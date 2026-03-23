@@ -29,6 +29,7 @@ import Dashboard2 from './pages/Dashboard/Dashboard2'
 import Party from './pages/Party/Party'
 import PartyDetail from './pages/Party/PartyDetail'
 import Noc from './pages/Noc/Noc'
+import Home2 from './pages/home2'
 
 function App() {
   return (
@@ -55,6 +56,7 @@ function App() {
                     <main>
                       <Routes>
                         <Route path='/' element={<Dashboard />} />
+                        <Route path='/home2' element={<Home2 />} />
                         <Route path='/dashboard2' element={<Dashboard2 />} />
                         <Route path='/driving' element={<DrivingLicence />} />
                         <Route path='/setting' element={<Setting />} />
