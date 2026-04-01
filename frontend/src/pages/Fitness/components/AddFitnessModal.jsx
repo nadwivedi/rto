@@ -533,24 +533,24 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
   if (!isOpen) return null;
 
   return (
-    <div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'>
-      <div className='bg-gray-50 rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col'>
+    <div className='fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4'>
+      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header */}
-        <div className='bg-gray-800 p-4 text-white flex-shrink-0'>
+        <div className='bg-gradient-to-r from-blue-600 to-indigo-600 p-2 md:p-3 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>
             <div>
-              <h2 className='text-xl font-bold'>
+              <h2 className='text-lg md:text-2xl font-bold'>
                 Add New Fitness Certificate
               </h2>
-              <p className='text-gray-400 text-sm'>
+              <p className='text-blue-100 text-xs md:text-sm mt-1'>
                 Enter the details for the new fitness certificate.
               </p>
             </div>
             <button
               onClick={onClose}
-              className='text-gray-400 hover:bg-gray-700 rounded-full p-2 transition'
+              className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
             >
-              <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                 <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
               </svg>
             </button>
@@ -558,17 +558,19 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
         </div>
 
         {/* Form Content */}
-        <form onSubmit={handleSubmit} className='flex-1 overflow-y-auto p-6 space-y-6'>
+        <form onSubmit={handleSubmit} className='flex flex-col flex-1 overflow-hidden'>
+          <div className='flex-1 overflow-y-auto p-3 md:p-6'>
           {/* Section 1: Vehicle Details */}
-          <div className='bg-white border border-gray-200 rounded-lg p-6'>
-            <h3 className='text-lg font-bold text-gray-800 mb-4'>
+          <div className='bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+            <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+              <span className='bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>1</span>
               Vehicle Details
             </h3>
 
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
               {/* Vehicle Number */}
               <div>
-                <label className='block text-sm font-semibold text-gray-700 mb-1'>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                   Vehicle Number <span className='text-red-500'>*</span>
                 </label>
                 <div className='relative'>
@@ -581,19 +583,19 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                     placeholder='e.g., CG04AA1234'
                     maxLength='10'
                     tabIndex="1"
-                    className={`w-full px-3 py-2 border rounded-md focus:ring-2 font-mono ${
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent font-mono bg-white ${
                       formData.vehicleNumber && !vehicleValidation.isValid
                         ? 'border-red-500 focus:ring-red-500'
                         : formData.vehicleNumber && vehicleValidation.isValid
                         ? 'border-green-500 focus:ring-green-500'
-                        : 'border-gray-300 focus:ring-gray-800'
+                        : 'border-gray-300 focus:ring-indigo-500'
                     }`}
                     required
                     autoFocus
                   />
                   {fetchingVehicle && (
                     <div className='absolute right-3 top-2.5'>
-                      <svg className='animate-spin h-5 w-5 text-gray-500' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+                      <svg className='animate-spin h-5 w-5 text-indigo-500' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
                         <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
                         <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
                       </svg>
@@ -609,20 +611,22 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
 
                   {/* Dropdown for multiple vehicle matches */}
                   {showVehicleDropdown && vehicleMatches.length > 0 && (
-                    <div className='absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto'>
+                    <div className='absolute z-10 w-full mt-1 bg-white border border-indigo-200 rounded-lg shadow-lg max-h-60 overflow-y-auto'>
                       {vehicleMatches.map((vehicle, index) => (
                         <div
                           key={vehicle._id}
                           ref={(el) => (dropdownItemRefs.current[index] = el)}
                           onClick={() => handleVehicleSelect(vehicle)}
-                          className={`px-4 py-3 cursor-pointer transition-colors ${
+                          className={`p-3 cursor-pointer border-b border-gray-100 last:border-b-0 transition ${
                             index === selectedDropdownIndex
-                              ? 'bg-gray-100'
-                              : 'hover:bg-gray-50'
+                              ? 'bg-indigo-100 border-l-4 border-l-indigo-600'
+                              : 'hover:bg-indigo-50'
                           }`}
                         >
-                          <p className='font-mono font-bold text-gray-900'>{vehicle.registrationNumber}</p>
-                          <p className='text-sm text-gray-600'>{vehicle.ownerName}</p>
+                          <p className={`font-mono font-bold text-sm ${
+                            index === selectedDropdownIndex ? 'text-indigo-800' : 'text-indigo-700'
+                          }`}>{vehicle.registrationNumber}</p>
+                          <p className='text-xs text-gray-700 mt-1'>{vehicle.ownerName}</p>
                         </div>
                       ))}
                     </div>
@@ -634,13 +638,13 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   </p>
                 )}
                 {vehicleError && (
-                  <p className='text-xs text-yellow-600 mt-1'>{vehicleError}</p>
+                  <p className='text-xs text-amber-600 mt-1'>{vehicleError}</p>
                 )}
               </div>
 
               {/* Mobile Number */}
               <div>
-                <label className='block text-sm font-semibold text-gray-700 mb-1'>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                   Mobile Number
                 </label>
                 <input
@@ -652,12 +656,12 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   placeholder='10-digit number'
                   maxLength='10'
                   tabIndex="3"
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                 />
               </div>
                {/* Owner Name */}
                <div>
-                <label className='block text-sm font-semibold text-gray-700 mb-1'>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                   Owner Name
                 </label>
                 <input
@@ -668,22 +672,23 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   onKeyDown={handleInputKeyDown}
                   placeholder='Owner Name'
                   tabIndex="2"
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                 />
               </div>
             </div>
           </div>
 
           {/* Section 2: Validity Period */}
-          <div className='bg-white border border-gray-200 rounded-lg p-6'>
-            <h3 className='text-lg font-bold text-gray-800 mb-4'>
+          <div className='bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+            <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+              <span className='bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>2</span>
               Validity Period
             </h3>
 
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
               {/* Valid From */}
               <div>
-                <label className='block text-sm font-semibold text-gray-700 mb-1'>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                   Valid From <span className='text-red-500'>*</span>
                 </label>
                 <input
@@ -694,16 +699,16 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   onBlur={handleDateBlur}
                   onKeyDown={handleInputKeyDown}
                   placeholder='DD-MM-YYYY'
-                  tabIndex="3"
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800'
+                  tabIndex="4"
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white'
                   required
                 />
               </div>
 
               {/* Valid To (Auto-calculated) */}
               <div>
-                <label className='block text-sm font-semibold text-gray-700 mb-1'>
-                  Valid To <span className='text-xs text-gray-500'>(Auto-calculated)</span>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                  Valid To <span className='text-xs text-emerald-600'>(Auto-calculated)</span>
                 </label>
                 <input
                   type='text'
@@ -713,23 +718,24 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   onBlur={handleDateBlur}
                   onKeyDown={handleInputKeyDown}
                   placeholder='DD-MM-YYYY'
-                  tabIndex="4"
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100'
+                  tabIndex="5"
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-emerald-50 text-gray-700'
                 />
               </div>
             </div>
           </div>
 
           {/* Section 3: Payment Information */}
-          <div className='bg-white border border-gray-200 rounded-lg p-6'>
-            <h3 className='text-lg font-bold text-gray-800 mb-4'>
+          <div className='bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+            <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+              <span className='bg-purple-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>3</span>
               Payment Information
             </h3>
 
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
               {/* Total Fee */}
               <div>
-                <label className='block text-sm font-semibold text-gray-700 mb-1'>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                   Total Fee (₹) <span className='text-red-500'>*</span>
                 </label>
                 <input
@@ -739,15 +745,15 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   onChange={handleChange}
                   onFocus={(e) => e.target.select()}
                   onKeyDown={handleInputKeyDown}
-                  tabIndex="5"
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800 font-semibold'
+                  tabIndex="6"
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold bg-white'
                   required
                 />
               </div>
 
               {/* Paid Amount */}
               <div>
-                <label className='block text-sm font-semibold text-gray-700 mb-1'>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                   Paid (₹) <span className='text-red-500'>*</span>
                 </label>
                 <input
@@ -757,19 +763,24 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   onChange={handleChange}
                   onFocus={(e) => e.target.select()}
                   onKeyDown={handleInputKeyDown}
-                  tabIndex="6"
-                  className={`w-full px-3 py-2 border rounded-md focus:ring-2 font-semibold ${
+                  tabIndex="7"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 font-semibold ${
                     paidExceedsTotal
                       ? 'border-red-500 focus:ring-red-500 bg-red-50'
-                      : 'border-gray-300 focus:ring-gray-800'
+                      : 'border-gray-300 focus:ring-purple-500 focus:border-transparent bg-white'
                   }`}
                   required
                 />
+                {paidExceedsTotal && (
+                  <p className='text-xs mt-1 text-red-600 font-semibold'>
+                    Paid amount cannot exceed total fee!
+                  </p>
+                )}
               </div>
 
               {/* Balance (Auto-calculated) */}
               <div>
-                <label className='block text-sm font-semibold text-gray-700 mb-1'>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                   Balance (₹) <span className='text-xs text-gray-500'>(Auto)</span>
                 </label>
                 <input
@@ -777,19 +788,19 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   name='balance'
                   value={formData.balance}
                   readOnly
-                  className='w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 font-semibold text-gray-700'
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-purple-50 font-semibold text-gray-700'
                 />
               </div>
             </div>
 
             {/* Fee Breakup Section */}
-            <div className='mt-6 pt-6 border-t border-gray-200'>
-              <div className='flex justify-between items-center mb-4'>
-                <h4 className='text-base font-bold text-gray-800'>Fee Breakup (Optional)</h4>
+            <div className='mt-5 pt-5 border-t border-purple-200'>
+              <div className='flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4'>
+                <h4 className='text-sm md:text-base font-bold text-gray-800'>Fee Breakup (Optional)</h4>
                 <button
                   type='button'
                   onClick={addFeeBreakupItem}
-                  className='px-4 py-2 text-sm bg-gray-800 text-white rounded-md hover:bg-gray-700 transition font-semibold flex items-center gap-2'
+                  className='px-4 py-2 text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold flex items-center justify-center gap-2 cursor-pointer'
                 >
                   <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
@@ -808,10 +819,10 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                         value={item.name}
                         onChange={(e) => handleFeeBreakupChange(index, 'name', e.target.value)}
                         readOnly={index < 5}
-                        className={`w-full px-3 py-2 border rounded-md text-sm font-semibold ${
+                        className={`w-full px-3 py-2 border rounded-lg text-sm font-semibold ${
                           index < 5
-                            ? 'border-gray-300 bg-gray-100 cursor-not-allowed'
-                            : 'border-gray-300 bg-white focus:ring-2 focus:ring-gray-800'
+                            ? 'border-purple-200 bg-purple-100 text-gray-700 cursor-not-allowed'
+                            : 'border-gray-300 bg-white focus:ring-2 focus:ring-purple-500 focus:border-transparent'
                         }`}
                       />
                     </div>
@@ -825,8 +836,8 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                           onChange={(e) => handleFeeBreakupChange(index, 'amount', e.target.value)}
                           onKeyDown={handleInputKeyDown}
                           min='0'
-                          tabIndex={7 + index}
-                          className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-gray-800 text-sm font-semibold'
+                          tabIndex={8 + index}
+                          className='w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm font-semibold bg-white'
                         />
                       </div>
                     </div>
@@ -834,7 +845,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                       <button
                         type='button'
                         onClick={() => removeFeeBreakupItem(index)}
-                        className='p-2 text-gray-500 hover:bg-gray-200 rounded-full transition'
+                        className='p-2 text-purple-500 hover:bg-purple-100 rounded-full transition cursor-pointer'
                         title='Remove item'
                       >
                         <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -847,41 +858,48 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
               </div>
             </div>
           </div>
+          </div>
+
+          <div className='border-t border-gray-200 p-3 md:p-4 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0'>
+            <div className='text-xs md:text-sm text-gray-600'>
+              <kbd className='px-2 py-1 bg-gray-200 rounded text-xs font-mono'>Ctrl+Enter</kbd> to submit quickly
+            </div>
+
+            <div className='flex gap-2 md:gap-3 w-full md:w-auto'>
+              <button
+                type='button'
+                onClick={onClose}
+                className='flex-1 md:flex-none px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-semibold transition cursor-pointer'
+              >
+                Cancel
+              </button>
+
+              <button
+                type='submit'
+                disabled={isSubmitting}
+                onClick={() => document.querySelector('form').requestSubmit()}
+                className='flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
+              >
+                {isSubmitting ? (
+                  <>
+                    <svg className='animate-spin h-5 w-5 text-white' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+                      <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                      <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                    </svg>
+                    Adding...
+                  </>
+                ) : (
+                  <>
+                    <svg className='w-4 h-4 md:w-5 md:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
+                    </svg>
+                    Add Fitness
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
         </form>
-
-        {/* Footer Actions */}
-        <div className='border-t border-gray-200 p-4 bg-gray-100 flex justify-end items-center gap-3 flex-shrink-0'>
-          <button
-            type='button'
-            onClick={onClose}
-            className='px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-semibold transition'
-          >
-            Cancel
-          </button>
-
-          <button
-            type='submit'
-            disabled={isSubmitting}
-            onClick={() => document.querySelector('form').requestSubmit()}
-            className={`px-6 py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700 font-semibold transition flex items-center gap-2 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-          >
-            {isSubmitting ? (
-              <>
-                <svg className='w-5 h-5 animate-spin' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' />
-                </svg>
-                Adding...
-              </>
-            ) : (
-              <>
-                <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
-                </svg>
-                Add Fitness
-              </>
-            )}
-          </button>
-        </div>
       </div>
     </div>
   );
