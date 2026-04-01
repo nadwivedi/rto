@@ -34,7 +34,7 @@ import Vahan from './pages/Vahan'
 
 function ProtectedLayout() {
   const location = useLocation()
-  const hideNavbar = location.pathname === '/home2'
+  const hideNavbar = ['/home2', '/vahan'].includes(location.pathname)
 
   return (
     <ProtectedRoute>

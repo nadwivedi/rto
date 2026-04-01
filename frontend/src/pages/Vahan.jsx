@@ -16,9 +16,9 @@ const vahanOptions = [
 
 const Vahan = () => {
   return (
-    <div className='min-h-screen bg-slate-100 pt-20 lg:pt-24'>
-      <div className='mx-auto flex max-w-7xl flex-col gap-6 px-4 pb-8 lg:flex-row lg:px-6'>
-        <aside className='lg:fixed lg:top-24 lg:h-[calc(100vh-7rem)] lg:w-80 lg:overflow-y-auto'>
+    <div className='min-h-screen bg-slate-100 pt-4 lg:pt-6'>
+      <div className='flex w-full flex-col gap-6 px-4 pb-8 lg:flex-row lg:px-6'>
+        <aside className='lg:fixed lg:left-6 lg:top-6 lg:h-[calc(100vh-3rem)] lg:w-80 lg:overflow-y-auto'>
           <div className='overflow-hidden rounded-[28px] bg-slate-900 text-white shadow-2xl'>
             <div className='space-y-2 p-4'>
               {vahanOptions.map((option, index) => (
