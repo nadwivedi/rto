@@ -25,7 +25,9 @@ const quickButtons = [
   { title: 'Add Tax', shortLabel: 'Tax', tone: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100' },
   { title: 'PUC', shortLabel: 'PUC', tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' },
   { title: 'Add GPS', shortLabel: 'GPS', tone: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100' },
-  { title: 'Bill', shortLabel: 'Bill', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100' }
+  { title: 'Bill', shortLabel: 'Bill', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100' },
+  { title: 'Day Book', shortLabel: 'Day Book', tone: 'border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100', path: '/day-book' },
+  { title: 'Party Ledger', shortLabel: 'Party Ledger', tone: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100', path: '/parties' }
 ]
 
 const Vahan = () => {
@@ -76,13 +78,14 @@ const Vahan = () => {
                 <div className='mt-3 flex flex-wrap gap-2'>
                   {quickButtons.map((button) => {
                     const option = vahanOptions.find((item) => item.title === button.title)
+                    const targetPath = button.path || option?.path
 
-                    if (!option) return null
+                    if (!targetPath) return null
 
                     return (
                       <Link
                         key={button.title}
-                        to={option.path}
+                        to={targetPath}
                         className={`inline-flex items-center justify-center rounded-lg border px-3 py-2 text-[11px] font-semibold transition sm:text-xs ${button.tone}`}
                       >
                         {button.shortLabel}
