@@ -102,6 +102,7 @@ const uploadRoutes = require('./routes/upload')
 const dashboardRoutes = require('./routes/dashboard')
 const partyRoutes = require('./routes/party')
 const nocRoutes = require('./routes/noc')
+const ocrRoutes = require('./routes/ocrRoutes')
 
 // Use Routes
 
@@ -133,6 +134,7 @@ app.use('/api/puc', userAuth, pucRoutes)
 app.use('/api/gps', userAuth, gpsRoutes)
 app.use('/api/parties', userAuth, partyRoutes)
 app.use('/api/noc', userAuth, nocRoutes)
+app.use('/api/ocr', userAuth, ocrRoutes)
 
 // Root route
 app.get('/', (req, res) => {

@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import { validateVehicleNumberRealtime, enforceVehicleNumberFormat } from '../../../utils/vehicleNoCheck'
 import { handleSmartDateInput } from '../../../utils/dateFormatter'
 import ImageViewer from '../../../components/ImageViewer'
+import DocumentScannerPreview from '../../../components/DocumentScannerPreview'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -87,6 +88,8 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
   const [uploadingAadhar, setUploadingAadhar] = useState(false)
   const [uploadingPan, setUploadingPan] = useState(false)
   const [uploadingSpeedGovernor, setUploadingSpeedGovernor] = useState(false)
+  const [isExtractingRc, setIsExtractingRc] = useState(false)
+  const [scanningFile, setScanningFile] = useState(null)
 
   // Handle Enter key to move to next field in order and arrow keys for party suggestions
   const handleKeyDown = (e) => {
@@ -1043,6 +1046,95 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
     toast.info('Speed Governor document removed', { position: 'top-right', autoClose: 2000 })
   }
 
+  // Handle RC extraction
+  const handleRcExtractionUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file for extraction.', { position: 'top-right', autoClose: 3000 });
+      return;
+    }
+
+    setScanningFile(file);
+    e.target.value = ''; // reset file input
+  }
+
+  const handleScannerConfirm = async (processedFile) => {
+    setScanningFile(null);
+    setIsExtractingRc(true);
+    const updateToast = toast.info('Analyzing RC image, please wait...', { autoClose: false, isLoading: true });
+
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const base64String = reader.result;
+          const response = await axios.post(
+            `${API_URL}/api/ocr/rc`,
+            { imageBase64: base64String },
+            { withCredentials: true }
+          );
+
+          if (response.data.success && response.data.data) {
+            const resultData = response.data.data;
+            
+            // Map the result properties to formData safely
+            setFormData(prev => {
+              const updated = { ...prev };
+              Object.keys(resultData).forEach(key => {
+                if (resultData[key] && Object.prototype.hasOwnProperty.call(updated, key)) {
+                  // Don't overwrite dateOfRegistration if already properly set, just take it if possible
+                  if (key === 'dateOfRegistration') {
+                      const formatted = handleSmartDateInput(resultData[key], '');
+                      if (formatted) updated[key] = formatted;
+                  } else {
+                      updated[key] = resultData[key].toUpperCase(); // usually we store uppercase
+                  }
+                }
+              });
+
+              // Also ensure vehicle validation is triggered if registrationNumber changes
+              if (resultData.registrationNumber) {
+                 const validation = validateVehicleNumberRealtime(resultData.registrationNumber);
+                 setVehicleValidation(validation);
+              }
+              
+              return updated;
+            });
+            
+            // Set the RC image preview as well so user sees what they uploaded in the normal documents section
+            if(!formData.rcImage) {
+                setRcImagePreview(base64String);
+                toast.dismiss(updateToast);
+                toast.success('RC Details Extracted Successfully!', { position: 'top-right', autoClose: 3000 });
+            } else {
+                toast.dismiss(updateToast);
+                toast.success('RC Details Extracted Successfully!', { position: 'top-right', autoClose: 3000 });
+            }
+
+          } else {
+            toast.dismiss(updateToast);
+            toast.error('Failed to extract data correctly.', { position: 'top-right', autoClose: 3000 });
+          }
+        } catch (err) {
+            console.error(err);
+            toast.dismiss(updateToast);
+            toast.error('Server error during OCR processing.', { position: 'top-right', autoClose: 3000 });
+        } finally {
+            setIsExtractingRc(false);
+        }
+      };
+      
+      reader.readAsDataURL(processedFile);
+
+    } catch (err) {
+      toast.dismiss(updateToast);
+      toast.error('Error reading the image file.', { position: 'top-right', autoClose: 3000 });
+      setIsExtractingRc(false);
+    }
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
 
@@ -1139,6 +1231,53 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
         {/* Form */}
         <div className='overflow-y-auto max-h-[calc(98vh-100px)] md:max-h-[calc(95vh-140px)] custom-scrollbar'>
           <form id='vehicle-registration-form' onSubmit={handleSubmit} className='p-3 md:p-8'>
+            {/* RC Extraction Section */}
+            {!editData && (
+              <div className='mb-4 md:mb-6 p-4 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-xl border-2 border-dashed border-teal-200'>
+                <div className='flex flex-col sm:flex-row items-center justify-between gap-4'>
+                  <div>
+                    <h3 className='text-sm md:text-base font-bold text-teal-800 flex items-center gap-2'>
+                        <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 10V3L4 14h7v7l9-11h-7z' />
+                        </svg>
+                        AI Fast Extraction
+                    </h3>
+                    <p className='text-xs text-teal-600 mt-1'>Upload an RC photo to automatically fill in the details below.</p>
+                   </div>
+                   <div className='relative overflow-hidden'>
+                    <button 
+                      type='button' 
+                      disabled={isExtractingRc}
+                      className='relative px-4 py-2 bg-teal-600 text-white font-semibold rounded-lg shadow-md hover:bg-teal-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 text-sm max-w-full'
+                    >
+                      {isExtractingRc ? (
+                        <>
+                          <svg className='animate-spin h-4 w-4 text-white' fill='none' viewBox='0 0 24 24'>
+                            <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                            <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                          </svg>
+                          Extracting...
+                        </>
+                      ) : (
+                        <>
+                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/>
+                          </svg>
+                          Upload RC Image
+                        </>
+                      )}
+                    </button>
+                    <input 
+                      type='file' 
+                      accept='image/*' 
+                      disabled={isExtractingRc}
+                      onChange={handleRcExtractionUpload} 
+                      className='absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed' 
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             {error && (
               <div className='mb-3 md:mb-6 p-2.5 md:p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded-lg flex items-start gap-2 md:gap-3 animate-shake'>
                 <svg className='w-4 h-4 md:w-5 md:h-5 text-red-500 flex-shrink-0 mt-0.5' fill='currentColor' viewBox='0 0 20 20'>
@@ -2437,6 +2576,14 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
             </div>
           </div>
         </div>
+      )}
+
+      {scanningFile && (
+        <DocumentScannerPreview
+          file={scanningFile}
+          onCancel={() => setScanningFile(null)}
+          onConfirm={handleScannerConfirm}
+        />
       )}
     </div>
   )
