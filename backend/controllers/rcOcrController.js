@@ -1,8 +1,6 @@
 const axios = require('axios');
 const pdfParse = require('pdf-parse');
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
-
 const callGroqAPI = async (imageBase64, textPrompt, isPdf = false) => {
   if (isPdf) {
     // If PDF, imageBase64 is actually raw text extracted by pdf-parse
@@ -25,7 +23,7 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false) => {
       },
       {
         headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
           'Content-Type': 'application/json'
         }
       }
@@ -63,7 +61,7 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false) => {
       },
       {
         headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
           'Content-Type': 'application/json'
         }
       }

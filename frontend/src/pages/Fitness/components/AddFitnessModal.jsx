@@ -38,6 +38,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [scanningFile, setScanningFile] = useState(null);
   const [isExtractingFitness, setIsExtractingFitness] = useState(false);
+  const isOcrUpdate = useRef(false);
 
   // Reset form when modal closes or when prefilled values change
   useEffect(() => {
@@ -90,6 +91,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
 
   // Calculate valid to date (1 year from valid from)
   useEffect(() => {
+    if (isOcrUpdate.current) return; // Prevent overwriting validTo if populated via OCR
     if (formData.validFrom) {
       // Parse DD-MM-YYYY
       const parts = formData.validFrom.split(/[/-]/); // Splits on both "/" and "-"
@@ -489,6 +491,8 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
           if (response.data.success && response.data.data) {
             const resultData = response.data.data;
             
+            isOcrUpdate.current = true; // Block auto-calculate effect
+
             // Map the result properties to formData safely
             setFormData(prev => {
               const updated = { ...prev };
@@ -513,6 +517,9 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
               return updated;
             });
             
+            // Release the block after rendering
+            setTimeout(() => { isOcrUpdate.current = false; }, 200);
+
             toast.dismiss(updateToast);
             toast.success('Fitness Details Extracted Successfully!', { position: 'top-right', autoClose: 3000 });
 
