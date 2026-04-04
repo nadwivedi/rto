@@ -55,10 +55,110 @@ exports.getAllParties = async (req, res) => {
       .limit(limitNum)
       .lean()
 
+    const partyIds = parties.map(party => party._id)
+    const vehicles = await VehicleRegistration.find({
+      partyId: { $in: partyIds },
+      userId: req.user.id
+    })
+      .select('partyId registrationNumber')
+      .lean()
+
+    const vehiclesByParty = {}
+    vehicles.forEach(vehicle => {
+      const key = vehicle.partyId?.toString()
+      if (!key) return
+      if (!vehiclesByParty[key]) vehiclesByParty[key] = []
+      vehiclesByParty[key].push(vehicle.registrationNumber)
+    })
+
+    const partiesWithPending = await Promise.all(
+      parties.map(async (party) => {
+        const vehicleNumbers = vehiclesByParty[party._id.toString()] || []
+
+        if (vehicleNumbers.length === 0) {
+          return {
+            ...party,
+            totalPending: 0
+          }
+        }
+
+        const [
+          taxPending,
+          fitnessPending,
+          insurancePending,
+          pucPending,
+          gpsPending,
+          cgPermitPending,
+          nationalPermitPending,
+          busPermitPending,
+          temporaryPermitPending,
+          temporaryPermitOtherStatePending
+        ] = await Promise.all([
+          Tax.aggregate([
+            { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balanceAmount: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balanceAmount' } } }
+          ]),
+          Fitness.aggregate([
+            { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
+          ]),
+          Insurance.aggregate([
+            { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
+          ]),
+          Puc.aggregate([
+            { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
+          ]),
+          Gps.aggregate([
+            { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
+          ]),
+          CgPermit.aggregate([
+            { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
+          ]),
+          NationalPermit.aggregate([
+            { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
+          ]),
+          BusPermit.aggregate([
+            { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
+          ]),
+          TemporaryPermit.aggregate([
+            { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
+          ]),
+          TemporaryPermitOtherState.aggregate([
+            { $match: { vehicleNo: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
+          ])
+        ])
+
+        const totalPending =
+          (taxPending[0]?.total || 0) +
+          (fitnessPending[0]?.total || 0) +
+          (insurancePending[0]?.total || 0) +
+          (pucPending[0]?.total || 0) +
+          (gpsPending[0]?.total || 0) +
+          (cgPermitPending[0]?.total || 0) +
+          (nationalPermitPending[0]?.total || 0) +
+          (busPermitPending[0]?.total || 0) +
+          (temporaryPermitPending[0]?.total || 0) +
+          (temporaryPermitOtherStatePending[0]?.total || 0)
+
+        return {
+          ...party,
+          totalPending
+        }
+      })
+    )
+
     res.json({
       success: true,
-      count: parties.length,
-      data: parties,
+      count: partiesWithPending.length,
+      data: partiesWithPending,
       pagination: {
         currentPage: pageNum,
         totalPages,

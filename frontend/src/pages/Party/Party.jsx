@@ -11,6 +11,8 @@ import AddEditPartyModal from './components/AddEditPartyModal'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
+const formatCurrency = (amount = 0) => `₹${Number(amount || 0).toLocaleString('en-IN')}`
+
 const Party = () => {
   const navigate = useNavigate()
   const theme = getTheme()
@@ -217,16 +219,6 @@ const Party = () => {
                           {/* Action Buttons */}
                           <div className='flex items-center gap-1'>
                             <button
-                              onClick={() => navigate(`/parties/${party._id}`)}
-                              className='p-1.5 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-all cursor-pointer'
-                              title='View Details'
-                            >
-                              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
-                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
-                              </svg>
-                            </button>
-                            <button
                               onClick={() => handleEdit(party)}
                               className='p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all cursor-pointer'
                               title='Edit'
@@ -269,6 +261,13 @@ const Party = () => {
                               <p className='text-xs text-gray-700 line-clamp-2'>{party.address}</p>
                             </div>
                           )}
+
+                          <div>
+                            <p className='text-[10px] text-gray-500 font-semibold uppercase'>Party Balance</p>
+                            <p className={`text-xs font-bold ${party.totalPending > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                              {formatCurrency(party.totalPending)}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -309,20 +308,18 @@ const Party = () => {
                             <span className='text-[11px] 2xl:text-sm text-gray-700 lowercase'>{party.email || '-'}</span>
                           </td>
                           <td className='px-4 2xl:px-6 py-3 2xl:py-4 max-w-xs'>
-                            <span className='text-[11px] 2xl:text-sm text-gray-700 line-clamp-2'>{party.address || '-'}</span>
+                            <div className='space-y-1'>
+                              <span className='block text-[11px] 2xl:text-sm text-gray-700 line-clamp-2'>{party.address || '-'}</span>
+                              <div className='text-[11px] 2xl:text-sm'>
+                                <span className='font-semibold text-gray-500'>Party Balance: </span>
+                                <span className={party.totalPending > 0 ? 'font-bold text-red-600' : 'font-bold text-green-600'}>
+                                  {formatCurrency(party.totalPending)}
+                                </span>
+                              </div>
+                            </div>
                           </td>
                           <td className='px-4 2xl:px-6 py-3 2xl:py-4' onClick={(e) => e.stopPropagation()}>
                             <div className='flex items-center justify-center gap-0.5'>
-                              <button
-                                onClick={() => navigate(`/parties/${party._id}`)}
-                                className='p-1.5 2xl:p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all duration-200 cursor-pointer'
-                                title='View Details'
-                              >
-                                <svg className='w-4 h-4 2xl:w-5 2xl:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
-                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
-                                </svg>
-                              </button>
                               <button
                                 onClick={() => handleEdit(party)}
                                 className='p-1.5 2xl:p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 cursor-pointer'
