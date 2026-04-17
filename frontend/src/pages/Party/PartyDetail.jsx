@@ -577,15 +577,6 @@ const PartyDetail = () => {
                         </tr>
                       ))}
                     </tbody>
-                    <tfoot className='bg-gray-100 border-t-2 border-gray-300'>
-                      <tr>
-                        <td colSpan='3' className='px-4 py-3 text-sm font-black text-gray-900 text-right uppercase'>Ledger Total</td>
-                        <td className='px-4 py-3 text-sm font-black text-gray-900 text-right'>{formatCurrency(ledgerTotals.total)}</td>
-                        <td className='px-4 py-3 text-sm font-black text-green-700 text-right'>{formatCurrency(ledgerTotals.paid)}</td>
-                        <td className='px-4 py-3 text-sm font-black text-red-700 text-right'>{formatCurrency(ledgerTotals.balance)}</td>
-                        <td className='px-4 py-3 text-sm font-black text-orange-700 text-right'>{formatCurrency(ledgerTotals.balance)}</td>
-                      </tr>
-                    </tfoot>
                   </table>
                 </div>
 

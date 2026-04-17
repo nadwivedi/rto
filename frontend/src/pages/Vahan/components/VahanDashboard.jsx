@@ -235,10 +235,10 @@ const VahanDashboard = () => {
     <div className='h-full overflow-auto p-3'>
       <div className='grid gap-3 xl:grid-cols-[65%_minmax(0,1fr)]'>
         <section className='min-w-0'>
-          <div className='mb-3 flex flex-wrap items-center gap-3'>
-            <h2 className='text-base font-bold text-gray-800 lg:text-[15px] xl:text-base 2xl:text-lg'>Expiry Soon</h2>
+          <div className='mb-3 grid grid-cols-1 items-center gap-3 text-center md:grid-cols-[auto_1fr]'>
+            <h2 className='text-left text-base font-bold text-gray-800 lg:text-[15px] xl:text-base 2xl:text-lg'>Expiry Soon</h2>
 
-            <div className='flex flex-wrap gap-1 lg:gap-1 xl:gap-1.5 2xl:gap-2'>
+            <div className='flex flex-wrap justify-center gap-1 lg:gap-1 xl:gap-1.5 2xl:gap-2'>
               {filterButtons.map(btn => (
                 <button
                   key={btn.key}
