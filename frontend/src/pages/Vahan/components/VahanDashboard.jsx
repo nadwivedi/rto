@@ -277,6 +277,7 @@ const VahanDashboard = () => {
                       <th className='px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Party / Vehicle</th>
                       <th className='px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Doc</th>
                       <th className='px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Validity</th>
+                      <th className='px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Days Left</th>
                     </tr>
                   </thead>
                   <tbody className='divide-y divide-gray-200'>
@@ -301,10 +302,14 @@ const VahanDashboard = () => {
                             </div>
                             <div className='flex items-baseline'>
                               <span className='w-9 shrink-0 text-gray-900'>To:</span>
-                              <span className='text-red-700'>{formatDate(record.validTo)} </span>
-                              <span className='text-red-600'>({formatExpiryText(record.validTo)})</span>
+                              <span className='text-red-700'>{formatDate(record.validTo)}</span>
                             </div>
                           </div>
+                        </td>
+                        <td className='px-3 py-2'>
+                          <span className={`text-[11px] font-bold ${getDaysRemaining(record.validTo) < 0 ? 'text-red-600' : 'text-orange-600'}`}>
+                            {formatExpiryText(record.validTo)}
+                          </span>
                         </td>
                       </tr>
                     ))}
