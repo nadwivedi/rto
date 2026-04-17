@@ -11,6 +11,7 @@ import AddPucModal from './Puc/components/AddPucModal'
 import AddGpsModal from './Gps/components/AddGpsModal'
 import AddInsuranceModal from './Insurance/components/AddInsuranceModal'
 import AddDealerBillModal from '../components/AddDealerBillModal'
+import VahanDashboard from './Vahan/components/VahanDashboard'
 
 const vahanOptions = [
   { title: 'Manage Vehicle', path: '/vehicle-registration', note: 'Vehicle registration and master details', image: '/buttons/add vehicle.png', category: 'vehicle', badgeTone: 'bg-sky-100 text-sky-700' },
@@ -84,43 +85,49 @@ const Vahan = () => {
       <div className='min-h-screen bg-slate-100 px-4 pb-8 lg:px-6'>
         <div className='flex w-full flex-col gap-6 lg:flex-row'>
           <aside className='lg:fixed lg:left-0 lg:top-20 lg:h-[calc(100vh-5rem)] lg:w-60 xl:w-64 2xl:w-[19rem] lg:overflow-y-auto'>
-          <div className='overflow-hidden rounded-[28px] bg-slate-900 text-white shadow-2xl'>
-            <div className='space-y-2 p-4'>
-              {vahanOptions.map((option, index) => (
-                <button
-                  key={option.title}
-                  type='button'
-                  onClick={() => openModal(option.title)}
-                  className={
-                    option.image
-                      ? 'block w-full transition duration-200 hover:opacity-95'
-                      : 'block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition duration-200 hover:bg-white/10 hover:shadow-lg'
-                  }
-                >
-                  {option.image ? (
-                    <img
-                      src={option.image}
-                      alt={option.title}
-                      className='mx-auto h-auto w-[92%] object-contain'
-                    />
-                  ) : (
-                    <div className='flex items-start gap-3'>
-                      <span className='mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-cyan-200'>
-                        {index + 1}
-                      </span>
-                      <div>
-                        <h2 className='text-sm font-bold text-white'>{option.title}</h2>
-                        <p className='mt-1 text-xs leading-5 text-slate-300'>{option.note}</p>
+            <div className='overflow-hidden rounded-[28px] bg-slate-900 text-white shadow-2xl'>
+              <div className='space-y-2 p-4'>
+                {vahanOptions.map((option, index) => (
+                  <button
+                    key={option.title}
+                    type='button'
+                    onClick={() => openModal(option.title)}
+                    className={
+                      option.image
+                        ? 'block w-full transition duration-200 hover:opacity-95'
+                        : 'block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left transition duration-200 hover:bg-white/10 hover:shadow-lg'
+                    }
+                  >
+                    {option.image ? (
+                      <img
+                        src={option.image}
+                        alt={option.title}
+                        className='mx-auto h-auto w-[92%] object-contain'
+                      />
+                    ) : (
+                      <div className='flex items-start gap-3'>
+                        <span className='mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/10 text-xs font-bold text-cyan-200'>
+                          {index + 1}
+                        </span>
+                        <div>
+                          <h2 className='text-sm font-bold text-white'>{option.title}</h2>
+                          <p className='mt-1 text-xs leading-5 text-slate-300'>{option.note}</p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </button>
-              ))}
+                    )}
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        </aside>
+          </aside>
+
+          <main className='flex-1 lg:ml-60 xl:ml-64 2xl:ml-[19rem]'>
+            <div className='bg-white rounded-2xl shadow-lg border border-gray-200 min-h-[calc(100vh-6rem)]'>
+              <VahanDashboard />
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
 
       {activeModal === 'Manage Vehicle' && (
         <RegisterVehicleModal
