@@ -319,55 +319,27 @@ const PartyDetail = () => {
     <div className='min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-pink-50'>
       <div className='w-full px-3 md:px-4 lg:px-6 pt-4 lg:pt-6 pb-8'>
         {/* Party Header */}
-        <div className='mb-6'>
-          {/* Party Info Card */}
-          <div className='bg-white rounded-2xl shadow-lg border border-gray-200 p-6'>
-            <div className='flex items-start gap-4'>
-              <div className='w-16 h-16 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold flex-shrink-0'>
-                {data.party?.partyName?.charAt(0)?.toUpperCase() || 'P'}
-              </div>
-              <div className='flex-1 min-w-0'>
-                <h1 className='text-2xl font-bold text-gray-900 mb-1'>{data.party?.partyName}</h1>
-                {data.party?.sonWifeDaughterOf && (
-                  <p className='text-sm text-gray-600'>S/o, W/o, D/o: {data.party.sonWifeDaughterOf}</p>
-                )}
-                <div className='flex flex-wrap gap-4 mt-2'>
-                  {data.party?.mobile && (
-                    <span className='text-sm text-gray-600'>
-                      <span className='font-semibold'>Mobile:</span> {data.party.mobile}
-                    </span>
-                  )}
-                  {data.party?.email && (
-                    <span className='text-sm text-gray-600'>
-                      <span className='font-semibold'>Email:</span> {data.party.email}
-                    </span>
-                  )}
-                </div>
-                {data.party?.address && (
-                  <p className='text-sm text-gray-600 mt-1'>
-                    <span className='font-semibold'>Address:</span> {data.party.address}
-                  </p>
-                )}
-              </div>
-            </div>
+        <div className='mb-4'>
+          <h1 className='mb-2 truncate text-xl font-bold text-gray-900'>{data.party?.partyName}</h1>
 
-            {/* Summary Stats */}
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mt-6'>
-              <div className='bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-4 border border-blue-200'>
-                <p className='text-xs text-blue-600 font-semibold uppercase'>Total Work</p>
-                <p className='text-2xl font-bold text-blue-700'>{allWork.length}</p>
+          {/* Summary Cards */}
+          <div className='bg-white rounded-2xl shadow-lg border border-gray-200 p-4'>
+            <div className='grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-stretch'>
+              <div className='bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl px-3 py-2 border border-blue-200'>
+                <p className='text-[10px] text-blue-600 font-bold uppercase'>Total Work</p>
+                <p className='truncate text-lg font-bold text-blue-700'>{allWork.length}</p>
               </div>
-              <div className='bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-4 border border-green-200'>
-                <p className='text-xs text-green-600 font-semibold uppercase'>Total Paid</p>
-                <p className='text-2xl font-bold text-green-700'>{formatCurrency(ledgerTotals.paid)}</p>
+              <div className='bg-gradient-to-br from-green-50 to-green-100 rounded-xl px-3 py-2 border border-green-200'>
+                <p className='text-[10px] text-green-600 font-bold uppercase'>Total Paid</p>
+                <p className='truncate text-lg font-bold text-green-700'>{formatCurrency(ledgerTotals.paid)}</p>
               </div>
-              <div className='bg-gradient-to-br from-red-50 to-red-100 rounded-xl p-4 border border-red-200'>
-                <p className='text-xs text-red-600 font-semibold uppercase'>Total Amount</p>
-                <p className='text-2xl font-bold text-red-700'>{formatCurrency(ledgerTotals.total)}</p>
+              <div className='bg-gradient-to-br from-red-50 to-red-100 rounded-xl px-3 py-2 border border-red-200'>
+                <p className='text-[10px] text-red-600 font-bold uppercase'>Total Amount</p>
+                <p className='truncate text-lg font-bold text-red-700'>{formatCurrency(ledgerTotals.total)}</p>
               </div>
-              <div className='bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl p-4 border border-orange-200'>
-                <p className='text-xs text-orange-600 font-semibold uppercase'>Total Balance</p>
-                <p className='text-2xl font-bold text-orange-700'>{formatCurrency(totalPending)}</p>
+              <div className='bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl px-3 py-2 border border-orange-200'>
+                <p className='text-[10px] text-orange-600 font-bold uppercase'>Total Balance</p>
+                <p className='truncate text-lg font-bold text-orange-700'>{formatCurrency(totalPending)}</p>
               </div>
             </div>
           </div>
