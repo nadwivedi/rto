@@ -122,6 +122,7 @@ const ocrRoutes = require('./routes/ocrRoutes')
 const employeeRoutes = require('./routes/employeeRoutes')
 const whatsappRoutes = require('./routes/whatsapp')
 const whatsappSettingsRoutes = require('./routes/whatsappSettings')
+const javakRoutes = require('./routes/javak')
 
 // Use Routes
 
@@ -158,6 +159,7 @@ app.use('/api/ocr', userAuth, ocrRoutes)
 app.use('/api/employees', userAuth, employeeRoutes)
 app.use('/api/whatsapp', userAuth, whatsappRoutes)
 app.use('/api/whatsapp-settings', userAuth, whatsappSettingsRoutes)
+app.use('/api/javak', userAuth, javakRoutes)
 
 // Root route
 app.get('/', (req, res) => {

@@ -32,6 +32,7 @@ import Noc from './pages/Noc/Noc'
 import Vahan from './pages/Vahan'
 import Sarthi from './pages/Sarthi'
 import WhatsApp from './pages/WhatsApp/WhatsApp'
+import Javak from './pages/Javak/Javak'
 
 function ProtectedLayout() {
   const navigate = useNavigate()
@@ -62,7 +63,7 @@ function ProtectedLayout() {
         const isModalOpen = document.querySelector('.bg-slate-900\\/60, .fixed.inset-0, [role="dialog"]') !== null;
         if (isModalOpen) return;
 
-        const vahanHubPages = ['/vahan', '/whatsapp', '/setting'];
+        const vahanHubPages = ['/vahan', '/whatsapp', '/setting', '/javak'];
         const sarthiHubPages = ['/sarthi'];
         const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal'];
 
@@ -130,6 +131,7 @@ function ProtectedLayout() {
               <Route path='/parties' element={<Party />} />
               <Route path='/parties/:partyId' element={<PartyDetail />} />
               <Route path='/whatsapp' element={<WhatsApp />} />
+              <Route path='/javak' element={<Javak />} />
             </Routes>
           </main>
         </div>

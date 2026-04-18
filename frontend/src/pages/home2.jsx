@@ -88,6 +88,13 @@ const Home2 = () => {
             </button>
           )}
           <button
+            onClick={() => navigate('/javak')}
+            className='flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold'
+          >
+            <span className='text-xl'>📋</span>
+            Javak
+          </button>
+          <button
             onClick={() => navigate('/setting')}
             className='flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-xl shadow-md hover:bg-slate-800 transition-all duration-300 font-bold'
           >
