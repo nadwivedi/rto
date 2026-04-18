@@ -30,10 +30,10 @@ const getEnhancedImg = async (imageSrc, crop, rotation = 0) => {
   // ReactCrop provides pixels in 'crop' if it's a pixel crop, otherwise it's percentage.
   // We assume the caller passes the pixel crop.
   if (crop && crop.width > 0 && crop.height > 0) {
-      cropX = crop.x;
-      cropY = crop.y;
-      cropW = crop.width;
-      cropH = crop.height;
+    cropX = crop.x;
+    cropY = crop.y;
+    cropW = crop.width;
+    cropH = crop.height;
   }
 
   // Set the canvas size to the final cropped and rotated size
@@ -50,12 +50,12 @@ const getEnhancedImg = async (imageSrc, crop, rotation = 0) => {
   // Draw with rotation
   ctx.translate(canvas.width / 2, canvas.height / 2);
   ctx.rotate((rotation * Math.PI) / 180);
-  
+
   // Draw only the cropped portion
   ctx.drawImage(
-      image,
-      cropX, cropY, cropW, cropH,
-      -cropW / 2, -cropH / 2, cropW, cropH
+    image,
+    cropX, cropY, cropW, cropH,
+    -cropW / 2, -cropH / 2, cropW, cropH
   );
 
   // Reset transform
@@ -80,7 +80,7 @@ export default function DocumentScannerPreview({ file, onCancel, onConfirm }) {
   const [imageSrc, setImageSrc] = useState(null);
   const [rotation, setRotation] = useState(0);
   const [isProcessing, setIsProcessing] = useState(false);
-  
+
   const imgRef = useRef(null);
   const [crop, setCrop] = useState();
   const [completedCrop, setCompletedCrop] = useState();
@@ -95,31 +95,33 @@ export default function DocumentScannerPreview({ file, onCancel, onConfirm }) {
 
   const onImageLoad = useCallback((e) => {
     const { width, height } = e.currentTarget;
-    const initialCrop = centerCrop(
-        makeAspectCrop({ unit: '%', width: 90, height: 90 }, width / height, width, height),
-        width,
-        height
-    );
-    setCrop(initialCrop); 
+    const initialCrop = {
+      unit: '%',
+      x: 0,
+      y: 0,
+      width: 100,
+      height: 100
+    };
+    setCrop(initialCrop);
   }, []);
 
   const handleConfirm = async () => {
     if (!imageSrc) return;
     setIsProcessing(true);
-    
+
     // Convert rendered crop percentages to actual image pixels if we have a defined crop
     let pixelCrop = null;
     if (completedCrop && completedCrop.width > 0 && completedCrop.height > 0 && imgRef.current) {
-        const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
-        const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
-        
-        pixelCrop = {
-            unit: 'px',
-            x: completedCrop.x * scaleX,
-            y: completedCrop.y * scaleY,
-            width: completedCrop.width * scaleX,
-            height: completedCrop.height * scaleY
-        };
+      const scaleX = imgRef.current.naturalWidth / imgRef.current.width;
+      const scaleY = imgRef.current.naturalHeight / imgRef.current.height;
+
+      pixelCrop = {
+        unit: 'px',
+        x: completedCrop.x * scaleX,
+        y: completedCrop.y * scaleY,
+        width: completedCrop.width * scaleX,
+        height: completedCrop.height * scaleY
+      };
     }
 
     try {
@@ -152,16 +154,13 @@ export default function DocumentScannerPreview({ file, onCancel, onConfirm }) {
   const previewStyle = {
     transform: `rotate(${rotation}deg)`,
     filter: 'none',
-    maxHeight: '100%',
-    maxWidth: '100%',
-    objectFit: 'contain',
     transition: 'transform 0.3s ease, filter 0.3s ease'
   };
 
   return (
     <div className="fixed inset-0 z-[110] flex flex-col bg-slate-950 md:p-6 p-0 text-white backdrop-blur-[2px]">
       <div className="flex flex-1 flex-col overflow-hidden bg-slate-900 shadow-xl md:rounded-2xl border border-slate-700">
-        
+
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 bg-slate-800 border-b border-slate-700">
           <h2 className="text-sm font-bold md:text-base">Document Preview & Crop</h2>
@@ -175,21 +174,23 @@ export default function DocumentScannerPreview({ file, onCancel, onConfirm }) {
         </div>
 
         {/* Image Preview Container */}
-        <div className="relative flex-1 bg-black flex items-center justify-center overflow-hidden p-4">
-          <ReactCrop
-              crop={crop}
-              onChange={(_, percentCrop) => setCrop(percentCrop)}
-              onComplete={(c) => setCompletedCrop(c)}
-          >
-              <img 
-                ref={imgRef}
-                src={imageSrc} 
-                alt="Document preview" 
-                onLoad={onImageLoad}
-                style={previewStyle}
-                className="max-h-[70vh]"
-              />
-          </ReactCrop>
+        <div className="relative flex-1 bg-black flex items-center justify-center overflow-auto p-4">
+          <div className="max-w-full max-h-full flex justify-center items-center">
+            <ReactCrop
+                crop={crop}
+                onChange={(_, percentCrop) => setCrop(percentCrop)}
+                onComplete={(c) => setCompletedCrop(c)}
+            >
+                <img 
+                  ref={imgRef}
+                  src={imageSrc} 
+                  alt="Document preview" 
+                  onLoad={onImageLoad}
+                  style={{ ...previewStyle, maxHeight: '50vh', maxWidth: '100%', objectFit: 'contain' }}
+                  className="block mx-auto"
+                />
+            </ReactCrop>
+          </div>
         </div>
 
         {/* Bottom Controls */}
