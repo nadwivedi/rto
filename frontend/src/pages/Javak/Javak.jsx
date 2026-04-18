@@ -282,6 +282,16 @@ const Javak = () => {
                 
                 <div className='overflow-x-auto'>
                   <table className='w-full'>
+                    <thead>
+                      <tr className='border-b border-slate-100 bg-slate-50/50 text-left text-xs font-semibold text-slate-500 uppercase tracking-wider'>
+                        <th className='px-6 py-3 w-44'>Vehicle No</th>
+                        <th className='px-6 py-3 flex-1'>Party Name</th>
+                        <th className='px-6 py-3 w-48'>Purpose</th>
+                        <th className='px-6 py-3 w-64'>Remark</th>
+                        <th className='px-6 py-3 w-32 text-center'>Status</th>
+                        <th className='px-6 py-3 w-24 text-right'>Action</th>
+                      </tr>
+                    </thead>
                     <tbody className='divide-y divide-slate-100'>
                       {groupedJavaks[date].map((task) => (
                         <tr key={task._id} className='hover:bg-slate-50/50 transition-colors group'>
