@@ -13,6 +13,7 @@ import AddInsuranceModal from './Insurance/components/AddInsuranceModal'
 import AddDealerBillModal from '../components/AddDealerBillModal'
 import AddMoneyReceivedModal from './Party/components/AddMoneyReceivedModal'
 import VahanDashboard from './Vahan/components/VahanDashboard'
+import IssueBusPermitModal from './BusPermit/components/IssueBusPermitModal'
 
 const vahanOptions = [
   { title: 'Manage Vehicle', path: '/vehicle-registration', note: 'Vehicle registration and master details', image: '/buttons/add vehicle.png', category: 'vehicle', badgeTone: 'bg-sky-100 text-sky-700' },
@@ -31,6 +32,7 @@ const quickButtons = [
   { title: 'Manage Vehicle', shortLabel: 'Vehicle', tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' },
   { title: 'Add NP', shortLabel: 'NP', tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100', path: '/national-permit' },
   { title: 'Add CG Permit', shortLabel: 'State Permit', tone: 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100', path: '/cg-permit' },
+  { title: 'Add Bus Permit', shortLabel: 'Bus Permit', tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100', path: '/bus-permit' },
   { title: 'Add Temp Permit', shortLabel: 'Temp Permit', tone: 'border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100', path: '/temporary-permit' },
   { title: 'Add Temp Other State', shortLabel: 'Temp Other State', tone: 'border-lime-200 bg-lime-50 text-lime-700 hover:bg-lime-100', path: '/temporary-permit-other-state' },
   { title: 'Insurance', shortLabel: 'Insurance', tone: 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' },
@@ -49,6 +51,7 @@ const PermitTypeSelectModal = ({ onClose, openModal }) => {
   const options = [
     { id: 'Add NP', label: 'Add National Permit', icon: 'M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z', colorClass: 'text-emerald-700 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 ring-emerald-400' },
     { id: 'Add CG Permit', label: 'Add State Permit', icon: 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z', colorClass: 'text-green-700 bg-green-50 border-green-200 hover:bg-green-100 ring-green-400' },
+    { id: 'Add Bus Permit', label: 'Add Bus Permit', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', colorClass: 'text-orange-700 bg-orange-50 border-orange-200 hover:bg-orange-100 ring-orange-400' },
     { id: 'Issue Temp Permit', label: 'Add Temporary Permit', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z', colorClass: 'text-teal-700 bg-teal-50 border-teal-200 hover:bg-teal-100 ring-teal-400' },
     { id: 'Issue Temp Permit Other State', label: 'Add Temporary Permit Other State', icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', colorClass: 'text-lime-700 bg-lime-50 border-lime-200 hover:bg-lime-100 ring-lime-400' }
   ];
@@ -236,13 +239,22 @@ const Vahan = () => {
         />
       )}
 
-      {activeModal === 'Add CG Permit' && (
+      { activeModal === 'Add CG Permit' && (
         <IssueCgPermitModal
           isOpen={true}
           onClose={closeModal}
           onSubmit={closeModal}
         />
       )}
+
+      { activeModal === 'Add Bus Permit' && (
+        <IssueBusPermitModal
+          isOpen={true}
+          onClose={closeModal}
+          onSubmit={closeModal}
+        />
+      )}
+
 
       {activeModal === 'Issue Temp Permit' && (
         <IssueTemporaryPermitModal
