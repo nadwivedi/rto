@@ -1,7 +1,7 @@
 const jwt = require('jsonwebtoken')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 
-const userAuthMiddleware = (req, res, next) => {
+const userAuthMiddleware = async (req, res, next) => {
   try {
     // Get token from cookie
     const token = req.cookies.token
@@ -36,10 +36,33 @@ const userAuthMiddleware = (req, res, next) => {
     // Add user info to request
     req.user = decoded
 
-    // KEY RBAC FIX: If staff, use adminId for all DB queries
-    // so staff sees the exact same data as their admin, no changes needed elsewhere
-    if (decoded.type === 'staff' && decoded.adminId) {
-      req.user.id = decoded.adminId
+    // KEY RBAC FIX: If staff, swap req.user.id to adminId so all DB queries
+    // fetch the admin's records transparently — no changes needed in any controller.
+    if (decoded.type === 'staff') {
+      req.user.staffId = decoded.id  // preserve real employee _id for getProfile
+
+      if (decoded.adminId) {
+        // Token already has adminId (normal case after first login)
+        req.user.id = decoded.adminId
+      } else {
+        // Old token without adminId — look up from DB and save for next login
+        const Employee = require('../models/Employee')
+        const User = require('../models/User')
+        const employee = await Employee.findById(decoded.id).select('adminId').lean()
+
+        let adminId = employee && employee.adminId ? employee.adminId.toString() : null
+        if (!adminId) {
+          const adminUser = await User.findOne({}).select('_id').lean()
+          adminId = adminUser ? adminUser._id.toString() : null
+          if (adminId) {
+            await Employee.updateOne({ _id: decoded.id }, { adminId })
+          }
+        }
+
+        if (adminId) {
+          req.user.id = adminId
+        }
+      }
     }
 
     next()

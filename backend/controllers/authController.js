@@ -149,7 +149,7 @@ exports.staffLogin = async (req, res) => {
 
     const trimmedIdentifier = identifier.trim()
 
-    const employee = await Employee.findOne({ mobile: trimmedIdentifier }).populate('adminId', '_id')
+    const employee = await Employee.findOne({ mobile: trimmedIdentifier })
 
     if (!employee) {
       return res.status(401).json({
@@ -175,13 +175,12 @@ exports.staffLogin = async (req, res) => {
 
     await Employee.updateOne({ _id: employee._id }, { lastLogin: new Date() })
 
-    // If employee has a named adminId use it, otherwise fall back to first user in DB
-    let adminId = employee.adminId ? employee.adminId._id || employee.adminId : null
+    // Resolve adminId - use the stored one or find the first admin in the DB
+    let adminId = employee.adminId ? employee.adminId.toString() : null
     if (!adminId) {
-      const User = require('../models/User')
-      const adminUser = await User.findOne({}).select('_id')
-      adminId = adminUser ? adminUser._id : null
-      // Save for future logins
+      const adminUser = await User.findOne({}).select('_id').lean()
+      adminId = adminUser ? adminUser._id.toString() : null
+      // Save for future logins so subsequent logins are instant
       if (adminId) await Employee.updateOne({ _id: employee._id }, { adminId })
     }
 
@@ -232,7 +231,9 @@ exports.staffLogin = async (req, res) => {
 exports.getProfile = async (req, res) => {
   try {
     if (req.user.type === 'staff') {
-      const employee = await Employee.findById(req.user.id).select('-password')
+      // Use staffId (original employee _id preserved in middleware)
+      const employeeId = req.user.staffId || req.user.id
+      const employee = await Employee.findById(employeeId).select('-password')
       if (!employee) {
         return res.status(404).json({ success: false, message: 'Staff profile not found' })
       }
