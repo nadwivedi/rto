@@ -64,6 +64,7 @@ const EditFitnessModal = ({ isOpen, onClose, onSuccess, fitness }) => {
         ownerName: fitness.ownerName || '',
         mobileNumber: fitness.mobileNumber || '',
         partyId: fitness.partyId?._id || fitness.partyId || '',
+        vehicleId: fitness.vehicleId?._id || fitness.vehicleId || '',
         validFrom: fitness.validFrom || '',
         validTo: fitness.validTo || '',
         totalFee: fitness.totalFee?.toString() || '0',

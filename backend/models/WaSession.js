@@ -1,8 +1,9 @@
 const mongoose = require('mongoose')
 
 const waSessionSchema = new mongoose.Schema({
-  sessionId: {
-    type: String,
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
     unique: true
   },

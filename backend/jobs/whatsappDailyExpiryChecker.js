@@ -7,11 +7,6 @@ const Puc = require('../models/Puc')
 const Gps = require('../models/Gps')
 const Insurance = require('../models/Insurance')
 
-/**
- * Parse a date string stored in Fitness/Tax/PUC/GPS/Insurance docs.
- * Supports: "DD-MM-YYYY", "DD/MM/YYYY", "YYYY-MM-DD"
- * Returns a Date object at midnight, or null if unparseable.
- */
 const parseDocDate = (dateStr) => {
     if (!dateStr) return null
     const s = String(dateStr).trim()
@@ -19,12 +14,10 @@ const parseDocDate = (dateStr) => {
     if (parts.length !== 3) return null
     let day, month, year
     if (parts[0].length === 4) {
-        // YYYY-MM-DD
         year = parseInt(parts[0])
         month = parseInt(parts[1]) - 1
         day = parseInt(parts[2])
     } else {
-        // DD-MM-YYYY or DD/MM/YYYY
         day = parseInt(parts[0])
         month = parseInt(parts[1]) - 1
         year = parseInt(parts[2])
@@ -33,32 +26,12 @@ const parseDocDate = (dateStr) => {
     return isNaN(d.getTime()) ? null : d
 }
 
-/**
- * Main job: scan all documents, queue WhatsApp alerts for expiries.
- * Uses doc.mobileNumber directly (simplest approach).
- */
-const checkAndQueueAlerts = async () => {
+// Scans documents. If specificUserId is provided, it only scans docs for that user.
+// Otherwise, it scans all documents across all users.
+const checkUserAndQueueAlerts = async (specificUserId = null) => {
     try {
-        console.log('[WHATSAPP-CRON] ── Starting document expiry scan ──')
+        console.log(`[WHATSAPP-CRON] ── Starting document expiry scan ${specificUserId ? `for user ${specificUserId}` : 'globally'} ──`)
 
-        // Load settings (use defaults if none configured)
-        let setting = await WhatsAppSetting.findOne()
-        if (!setting) {
-            console.log('[WHATSAPP-CRON] No settings found, using defaults.')
-            setting = {
-                daysBeforeExpiry: 7,
-                sendOnExpiryDay: true,
-                enableGracePeriodAlerts: false,
-                gracePeriodDays: []
-            }
-        }
-
-        const daysBeforeExpiry = setting.daysBeforeExpiry || 7
-        const sendOnExpiryDay = setting.sendOnExpiryDay !== false
-        const enableGrace = setting.enableGracePeriodAlerts === true
-        const graceDays = (setting.gracePeriodDays || []).map(Number)
-
-        // Today at midnight for clean date math
         const today = new Date()
         today.setHours(0, 0, 0, 0)
 
@@ -76,30 +49,45 @@ const checkAndQueueAlerts = async () => {
 
         let queuedCount = 0
 
-        for (const { name, model, dateField } of models) {
-            // Fetch all docs that have a mobile number — use lean() for speed
-            const docs = await model.find({
-                mobileNumber: { $exists: true, $nin: [null, '', undefined] }
-            }).lean()
+        // Fetch settings per user and cache them
+        const userSettings = new Map()
+        const getSettingForUser = async (uid) => {
+            if (userSettings.has(uid)) return userSettings.get(uid)
+            let setting = await WhatsAppSetting.findOne({ userId: uid })
+            if (!setting) {
+                setting = { daysBeforeExpiry: 7, sendOnExpiryDay: true, enableGracePeriodAlerts: false, gracePeriodDays: [] }
+            }
+            userSettings.set(uid, setting)
+            return setting
+        }
 
-            console.log(`[WHATSAPP-CRON] ${name}: checking ${docs.length} docs with mobile numbers`)
+        for (const { name, model, dateField } of models) {
+            const query = { mobileNumber: { $exists: true, $nin: [null, '', undefined] } }
+            if (specificUserId) query.userId = specificUserId
+
+            const docs = await model.find(query).lean()
+            console.log(`[WHATSAPP-CRON] ${name}: checking ${docs.length} docs with mobile numbers ${specificUserId ? `for ${specificUserId}` : ''}`)
 
             for (const doc of docs) {
-                const expiryDate = parseDocDate(doc[dateField])
-                if (!expiryDate) {
-                    console.log(`[WHATSAPP-CRON]   Skipping doc ${doc._id}: unparseable date "${doc[dateField]}"`)
-                    continue
-                }
+                if (!doc.userId) continue // Cannot queue without a user
 
-                // diffDays = positive means expires in future, negative means already expired
+                const docUserId = doc.userId.toString()
+                const setting = await getSettingForUser(docUserId)
+
+                const daysBeforeExpiry = setting.daysBeforeExpiry || 7
+                const sendOnExpiryDay = setting.sendOnExpiryDay !== false
+                const enableGrace = setting.enableGracePeriodAlerts === true
+                const graceDays = (setting.gracePeriodDays || []).map(Number)
+
+                const expiryDate = parseDocDate(doc[dateField])
+                if (!expiryDate) continue
+
                 const diffDays = Math.round((expiryDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
 
                 let alertType = null
                 let alertLabel = ''
 
-                // Should alert?
                 if (diffDays >= 0 && diffDays <= daysBeforeExpiry) {
-                    // Expires within the alert window (e.g. 0–7 days)
                     if (diffDays === 0) {
                         if (sendOnExpiryDay) {
                             alertType = 'today'
@@ -122,7 +110,6 @@ const checkAndQueueAlerts = async () => {
                 const vehicleNo = doc.vehicleNumber || 'your vehicle'
                 const mobileNumber = String(doc.mobileNumber).trim()
 
-                // Build WhatsApp message
                 let msg = ''
                 if (alertType === 'upcoming') {
                     msg = `Dear Customer,\n\nYour *${name}* document for vehicle *${vehicleNo}* will expire on *${doc[dateField]}* (${alertLabel}).\n\nPlease renew it soon to avoid penalties.\n\n— RTO Services`
@@ -132,19 +119,19 @@ const checkAndQueueAlerts = async () => {
                     msg = `Dear Customer,\n\n🚨 Your *${name}* document for vehicle *${vehicleNo}* expired on *${doc[dateField]}* (${alertLabel}).\n\nPlease renew immediately to avoid heavy fines.\n\n— RTO Services`
                 }
 
-                // Skip if already queued today for this exact document
                 const alreadyQueued = await MessageLog.findOne({
+                    userId: docUserId,
                     documentId: doc._id,
                     documentType: name,
                     createdAt: { $gte: startOfDay, $lte: endOfDay }
                 })
 
                 if (alreadyQueued) {
-                    console.log(`[WHATSAPP-CRON]   Already queued today for ${name} doc ${doc._id} (${vehicleNo})`)
                     continue
                 }
 
                 await MessageLog.create({
+                    userId: docUserId,
                     documentId: doc._id,
                     documentType: name,
                     targetNumber: mobileNumber,
@@ -154,7 +141,7 @@ const checkAndQueueAlerts = async () => {
                 })
 
                 queuedCount++
-                console.log(`[WHATSAPP-CRON]   ✓ Queued: ${name} | ${vehicleNo} | ${mobileNumber} | ${alertLabel}`)
+                console.log(`[WHATSAPP-CRON:${docUserId}]   ✓ Queued: ${name} | ${vehicleNo} | ${mobileNumber} | ${alertLabel}`)
             }
         }
 
@@ -168,14 +155,14 @@ const checkAndQueueAlerts = async () => {
 }
 
 const initWhatsAppDailyChecker = () => {
-    // Run every day at 08:30 AM
+    // Run globally for all users every day at 08:30 AM
     cron.schedule('30 8 * * *', () => {
-        checkAndQueueAlerts()
+        checkUserAndQueueAlerts(null)
     })
     console.log('[CRON] WhatsApp Daily Expiry Checker initiated (runs at 08:30 AM daily)')
 }
 
 module.exports = {
     initWhatsAppDailyChecker,
-    checkAndQueueAlerts
+    checkUserAndQueueAlerts
 }

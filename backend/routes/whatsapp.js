@@ -6,18 +6,19 @@ const MessageLog = require('../models/MessageLog')
 // GET current WA status
 router.get('/status', async (req, res) => {
   try {
-    const session = await whatsappService.getStatus()
+    const userId = req.user.id
+    const session = await whatsappService.getStatus(userId)
 
     // If DB shows authenticated/initializing but client is gone (server restart), auto-restore
-    if ((session?.status === 'authenticated' || session?.status === 'initializing') && !whatsappService.isClientConnected()) {
-      console.log('[WHATSAPP] Status endpoint: DB=authenticated/initializing but client null — auto-restoring...')
-      whatsappService.startClient()
+    if ((session?.status === 'authenticated' || session?.status === 'initializing') && !whatsappService.isClientConnected(userId)) {
+      console.log(`[WHATSAPP] Status endpoint: DB=authenticated/initializing but client null — auto-restoring for user ${userId}...`)
+      whatsappService.startClient(userId)
     }
 
     res.json({
       ...(session ? session.toObject() : {}),
-      isStopped: whatsappService.isStopped,
-      clientActive: whatsappService.isClientConnected()
+      isStopped: whatsappService.isClientStopped(userId),
+      clientActive: whatsappService.isClientConnected(userId)
     })
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -27,7 +28,8 @@ router.get('/status', async (req, res) => {
 // POST Start/resume session (will use saved auth if available — no QR needed)
 router.post('/start', async (req, res) => {
   try {
-    whatsappService.startClient() // async, non-blocking
+    const userId = req.user.id
+    whatsappService.startClient(userId) // async, non-blocking
     res.json({ message: 'Session start initiated. Check status for QR or connection update.' })
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -37,7 +39,8 @@ router.post('/start', async (req, res) => {
 // POST Stop: destroys browser, keeps auth on disk, pauses message sender
 router.post('/stop', async (req, res) => {
   try {
-    await whatsappService.stopClient()
+    const userId = req.user.id
+    await whatsappService.stopClient(userId)
     res.json({ message: 'WhatsApp session stopped. Auth saved. Tap Start to resume.' })
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -47,7 +50,8 @@ router.post('/stop', async (req, res) => {
 // POST Logout: destroys browser AND wipes saved auth from disk (forces QR rescan)
 router.post('/logout', async (req, res) => {
   try {
-    await whatsappService.logoutClient()
+    const userId = req.user.id
+    await whatsappService.logoutClient(userId)
     res.json({ message: 'Logged out and session data cleared. You will need to scan QR again.' })
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -57,19 +61,20 @@ router.post('/logout', async (req, res) => {
 // POST Manual trigger — immediately scan + send (for testing, one-click from UI)
 router.post('/trigger-check', async (req, res) => {
   try {
-    const { checkAndQueueAlerts } = require('../jobs/whatsappDailyExpiryChecker')
-    const { sendPendingMessages } = require('../jobs/whatsappMessageSender')
+    const userId = req.user.id
+    const { checkUserAndQueueAlerts } = require('../jobs/whatsappDailyExpiryChecker')
+    const { processPendingMessagesForUser } = require('../jobs/whatsappMessageSender')
 
     // Reset ALL today's failed messages back to pending before scan
     const startOfDay = new Date()
     startOfDay.setHours(0, 0, 0, 0)
     const reset = await MessageLog.updateMany(
-      { status: 'failed', createdAt: { $gte: startOfDay } },
+      { userId, status: 'failed', createdAt: { $gte: startOfDay } },
       { $set: { status: 'pending', errorReason: null, scheduledFor: new Date() } }
     )
 
-    const queued = await checkAndQueueAlerts()
-    await sendPendingMessages()
+    const queued = await checkUserAndQueueAlerts(userId)
+    await processPendingMessagesForUser(userId)
 
     res.json({
       message: `Scan done. ${queued || 0} new alerts queued. ${reset.modifiedCount} failed messages reset. Sender processed pending.`
@@ -82,7 +87,8 @@ router.post('/trigger-check', async (req, res) => {
 // GET fetch recently sent/failed logs, limited to 100
 router.get('/logs', async (req, res) => {
   try {
-    const logs = await MessageLog.find()
+    const userId = req.user.id
+    const logs = await MessageLog.find({ userId })
       .sort({ createdAt: -1 })
       .limit(100)
     res.json(logs)

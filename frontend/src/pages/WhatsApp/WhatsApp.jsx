@@ -56,6 +56,19 @@ const WhatsApp = () => {
     }
   }
 
+  const runCheckNow = async () => {
+    setActionBusy('check')
+    try {
+      const res = await axios.post(`${API_URL}/api/whatsapp/trigger-check`, {}, { withCredentials: true })
+      toast.success(res.data.message)
+      await fetchLogs()
+    } catch (error) {
+      toast.error(`Check failed: ${error?.response?.data?.message || error.message}`)
+    } finally {
+      setActionBusy(null)
+    }
+  }
+
   // Dynamic polling: 400ms while connecting/scanning QR, 5s otherwise
   useEffect(() => {
     const init = async () => {
@@ -211,6 +224,19 @@ const WhatsApp = () => {
             )}
           </div>
 
+          {/* Run Check Now — manual trigger for testing */}
+          <button
+            onClick={runCheckNow}
+            disabled={actionBusy === 'check'}
+            className='w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm transition shadow-md flex items-center justify-center gap-2'
+          >
+            {actionBusy === 'check' ? (
+              <><div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' /> Scanning...</>
+            ) : (
+              <>🔍 Run Expiry Check Now</>
+            )}
+          </button>
+
           {/* Sent Today Summary */}
           <div className='p-3 bg-gray-50 border border-gray-200 rounded-lg text-center'>
             <p className='text-xs text-gray-500'>Messages Sent Today</p>
@@ -218,7 +244,7 @@ const WhatsApp = () => {
               const today = new Date()
               const logDate = new Date(l.sentAt || l.createdAt)
               return l.status === 'sent' && logDate.toDateString() === today.toDateString()
-            }).length} <span className='text-sm font-normal text-gray-400'>/ 20</span></p>
+            }).length} <span className='text-sm font-normal text-gray-400'>/ 30</span></p>
           </div>
         </div>
 
