@@ -32,6 +32,25 @@ class WhatsappService {
     return session
   }
 
+  /**
+   * Called on server boot — if DB shows 'authenticated', auto-restore the session
+   * so messages can be sent without manually clicking Start in the UI.
+   * Matches the working system's restoreActiveSessions() pattern.
+   */
+  async autoRestoreSession() {
+    try {
+      const session = await WaSession.findOne()
+      if (session && (session.status === 'authenticated' || session.status === 'initializing')) {
+        console.log('[WHATSAPP] DB shows authenticated/initializing — auto-restoring session...')
+        this.startClient()
+      } else {
+        console.log(`[WHATSAPP] Auto-restore skipped (DB status: ${session?.status || 'none'})`)
+      }
+    } catch (err) {
+      console.error('[WHATSAPP] autoRestoreSession error:', err.message)
+    }
+  }
+
   // ─── Lock file cleanup (orphaned Chrome after nodemon restart) ────────
 
   clearChromeLock() {
@@ -247,10 +266,14 @@ class WhatsappService {
 
     let num = targetNumber.replace(/\D/g, '')
     if (num.length === 10) num = '91' + num
-    const chatId = `${num}@c.us`
 
-    const isRegistered = await this.client.isRegisteredUser(chatId)
-    if (!isRegistered) throw new Error(`${num} is not on WhatsApp`)
+    // Use getNumberId() to resolve the correct chat ID — handles @lid format
+    // used by newer WhatsApp accounts (avoids 'findChat: new chat not found @lid' error)
+    const numberId = await this.client.getNumberId(num).catch(() => null)
+    if (!numberId) {
+      throw new Error(`${num} is not registered on WhatsApp`)
+    }
+    const chatId = numberId._serialized  // could be @c.us or @lid depending on account type
 
     const result = await this.client.sendMessage(chatId, text)
     return { success: true, messageId: result?.id?._serialized }

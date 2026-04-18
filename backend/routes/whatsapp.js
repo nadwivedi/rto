@@ -7,6 +7,13 @@ const MessageLog = require('../models/MessageLog')
 router.get('/status', async (req, res) => {
   try {
     const session = await whatsappService.getStatus()
+
+    // If DB shows authenticated/initializing but client is gone (server restart), auto-restore
+    if ((session?.status === 'authenticated' || session?.status === 'initializing') && !whatsappService.isClientConnected()) {
+      console.log('[WHATSAPP] Status endpoint: DB=authenticated/initializing but client null — auto-restoring...')
+      whatsappService.startClient()
+    }
+
     res.json({
       ...(session ? session.toObject() : {}),
       isStopped: whatsappService.isStopped,
@@ -42,6 +49,31 @@ router.post('/logout', async (req, res) => {
   try {
     await whatsappService.logoutClient()
     res.json({ message: 'Logged out and session data cleared. You will need to scan QR again.' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
+// POST Manual trigger — immediately scan + send (for testing, one-click from UI)
+router.post('/trigger-check', async (req, res) => {
+  try {
+    const { checkAndQueueAlerts } = require('../jobs/whatsappDailyExpiryChecker')
+    const { sendPendingMessages } = require('../jobs/whatsappMessageSender')
+
+    // Reset ALL today's failed messages back to pending before scan
+    const startOfDay = new Date()
+    startOfDay.setHours(0, 0, 0, 0)
+    const reset = await MessageLog.updateMany(
+      { status: 'failed', createdAt: { $gte: startOfDay } },
+      { $set: { status: 'pending', errorReason: null, scheduledFor: new Date() } }
+    )
+
+    const queued = await checkAndQueueAlerts()
+    await sendPendingMessages()
+
+    res.json({
+      message: `Scan done. ${queued || 0} new alerts queued. ${reset.modifiedCount} failed messages reset. Sender processed pending.`
+    })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }

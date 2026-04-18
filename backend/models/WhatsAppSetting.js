@@ -25,11 +25,11 @@ const whatsappSettingSchema = new mongoose.Schema({
   },
   maxMessagesPerDay: {
     type: Number,
-    default: 20
+    default: 30
   },
   maxMessagesPerHour: {
     type: Number,
-    default: 3
+    default: 5
   }
 }, {
   timestamps: true

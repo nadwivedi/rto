@@ -5,15 +5,35 @@ const whatsappService = require('../services/whatsappService')
 
 const sendPendingMessages = async () => {
     try {
+        // If WhatsApp client is not connected yet, skip this run silently
+        if (!whatsappService.isClientConnected()) {
+            console.log('[WHATSAPP-SENDER] Client not connected yet, skipping this run.')
+            return
+        }
+
         console.log('[WHATSAPP-SENDER] Checking for pending messages...')
 
         let setting = await WhatsAppSetting.findOne()
-        const maxPerDay = setting ? setting.maxMessagesPerDay : 20
-        const maxPerHour = setting ? setting.maxMessagesPerHour : 3
+        const maxPerDay = setting ? setting.maxMessagesPerDay : 30
+        const maxPerHour = setting ? setting.maxMessagesPerHour : 5
 
         const startOfDay = new Date()
         startOfDay.setHours(0, 0, 0, 0)
-        
+
+        // ── Auto-retry: reset today's failed messages back to pending ──────
+        // (Failed due to client being null during server restart — retry now)
+        const resetResult = await MessageLog.updateMany(
+            {
+                status: 'failed',
+                createdAt: { $gte: startOfDay },
+                errorReason: { $regex: /not initialized|paused|State: null|State: undefined|not found.*@lid|not found @lid/i }
+            },
+            { $set: { status: 'pending', errorReason: null, scheduledFor: new Date() } }
+        )
+        if (resetResult.modifiedCount > 0) {
+            console.log(`[WHATSAPP-SENDER] Reset ${resetResult.modifiedCount} failed message(s) back to pending for retry.`)
+        }
+
         // Count how many sent today
         const sentTodayCount = await MessageLog.countDocuments({
             status: 'sent',
@@ -28,7 +48,7 @@ const sendPendingMessages = async () => {
         const remainingQuota = maxPerDay - sentTodayCount
         const limitToFetch = Math.min(maxPerHour, remainingQuota)
 
-        if (limitToFetch <= 0) return;
+        if (limitToFetch <= 0) return
 
         // Fetch up to 'limitToFetch' pending messages
         const messages = await MessageLog.find({
@@ -37,11 +57,10 @@ const sendPendingMessages = async () => {
         }).sort({ scheduledFor: 1 }).limit(limitToFetch)
 
         if (messages.length === 0) {
-            // Nothing to do
             return
         }
 
-        console.log(`[WHATSAPP-SENDER] Found ${messages.length} pending messages. Attempting to send...`)
+        console.log(`[WHATSAPP-SENDER] Found ${messages.length} pending message(s). Sending...`)
 
         for (const msg of messages) {
             try {
@@ -69,11 +88,11 @@ const sendPendingMessages = async () => {
 }
 
 const initWhatsAppMessageSender = () => {
-    // Run at the beginning of every hour (e.g. 09:00, 10:00, etc)
-    cron.schedule('0 * * * *', () => {
+    // Run every 5 minutes so alerts go out promptly after check
+    cron.schedule('*/5 * * * *', () => {
         sendPendingMessages()
     })
-    console.log('[CRON] WhatsApp Message Sender initiated (runs every hour)')
+    console.log('[CRON] WhatsApp Message Sender initiated (runs every 5 minutes)')
 }
 
 module.exports = {

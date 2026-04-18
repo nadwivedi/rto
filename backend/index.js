@@ -82,6 +82,13 @@ initEmailDataExportCron()
 initWhatsAppDailyChecker()
 initWhatsAppMessageSender()
 
+// Auto-restore WhatsApp session if it was authenticated before server restart
+const whatsappService = require('./services/whatsappService')
+// Small delay to allow MongoDB connection to fully establish
+setTimeout(() => {
+  whatsappService.autoRestoreSession()
+}, 3000)
+
 // Import Middleware
 const userAuth = require('./middleware/userAuth')
 
