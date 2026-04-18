@@ -399,7 +399,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
       )
       setFilteredParties(filtered)
       setShowPartySuggestions(filtered.length > 0)
-      setHighlightedIndex(-1) // Reset highlighted index when filtering
+      setHighlightedIndex(filtered.length > 0 ? 0 : -1) // Reset highlighted index when filtering
     } else {
       setShowPartySuggestions(false)
       setFilteredParties([])
