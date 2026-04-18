@@ -630,7 +630,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
 
   return (
     <div className='fixed inset-0 bg-black/60  z-50 flex items-center justify-center p-2 md:p-4'>
-      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
+      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header */}
         <div className='bg-gradient-to-r from-blue-600 to-indigo-600 p-2 md:p-3 text-white flex-shrink-0'>
           <div className='flex items-center justify-between gap-3'>
@@ -696,9 +696,9 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 Vehicle & Receipt Details
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4'>
                 {/* Vehicle Number */}
-                <div>
+                <div className='lg:col-span-3'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Vehicle Number <span className='text-red-500'>*</span>
                   </label>
@@ -800,7 +800,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 </div>
 
                 {/* Receipt Number */}
-                <div>
+                <div className='lg:col-span-2'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Receipt Number
                   </label>
@@ -817,7 +817,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 </div>
 
                 {/* Owner Name */}
-                <div>
+                <div className='lg:col-span-4'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Owner Name
                   </label>
@@ -834,7 +834,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 </div>
 
                 {/* Mobile Number */}
-                <div>
+                <div className='lg:col-span-3'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Mobile Number
                   </label>
