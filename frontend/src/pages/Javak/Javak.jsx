@@ -6,6 +6,27 @@ import AddJavakModal from './components/AddJavakModal'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
+// Component for Inline Editing
+const EditableCell = ({ value, onSave, onCancel, uppercase }) => {
+  const [val, setVal] = useState(value || '');
+  const handleSave = () => onSave(val);
+  
+  return (
+    <input
+      autoFocus
+      type='text'
+      className={`w-full px-2 py-1 text-sm border-2 border-amber-400 focus:ring-2 focus:ring-amber-200 rounded outline-none shadow-sm ${uppercase ? 'uppercase' : ''}`}
+      value={val}
+      onChange={e => setVal(uppercase ? e.target.value.toUpperCase() : e.target.value)}
+      onBlur={handleSave}
+      onKeyDown={e => {
+        if (e.key === 'Enter') handleSave();
+        if (e.key === 'Escape') onCancel();
+      }}
+    />
+  )
+}
+
 const Javak = () => {
   const [javaks, setJavaks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -29,6 +50,9 @@ const Javak = () => {
   const remarkRef = useRef(null)
   
   const [isSaving, setIsSaving] = useState(false)
+  
+  // Cell inline editing state: { id, field }
+  const [editingCell, setEditingCell] = useState(null)
 
   const fetchJavaks = async () => {
     try {
@@ -56,6 +80,23 @@ const Javak = () => {
       await axios.patch(`${API_URL}/api/javak/${id}/status`, { isWorkDone: !currentStatus }, { withCredentials: true })
     } catch (error) {
       toast.error('Failed to update status')
+      fetchJavaks()
+    }
+  }
+
+  const handleCellSave = async (id, field, newValue) => {
+    setEditingCell(null)
+    const task = javaks.find(t => t._id === id)
+    if (!task || task[field] === newValue) return
+
+    try {
+      // Optimistic locally
+      setJavaks(prev => prev.map(j => j._id === id ? { ...j, [field]: newValue } : j))
+      // Save it to backend completely
+      await axios.put(`${API_URL}/api/javak/${id}`, { ...task, [field]: newValue }, { withCredentials: true })
+      toast.success('Updated successfully')
+    } catch (err) {
+      toast.error('Failed to update field')
       fetchJavaks()
     }
   }
@@ -295,10 +336,26 @@ const Javak = () => {
                     <tbody className='divide-y divide-slate-100'>
                       {groupedJavaks[date].map((task) => (
                         <tr key={task._id} className='hover:bg-slate-50/50 transition-colors group'>
-                          <td className='px-6 py-4 text-sm font-bold text-slate-700 whitespace-nowrap w-44'>{task.vehicleNo || '-'}</td>
-                          <td className='px-6 py-4 text-sm font-semibold text-slate-800 flex-1'>{task.partyName}</td>
-                          <td className='px-6 py-4 text-sm text-slate-600 w-48'>{task.purpose || '-'}</td>
-                          <td className='px-6 py-4 text-sm text-slate-600 w-64 max-w-xs truncate' title={task.remark}>{task.remark || '-'}</td>
+                          <td className='px-6 py-4 text-sm font-bold text-slate-700 w-44 cursor-pointer hover:bg-amber-50' onClick={() => setEditingCell({ id: task._id, field: 'vehicleNo'})}>
+                            {editingCell?.id === task._id && editingCell?.field === 'vehicleNo' ? 
+                              <EditableCell uppercase value={task.vehicleNo} onCancel={() => setEditingCell(null)} onSave={(val) => handleCellSave(task._id, 'vehicleNo', val)} /> : 
+                              (task.vehicleNo || '-')}
+                          </td>
+                          <td className='px-6 py-4 text-sm font-semibold text-slate-800 flex-1 cursor-pointer hover:bg-amber-50' onClick={() => setEditingCell({ id: task._id, field: 'partyName'})}>
+                            {editingCell?.id === task._id && editingCell?.field === 'partyName' ? 
+                              <EditableCell uppercase value={task.partyName} onCancel={() => setEditingCell(null)} onSave={(val) => handleCellSave(task._id, 'partyName', val)} /> : 
+                              task.partyName}
+                          </td>
+                          <td className='px-6 py-4 text-sm text-slate-600 w-48 cursor-pointer hover:bg-amber-50' onClick={() => setEditingCell({ id: task._id, field: 'purpose'})}>
+                            {editingCell?.id === task._id && editingCell?.field === 'purpose' ? 
+                              <EditableCell value={task.purpose} onCancel={() => setEditingCell(null)} onSave={(val) => handleCellSave(task._id, 'purpose', val)} /> : 
+                              (task.purpose || '-')}
+                          </td>
+                          <td className='px-6 py-4 text-sm text-slate-600 w-64 max-w-xs truncate cursor-pointer hover:bg-amber-50' title={task.remark} onClick={() => setEditingCell({ id: task._id, field: 'remark'})}>
+                            {editingCell?.id === task._id && editingCell?.field === 'remark' ? 
+                              <EditableCell value={task.remark} onCancel={() => setEditingCell(null)} onSave={(val) => handleCellSave(task._id, 'remark', val)} /> : 
+                              (task.remark || '-')}
+                          </td>
                           <td className='px-6 py-4 text-center w-32'>
                             <button
                               onClick={() => handleToggleStatus(task._id, task.isWorkDone)}
