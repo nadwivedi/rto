@@ -22,6 +22,10 @@ const messageLogSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  ownerName: {
+    type: String,
+    trim: true
+  },
   messageBody: {
     type: String,
     required: true

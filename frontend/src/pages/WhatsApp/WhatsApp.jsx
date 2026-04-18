@@ -267,7 +267,7 @@ const WhatsApp = () => {
               <thead>
                 <tr className='bg-gray-50 border-y border-gray-200'>
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Date & Time</th>
-                  <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Mobile No.</th>
+                  <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Party / Mobile</th>
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Document</th>
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Message Preview</th>
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Status</th>
@@ -279,13 +279,19 @@ const WhatsApp = () => {
                 ) : logs.length === 0 ? (
                   <tr><td colSpan='5' className='py-8 text-center text-sm text-gray-400'>No messages logged yet. They will appear here once alerts are triggered.</td></tr>
                 ) : (
-                  logs.map((log) => (
+                  logs.map((log) => {
+                    const d = new Date(log.createdAt);
+                    const dateStr = d.toLocaleDateString('en-IN');
+                    const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                    return (
                     <tr key={log._id} className='hover:bg-gray-50 transition'>
-                      <td className='py-3 px-4 text-xs text-gray-600 whitespace-nowrap'>
-                        {new Date(log.createdAt).toLocaleString('en-IN')}
+                      <td className='py-3 px-4 whitespace-nowrap'>
+                        <div className='text-sm text-gray-800 font-medium'>{dateStr}</div>
+                        <div className='text-xs text-gray-500'>{timeStr}</div>
                       </td>
-                      <td className='py-3 px-4 text-sm text-gray-800 font-semibold'>
-                        {log.targetNumber}
+                      <td className='py-3 px-4'>
+                        <div className='text-sm text-gray-800 font-bold'>{log.ownerName || 'Unknown Party'}</div>
+                        <div className='text-xs text-gray-500'>{log.targetNumber}</div>
                       </td>
                       <td className='py-3 px-4'>
                         <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
@@ -317,7 +323,8 @@ const WhatsApp = () => {
                         )}
                       </td>
                     </tr>
-                  ))
+                    );
+                  })
                 )}
               </tbody>
             </table>

@@ -119,11 +119,28 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
                     msg = `Dear Customer,\n\n🚨 Your *${name}* document for vehicle *${vehicleNo}* expired on *${doc[dateField]}* (${alertLabel}).\n\nPlease renew immediately to avoid heavy fines.\n\n— RTO Services`
                 }
 
+                let startOfCheck = startOfDay;
+                let messagePattern = null;
+
+                if (alertType === 'upcoming') {
+                    // Find if any "upcoming" message was sent/queued AT ALL in the entire X day window
+                    startOfCheck = new Date(today);
+                    startOfCheck.setDate(startOfCheck.getDate() - daysBeforeExpiry);
+                    startOfCheck.setHours(0, 0, 0, 0);
+                    messagePattern = /will expire on/i;
+                } else if (alertType === 'today') {
+                    messagePattern = /expires TODAY/i;
+                } else if (alertType === 'grace') {
+                    messagePattern = /expired.*ago/i;
+                }
+
                 const alreadyQueued = await MessageLog.findOne({
                     userId: docUserId,
                     documentId: doc._id,
                     documentType: name,
-                    createdAt: { $gte: startOfDay, $lte: endOfDay }
+                    status: { $in: ['pending', 'sent'] }, // count pending or successful attempts
+                    createdAt: { $gte: startOfCheck, $lte: endOfDay },
+                    messageBody: messagePattern ? { $regex: messagePattern } : { $exists: true }
                 })
 
                 if (alreadyQueued) {
@@ -135,6 +152,7 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
                     documentId: doc._id,
                     documentType: name,
                     targetNumber: mobileNumber,
+                    ownerName: doc.ownerName || doc.partyName || 'Unknown Owner',
                     messageBody: msg,
                     status: 'pending',
                     scheduledFor: new Date()
