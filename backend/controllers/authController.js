@@ -311,3 +311,43 @@ exports.logout = async (req, res) => {
     message: 'Logged out successfully'
   })
 }
+
+// Change Password
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ success: false, message: 'Current password and new password are required' })
+    }
+
+    if (newPassword.length < 4) {
+      return res.status(400).json({ success: false, message: 'New password must be at least 4 characters long' })
+    }
+
+    let account;
+    if (req.user.type === 'staff') {
+      const employeeId = req.user.staffId || req.user.id
+      account = await Employee.findById(employeeId)
+    } else {
+      account = await User.findById(req.user.id)
+    }
+
+    if (!account) {
+      return res.status(404).json({ success: false, message: 'Account not found' })
+    }
+
+    const isMatch = await account.comparePassword(currentPassword)
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Incorrect current password' })
+    }
+
+    account.password = newPassword
+    await account.save()
+
+    res.json({ success: true, message: 'Password updated successfully' })
+  } catch (error) {
+    console.error('Change password error:', error)
+    res.status(500).json({ success: false, message: 'An error occurred while changing password' })
+  }
+}
