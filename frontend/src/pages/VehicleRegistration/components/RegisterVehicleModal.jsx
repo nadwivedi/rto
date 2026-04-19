@@ -23,6 +23,8 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
     address: '',
     mobileNumber: '',
     email: '',
+    subPartyName: '',
+    subPartyMobile: '',
     makerName: '',
     makerModel: '',
     colour: '',
@@ -151,7 +153,9 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
         'sonWifeDaughterOf',
         'address',
         'mobileNumber',
-        'email'
+        'email',
+        'subPartyName',
+        'subPartyMobile'
       ]
 
       const currentIndex = navigationOrder.indexOf(currentFieldName)
@@ -255,6 +259,8 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
         address: '',
         mobileNumber: '',
         email: '',
+        subPartyName: '',
+        subPartyMobile: '',
         makerName: '',
         makerModel: '',
         colour: '',
@@ -378,7 +384,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
     }
 
     // Convert specific fields to uppercase
-    const uppercaseFields = ['chassisNumber', 'engineNumber', 'makerName', 'makerModel', 'colour', 'ownerName', 'sonWifeDaughterOf', 'address']
+    const uppercaseFields = ['chassisNumber', 'engineNumber', 'makerName', 'makerModel', 'colour', 'ownerName', 'sonWifeDaughterOf', 'address', 'subPartyName']
     const processedValue = uppercaseFields.includes(name) ? value.toUpperCase() : value
 
     setFormData(prev => ({
@@ -1991,6 +1997,71 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
                         onKeyDown={handleKeyDown}
                         placeholder='Enter email address'
                         className='w-full pl-9 md:pl-12 pr-2.5 md:pr-4 py-1.5 md:py-2 text-xs md:text-sm bg-white border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 font-semibold text-gray-800 placeholder-gray-400'
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Sub Party Details Section */}
+            <div className='mb-4 md:mb-8'>
+              <div className='flex items-center gap-2 md:gap-3 mb-3 md:mb-6'>
+                <div className='bg-gradient-to-br from-fuchsia-500 to-rose-500 p-1.5 md:p-2.5 rounded-lg md:rounded-xl shadow-lg'>
+                  <svg className='w-4 h-4 md:w-6 md:h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className='text-sm md:text-xl font-bold text-gray-800'>Sub Party Details <span className='text-xs font-normal text-gray-500'>(Optional)</span></h3>
+                  <p className='text-[10px] md:text-sm text-gray-500 hidden md:block'>Enter sub party name and mobile if applicable</p>
+                </div>
+              </div>
+              <div className='bg-gradient-to-br from-fuchsia-50 to-rose-50 p-3 md:p-6 rounded-xl md:rounded-2xl border border-fuchsia-100'>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5'>
+                  {/* Sub Party Name */}
+                  <div className='group'>
+                    <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2'>
+                      Sub Party Name
+                    </label>
+                    <div className='relative'>
+                      <div className='absolute inset-y-0 left-0 pl-2.5 md:pl-4 flex items-center pointer-events-none'>
+                        <svg className='w-4 h-4 md:w-5 md:h-5 text-fuchsia-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' />
+                        </svg>
+                      </div>
+                      <input
+                        type='text'
+                        name='subPartyName'
+                        value={formData.subPartyName}
+                        onChange={handleChange}
+                        onKeyDown={handleKeyDown}
+                        placeholder='Enter sub party name'
+                        className='w-full pl-9 md:pl-12 pr-2.5 md:pr-4 py-1.5 md:py-2 text-xs md:text-sm bg-white border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all duration-200 uppercase font-semibold text-gray-800 placeholder-gray-400'
+                      />
+                    </div>
+                  </div>
+
+                  {/* Sub Party Mobile */}
+                  <div className='group'>
+                    <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2'>
+                      Sub Party Mobile
+                    </label>
+                    <div className='relative'>
+                      <div className='absolute inset-y-0 left-0 pl-2.5 md:pl-4 flex items-center pointer-events-none'>
+                        <svg className='w-4 h-4 md:w-5 md:h-5 text-fuchsia-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' />
+                        </svg>
+                      </div>
+                      <input
+                        type='tel'
+                        name='subPartyMobile'
+                        value={formData.subPartyMobile}
+                        onChange={handleChange}
+                        onKeyDown={handleKeyDown}
+                        maxLength='10'
+                        placeholder='Enter 10-digit mobile number'
+                        className='w-full pl-9 md:pl-12 pr-2.5 md:pr-4 py-1.5 md:py-2 text-xs md:text-sm bg-white border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 transition-all duration-200 font-semibold text-gray-800 placeholder-gray-400'
                       />
                     </div>
                   </div>

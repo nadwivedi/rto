@@ -53,6 +53,14 @@ const vehicleRegistrationSchema = new mongoose.Schema({
     trim: true,
     lowercase: true
   },
+  subPartyName: {
+    type: String,
+    trim: true
+  },
+  subPartyMobile: {
+    type: String,
+    trim: true
+  },
   makerName: {
     type: String,
     trim: true
