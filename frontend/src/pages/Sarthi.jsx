@@ -7,10 +7,34 @@ import AddRegistrationRenewalModal from './RegistrationRenewal/components/AddReg
 import SarthiDashboard from './Sarthi/components/SarthiDashboard'
 
 const sarthiOptions = [
-  { title: 'Add DL', note: 'New driving license application', icon: '🪪', category: 'dl', badgeTone: 'bg-indigo-100 text-indigo-700' },
-  { title: 'Vehicle Transfer', note: 'Ownership transfer service', icon: '🔀', category: 'transfer', badgeTone: 'bg-orange-100 text-orange-700' },
-  { title: 'NOC Issued', note: 'No Objection Certificate service', icon: '📄', category: 'noc', badgeTone: 'bg-emerald-100 text-emerald-700' },
-  { title: 'RC Renewal', note: 'Vehicle registration renewal', icon: '🔄', category: 'registration', badgeTone: 'bg-violet-100 text-violet-700' }
+  { 
+    title: 'Add DL', 
+    note: 'New driving license application', 
+    icon: <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>, 
+    bgGradient: 'bg-gradient-to-br from-indigo-500 to-purple-600',
+    shadow: 'shadow-indigo-500/30'
+  },
+  { 
+    title: 'Vehicle Transfer', 
+    note: 'Ownership transfer service', 
+    icon: <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>, 
+    bgGradient: 'bg-gradient-to-br from-orange-400 to-red-500',
+    shadow: 'shadow-orange-500/30'
+  },
+  { 
+    title: 'NOC Issued', 
+    note: 'No Objection Certificate service', 
+    icon: <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>, 
+    bgGradient: 'bg-gradient-to-br from-emerald-400 to-teal-500',
+    shadow: 'shadow-emerald-500/30'
+  },
+  { 
+    title: 'RC Renewal', 
+    note: 'Vehicle registration renewal', 
+    icon: <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>, 
+    bgGradient: 'bg-gradient-to-br from-sky-400 to-blue-600',
+    shadow: 'shadow-blue-500/30'
+  }
 ]
 
 const quickButtons = [
@@ -46,21 +70,27 @@ const Sarthi = () => {
         <div className='flex w-full flex-col gap-6 lg:flex-row'>
           <aside className='lg:fixed lg:left-0 lg:top-[4.75rem] lg:h-[calc(100vh-4.75rem)] lg:w-60 xl:w-64 2xl:w-[19rem] lg:overflow-y-auto'>
             <div className='overflow-hidden rounded-[28px] bg-slate-900 text-white shadow-2xl'>
-              <div className='space-y-4 p-6'>
+              <div className='space-y-3 p-5'>
                 {sarthiOptions.map((option, index) => (
                   <button
                     key={option.title}
                     type='button'
                     onClick={() => openModal(option.title)}
-                    className='block w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-left transition duration-200 hover:bg-white/10 hover:shadow-lg'
+                    className='group relative block w-full overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-3 text-left transition-all duration-300 hover:border-white/20 hover:bg-white/10 hover:-translate-y-0.5 hover:shadow-xl'
                   >
-                    <div className='flex items-start gap-3'>
-                      <span className='mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-xl font-bold'>
+                    <div className='absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 transition-opacity duration-500 group-hover:opacity-100' />
+                    <div className='relative flex items-center gap-3'>
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl md:rounded-lg ${option.bgGradient} shadow-md ${option.shadow} transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3`}>
                         {option.icon}
-                      </span>
-                      <div className='min-w-0'>
-                        <h2 className='text-sm font-bold text-white truncate'>{option.title}</h2>
-                        <p className='mt-1 text-xs leading-5 text-slate-300'>{option.note}</p>
+                      </div>
+                      <div className='min-w-0 flex-1'>
+                        <h2 className='text-[13.5px] sm:text-sm font-bold text-white tracking-wide'>{option.title}</h2>
+                        <p className='mt-0.5 text-[10.5px] sm:text-[11px] font-medium text-slate-400 line-clamp-1 group-hover:text-slate-300 transition-colors'>{option.note}</p>
+                      </div>
+                      <div className="shrink-0 text-slate-500 transition-all duration-300 group-hover:text-white group-hover:translate-x-1">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                        </svg>
                       </div>
                     </div>
                   </button>
