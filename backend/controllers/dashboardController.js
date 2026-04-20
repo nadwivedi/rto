@@ -69,7 +69,7 @@ exports.getDashboardData = async (req, res) => {
         { $match: { userId } },
         { $group: { _id: '$status', count: { $sum: 1 } } }
       ]),
-      BusPermit.find({ userId, status: 'expiring_soon' }).sort({ permitExpiryDate: 1 }),
+      BusPermit.find({ userId, status: 'expiring_soon' }).sort({ validTo: 1 }),
 
       // National Permit
       NationalPermit.aggregate([
@@ -96,7 +96,7 @@ exports.getDashboardData = async (req, res) => {
         { $match: { userId } },
         { $group: { _id: '$status', count: { $sum: 1 } } }
       ]),
-      CgPermit.find({ userId, status: 'expiring_soon' }).sort({ permitExpiryDate: 1 }),
+      CgPermit.find({ userId, status: 'expiring_soon' }).sort({ validTo: 1 }),
 
       // Insurance
       Insurance.aggregate([

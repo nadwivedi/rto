@@ -141,6 +141,8 @@ const VahanDashboard = () => {
         records.push({
           ...r,
           docType: 'State Permit',
+          ownerName: r.permitHolder || r.partyName,
+          validFrom: r.validFrom,
           validTo: r.validTo || r.permitExpiryDate
         })
       })
@@ -149,6 +151,8 @@ const VahanDashboard = () => {
         records.push({
           ...r,
           docType: 'Bus Permit',
+          ownerName: r.permitHolder || r.partyName,
+          validFrom: r.validFrom,
           validTo: r.validTo || r.permitExpiryDate
         })
       })
