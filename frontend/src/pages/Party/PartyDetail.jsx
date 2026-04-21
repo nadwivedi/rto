@@ -287,7 +287,7 @@ const PartyDetail = () => {
           <div className='text-center py-12'>
             <p className='text-gray-600'>Party not found</p>
             <button
-              onClick={() => navigate('/parties')}
+              onClick={() => navigate('/party')}
               className='mt-4 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700'
             >
               Back to Parties

@@ -63,6 +63,8 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
   })
   const [savingParty, setSavingParty] = useState(false)
 
+  const registrationNumberRef = useRef(null)
+
   // Refs for party modal Enter key navigation
   const partyNameRef = useRef(null)
   const partySWDRef = useRef(null)
@@ -252,6 +254,14 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
       }, 100)
     }
   }, [showAddPartyModal])
+
+  useEffect(() => {
+    if (isOpen && !editData && registrationNumberRef.current && !showAddPartyModal && !scanningFile && !scanningBackFile) {
+      setTimeout(() => {
+        registrationNumberRef.current?.focus()
+      }, 100)
+    }
+  }, [isOpen, editData, showAddPartyModal, scanningFile, scanningBackFile])
 
   useEffect(() => {
     if (editData) {
@@ -1677,6 +1687,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
                       <input
                         type='text'
                         name='registrationNumber'
+                        ref={registrationNumberRef}
                         value={formData.registrationNumber}
                         onChange={handleChange}
                         onKeyDown={handleKeyDown}

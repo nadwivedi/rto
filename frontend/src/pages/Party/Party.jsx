@@ -203,7 +203,7 @@ const Party = () => {
                         <div className='bg-gradient-to-r from-purple-50 to-pink-50 p-3 flex items-start justify-between border-b border-gray-200'>
                           <div
                             className='min-w-0 flex-1 mr-2 cursor-pointer'
-                            onClick={() => navigate(`/parties/${party._id}`)}
+                            onClick={() => navigate(`/party/${party._id}`)}
                           >
                             <div className='text-sm font-bold text-gray-900 mb-1 flex items-center gap-2'>
                               <div className='w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-xs font-bold'>
@@ -288,7 +288,7 @@ const Party = () => {
                     </thead>
                     <tbody className='divide-y divide-gray-200'>
                       {filteredParties.map((party) => (
-                        <tr key={party._id} className='hover:bg-gradient-to-r hover:from-purple-50/50 hover:via-pink-50/50 hover:to-indigo-50/50 transition-all duration-200 group cursor-pointer' onClick={() => navigate(`/parties/${party._id}`)}>
+                        <tr key={party._id} className='hover:bg-gradient-to-r hover:from-purple-50/50 hover:via-pink-50/50 hover:to-indigo-50/50 transition-all duration-200 group cursor-pointer' onClick={() => navigate(`/party/${party._id}`)}>
                           <td className='px-4 2xl:px-6 py-3 2xl:py-4'>
                             <div className='flex items-center gap-3'>
                               <div className='w-9 h-9 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-bold flex-shrink-0'>

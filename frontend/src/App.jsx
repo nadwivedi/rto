@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, useParams, Navigate } from 'react-router-dom'
 import { useEffect } from 'react'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -33,6 +33,11 @@ import Vahan from './pages/Vahan'
 import Sarthi from './pages/Sarthi'
 import WhatsApp from './pages/WhatsApp/WhatsApp'
 import Javak from './pages/Javak/Javak'
+
+function LegacyPartyDetailRedirect() {
+  const { partyId } = useParams()
+  return <Navigate to={`/party/${partyId}`} replace />
+}
 
 function ProtectedLayout() {
   const navigate = useNavigate()
@@ -81,11 +86,11 @@ function ProtectedLayout() {
           '/puc',
           '/gps',
           '/dealer-bill',
-          '/parties'
+          '/party'
         ];
         
-        if (location.pathname.startsWith('/parties/')) {
-          navigate('/parties');
+        if (location.pathname.startsWith('/party/')) {
+          navigate('/party');
         } else if (vahanHubPages.includes(location.pathname) || sarthiHubPages.includes(location.pathname)) {
           navigate('/');
         } else if (vahanSubPages.includes(location.pathname)) {
@@ -130,8 +135,10 @@ function ProtectedLayout() {
               <Route path='/gps' element={<Gps />} />
               <Route path='/dealer-bill' element={<DealerBill />} />
               <Route path='/day-book' element={<DayBook />} />
-              <Route path='/parties' element={<Party />} />
-              <Route path='/parties/:partyId' element={<PartyDetail />} />
+              <Route path='/party' element={<Party />} />
+              <Route path='/party/:partyId' element={<PartyDetail />} />
+              <Route path='/parties' element={<Navigate to='/party' replace />} />
+              <Route path='/parties/:partyId' element={<LegacyPartyDetailRedirect />} />
               <Route path='/whatsapp' element={<WhatsApp />} />
               <Route path='/javak' element={<Javak />} />
             </Routes>
