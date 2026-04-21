@@ -214,3 +214,18 @@ exports.gpsOcr = async (req, res) => {
 }`;
   return processOcrRequest(req, res, prompt, template);
 };
+
+exports.llOcr = async (req, res) => {
+  const prompt = "Extract the details from this learning license/driving license document. Map the tracking number or application no to learningLicenseApplicationNumber if present. Map the license number or LL number to learningLicenseNumber. Map the issue date/from date to learningLicenseIssueDate. Map the expiry/valid till date to learningLicenseExpiryDate.";
+  const template = `{
+  "name": "",
+  "dateOfBirth": "",
+  "fatherName": "",
+  "address": "",
+  "learningLicenseApplicationNumber": "",
+  "learningLicenseNumber": "",
+  "learningLicenseIssueDate": "",
+  "learningLicenseExpiryDate": ""
+}`;
+  return processOcrRequest(req, res, prompt, template);
+};

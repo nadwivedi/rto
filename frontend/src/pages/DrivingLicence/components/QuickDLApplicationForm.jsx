@@ -1,7 +1,10 @@
 import { useState, useEffect, useMemo } from 'react'
-import { handleSmartDateInput } from '../../../utils/dateFormatter'
+import axios from 'axios'
+import { toast } from 'react-toastify'
+import { handleSmartDateInput, normalizeAIExtractedDate } from '../../../utils/dateFormatter'
 import { validateMobileNumberRealtime, enforceMobileNumberFormat, validateEmailRealtime } from '../../../utils/contactValidation'
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
   // Get current date in DD-MM-YYYY format
   const getCurrentDate = () => {
@@ -55,6 +58,8 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
   // Validation states
   const [mobileValidation, setMobileValidation] = useState({ isValid: false, message: '' })
   const [emailValidation, setEmailValidation] = useState({ isValid: true, message: '' })
+  const [isExtractingLl, setIsExtractingLl] = useState(false)
+  const [scanningFile, setScanningFile] = useState(null)
 
   // Date of Birth state
   const [dobDay, setDobDay] = useState('')
@@ -171,41 +176,93 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     }
   }, [dobMonth, dobYear])
 
-  // Auto-calculate Learning License Expiry Date (6 months from issue date, minus 1 day)
-  useEffect(() => {
-    if (formData.learningLicenseIssueDate) {
-      // Parse DD-MM-YYYY format
-      const parts = formData.learningLicenseIssueDate.split('-')
-      if (parts.length === 3) {
-        const day = parseInt(parts[0], 10)
-        const month = parseInt(parts[1], 10) - 1 // Month is 0-indexed
-        const year = parseInt(parts[2], 10)
 
-        // Check if date is valid
-        if (!isNaN(day) && !isNaN(month) && !isNaN(year) && year > 1900) {
-          const issueDate = new Date(year, month, day)
+  const handleLlExtractionUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-          // Check if the date object is valid
-          if (!isNaN(issueDate.getTime())) {
-            const expiryDate = new Date(issueDate)
-            expiryDate.setMonth(expiryDate.getMonth() + 6)
-            // Subtract 1 day because issue date counts as day 1
-            expiryDate.setDate(expiryDate.getDate() - 1)
-
-            // Format date to DD-MM-YYYY
-            const expiryDay = String(expiryDate.getDate()).padStart(2, '0')
-            const expiryMonth = String(expiryDate.getMonth() + 1).padStart(2, '0')
-            const expiryYear = expiryDate.getFullYear()
-
-            setFormData(prev => ({
-              ...prev,
-              learningLicenseExpiryDate: `${expiryDay}-${expiryMonth}-${expiryYear}`
-            }))
-          }
-        }
-      }
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      toast.error('Please upload an image or PDF file for extraction.', { position: 'top-right', autoClose: 3000 });
+      return;
     }
-  }, [formData.learningLicenseIssueDate])
+
+    setScanningFile(file);
+    e.target.value = ''; // reset file input
+
+    setIsExtractingLl(true);
+    const updateToast = toast.info('Analyzing Learning License document, please wait...', { autoClose: false, isLoading: true });
+
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const base64String = reader.result;
+          const response = await axios.post(
+            `${API_URL}/api/ocr/ll`,
+            { imageBase64: base64String },
+            { withCredentials: true }
+          );
+
+          if (response.data.success && response.data.data) {
+            const resultData = response.data.data;
+            
+            setFormData(prev => {
+              const updated = { ...prev };
+              if (resultData.name) updated.name = resultData.name.toUpperCase();
+              if (resultData.fatherName) updated.fatherName = resultData.fatherName.toUpperCase();
+              if (resultData.address) updated.address = resultData.address.toUpperCase();
+              if (resultData.learningLicenseNumber) updated.learningLicenseNumber = resultData.learningLicenseNumber.toUpperCase();
+              if (resultData.learningLicenseApplicationNumber) updated.learningLicenseApplicationNumber = resultData.learningLicenseApplicationNumber.toUpperCase();
+              
+              if (resultData.learningLicenseIssueDate) {
+                  const normalizedStr = normalizeAIExtractedDate(resultData.learningLicenseIssueDate);
+                  const formatted = handleSmartDateInput(normalizedStr, '');
+                  if (formatted) updated.learningLicenseIssueDate = formatted;
+              }
+              if (resultData.learningLicenseExpiryDate) {
+                  const normalizedStr = normalizeAIExtractedDate(resultData.learningLicenseExpiryDate);
+                  const formatted = handleSmartDateInput(normalizedStr, '');
+                  if (formatted) updated.learningLicenseExpiryDate = formatted;
+              }
+              return updated;
+            });
+
+            if (resultData.dateOfBirth) {
+                const normalizedStr = normalizeAIExtractedDate(resultData.dateOfBirth);
+                const formattedDob = handleSmartDateInput(normalizedStr, '');
+                if (formattedDob) {
+                    const parts = formattedDob.split('-');
+                    if (parts.length === 3) {
+                        setDobDay(parts[0]);
+                        setDobMonth(parts[1]);
+                        setDobYear(parts[2]);
+                    }
+                }
+            }
+
+            toast.dismiss(updateToast);
+            toast.success('Learning License Details Extracted Successfully!', { position: 'top-right', autoClose: 3000 });
+          } else {
+            toast.dismiss(updateToast);
+            toast.error('Failed to extract data correctly.', { position: 'top-right', autoClose: 3000 });
+          }
+        } catch (err) {
+            console.error(err);
+            toast.dismiss(updateToast);
+            toast.error('Server error during OCR processing.', { position: 'top-right', autoClose: 3000 });
+        } finally {
+            setIsExtractingLl(false);
+            setScanningFile(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.dismiss(updateToast);
+      toast.error('Error reading the file.', { position: 'top-right', autoClose: 3000 });
+      setIsExtractingLl(false);
+      setScanningFile(null);
+    }
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -243,6 +300,34 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     if (name === 'licenseIssueDate' || name === 'licenseExpiryDate' || name === 'learningLicenseIssueDate' || name === 'learningLicenseExpiryDate') {
       const formatted = handleSmartDateInput(value, formData[name] || '')
       if (formatted !== null) {
+        // Auto-calculate Learning License Expiry Date on manual edit (6 months from issue date, minus 1 day)
+        if (name === 'learningLicenseIssueDate' && formatted.length === 10) {
+          const parts = formatted.split('-')
+          const day = parseInt(parts[0], 10)
+          const month = parseInt(parts[1], 10) - 1 // Month is 0-indexed
+          const year = parseInt(parts[2], 10)
+
+          if (!isNaN(day) && !isNaN(month) && !isNaN(year) && year > 1900) {
+            const issueDate = new Date(year, month, day)
+            if (!isNaN(issueDate.getTime())) {
+              const expiryDate = new Date(issueDate)
+              expiryDate.setMonth(expiryDate.getMonth() + 6)
+              expiryDate.setDate(expiryDate.getDate() - 1)
+
+              const expiryDay = String(expiryDate.getDate()).padStart(2, '0')
+              const expiryMonth = String(expiryDate.getMonth() + 1).padStart(2, '0')
+              const expiryYear = expiryDate.getFullYear()
+
+              setFormData(prev => ({
+                ...prev,
+                [name]: formatted,
+                learningLicenseExpiryDate: `${expiryDay}-${expiryMonth}-${expiryYear}`
+              }))
+              return
+            }
+          }
+        }
+
         setFormData(prev => ({
           ...prev,
           [name]: formatted
@@ -361,14 +446,47 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
             <div>
               <h2 className='text-lg md:text-2xl font-bold'>Add New Driving Licence</h2>
             </div>
-            <button
-              onClick={onClose}
-              className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
-            >
-              <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-              </svg>
-            </button>
+            <div className='flex shrink-0 items-center gap-2'>
+              <div className='relative overflow-hidden rounded-lg'>
+                <button
+                  type='button'
+                  disabled={isExtractingLl}
+                  className='flex max-w-full items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/30 disabled:opacity-60 md:px-4 md:py-2 md:text-sm cursor-pointer'
+                >
+                  {isExtractingLl ? (
+                    <>
+                      <svg className='h-4 w-4 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
+                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                      </svg>
+                      Extracting
+                    </>
+                  ) : (
+                    <>
+                      <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/>
+                      </svg>
+                      LL Upload
+                    </>
+                  )}
+                </button>
+                <input
+                  type='file'
+                  accept='image/*,application/pdf'
+                  disabled={isExtractingLl}
+                  onChange={handleLlExtractionUpload}
+                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
+                />
+              </div>
+              <button
+                onClick={onClose}
+                className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer hover:rotate-90 duration-200'
+              >
+                <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 

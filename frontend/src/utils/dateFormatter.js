@@ -396,6 +396,16 @@ export const formatDateToString = (date) => {
  */
 export const normalizeAIExtractedDate = (dateStr) => {
   if (!dateStr) return '';
+  
+  // Look for exact pattern DD/MM/YYYY or DD-MM-YYYY or DD.MM.YYYY
+  const exactMatch = String(dateStr).trim().match(/^(\d{2})[\/\-\.](\d{2})[\/\-\.](\d{4})$/);
+  if (exactMatch) {
+    const day = exactMatch[1];
+    const month = exactMatch[2];
+    const year = exactMatch[3];
+    return `${day}-${month}-${year}`;
+  }
+
   const months = { jan: '01', feb: '02', mar: '03', apr: '04', may: '05', jun: '06', jul: '07', aug: '08', sep: '09', oct: '10', nov: '11', dec: '12' };
   const weekdays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
 
