@@ -168,6 +168,21 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
       }
     }
 
+    if (currentFieldName === 'partySearch' && e.key === 'Enter' && !formData.partyId) {
+      e.preventDefault()
+      const exactParty = findMatchingParty(formData.ownerName)
+
+      if (exactParty) {
+        handlePartySelect(exactParty)
+      } else if (formData.ownerName.trim()) {
+        toast.error('Party is required. Choose an existing party or create a new party with Alt+N.', { position: 'top-right', autoClose: 3000 })
+        setNewParty(prev => ({ ...prev, partyName: formData.ownerName }))
+      } else {
+        toast.error('Please choose a party from dropdown or create a new party.', { position: 'top-right', autoClose: 3000 })
+      }
+      return
+    }
+
     if (e.key === 'Enter') {
       e.preventDefault() // Prevent default form submission
 
