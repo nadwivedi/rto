@@ -25,7 +25,6 @@ import Form20 from './pages/Form20'
 import Puc from './pages/Puc/Puc'
 import Gps from './pages/Gps/Gps'
 import Home2 from './pages/home2'
-import DayBook from './pages/DayBook'
 import Party from './pages/Party/Party'
 import PartyDetail from './pages/Party/PartyDetail'
 import Noc from './pages/Noc/Noc'
@@ -134,7 +133,6 @@ function ProtectedLayout() {
               <Route path='/puc' element={<Puc />} />
               <Route path='/gps' element={<Gps />} />
               <Route path='/dealer-bill' element={<DealerBill />} />
-              <Route path='/day-book' element={<DayBook />} />
               <Route path='/party' element={<Party />} />
               <Route path='/party/:partyId' element={<PartyDetail />} />
               <Route path='/parties' element={<Navigate to='/party' replace />} />
