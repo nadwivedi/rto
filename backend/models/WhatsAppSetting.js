@@ -23,6 +23,10 @@ const whatsappSettingSchema = new mongoose.Schema({
     type: [Number], // e.g. [7, 15] for sending alerts 7 days and 15 days AFTER expiry
     default: [7, 15]
   },
+  alertRules: {
+    type: mongoose.Schema.Types.Mixed,
+    default: {}
+  },
   maxMessagesPerDay: {
     type: Number,
     default: 30

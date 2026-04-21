@@ -1,6 +1,7 @@
 const express = require('express')
 const router = express.Router()
 const WhatsAppSetting = require('../models/WhatsAppSetting')
+const { normalizeAlertSettings } = require('../utils/whatsappAlertSettings')
 
 // Middleware to get current user ID. Since this depends on an auth system,
 // adjust according to actual authentication implementation.
@@ -8,18 +9,18 @@ const WhatsAppSetting = require('../models/WhatsAppSetting')
 
 router.get('/', async (req, res) => {
   try {
-    // if using multi-tenant this would be req.user.id
-    // here we simplify to fetch the primary one or first one
-    let setting = await WhatsAppSetting.findOne()
+    let setting = await WhatsAppSetting.findOne({ userId: req.user.id })
     if (!setting) {
-      // Create default
-      // Note: we are passing a fake userId just to map to the unique required field if multitenancy isn't strictly enforced right here
-      const firstUser = await require('../models/User').findOne()
       setting = await WhatsAppSetting.create({
-        userId: firstUser ? firstUser._id : new require('mongoose').Types.ObjectId()
+        userId: req.user.id
       })
     }
-    res.json(setting)
+    const normalized = normalizeAlertSettings(setting.toObject())
+    res.json({
+      ...setting.toObject(),
+      alertRules: normalized.alertRules,
+      services: normalized.services
+    })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
@@ -32,25 +33,31 @@ router.put('/', async (req, res) => {
       sendOnExpiryDay,
       enableGracePeriodAlerts,
       gracePeriodDays,
+      alertRules,
       maxMessagesPerDay,
       maxMessagesPerHour
     } = req.body
 
-    let setting = await WhatsAppSetting.findOne()
+    let setting = await WhatsAppSetting.findOne({ userId: req.user.id })
     if (!setting) {
-      const firstUser = await require('../models/User').findOne()
-      setting = new WhatsAppSetting({ userId: firstUser ? firstUser._id : new require('mongoose').Types.ObjectId() })
+      setting = new WhatsAppSetting({ userId: req.user.id })
     }
 
     if (daysBeforeExpiry !== undefined) setting.daysBeforeExpiry = daysBeforeExpiry
     if (sendOnExpiryDay !== undefined) setting.sendOnExpiryDay = sendOnExpiryDay
     if (enableGracePeriodAlerts !== undefined) setting.enableGracePeriodAlerts = enableGracePeriodAlerts
     if (gracePeriodDays !== undefined) setting.gracePeriodDays = gracePeriodDays
+    if (alertRules !== undefined) setting.alertRules = normalizeAlertSettings({ ...setting.toObject(), alertRules }).alertRules
     if (maxMessagesPerDay !== undefined) setting.maxMessagesPerDay = maxMessagesPerDay
     if (maxMessagesPerHour !== undefined) setting.maxMessagesPerHour = maxMessagesPerHour
 
     await setting.save()
-    res.json(setting)
+    const normalized = normalizeAlertSettings(setting.toObject())
+    res.json({
+      ...setting.toObject(),
+      alertRules: normalized.alertRules,
+      services: normalized.services
+    })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }

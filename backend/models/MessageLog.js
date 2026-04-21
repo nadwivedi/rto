@@ -14,7 +14,7 @@ const messageLogSchema = new mongoose.Schema({
   },
   documentType: {
     type: String,
-    enum: ['Tax', 'Fitness', 'Puc', 'Gps', 'Insurance'],
+    enum: ['Tax', 'Fitness', 'Puc', 'Gps', 'Insurance', 'NationalPermit', 'CgPermit', 'BusPermit'],
     required: true
   },
   targetNumber: {
@@ -29,6 +29,11 @@ const messageLogSchema = new mongoose.Schema({
   messageBody: {
     type: String,
     required: true
+  },
+  alertKey: {
+    type: String,
+    trim: true,
+    index: true
   },
   status: {
     type: String,
