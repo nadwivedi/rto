@@ -52,7 +52,11 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     // Payment Information
     totalAmount: '4000',
     paidAmount: '2000',
-    balanceAmount: 2000
+    balanceAmount: 2000,
+    documents: {
+      learningLicense: '',
+      learningLicenseType: ''
+    }
   })
 
   // Validation states
@@ -224,6 +228,13 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                   const formatted = handleSmartDateInput(normalizedStr, '');
                   if (formatted) updated.learningLicenseExpiryDate = formatted;
               }
+
+              if (!updated.documents) {
+                  updated.documents = {};
+              }
+              updated.documents.learningLicense = base64String;
+              updated.documents.learningLicenseType = file.type;
+
               return updated;
             });
 
@@ -426,7 +437,11 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
       emergencyRelation: 'Father',
       totalAmount: '4000',
       paidAmount: '2000',
-      balanceAmount: 2000
+      balanceAmount: 2000,
+      documents: {
+        learningLicense: '',
+        learningLicenseType: ''
+      }
     })
     // Reset date dropdowns
     setDobDay('')
@@ -683,13 +698,13 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Address <span className='text-red-500'>*</span>
                   </label>
-                  <input
-                    type='text'
+                  <textarea
                     name='address'
                     value={formData.address}
                     onChange={handleChange}
                     placeholder='Complete address'
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                    rows={2}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-y min-h-[42px]'
                     required
                   />
                 </div>
@@ -917,6 +932,22 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                 </div>
               </div>
             </div>
+
+            {/* Document Preview Section */}
+            {formData.documents?.learningLicense && (
+              <div className='bg-gray-100 border border-gray-300 rounded-xl p-3 md:p-6 mb-4 md:mb-6 mt-4'>
+                <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4'>
+                  Learning License Preview
+                </h3>
+                <div className='w-full rounded-lg overflow-hidden flex justify-center bg-white border border-gray-200'>
+                  {formData.documents.learningLicenseType === 'application/pdf' ? (
+                     <iframe src={formData.documents.learningLicense} className='w-full h-96' title='PDF Preview'></iframe>
+                  ) : (
+                     <img src={formData.documents.learningLicense} alt='Preview' className='max-h-96 object-contain' />
+                  )}
+                </div>
+              </div>
+            )}
 
           </div>
 

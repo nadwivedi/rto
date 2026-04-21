@@ -108,8 +108,9 @@ const DrivingSchema = new mongoose.Schema({
     photo: String,
     signature: String,
     aadharCard: String,
+    learningLicense: String, 
+    learningLicenseType: String // e.g. application/pdf, image/jpeg
   },
-
   
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields
