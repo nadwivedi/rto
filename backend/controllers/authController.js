@@ -254,6 +254,110 @@ exports.staffLogin = async (req, res) => {
   }
 }
 
+// Let an authenticated admin access a user account from the public frontend for testing.
+exports.adminAccessLogin = async (req, res) => {
+  try {
+    const { token: accessToken } = req.body
+
+    if (!accessToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Access token is required'
+      })
+    }
+
+    const decoded = jwt.verify(
+      accessToken,
+      process.env.JWT_SECRET || 'your-secret-key-change-this-in-production'
+    )
+
+    if (decoded.type !== 'admin_user_access' || decoded.purpose !== 'admin_user_access') {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid access token'
+      })
+    }
+
+    const user = await User.findById(decoded.id).select('-password')
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      })
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'This user account is inactive'
+      })
+    }
+
+    const loginAt = new Date()
+    await User.updateOne({ _id: user._id }, { lastLogin: loginAt, lastActivity: loginAt })
+    user.lastLogin = loginAt
+    user.lastActivity = loginAt
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        mobile1: user.mobile1,
+        mobile2: user.mobile2,
+        email: user.email,
+        name: user.name,
+        type: 'user',
+        accessedByAdmin: decoded.adminId
+      },
+      process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
+      { expiresIn: '30d' }
+    )
+
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000
+    })
+
+    res.json({
+      success: true,
+      message: 'Access granted',
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          mobile1: user.mobile1,
+          mobile2: user.mobile2,
+          email: user.email,
+          address: user.address,
+          state: user.state,
+          rto: user.rto,
+          billName: user.billName,
+          billDescription: user.billDescription,
+          type: 'user',
+          lastLogin: user.lastLogin,
+          lastActivity: user.lastActivity
+        }
+      }
+    })
+  } catch (error) {
+    console.error('Admin access login error:', error)
+
+    if (error.name === 'TokenExpiredError' || error.name === 'JsonWebTokenError') {
+      return res.status(401).json({
+        success: false,
+        message: 'Access token has expired or is invalid'
+      })
+    }
+
+    res.status(500).json({
+      success: false,
+      message: 'An error occurred while granting access'
+    })
+  }
+}
+
 // Get current user profile
 exports.getProfile = async (req, res) => {
   try {

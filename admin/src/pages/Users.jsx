@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://rtosarthi.com'
 console.log(BACKEND_URL);
 
 const formatDateTime = (value) => {
@@ -78,6 +79,7 @@ const Users = () => {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [copiedId, setCopiedId] = useState(null)
+  const [accessingId, setAccessingId] = useState(null)
 
   useEffect(() => {
     fetchUsers()
@@ -96,6 +98,7 @@ const Users = () => {
       setLoading(true)
       const response = await fetch(`${BACKEND_URL}/api/admin/users`, {
         method: 'GET',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         }
@@ -155,6 +158,7 @@ const Users = () => {
 
       const response = await fetch(url, {
         method: method,
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         },
@@ -209,6 +213,7 @@ const Users = () => {
     try {
       const response = await fetch(`${BACKEND_URL}/api/admin/users/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json'
         }
@@ -222,6 +227,42 @@ const Users = () => {
       }
     } catch (error) {
       setError('Failed to delete user')
+    }
+  }
+
+  const handleAccess = async (user) => {
+    const accessWindow = window.open('', '_blank')
+
+    if (!accessWindow) {
+      setError('Please allow popups to open the user account in a new tab')
+      return
+    }
+
+    try {
+      setAccessingId(user._id)
+      setError('')
+
+      const response = await fetch(`${BACKEND_URL}/api/admin/users/${user._id}/access-token`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+      const data = await response.json()
+
+      if (!response.ok || !data.success || !data.data?.token) {
+        accessWindow.close()
+        setError(data.message || 'Failed to create user access token')
+        return
+      }
+
+      accessWindow.location.href = `${FRONTEND_URL}/admin-access?token=${encodeURIComponent(data.data.token)}`
+    } catch (error) {
+      accessWindow.close()
+      setError('Failed to open user account access')
+    } finally {
+      setAccessingId(null)
     }
   }
 
@@ -339,6 +380,13 @@ const Users = () => {
                       <td className='px-6 py-4 text-sm'>
                         <div className='flex gap-3'>
                           <button
+                            onClick={() => handleAccess(user)}
+                            disabled={accessingId === user._id}
+                            className='text-emerald-600 hover:text-emerald-800 font-semibold cursor-pointer disabled:opacity-60 disabled:cursor-wait'
+                          >
+                            {accessingId === user._id ? 'Opening...' : 'Access'}
+                          </button>
+                          <button
                             onClick={() => handleEdit(user)}
                             className='text-indigo-600 hover:text-indigo-800 font-semibold cursor-pointer'
                           >
@@ -401,6 +449,13 @@ const Users = () => {
                       <div>Created: {new Date(user.createdAt).toLocaleDateString()}</div>
                     </div>
                     <div className='flex gap-2'>
+                      <button
+                        onClick={() => handleAccess(user)}
+                        disabled={accessingId === user._id}
+                        className='text-emerald-600 hover:text-emerald-800 font-semibold text-sm px-3 py-1.5 rounded hover:bg-emerald-50 transition-colors cursor-pointer disabled:opacity-60 disabled:cursor-wait'
+                      >
+                        {accessingId === user._id ? 'Opening...' : 'Access'}
+                      </button>
                       <button
                         onClick={() => handleEdit(user)}
                         className='text-indigo-600 hover:text-indigo-800 font-semibold text-sm px-3 py-1.5 rounded hover:bg-indigo-50 transition-colors cursor-pointer'

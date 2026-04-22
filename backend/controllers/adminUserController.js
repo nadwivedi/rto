@@ -1,5 +1,6 @@
 const User = require('../models/User')
 const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 
 // Get all users
@@ -431,6 +432,72 @@ exports.getUserStatistics = async (req, res) => {
         total: totalUsers,
         active: activeUsers,
         inactive: inactiveUsers
+      }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: getSimplifiedTimestamp()
+    })
+  }
+}
+
+// Generate a short-lived token so an admin can open the frontend as a user for testing.
+exports.generateUserAccessToken = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select('-password')
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      })
+    }
+
+    if (!user.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'Cannot access an inactive user account'
+      })
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        type: 'admin_user_access',
+        purpose: 'admin_user_access',
+        adminId: req.admin.id
+      },
+      process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
+      { expiresIn: '10m' }
+    )
+
+    const adminToken = jwt.sign(
+      {
+        id: req.admin.id,
+        email: req.admin.email,
+        type: 'admin'
+      },
+      process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
+      { expiresIn: '30d' }
+    )
+
+    res.cookie('adminToken', adminToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000
+    })
+
+    res.json({
+      success: true,
+      data: {
+        token
       }
     })
   } catch (error) {

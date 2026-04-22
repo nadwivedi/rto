@@ -6,6 +6,7 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import { ThemeProvider } from './context/ThemeContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
+import AdminAccess from './pages/AdminAccess'
 import Setting from './pages/Setting'
 import DrivingLicence from './pages/DrivingLicence/DrivingLicence'
 import NationalPermit from './pages/NationalPermit/NationalPermit'
@@ -155,6 +156,7 @@ function App() {
           <ToastContainer />
           <Routes>
             <Route path='/login' element={<Login />} />
+            <Route path='/admin-access' element={<AdminAccess />} />
             <Route path='/*' element={<ProtectedLayout />} />
           </Routes>
         </ThemeProvider>

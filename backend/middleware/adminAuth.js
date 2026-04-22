@@ -4,7 +4,7 @@ const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../u
 const adminAuthMiddleware = (req, res, next) => {
   try {
     // Get token from cookie
-    const token = req.cookies.token
+    const token = req.cookies.adminToken || req.cookies.token
 
     if (!token) {
       return res.status(401).json({

@@ -50,7 +50,7 @@ exports.login = async (req, res) => {
     )
 
     // Set token in HTTP-only cookie
-    res.cookie('token', token, {
+    res.cookie('adminToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
@@ -112,6 +112,11 @@ exports.getProfile = async (req, res) => {
 // Admin logout
 exports.logout = async (req, res) => {
   // Clear the token cookie
+  res.clearCookie('adminToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  })
   res.clearCookie('token', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
