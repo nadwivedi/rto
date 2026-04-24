@@ -692,8 +692,7 @@ const NationalPermit = () => {
                       {/* Part A Info */}
                       <div className='pb-2.5 border-b border-gray-100'>
                         <div className='flex items-center justify-between mb-1.5'>
-                          <span className='text-[10px] text-gray-500 font-semibold uppercase'>Part A Permit</span>
-                          <span className='text-xs font-mono font-bold text-gray-900'>{record.permitNumber}</span>
+                          <span className='text-[10px] text-gray-500 font-semibold uppercase'>Part A</span>
                         </div>
                         <div className='flex items-center justify-between mb-1'>
                           <span className='text-[10px] text-gray-500 font-semibold uppercase'>Valid From</span>
@@ -846,7 +845,7 @@ const NationalPermit = () => {
           <table className='w-full'>
             <thead className={theme.tableHeader}>
               <tr>
-                <th className='px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide'>Vehicle/Permit No.</th>
+                <th className='px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide'>Vehicle No.</th>
                 <th className='px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide'>Permit Holder</th>
                 <th className='px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide'>Valid From</th>
                 <th className='px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide'>Valid To</th>
@@ -916,12 +915,6 @@ const NationalPermit = () => {
                             );
                           })()}
                         </div>
-                        <div className='flex items-center gap-1.5'>
-                          <svg className='w-3.5 h-3.5 text-indigo-600 flex-shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
-                          </svg>
-                          <span className='text-[10px] 2xl:text-xs font-medium text-gray-600'>{permit.permitNumber}</span>
-                        </div>
                       </div>
                     </td>
                     <td className='px-4 2xl:px-6 py-3 2xl:py-4'>
@@ -940,7 +933,7 @@ const NationalPermit = () => {
                         </div>
                       </div>
                     </td>
-                    <td className='px-0.5 2xl:px-1 py-3 2xl:py-5 pl-8 2xl:pl-12'>
+                    <td className='px-0.5 2xl:px-1 py-3 2xl:py-5 pl-4 2xl:pl-8'>
                       <div className='flex items-center text-[11px] 2xl:text-[13.8px]'>
                         <span className='inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-green-100 text-green-700 font-semibold border border-green-200 whitespace-nowrap'>
                           <svg className='w-3 h-3 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
