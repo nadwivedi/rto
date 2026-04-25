@@ -37,6 +37,9 @@ const WhatsApp = () => {
   const [logs, setLogs] = useState([])
   const [loading, setLoading] = useState(true)
   const [actionBusy, setActionBusy] = useState(null)
+  const [page, setPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [todaySentCount, setTodaySentCount] = useState(0)
 
   const fetchStatus = async () => {
     try {
@@ -47,10 +50,12 @@ const WhatsApp = () => {
     }
   }
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (currentPage = page) => {
     try {
-      const res = await axios.get(`${API_URL}/api/whatsapp/logs`, { withCredentials: true })
-      setLogs(res.data || [])
+      const res = await axios.get(`${API_URL}/api/whatsapp/logs?page=${currentPage}&limit=50`, { withCredentials: true })
+      setLogs(res.data.logs || [])
+      setTotalPages(res.data.totalPages || 1)
+      setTodaySentCount(res.data.todaySentCount || 0)
     } catch (error) {
       console.error('[WhatsApp] Logs fetch error:', error)
     }
@@ -61,7 +66,7 @@ const WhatsApp = () => {
     try {
       const res = await axios.post(`${API_URL}/api/whatsapp/trigger-check`, {}, { withCredentials: true })
       toast.success(res.data.message)
-      await fetchLogs()
+      await fetchLogs(page)
     } catch (error) {
       toast.error(`Check failed: ${error?.response?.data?.message || error.message}`)
     } finally {
@@ -73,7 +78,7 @@ const WhatsApp = () => {
   useEffect(() => {
     const init = async () => {
       await fetchStatus()
-      await fetchLogs()
+      await fetchLogs(1)
       setLoading(false)
     }
     init()
@@ -251,11 +256,7 @@ const WhatsApp = () => {
           {/* Sent Today Summary */}
           <div className='p-3 bg-gray-50 border border-gray-200 rounded-lg text-center'>
             <p className='text-xs text-gray-500'>Messages Sent Today</p>
-            <p className='text-2xl font-black text-gray-800'>{logs.filter(l => {
-              const today = new Date()
-              const logDate = new Date(l.sentAt || l.createdAt)
-              return l.status === 'sent' && logDate.toDateString() === today.toDateString()
-            }).length} <span className='text-sm font-normal text-gray-400'>/ 30</span></p>
+            <p className='text-2xl font-black text-gray-800'>{todaySentCount} <span className='text-sm font-normal text-gray-400'>/ 30</span></p>
           </div>
         </div>
 
@@ -266,7 +267,7 @@ const WhatsApp = () => {
               📋 Recent Message Logs
             </h2>
             <button
-              onClick={() => { fetchLogs(); toast.info('Logs refreshed') }}
+              onClick={() => { fetchLogs(page); toast.info('Logs refreshed') }}
               className='px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-semibold text-gray-700 border border-gray-300 transition'
             >
               🔄 Refresh
@@ -350,6 +351,39 @@ const WhatsApp = () => {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className='flex items-center justify-between mt-4 px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-xl'>
+              <div className='text-sm text-gray-500'>
+                Showing Page <span className='font-semibold text-gray-800'>{page}</span> of <span className='font-semibold text-gray-800'>{totalPages}</span>
+              </div>
+              <div className='flex items-center gap-2'>
+                <button
+                  onClick={() => {
+                    const newPage = Math.max(1, page - 1);
+                    setPage(newPage);
+                    fetchLogs(newPage);
+                  }}
+                  disabled={page === 1}
+                  className='px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition'
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => {
+                    const newPage = Math.min(totalPages, page + 1);
+                    setPage(newPage);
+                    fetchLogs(newPage);
+                  }}
+                  disabled={page === totalPages}
+                  className='px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition'
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

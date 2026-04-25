@@ -99,16 +99,33 @@ router.post('/trigger-check', async (req, res) => {
   }
 })
 
-// GET fetch recently sent/failed logs, limited to 100
+// GET fetch recently sent/failed logs with pagination
 router.get('/logs', async (req, res) => {
   try {
-    const userId = req.user.id
+    const userId = req.user.id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
     const logs = await MessageLog.find({ userId })
       .sort({ createdAt: -1 })
-      .limit(100)
-    res.json(logs)
+      .skip(skip)
+      .limit(limit);
+
+    const totalLogs = await MessageLog.countDocuments({ userId });
+    const totalPages = Math.ceil(totalLogs / limit);
+
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    const todaySentCount = await MessageLog.countDocuments({
+      userId,
+      status: 'sent',
+      createdAt: { $gte: startOfDay }
+    });
+
+    res.json({ logs, totalPages, currentPage: page, totalLogs, todaySentCount });
   } catch (error) {
-    res.status(500).json({ message: error.message })
+    res.status(500).json({ message: error.message });
   }
 })
 
