@@ -40,6 +40,7 @@ const WhatsApp = () => {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [todaySentCount, setTodaySentCount] = useState(0)
+  const [statusFilter, setStatusFilter] = useState('all')
 
   const fetchStatus = async () => {
     try {
@@ -274,6 +275,43 @@ const WhatsApp = () => {
             </button>
           </div>
 
+          {/* ---- STATUS FILTER TABS ---- */}
+          {(() => {
+            const counts = {
+              all: logs.length,
+              sent: logs.filter(l => l.status === 'sent').length,
+              pending: logs.filter(l => l.status === 'pending').length,
+              failed: logs.filter(l => l.status === 'failed').length,
+            }
+            const tabs = [
+              { key: 'all',     label: 'All',     emoji: '📋', active: 'bg-gray-800 text-white border-gray-800',     inactive: 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50',     badge: 'bg-gray-200 text-gray-800' },
+              { key: 'sent',    label: 'Sent',    emoji: '✅', active: 'bg-green-600 text-white border-green-600',   inactive: 'bg-white text-green-700 border-green-300 hover:bg-green-50',   badge: 'bg-green-100 text-green-800' },
+              { key: 'pending', label: 'Pending', emoji: '⏳', active: 'bg-yellow-500 text-white border-yellow-500', inactive: 'bg-white text-yellow-700 border-yellow-300 hover:bg-yellow-50', badge: 'bg-yellow-100 text-yellow-800' },
+              { key: 'failed',  label: 'Failed',  emoji: '❌', active: 'bg-red-600 text-white border-red-600',       inactive: 'bg-white text-red-700 border-red-300 hover:bg-red-50',         badge: 'bg-red-100 text-red-800' },
+            ]
+            return (
+              <div className='flex flex-wrap gap-2 mb-4'>
+                {tabs.map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setStatusFilter(tab.key)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition ${
+                      statusFilter === tab.key ? tab.active : tab.inactive
+                    }`}
+                  >
+                    <span>{tab.emoji}</span>
+                    <span>{tab.label}</span>
+                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                      statusFilter === tab.key ? 'bg-white/20 text-white' : tab.badge
+                    }`}>
+                      {counts[tab.key]}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )
+          })()}
+
           <div className='overflow-x-auto'>
             <table className='w-full text-left border-collapse'>
               <thead>
@@ -292,7 +330,10 @@ const WhatsApp = () => {
                 ) : logs.length === 0 ? (
                   <tr><td colSpan='6' className='py-8 text-center text-sm text-gray-400'>No messages logged yet. They will appear here once alerts are triggered.</td></tr>
                 ) : (
-                  logs.map((log) => {
+                  logs.filter(log => statusFilter === 'all' || log.status === statusFilter).length === 0 ? (
+                    <tr><td colSpan='6' className='py-8 text-center text-sm text-gray-400'>No {statusFilter} messages found.</td></tr>
+                  ) :
+                  logs.filter(log => statusFilter === 'all' || log.status === statusFilter).map((log) => {
                     const d = new Date(log.createdAt);
                     const dateStr = d.toLocaleDateString('en-IN');
                     const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
