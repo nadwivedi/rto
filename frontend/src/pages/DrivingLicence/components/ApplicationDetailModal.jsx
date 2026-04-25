@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
   const [status, setStatus] = useState(application?.status || 'Pending')
   const [remarks, setRemarks] = useState('')
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return
@@ -61,6 +62,29 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
     }
   }
 
+  const handleViewPdf = (base64String) => {
+    if (!base64String) return;
+    try {
+      if (base64String.startsWith('http') || base64String.startsWith('blob:')) {
+        window.open(base64String, '_blank');
+        return;
+      }
+      const base64Data = base64String.includes(',') ? base64String.split(',')[1] : base64String;
+      const byteCharacters = atob(base64Data);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: 'application/pdf' });
+      const blobUrl = URL.createObjectURL(blob);
+      window.open(blobUrl, '_blank');
+    } catch (error) {
+      console.error('Error opening PDF:', error);
+      alert('Unable to open PDF. It may be corrupted.');
+    }
+  }
+
   return (
     <div className='fixed inset-0 bg-black/70  z-50 flex items-center justify-center p-2 md:p-4'>
       <div className='bg-white rounded-xl md:rounded-3xl shadow-2xl w-full md:w-[95%] lg:w-[90%] xl:w-[85%] max-h-[98vh] md:max-h-[95vh] overflow-hidden flex flex-col'>
@@ -70,9 +94,6 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
             <div className='min-w-0 flex-1'>
               <div className='flex items-center gap-2 mb-1 md:mb-2 flex-wrap'>
                 <h2 className='text-base md:text-xl font-bold truncate'>DL Application Details</h2>
-                <span className={`px-2 py-0.5 md:px-3 md:py-1 rounded-full text-[9px] md:text-xs font-semibold border ${getStatusColor(status)}`}>
-                  {status}
-                </span>
               </div>
               <p className='text-[10px] md:text-sm text-white/90 truncate'>Application ID: {application.id}</p>
             </div>
@@ -89,6 +110,38 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
 
         {/* Content */}
         <div className='flex-1 overflow-y-auto p-3 md:p-5'>
+          {/* Document Preview Section - Render on Top if Learning License Document exists */}
+          {application.fullData?.documents?.learningLicense && (
+            <div className='mb-4 bg-gray-50 rounded-lg md:rounded-xl p-3 md:p-4 border-2 border-gray-200 shadow-sm'>
+              <h3 className='text-sm md:text-base font-bold text-gray-800 mb-2 flex items-center gap-2'>
+                <svg className='w-4 h-4 text-indigo-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13' />
+                </svg>
+                Uploaded Learning License
+              </h3>
+              <div className='w-full flex justify-center bg-white rounded-lg border border-gray-200 p-3'>
+                {application.fullData.documents.learningLicenseType === 'application/pdf' ? (
+                  <button 
+                    onClick={() => handleViewPdf(application.fullData.documents.learningLicense)}
+                    className='flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-md text-xs font-semibold transition-colors shadow-sm'
+                  >
+                    <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
+                      <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z' clipRule='evenodd' />
+                    </svg>
+                    View PDF
+                  </button>
+                ) : (
+                  <img 
+                    src={application.fullData.documents.learningLicense} 
+                    alt='Learning License' 
+                    onClick={() => setIsImageModalOpen(true)}
+                    className='max-w-full h-32 md:h-40 object-contain rounded cursor-pointer border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105'
+                    title='Click to view full size'
+                  />
+                )}
+              </div>
+            </div>
+          )}
           {/* Application Details */}
           <div className='space-y-3 md:space-y-4'>
             {/* Personal Information */}
@@ -99,9 +152,9 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                 </svg>
                 Personal Information
               </h3>
-              <div className='grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3'>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3'>
                 {/* Full Name - Always show */}
-                <div className='bg-white/80 p-2 rounded-lg col-span-2'>
+                <div className='bg-white/80 p-2 rounded-lg'>
                   <label className='text-[10px] md:text-xs font-semibold text-gray-600'>Full Name</label>
                   <p className='text-xs md:text-sm font-bold text-gray-900 mt-0.5'>{application.name}</p>
                 </div>
@@ -119,7 +172,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                 </div>
 
                 {/* Father's Name - Always show */}
-                <div className='bg-white/80 p-2 rounded-lg col-span-2'>
+                <div className='bg-white/80 p-2 rounded-lg'>
                   <label className='text-[10px] md:text-xs font-semibold text-gray-600'>Father's Name</label>
                   <p className='text-xs md:text-sm font-bold text-gray-900 mt-0.5'>{application.fullData?.fatherName || 'Ramesh Kumar'}</p>
                 </div>
@@ -140,7 +193,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                 )}
 
                 {/* Address - Always show */}
-                <div className='bg-white/80 p-2 rounded-lg col-span-2 md:col-span-3'>
+                <div className='bg-white/80 p-2 rounded-lg col-span-2 md:col-span-4'>
                   <label className='text-[10px] md:text-xs font-semibold text-gray-600'>Address</label>
                   <p className='text-xs md:text-sm font-bold text-gray-900 mt-0.5 leading-relaxed'>
                     {application.fullData?.address || '123, MG Road, Sector 15, Mumbai, Maharashtra - 400001'}
@@ -329,6 +382,29 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
           </div>
         </div>
       </div>
+
+      {/* Fullscreen Image Modal */}
+      {isImageModalOpen && (
+        <div 
+          className='fixed inset-0 z-[60] flex items-center justify-center bg-black/90 p-4 backdrop-blur-sm'
+          onClick={() => setIsImageModalOpen(false)}
+        >
+          <button 
+            className='absolute top-4 right-4 md:top-6 md:right-6 text-white hover:text-red-400 transition-colors p-2'
+            onClick={(e) => { e.stopPropagation(); setIsImageModalOpen(false); }}
+          >
+            <svg className='w-8 h-8 md:w-10 md:h-10' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+            </svg>
+          </button>
+          <img 
+            src={application.fullData?.documents?.learningLicense} 
+            className='max-w-full max-h-full object-contain rounded-lg shadow-2xl select-none'
+            onClick={(e) => e.stopPropagation()} 
+            alt='Full Size Learning License' 
+          />
+        </div>
+      )}
     </div>
   )
 }

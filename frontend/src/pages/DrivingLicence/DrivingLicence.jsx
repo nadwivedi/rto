@@ -397,7 +397,8 @@ const DrivingLicence = () => {
         totalAmount: parseFloat(formData.totalAmount) || 0,
         paidAmount: parseFloat(formData.paidAmount) || 0,
         balanceAmount: parseFloat(formData.balanceAmount) || 0,
-        applicationStatus: 'pending'
+        applicationStatus: 'pending',
+        documents: formData.documents
       }
 
       const response = await axios.post(`${API_URL}/api/driving-licenses`, applicationData, { withCredentials: true })
@@ -452,7 +453,8 @@ const DrivingLicence = () => {
         paidAmount: parseFloat(formData.paidAmount) || 0,
         balanceAmount: parseFloat(formData.balanceAmount) || 0,
         applicationStatus: formData.applicationStatus,
-        notes: formData.notes
+        notes: formData.notes,
+        documents: formData.documents
       }
 
       const response = await axios.put(`${API_URL}/api/driving-licenses/${selectedApplication.id}`, applicationData, { withCredentials: true })
