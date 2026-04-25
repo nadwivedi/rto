@@ -77,28 +77,28 @@ const Home2 = () => {
     <div className='min-h-screen bg-slate-100 px-2 py-6 sm:px-6 lg:px-10'>
       <div className='mx-auto max-w-6xl'>
         {/* Top Navbar Options */}
-        <div className='flex justify-end gap-3 mb-8'>
+        <div className='flex justify-end gap-2 sm:gap-3 mb-6 sm:mb-8'>
           {user?.type !== 'staff' && (
             <button
               onClick={() => navigate('/whatsapp')}
-              className='flex items-center gap-2 px-4 py-2 bg-emerald-500 text-white rounded-xl shadow-md hover:bg-emerald-600 transition-all duration-300 font-bold'
+              className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-emerald-600 transition-all duration-300 font-bold text-xs sm:text-base'
             >
-              <span className='text-xl'>💬</span>
+              <span className='text-base sm:text-xl'>💬</span>
               WhatsApp
             </button>
           )}
           <button
             onClick={() => navigate('/javak')}
-            className='flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold'
+            className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-indigo-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold text-xs sm:text-base'
           >
-            <span className='text-xl'>📋</span>
+            <span className='text-base sm:text-xl'>📋</span>
             Javak
           </button>
           <button
             onClick={() => navigate('/setting')}
-            className='flex items-center gap-2 px-4 py-2 bg-slate-700 text-white rounded-xl shadow-md hover:bg-slate-800 transition-all duration-300 font-bold'
+            className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-slate-700 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-slate-800 transition-all duration-300 font-bold text-xs sm:text-base'
           >
-            <span className='text-xl'>⚙️</span>
+            <span className='text-base sm:text-xl'>⚙️</span>
             Setting
           </button>
         </div>
