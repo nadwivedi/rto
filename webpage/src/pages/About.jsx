@@ -1,9 +1,16 @@
 import { Link } from 'react-router-dom'
+import SEO from '../components/SEO'
 import './About.css'
 
 export default function About() {
   return (
     <>
+      <SEO 
+        title="About Us | RTO Sarthi"
+        description="Learn more about RTO Sarthi, India's best RTO agent software developed by SoftwareBytes. Discover how we use AI to streamline RTO workflows."
+        url="/about"
+        keywords="about rto sarthi, softwarebytes, rto software developers"
+      />
       <section className="page-hero">
         <div className="page-hero-bg">
           <div className="shape shape-1"></div>

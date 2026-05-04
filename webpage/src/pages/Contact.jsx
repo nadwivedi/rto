@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import SEO from '../components/SEO'
 import './Contact.css'
 
 export default function Contact() {
@@ -16,6 +17,12 @@ export default function Contact() {
 
   return (
     <>
+      <SEO 
+        title="Contact Us | RTO Sarthi"
+        description="Get in touch with the RTO Sarthi team for a free demo, technical support, or pricing enquiries. Call, email, or chat with us on WhatsApp."
+        url="/contact"
+        keywords="contact rto sarthi, rto agent software support, rto software demo"
+      />
       <section className="page-hero">
         <div className="page-hero-bg">
           <div className="shape shape-1"></div>

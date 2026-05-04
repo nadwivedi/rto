@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import SEO from '../components/SEO'
 import './Home.css'
 
 const features = [
@@ -80,6 +81,12 @@ const features = [
 export default function Home() {
   return (
     <>
+      <SEO 
+        title="Smart RTO Agent Software"
+        description="RTO Sarthi is the ultimate AI-powered software for RTO agents. Track document expiry, send automated WhatsApp reminders, and manage your party ledgers all in one intuitive dashboard."
+        url="/"
+        keywords="rto agent software, rto software india, whatsapp rto reminder, rto pending balance software, vehicle expiry tracker"
+      />
       {/* HERO */}
       <section className="hero" id="home">
         <div className="hero-bg-shapes">

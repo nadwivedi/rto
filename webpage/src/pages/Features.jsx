@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import SEO from '../components/SEO'
 import './Features.css'
 
 export default function Features() {
@@ -49,6 +50,12 @@ export default function Features() {
 
   return (
     <>
+      <SEO 
+        title="Features | RTO Sarthi"
+        description="Explore the features of RTO Sarthi. AI automatic entry, WhatsApp reminders, expiry alerts, billing, and complete party management."
+        url="/features"
+        keywords="rto software features, whatsapp reminder for rto, automatic rc entry, rto party management"
+      />
       {/* PAGE HERO */}
       <section className="page-hero">
         <div className="page-hero-bg">
