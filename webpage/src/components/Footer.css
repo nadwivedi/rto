@@ -3,14 +3,14 @@
 .footer-brand { display: flex; flex-direction: column; gap: 16px; }
 .footer-brand .nav-logo { display: flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.1rem; }
 .footer-brand .logo-text { color: #fff; }
-.footer-brand .logo-accent { color: #6366f1; }
+.footer-brand .logo-accent { color: var(--secondary); }
 .footer-tagline { font-size: .9rem; line-height: 1.7; }
-.footer-link { color: #6366f1; text-decoration: underline; }
+.footer-link { color: var(--secondary); text-decoration: underline; }
 .footer-links-col h4 { color: #fff; font-weight: 700; margin-bottom: 16px; font-size: .95rem; }
 .footer-links-col ul { list-style: none; display: flex; flex-direction: column; gap: 10px; }
 .footer-links-col a { font-size: .9rem; color: #9ca3af; transition: .2s; }
-.footer-links-col a:hover { color: #6366f1; }
+.footer-links-col a:hover { color: var(--secondary); }
 .footer-bottom { border-top: 1px solid rgba(255,255,255,.08); padding: 24px 0; text-align: center; font-size: .85rem; }
-.footer-bottom a { color: #6366f1; text-decoration: underline; }
+.footer-bottom a { color: var(--secondary); text-decoration: underline; }
 @media(max-width: 768px) { .footer-grid { grid-template-columns: 1fr 1fr; } }
 @media(max-width: 480px) { .footer-grid { grid-template-columns: 1fr; } }

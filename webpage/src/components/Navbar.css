@@ -10,12 +10,12 @@
 }
 .nav-logo { display: flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.2rem; }
 .logo-icon { display: flex; }
-.logo-accent { color: #6366f1; }
+.logo-accent { color: var(--secondary); }
 .nav-links { display: flex; align-items: center; gap: 8px; }
 .nav-link { padding: 8px 16px; border-radius: 8px; font-weight: 500; font-size: .95rem; color: #4b5563; transition: .2s; }
-.nav-link:hover, .nav-link.active { color: #6366f1; background: rgba(99,102,241,.07); }
-.nav-cta { padding: 10px 22px; border-radius: 10px; background: #6366f1; color: #fff; font-weight: 600; font-size: .9rem; transition: .2s; }
-.nav-cta:hover { background: #4f46e5; transform: translateY(-1px); }
+.nav-link:hover, .nav-link.active { color: var(--primary); background: rgba(4,78,185,.07); }
+.nav-cta { padding: 10px 22px; border-radius: 10px; background: var(--primary); color: #fff; font-weight: 600; font-size: .9rem; transition: .2s; }
+.nav-cta:hover { background: var(--primary-dark); transform: translateY(-1px); }
 .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; }
 .hamburger span { display: block; width: 24px; height: 2px; background: #374151; border-radius: 2px; transition: .3s; }
 @media(max-width: 768px) {

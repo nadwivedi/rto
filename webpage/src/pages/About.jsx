@@ -95,7 +95,7 @@ export default function About() {
                     <circle cx="14" cy="14" r="3" fill="white"/>
                     <defs>
                       <linearGradient id="devLg" x1="0" y1="0" x2="28" y2="28">
-                        <stop stopColor="#6366f1"/><stop offset="1" stopColor="#8b5cf6"/>
+                        <stop stopColor="#044eb9"/><stop offset="1" stopColor="#ff6b00"/>
                       </linearGradient>
                     </defs>
                   </svg>

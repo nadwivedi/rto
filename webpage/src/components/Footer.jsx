@@ -10,7 +10,7 @@ const Logo = () => (
         <circle cx="14" cy="14" r="3" fill="white"/>
         <defs>
           <linearGradient id="fLogo" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#6366f1"/><stop offset="1" stopColor="#8b5cf6"/>
+            <stop stopColor="#044eb9"/><stop offset="1" stopColor="#ff6b00"/>
           </linearGradient>
         </defs>
       </svg>
