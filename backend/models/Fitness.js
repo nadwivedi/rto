@@ -114,7 +114,10 @@ fitnessSchema.index({ validTo: 1 })
 // Index 3: balance (for filtering pending payments)
 fitnessSchema.index({ balance: 1 })
 
-// Index 4: createdAt (for default sorting - newest first)
+// Index 4: ownerName (for searching by name)
+fitnessSchema.index({ ownerName: 1 })
+
+// Index 5: createdAt (for default sorting - newest first)
 fitnessSchema.index({ createdAt: -1 })
 
 const Fitness = mongoose.model('Fitness', fitnessSchema)

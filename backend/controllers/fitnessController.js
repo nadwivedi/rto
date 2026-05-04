@@ -88,8 +88,12 @@ exports.getAllFitness = async (req, res) => {
 
     const query = { userId: req.user.id }
 
+    // Search by vehicle number or owner name
     if (search) {
-      query.vehicleNumber = { $regex: search, $options: 'i' }
+      query.$or = [
+        { vehicleNumber: { $regex: search, $options: 'i' } },
+        { ownerName: { $regex: search, $options: 'i' } }
+      ]
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit)
@@ -163,10 +167,15 @@ exports.getExpiringSoonFitness = async (req, res) => {
     }
 
     if (search) {
-      // Update the vehicleNumber condition to work with search
+      // Update the condition to work with search for both vehicleNumber and ownerName
       query.$and = [
         { vehicleNumber: { $nin: vehiclesWithActiveFitness } },
-        { vehicleNumber: { $regex: search, $options: 'i' } }
+        {
+          $or: [
+            { vehicleNumber: { $regex: search, $options: 'i' } },
+            { ownerName: { $regex: search, $options: 'i' } }
+          ]
+        }
       ]
       delete query.vehicleNumber
     }
@@ -220,10 +229,15 @@ exports.getExpiredFitness = async (req, res) => {
     }
 
     if (search) {
-      // Update the vehicleNumber condition to work with search
+      // Update the condition to work with search for both vehicleNumber and ownerName
       query.$and = [
         { vehicleNumber: { $nin: vehiclesWithActiveFitness } },
-        { vehicleNumber: { $regex: search, $options: 'i' } }
+        {
+          $or: [
+            { vehicleNumber: { $regex: search, $options: 'i' } },
+            { ownerName: { $regex: search, $options: 'i' } }
+          ]
+        }
       ]
       delete query.vehicleNumber
     }
@@ -267,8 +281,12 @@ exports.getActiveFitness = async (req, res) => {
 
     const query = { status: 'active', userId: req.user.id }
 
+    // Search by vehicle number or owner name
     if (search) {
-      query.vehicleNumber = { $regex: search, $options: 'i' }
+      query.$or = [
+        { vehicleNumber: { $regex: search, $options: 'i' } },
+        { ownerName: { $regex: search, $options: 'i' } }
+      ]
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit)
@@ -310,8 +328,12 @@ exports.getPendingFitness = async (req, res) => {
 
     const query = { balance: { $gt: 0 }, userId: req.user.id }
 
+    // Search by vehicle number or owner name
     if (search) {
-      query.vehicleNumber = { $regex: search, $options: 'i' }
+      query.$or = [
+        { vehicleNumber: { $regex: search, $options: 'i' } },
+        { ownerName: { $regex: search, $options: 'i' } }
+      ]
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit)

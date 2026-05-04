@@ -11,7 +11,7 @@ const SearchBar = ({ value, onChange, placeholder, toUpperCase = false }) => {
         placeholder={placeholder}
         value={value}
         onChange={handleChange}
-        className='w-full pl-11 pr-4 py-3 text-sm border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 transition-all bg-white shadow-sm uppercase'
+        className={`w-full pl-11 pr-4 py-3 text-sm border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 transition-all bg-white shadow-sm ${toUpperCase ? 'uppercase' : ''}`}
       />
       <svg
         className='absolute left-3.5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-indigo-400'

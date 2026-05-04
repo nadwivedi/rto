@@ -474,8 +474,8 @@ const Fitness = () => {
                 <SearchBar
                   value={searchQuery}
                   onChange={(value) => setSearchQuery(value)}
-                  placeholder="Search by vehicle number..."
-                  toUpperCase={true}
+                  placeholder="Search by vehicle number or name..."
+                  toUpperCase={false}
                 />
 
                 {/* Add Button */}

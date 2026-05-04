@@ -101,7 +101,10 @@ taxSchema.index({ taxTo: 1 })
 // Index 3: balanceAmount (for filtering pending payments)
 taxSchema.index({ balanceAmount: 1 })
 
-// Index 4: createdAt (for default sorting - newest first)
+// Index 4: ownerName (for searching by name)
+taxSchema.index({ ownerName: 1 })
+
+// Index 5: createdAt (for default sorting - newest first)
 taxSchema.index({ createdAt: -1 })
 
 const Tax = mongoose.model('Tax', taxSchema)
