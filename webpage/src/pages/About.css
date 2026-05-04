@@ -1,0 +1,34 @@
+.about-main { padding: 100px 0; }
+.about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: start; }
+.about-text p { color: #4b5563; margin-bottom: 16px; font-size: 1rem; line-height: 1.8; }
+.about-values { margin-top: 32px; display: flex; flex-direction: column; gap: 20px; }
+.value-item { display: flex; gap: 16px; align-items: flex-start; }
+.value-icon { width: 28px; height: 28px; border-radius: 8px; background: #6366f1; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+.value-item strong { display: block; font-weight: 700; margin-bottom: 4px; }
+.value-item p { font-size: .9rem; color: #4b5563; margin: 0; }
+.about-card-visual { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.about-stat-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 16px; padding: 24px; text-align: center; transition: .3s; }
+.about-stat-card:hover { border-color: #6366f1; box-shadow: 0 8px 24px rgba(99,102,241,.1); }
+.asc-icon { font-size: 2rem; margin-bottom: 12px; display: block; }
+.about-stat-card h3 { font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 700; font-size: .95rem; margin-bottom: 8px; }
+.about-stat-card p { font-size: .82rem; color: #4b5563; }
+
+.developer-section { padding: 80px 0; background: #f9fafb; }
+.dev-card { background: #fff; border-radius: 24px; padding: 60px; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; border: 1px solid #e5e7eb; box-shadow: 0 12px 48px rgba(0,0,0,.08); }
+.dev-info p { color: #4b5563; line-height: 1.8; margin-bottom: 16px; font-size: 1rem; }
+.dev-highlights { display: flex; flex-direction: column; gap: 12px; margin: 24px 0; }
+.dev-highlight { display: flex; align-items: center; gap: 12px; font-size: .95rem; font-weight: 500; }
+.dh-icon { font-size: 1.2rem; }
+.dev-btn { margin-top: 8px; }
+.dev-logo-card { background: linear-gradient(135deg,#f0f0ff,#faf5ff); border-radius: 20px; padding: 40px; text-align: center; border: 1px solid rgba(99,102,241,.2); height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; }
+.dev-logo-inner { display: flex; flex-direction: column; align-items: center; gap: 16px; }
+.dlp-name { display: block; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.5rem; }
+.dlp-location { display: block; font-size: .85rem; color: #6b7280; }
+.dev-quote { font-size: .95rem; color: #4b5563; font-style: italic; max-width: 280px; }
+.dev-site-link { color: #6366f1; font-weight: 600; text-decoration: underline; font-size: 1rem; }
+
+@media(max-width: 1024px) {
+  .about-grid, .dev-card { grid-template-columns: 1fr; }
+  .about-card-visual { grid-template-columns: 1fr 1fr; }
+}
+@media(max-width: 480px) { .about-card-visual { grid-template-columns: 1fr; } .dev-card { padding: 32px 20px; } }
