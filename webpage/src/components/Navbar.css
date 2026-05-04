@@ -8,13 +8,13 @@
   max-width: 1200px; margin: 0 auto; padding: 0 24px;
   height: 68px; display: flex; align-items: center; justify-content: space-between;
 }
-.nav-logo { display: flex; align-items: center; gap: 10px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.2rem; }
+.nav-logo { display: flex; align-items: center; gap: 8px; font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 800; font-size: 1.05rem; }
 .logo-icon { display: flex; }
 .logo-accent { color: var(--secondary); }
 .nav-links { display: flex; align-items: center; gap: 8px; }
-.nav-link { padding: 8px 16px; border-radius: 8px; font-weight: 500; font-size: .95rem; color: #4b5563; transition: .2s; }
+.nav-link { padding: 8px 14px; border-radius: 8px; font-weight: 500; font-size: .85rem; color: #4b5563; transition: .2s; }
 .nav-link:hover, .nav-link.active { color: var(--primary); background: rgba(4,78,185,.07); }
-.nav-cta { padding: 10px 22px; border-radius: 10px; background: var(--primary); color: #fff; font-weight: 600; font-size: .9rem; transition: .2s; }
+.nav-cta { padding: 8px 18px; border-radius: 8px; background: var(--primary); color: #fff; font-weight: 600; font-size: .85rem; transition: .2s; }
 .nav-cta:hover { background: var(--primary-dark); transform: translateY(-1px); }
 .hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 8px; }
 .hamburger span { display: block; width: 24px; height: 2px; background: #374151; border-radius: 2px; transition: .3s; }

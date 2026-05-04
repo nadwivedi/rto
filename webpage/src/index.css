@@ -53,10 +53,10 @@ img { max-width: 100%; }
   font-size: .8rem; font-weight: 700; letter-spacing: .05em;
   text-transform: uppercase; margin-bottom: 16px;
 }
-.section-header { text-align: center; margin-bottom: 56px; }
-.section-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(1.8rem,4vw,2.8rem); font-weight: 800; margin-bottom: 16px; color: var(--primary); }
+.section-header { text-align: center; margin-bottom: 40px; }
+.section-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(1.5rem,3vw,2.2rem); font-weight: 800; margin-bottom: 16px; color: var(--primary); }
 .section-title-sm { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(1.5rem,3vw,2.2rem); font-weight: 800; margin-bottom: 16px; color: var(--primary); }
-.section-desc { font-size: 1.1rem; color: var(--gray-600); max-width: 580px; margin: 0 auto; }
+.section-desc { font-size: .85rem; color: var(--gray-600); max-width: 580px; margin: 0 auto; }
 .gradient-text { background: linear-gradient(135deg, var(--primary), #0a75ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
 /* CTA */
@@ -88,8 +88,8 @@ img { max-width: 100%; }
 .badge-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
 .hero-title { font-family: 'Plus Jakarta Sans', sans-serif; font-size: clamp(2rem,5vw,3.5rem); font-weight: 900; line-height: 1.15; margin-bottom: 24px; color: var(--primary); }
-.hero-description { font-size: 1.1rem; color: var(--gray-600); margin-bottom: 36px; max-width: 520px; margin-left: auto; margin-right: auto; }
-.hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; justify-content: center; }
+.hero-description { font-size: 1.1rem; color: var(--gray-600); margin-bottom: 36px; max-width: 520px; }
+.hero-actions { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 48px; }
 
 /* BG SHAPES */
 .shape { position: absolute; border-radius: 50%; filter: blur(60px); opacity: .4; }

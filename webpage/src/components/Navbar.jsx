@@ -17,7 +17,7 @@ export default function Navbar() {
       <div className="nav-container">
         <Link to="/" className="nav-logo">
           <div className="logo-icon">
-            <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
               <circle cx="14" cy="14" r="14" fill="url(#lg1)"/>
               <path d="M8 14C8 10.686 10.686 8 14 8C17.314 8 20 10.686 20 14C20 17.314 17.314 20 14 20" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
               <circle cx="14" cy="14" r="3" fill="white"/>
