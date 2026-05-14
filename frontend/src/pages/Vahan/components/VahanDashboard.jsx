@@ -107,6 +107,14 @@ const VahanDashboard = () => {
         })
       })
 
+      ;(data.expiringRecords.insurance || []).forEach(r => {
+        records.push({
+          ...r,
+          docType: 'Insurance',
+          ownerName: r.policyHolderName || r.ownerName
+        })
+      })
+
       ;(data.expiringRecords.nationalPermit || []).forEach(r => {
         if (r.partAStatus === 'expiring_soon') {
           records.push({
@@ -216,7 +224,8 @@ const VahanDashboard = () => {
     'State Permit': 8,
     'Bus Permit': 9,
     'Temp Permit': 10,
-    'Temp Permit Other': 11
+    'Temp Permit Other': 11,
+    'Insurance': 12
   }
 
   const filteredRecords = useMemo(() => {
@@ -228,6 +237,7 @@ const VahanDashboard = () => {
         'tax': 'Tax',
         'puc': 'PUC',
         'gps': 'GPS',
+        'insurance': 'Insurance',
         'permit': ['National Permit', 'NP (Part A)', 'NP (Part B)', 'State Permit', 'Bus Permit', 'Temp Permit', 'Temp Permit Other']
       }
       const targetType = filterMap[filter]
@@ -265,7 +275,8 @@ const VahanDashboard = () => {
       'State Permit': 'bg-green-100 text-green-700',
       'Bus Permit': 'bg-amber-100 text-amber-700',
       'Temp Permit': 'bg-yellow-100 text-yellow-700',
-      'Temp Permit Other': 'bg-orange-100 text-orange-700'
+      'Temp Permit Other': 'bg-orange-100 text-orange-700',
+      'Insurance': 'bg-blue-100 text-blue-700'
     }
     return styles[docType] || 'bg-gray-100 text-gray-700'
   }
@@ -276,6 +287,7 @@ const VahanDashboard = () => {
     { key: 'fitness', label: 'Fitness' },
     { key: 'puc', label: 'PUC' },
     { key: 'gps', label: 'GPS' },
+    { key: 'insurance', label: 'Insurance' },
     { key: 'permit', label: 'Permit' }
   ]
 
@@ -285,6 +297,7 @@ const VahanDashboard = () => {
     fitness: allRecords.filter(r => r.docType === 'Fitness').length,
     puc: allRecords.filter(r => r.docType === 'PUC').length,
     gps: allRecords.filter(r => r.docType === 'GPS').length,
+    insurance: allRecords.filter(r => r.docType === 'Insurance').length,
     permit: allRecords.filter(r => ['National Permit', 'NP (Part A)', 'NP (Part B)', 'State Permit', 'Bus Permit', 'Temp Permit', 'Temp Permit Other'].includes(r.docType)).length
   }
 

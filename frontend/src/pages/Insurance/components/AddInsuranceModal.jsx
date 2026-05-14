@@ -31,6 +31,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
   const [vehicleError, setVehicleError] = useState('')
   const [vehicleValidation, setVehicleValidation] = useState({ isValid: false, message: '' })
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
+  const [isManualValidTo, setIsManualValidTo] = useState(false)
 
   // Insurance document upload states
   const [insuranceDocPreview, setInsuranceDocPreview] = useState(null)
@@ -98,6 +99,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       setFetchingVehicle(false)
       setVehicleValidation({ isValid: false, message: '' })
       setInsuranceDocPreview(null)
+      setIsManualValidTo(false)
     }
   }, [initialData, isOpen, prefilledVehicleNumber, prefilledOwnerName, prefilledMobileNumber])
 
@@ -189,7 +191,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
   // Calculate valid to date (1 year from valid from)
   useEffect(() => {
-    if (isOcrUpdate.current) return; // Prevent overwriting if populated via OCR
+    if (isOcrUpdate.current || isManualValidTo) return; // Prevent overwriting if populated via OCR or manual edit
     if (formData.validFrom) {
       // Parse DD-MM-YYYY format
       const parts = formData.validFrom.trim().split('-')
@@ -362,11 +364,21 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
     // Auto-format date fields with automatic dash insertion
     if (name === 'validFrom' || name === 'validTo') {
+      if (name === 'validTo') setIsManualValidTo(true)
       const formatted = handleSmartDateInput(value, formData[name] || '')
+      
+      // If smart formatting returns a value, use it
       if (formatted !== null) {
         setFormData(prev => ({
           ...prev,
           [name]: formatted
+        }))
+      } else {
+        // If smart formatting rejects (e.g. invalid first digit), 
+        // still allow the user to type/delete so the field isn't "locked"
+        setFormData(prev => ({
+          ...prev,
+          [name]: value
         }))
       }
       return
@@ -602,24 +614,29 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
     setIsSubmitting(true)
     try {
-      const response = await axios.post(`${API_URL}/api/insurance`, submitData, {
+      const endpoint = isEditMode ? `${API_URL}/api/insurance/${initialData._id}` : `${API_URL}/api/insurance`
+      const method = isEditMode ? 'put' : 'post'
+      
+      const response = await axios[method](endpoint, submitData, {
         withCredentials: true
       })
 
       if (response.data.success) {
-        toast.success('Insurance record added successfully!')
+        toast.success(isEditMode ? 'Insurance record updated successfully!' : 'Insurance record added successfully!')
 
         // Call onSubmit callback to notify parent (for refresh)
         if (onSubmit) {
-          onSubmit()
+          // If the parent passed a function that expects formData, we might still want to pass it
+          // but usually it's just for refresh.
+          onSubmit(submitData)
         }
 
         // Close modal
         onClose()
       }
     } catch (error) {
-      console.error('Error adding insurance:', error)
-      toast.error(error.response?.data?.message || 'Failed to add insurance record')
+      console.error(`Error ${isEditMode ? 'updating' : 'adding'} insurance:`, error)
+      toast.error(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} insurance record`)
     } finally {
       setIsSubmitting(false)
     }
