@@ -1,5 +1,6 @@
 const Tax = require('../models/Tax')
 const VehicleRegistration = require('../models/VehicleRegistration')
+const { checkUserAndQueueAlerts } = require('../jobs/whatsappDailyExpiryChecker')
 const mongoose = require('mongoose')
 
 // helper function to calculate status
@@ -202,6 +203,9 @@ exports.createTax = async (req, res) => {
 
     await tax.save()
 
+    // Trigger WhatsApp expiry check immediately after creation
+    try { checkUserAndQueueAlerts(req.user.id) } catch (e) { console.error('[WhatsApp] Trigger error (tax create):', e) }
+
     res.status(201).json({
       success: true,
       message: 'Tax record created successfully',
@@ -270,6 +274,9 @@ exports.updateTax = async (req, res) => {
     if (partyId !== undefined) tax.partyId = partyId
 
     await tax.save()
+
+    // Trigger WhatsApp expiry check immediately after update
+    try { checkUserAndQueueAlerts(req.user.id) } catch (e) { console.error('[WhatsApp] Trigger error (tax update):', e) }
 
     res.json({
       success: true,

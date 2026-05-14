@@ -34,7 +34,7 @@ const alertSources = [
   { key: 'tax', name: 'Tax', documentType: 'Tax', model: Tax, dateField: 'taxTo', ownerField: 'ownerName' },
   { key: 'puc', name: 'PUC', documentType: 'Puc', model: Puc, dateField: 'validTo', ownerField: 'ownerName' },
   { key: 'gps', name: 'GPS', documentType: 'Gps', model: Gps, dateField: 'validTo', ownerField: 'ownerName' },
-  { key: 'insurance', name: 'Insurance', documentType: 'Insurance', model: Insurance, dateField: 'validTo', ownerField: 'ownerName' },
+  { key: 'insurance', name: 'Insurance', documentType: 'Insurance', model: Insurance, dateField: 'validTo', ownerField: 'policyHolderName', query: { isRenewed: { $ne: true } } },
   { key: 'statePermit', name: 'State Permit', documentType: 'CgPermit', model: CgPermit, dateField: 'validTo', ownerField: 'permitHolder', query: { isRenewed: false } },
   { key: 'busPermit', name: 'Bus Permit', documentType: 'BusPermit', model: BusPermit, dateField: 'validTo', ownerField: 'permitHolder', query: { isRenewed: false } },
   { key: 'temporaryPermit', name: 'Temp Permit', documentType: 'TemporaryPermit', model: TemporaryPermit, dateField: 'validTo', ownerField: 'permitHolder', query: { isRenewed: false } }
@@ -46,14 +46,21 @@ const nationalPermitParts = [
 ]
 
 const getAlertForDay = (diffDays, rule) => {
-  const beforeDays = (rule.beforeDays || []).map(Number)
-  const afterDays = (rule.afterDays || []).map(Number)
+  // Sort ascending so we match the SMALLEST threshold that diffDays fits within
+  // e.g. beforeDays=[7,3], diffDays=4: 4 ≤ 3? No → 4 ≤ 7? Yes → key 'before-7'
+  // e.g. beforeDays=[7,3], diffDays=3: 3 ≤ 3? Yes → key 'before-3' (new key = fallback sends)
+  const beforeDays = [...(rule.beforeDays || [])].map(Number).sort((a, b) => a - b)
+  const afterDays = [...(rule.afterDays || [])].map(Number).sort((a, b) => a - b)
 
-  if (diffDays > 0 && beforeDays.includes(diffDays)) {
-    return {
-      type: 'upcoming',
-      key: `before-${diffDays}`,
-      label: `expires in ${diffDays} day${diffDays === 1 ? '' : 's'}`
+  if (diffDays > 0) {
+    for (const threshold of beforeDays) {
+      if (diffDays <= threshold) {
+        return {
+          type: 'upcoming',
+          key: `before-${threshold}`,
+          label: `expires in ${diffDays} day${diffDays === 1 ? '' : 's'}`
+        }
+      }
     }
   }
 
@@ -67,11 +74,13 @@ const getAlertForDay = (diffDays, rule) => {
 
   if (diffDays < 0 && rule.sendAfterExpiry === true) {
     const daysPast = Math.abs(diffDays)
-    if (afterDays.includes(daysPast)) {
-      return {
-        type: 'expired',
-        key: `after-${daysPast}`,
-        label: `expired ${daysPast} days ago`
+    for (const threshold of afterDays) {
+      if (daysPast <= threshold) {
+        return {
+          type: 'expired',
+          key: `after-${threshold}`,
+          label: `expired ${daysPast} days ago`
+        }
       }
     }
   }

@@ -12,7 +12,7 @@ const WHATSAPP_ALERT_SERVICES = [
 
 const DEFAULT_ALERT_RULE = {
   enabled: true,
-  beforeDays: [7],
+  beforeDays: [7, 3],
   sendOnExpiryDay: true,
   sendAfterExpiry: false,
   afterDays: [7, 10]

@@ -83,16 +83,28 @@ router.post('/trigger-check', async (req, res) => {
     // Reset ALL today's failed messages back to pending before scan
     const startOfDay = new Date()
     startOfDay.setHours(0, 0, 0, 0)
-    const reset = await MessageLog.updateMany(
+    const failedReset = await MessageLog.updateMany(
       { userId, status: 'failed', createdAt: { $gte: startOfDay } },
       { $set: { status: 'pending', errorReason: null, scheduledFor: new Date() } }
+    )
+
+    // Also reset stale pending messages older than 1 hour (so re-check can re-queue if needed)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+    const stalePendingReset = await MessageLog.updateMany(
+      { userId, status: 'pending', scheduledFor: { $lt: oneHourAgo } },
+      { $set: { status: 'failed', errorReason: 'Stale — reset by manual trigger' } }
+    )
+
+    // Delete old 'failed' stale logs so they can be re-queued fresh
+    await MessageLog.deleteMany(
+      { userId, status: 'failed', errorReason: 'Stale — reset by manual trigger' }
     )
 
     const queued = await checkUserAndQueueAlerts(userId)
     await processPendingMessagesForUser(userId)
 
     res.json({
-      message: `Scan done. ${queued || 0} new alerts queued. ${reset.modifiedCount} failed messages reset. Sender processed pending.`
+      message: `Scan done. ${queued || 0} new alerts queued. ${failedReset.modifiedCount} failed messages reset. ${stalePendingReset.modifiedCount} stale pending cleared. Sender processed pending.`
     })
   } catch (error) {
     res.status(500).json({ message: error.message })

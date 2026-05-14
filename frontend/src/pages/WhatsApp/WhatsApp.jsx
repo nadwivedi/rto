@@ -66,7 +66,7 @@ const WhatsApp = () => {
     setActionBusy('check')
     try {
       const res = await axios.post(`${API_URL}/api/whatsapp/trigger-check`, {}, { withCredentials: true })
-      toast.success(res.data.message)
+      toast.success(res.data.message, { autoClose: 5000 })
       await fetchLogs(page)
     } catch (error) {
       toast.error(`Check failed: ${error?.response?.data?.message || error.message}`)

@@ -1,5 +1,6 @@
 const Fitness = require('../models/Fitness')
 const VehicleRegistration = require('../models/VehicleRegistration')
+const { checkUserAndQueueAlerts } = require('../jobs/whatsappDailyExpiryChecker')
 const mongoose = require('mongoose')
 const fs = require('fs')
 const path = require('path')
@@ -498,6 +499,9 @@ exports.createFitness = async (req, res) => {
 
     await fitness.save()
 
+    // Trigger WhatsApp expiry check immediately after creation
+    try { checkUserAndQueueAlerts(req.user.id) } catch (e) { console.error('[WhatsApp] Trigger error (fitness create):', e) }
+
     res.status(201).json({
       success: true,
       message: 'Fitness record created successfully',
@@ -590,6 +594,9 @@ exports.updateFitness = async (req, res) => {
     }
 
     await fitness.save()
+
+    // Trigger WhatsApp expiry check immediately after update
+    try { checkUserAndQueueAlerts(req.user.id) } catch (e) { console.error('[WhatsApp] Trigger error (fitness update):', e) }
 
     res.json({
       success: true,

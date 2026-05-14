@@ -1,4 +1,5 @@
 const Insurance = require('../models/Insurance')
+const { checkUserAndQueueAlerts } = require('../jobs/whatsappDailyExpiryChecker')
 const VehicleRegistration = require('../models/VehicleRegistration')
 const mongoose = require('mongoose')
 
@@ -128,6 +129,13 @@ exports.createInsurance = async (req, res) => {
 
     const newInsurance = new Insurance(insuranceData)
     await newInsurance.save()
+
+    // Trigger WhatsApp expiry check for this user immediately after adding
+    try {
+      checkUserAndQueueAlerts(req.user.id)
+    } catch (err) {
+      console.error('Error triggering WhatsApp scan after insurance create:', err)
+    }
 
     res.status(201).json({
       success: true,
@@ -511,12 +519,19 @@ exports.updateInsurance = async (req, res) => {
     }
     if (partyId !== undefined) insurance.partyId = partyId
 
-    await insurance.save()
+    const updatedInsurance = await insurance.save()
+
+    // Trigger WhatsApp expiry check for this user after update
+    try {
+      checkUserAndQueueAlerts(req.user.id)
+    } catch (err) {
+      console.error('Error triggering WhatsApp scan after insurance update:', err)
+    }
 
     res.status(200).json({
       success: true,
       message: 'Insurance record updated successfully',
-      data: insurance
+      data: updatedInsurance
     })
   } catch (error) {
     console.error('Error updating insurance record:', error)
