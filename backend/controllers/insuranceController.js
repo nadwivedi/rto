@@ -1,5 +1,6 @@
 const Insurance = require('../models/Insurance')
 const { checkUserAndQueueAlerts } = require('../jobs/whatsappDailyExpiryChecker')
+const { processPendingMessagesForUser } = require('../jobs/whatsappMessageSender')
 const VehicleRegistration = require('../models/VehicleRegistration')
 const mongoose = require('mongoose')
 
@@ -130,9 +131,10 @@ exports.createInsurance = async (req, res) => {
     const newInsurance = new Insurance(insuranceData)
     await newInsurance.save()
 
-    // Trigger WhatsApp expiry check for this user immediately after adding
+    // Queue alerts then immediately try to send (uses existing limits + session logic)
     try {
-      checkUserAndQueueAlerts(req.user.id)
+      await checkUserAndQueueAlerts(req.user.id)
+      processPendingMessagesForUser(req.user.id) // non-blocking: start/send/destroy session as needed
     } catch (err) {
       console.error('Error triggering WhatsApp scan after insurance create:', err)
     }
@@ -521,9 +523,10 @@ exports.updateInsurance = async (req, res) => {
 
     const updatedInsurance = await insurance.save()
 
-    // Trigger WhatsApp expiry check for this user after update
+    // Queue alerts then immediately try to send (uses existing limits + session logic)
     try {
-      checkUserAndQueueAlerts(req.user.id)
+      await checkUserAndQueueAlerts(req.user.id)
+      processPendingMessagesForUser(req.user.id) // non-blocking: start/send/destroy session as needed
     } catch (err) {
       console.error('Error triggering WhatsApp scan after insurance update:', err)
     }
