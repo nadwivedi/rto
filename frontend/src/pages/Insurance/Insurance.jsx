@@ -740,13 +740,10 @@ const Insurance = () => {
                     <thead className={theme.tableHeader}>
                       <tr>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
-                          Vehicle / Policy No.
+                          Insurance / Client
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
-                          Policy Holder
-                        </th>
-                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
-                          Company
+                          Vehicle / Contact
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
                           Validity Period
@@ -775,84 +772,54 @@ const Insurance = () => {
                             key={insurance.id}
                             className="hover:bg-gradient-to-r hover:from-blue-50 hover:via-indigo-50 hover:to-purple-50 transition-all duration-300 group"
                           >
+                            {/* Insurance / Client Column */}
+                            <td className='px-4 2xl:px-6 py-3 2xl:py-5'>
+                              <div className='flex flex-col gap-1'>
+                                <div className='flex items-center gap-1.5'>
+                                  <div className='bg-blue-100 p-1 rounded-md'>
+                                    <svg className='w-3 h-3 text-blue-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' />
+                                    </svg>
+                                  </div>
+                                  <span className='text-[11px] 2xl:text-[13px] font-bold text-gray-900 truncate max-w-[150px]'>
+                                    {insurance.insuranceCompany || 'N/A'}
+                                  </span>
+                                </div>
+                                <div className='flex items-center gap-1.5 ml-1'>
+                                  <div className='w-1 h-1 rounded-full bg-gray-400'></div>
+                                  <span className='text-[10px] 2xl:text-[12px] font-medium text-gray-600 truncate max-w-[150px]'>
+                                    {insurance.policyHolderName || 'N/A'}
+                                  </span>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Vehicle / Contact Column */}
                             <td className="px-4 2xl:px-6 py-3 2xl:py-5">
-                              <div className='flex flex-col gap-1 2xl:gap-1.5'>
-                                <div>
+                              <div className='flex flex-col gap-1.5'>
+                                <div className='flex items-center gap-2'>
                                   {(() => {
-                                    const parts = getVehicleNumberParts(
-                                      insurance.vehicleNumber
-                                    );
-                                    if (!parts) {
-                                      return (
-                                        <div className='flex items-center gap-1.5'>
-                                          <svg className='w-3.5 h-3.5 2xl:w-4 2xl:h-4 text-blue-600 flex-shrink-0' fill='currentColor' viewBox='0 0 20 20'>
-                                            <path d='M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z' />
-                                            <path d='M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z' />
-                                          </svg>
-                                          <span className='text-[13px] 2xl:text-[15px] font-semibold text-gray-900'>{insurance.vehicleNumber}</span>
-                                        </div>
-                                      );
-                                    }
+                                    const parts = getVehicleNumberParts(insurance.vehicleNumber);
+                                    if (!parts) return <span className='text-[12px] 2xl:text-[14px] font-bold text-blue-900'>{insurance.vehicleNumber}</span>;
                                     return (
-                                      <div className={vehicleDesign.container}>
-                                        <svg
-                                          className="w-4 h-6 mr-0.5 text-blue-800 flex-shrink-0"
-                                          fill="currentColor"
-                                          viewBox="0 0 20 20"
-                                        >
-                                          <path d="M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
-                                          <path d="M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z" />
-                                        </svg>
-                                        <span className={vehicleDesign.stateCode}>
-                                          {parts.stateCode}
-                                        </span>
-                                        <span
-                                          className={vehicleDesign.districtCode}
-                                        >
-                                          {parts.districtCode}
-                                        </span>
-                                        <span className={vehicleDesign.series}>
-                                          {parts.series}
-                                        </span>
-                                        <span className={vehicleDesign.last4Digits}>
-                                          {parts.last4Digits}
-                                        </span>
+                                      <div className={vehicleDesign.container + " scale-90 -ml-2 origin-left"}>
+                                        <span className={vehicleDesign.stateCode}>{parts.stateCode}</span>
+                                        <span className={vehicleDesign.districtCode}>{parts.districtCode}</span>
+                                        <span className={vehicleDesign.series}>{parts.series}</span>
+                                        <span className={vehicleDesign.last4Digits}>{parts.last4Digits}</span>
                                       </div>
                                     );
                                   })()}
                                 </div>
                                 <div className='flex items-center gap-1.5'>
-                                  <svg className='w-3.5 h-3.5 text-indigo-600 flex-shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                                  <svg className='w-3 h-3 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' />
                                   </svg>
-                                  <span className='text-[11px] 2xl:text-[13px] font-medium text-gray-600'>{insurance.policyNumber}</span>
+                                  <span className='text-[10px] 2xl:text-[12px] font-semibold text-gray-500'>{insurance.mobileNumber || 'N/A'}</span>
                                 </div>
                               </div>
                             </td>
-                            <td className='px-4 2xl:px-6 py-3 2xl:py-5'>
-                              <div className='flex items-center'>
-                                <div className='flex-shrink-0 h-8 w-8 2xl:h-10 2xl:w-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold shadow-md text-xs 2xl:text-sm'>
-                                  {insurance.policyHolderName?.charAt(0) || 'P'}
-                                </div>
-                                <div className='ml-2 2xl:ml-4'>
-                                  <div className='text-[11px] 2xl:text-sm font-bold text-gray-900'>{insurance.policyHolderName || 'N/A'}</div>
-                                  {insurance.mobileNumber && (
-                                    <div className='text-[10px] 2xl:text-xs text-gray-500 flex items-center mt-0.5 2xl:mt-1'>
-                                      <svg className='w-3 h-3 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' />
-                                      </svg>
-                                      {insurance.mobileNumber}
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            </td>
-                            <td className='px-4 2xl:px-6 py-3 2xl:py-5'>
-                              <div className='flex flex-col'>
-                                <div className='text-[11px] 2xl:text-sm font-bold text-gray-900'>{insurance.insuranceCompany || 'N/A'}</div>
-                                <div className='text-[10px] 2xl:text-xs text-gray-500 mt-0.5'>Insurance Co.</div>
-                              </div>
-                            </td>
+
                             <td className="px-4 2xl:px-6 py-3 2xl:py-5">
                               <div className="flex flex-col gap-1.5 min-w-[120px]">
                                 <div className="flex items-center text-[10px] 2xl:text-[12px]">
@@ -921,8 +888,8 @@ const Insurance = () => {
                                     title="View Insurance Document"
                                   >
                                     <svg className="w-4 h-4 2xl:w-5 2xl:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
                                     </svg>
                                   </a>
                                 )}
