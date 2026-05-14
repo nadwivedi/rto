@@ -10,6 +10,9 @@ router.get('/export', insuranceController.exportAllInsurance)
 // Get statistics (must be before /:id)
 router.get('/statistics', insuranceController.getStatistics)
 
+// Get distinct insurance companies for filter dropdown
+router.get('/companies', insuranceController.getInsuranceCompanies)
+
 // Get expiring insurance records (must be before /:id)
 router.get('/expiring', insuranceController.getExpiringInsurance)
 

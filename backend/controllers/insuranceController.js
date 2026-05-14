@@ -154,6 +154,19 @@ exports.createInsurance = async (req, res) => {
   }
 }
 
+// Get distinct insurance companies for filter dropdown
+exports.getInsuranceCompanies = async (req, res) => {
+  try {
+    const companies = await Insurance.distinct('insuranceCompany', {
+      userId: req.user.id,
+      insuranceCompany: { $exists: true, $nin: [null, ''] }
+    })
+    res.status(200).json({ success: true, data: companies.filter(Boolean).sort() })
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch companies' })
+  }
+}
+
 // Get all insurance records with pagination and filters
 exports.getAllInsurance = async (req, res) => {
   try {
@@ -161,12 +174,18 @@ exports.getAllInsurance = async (req, res) => {
       page = 1,
       limit = 20,
       search,
+      company,
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query
 
     // Build query
     const query = { userId: req.user.id }
+
+    // Filter by insurance company
+    if (company) {
+      query.insuranceCompany = { $regex: company, $options: 'i' }
+    }
 
     // Search by policy number, vehicle number, owner name
     if (search) {

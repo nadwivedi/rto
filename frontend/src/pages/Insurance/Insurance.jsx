@@ -29,7 +29,9 @@ const Insurance = () => {
   const [selectedInsurance, setSelectedInsurance] = useState(null);
   const [loading, setLoading] = useState(false);
   const [dateFilter, setDateFilter] = useState("All");
-  const [statusFilter, setStatusFilter] = useState("all"); // Add status filter
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [companyFilter, setCompanyFilter] = useState("");
+  const [companies, setCompanies] = useState([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -71,6 +73,15 @@ const Insurance = () => {
     }
   };
 
+  const fetchCompanies = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/insurance/companies`, { withCredentials: true });
+      if (res.data.success) setCompanies(res.data.data);
+    } catch (e) {
+      console.error('Error fetching companies:', e);
+    }
+  };
+
   // Fetch insurance records from API
   const fetchInsurances = async (page = pagination.currentPage) => {
     setLoading(true);
@@ -80,6 +91,7 @@ const Insurance = () => {
         page,
         limit: pagination.limit,
         search: debouncedSearchQuery,
+        ...(companyFilter ? { company: companyFilter } : {}),
       };
 
       if (statusFilter !== "all") {
@@ -128,12 +140,13 @@ const Insurance = () => {
 
   // Load insurance records on component mount and when filters change
   useEffect(() => {
-    // Only fetch if search query is empty or has at least 4 characters
     if (debouncedSearchQuery.length === 0 || debouncedSearchQuery.length >= 4) {
-      fetchInsurances(1); // Reset to page 1 when filters change
+      fetchInsurances(1);
       fetchStatistics();
     }
-  }, [debouncedSearchQuery, statusFilter]);
+  }, [debouncedSearchQuery, statusFilter, companyFilter]);
+
+  useEffect(() => { fetchCompanies(); }, []);
 
   // Page change handler
   const handlePageChange = (newPage) => {
