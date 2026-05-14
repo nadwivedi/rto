@@ -174,6 +174,20 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
         const alert = getAlertForDay(diffDays, rule)
         if (!alert) continue
 
+        const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000)
+
+        // Clear stale pending for this specific bucket — if WhatsApp was down
+        // and the message stayed pending for 2+ hours, delete it so we can retry today
+        await MessageLog.deleteMany({
+          userId: docUserId,
+          documentId: doc._id,
+          documentType: source.documentType,
+          status: 'pending',
+          alertKey: alert.key,
+          scheduledFor: { $lt: twoHoursAgo }
+        })
+
+        // Now check if this bucket already has a sent or recently-pending message
         const alreadyQueued = await MessageLog.findOne({
           userId: docUserId,
           documentId: doc._id,
