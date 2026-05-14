@@ -24,6 +24,11 @@ const InsuranceSchema = new mongoose.Schema({
     trim: true
   },
 
+  insuranceCompany: {
+    type: String,
+    trim: true
+  },
+
   // Vehicle Information
   vehicleNumber: {
     type: String,

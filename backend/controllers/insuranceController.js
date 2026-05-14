@@ -32,7 +32,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, vehicleNumber, mobileNumber, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, partyId: reqPartyId } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, vehicleNumber, mobileNumber, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, partyId: reqPartyId } = req.body
 
     // Validate required fields
 
@@ -107,6 +107,7 @@ exports.createInsurance = async (req, res) => {
     const insuranceData = {
       policyNumber,
       policyHolderName,
+      insuranceCompany,
       vehicleNumber,
       mobileNumber,
       validFrom,
@@ -456,7 +457,7 @@ exports.getInsuranceByPolicyNumber = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, vehicleNumber, mobileNumber, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, partyId } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, vehicleNumber, mobileNumber, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, partyId } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -491,6 +492,7 @@ exports.updateInsurance = async (req, res) => {
     // Update fields
     if (policyNumber) insurance.policyNumber = policyNumber
     if (policyHolderName) insurance.policyHolderName = policyHolderName
+    if (insuranceCompany !== undefined) insurance.insuranceCompany = insuranceCompany
     if (vehicleNumber) insurance.vehicleNumber = vehicleNumber
     if (mobileNumber !== undefined) insurance.mobileNumber = mobileNumber
     if (validFrom) insurance.validFrom = validFrom

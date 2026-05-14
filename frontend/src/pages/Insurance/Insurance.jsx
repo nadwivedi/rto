@@ -772,6 +772,9 @@ const Insurance = () => {
                           Policy Holder
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
+                          Company
+                        </th>
+                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
                           Valid From
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
@@ -871,6 +874,12 @@ const Insurance = () => {
                                     </div>
                                   )}
                                 </div>
+                              </div>
+                            </td>
+                            <td className='px-4 2xl:px-6 py-3 2xl:py-5'>
+                              <div className='flex flex-col'>
+                                <div className='text-[11px] 2xl:text-sm font-bold text-gray-900'>{insurance.insuranceCompany || 'N/A'}</div>
+                                <div className='text-[10px] 2xl:text-xs text-gray-500 mt-0.5'>Insurance Co.</div>
                               </div>
                             </td>
                             <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 pl-8 2xl:pl-12">
@@ -977,6 +986,21 @@ const Insurance = () => {
                                     </svg>
                                   </button>
                                 )}
+                                {/* View Document Button */}
+                                {insurance.insuranceDocument && (
+                                  <a
+                                    href={`${API_URL}${insurance.insuranceDocument}`}
+                                    target='_blank'
+                                    rel='noopener noreferrer'
+                                    className="p-1.5 2xl:p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all group-hover:scale-110 duration-200"
+                                    title="View Insurance Document"
+                                  >
+                                    <svg className="w-4 h-4 2xl:w-5 2xl:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                    </svg>
+                                  </a>
+                                )}
                                 <button
                                   onClick={() => handleEditClick(insurance)}
                                   className="p-1.5 2xl:p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all group-hover:scale-110 duration-200"
@@ -1023,7 +1047,7 @@ const Insurance = () => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="9" className="px-6 py-16">
+                          <td colSpan="10" className="px-6 py-16">
                             <div className="flex flex-col items-center justify-center">
                               <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-6 shadow-lg">
                                 <svg

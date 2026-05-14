@@ -12,6 +12,7 @@ const RenewInsuranceModal = ({ isOpen, onClose, onSubmit, insuranceData }) => {
     totalFee: '',
     paid: '',
     balance: '',
+    insuranceCompany: '',
     remarks: ''
   })
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
@@ -23,6 +24,7 @@ const RenewInsuranceModal = ({ isOpen, onClose, onSubmit, insuranceData }) => {
         ...prev,
         vehicleNumber: insuranceData.vehicleNumber || '',
         mobileNumber: insuranceData.mobileNumber || '',
+        insuranceCompany: insuranceData.insuranceCompany || '',
         remarks: insuranceData.remarks || ''
       }))
     } else if (!isOpen) {
@@ -36,6 +38,7 @@ const RenewInsuranceModal = ({ isOpen, onClose, onSubmit, insuranceData }) => {
         totalFee: '',
         paid: '',
         balance: '',
+        insuranceCompany: '',
         remarks: ''
       })
       setPaidExceedsTotal(false)
@@ -223,6 +226,7 @@ const RenewInsuranceModal = ({ isOpen, onClose, onSubmit, insuranceData }) => {
       totalFee: '',
       paid: '',
       balance: '',
+      insuranceCompany: '',
       remarks: ''
     })
     setPaidExceedsTotal(false)
@@ -345,6 +349,21 @@ const RenewInsuranceModal = ({ isOpen, onClose, onSubmit, insuranceData }) => {
                     className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent ${
                       insuranceData?.mobileNumber ? 'bg-teal-50' : ''
                     }`}
+                  />
+                </div>
+
+                {/* Insurance Company */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Insurance Company
+                  </label>
+                  <input
+                    type='text'
+                    name='insuranceCompany'
+                    value={formData.insuranceCompany}
+                    onChange={handleChange}
+                    placeholder='e.g., HDFC ERGO, ICICI Lombard'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent'
                   />
                 </div>
               </div>

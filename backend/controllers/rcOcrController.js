@@ -81,7 +81,7 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
   }
 };
 
-const processOcrRequest = async (req, res, promptText, jsonTemplate) => {
+const processOcrRequest = async (req, res, promptText, jsonTemplate, maxPages = 0) => {
   try {
     const { imageBase64, backImageBase64 } = req.body;
 
@@ -97,7 +97,8 @@ const processOcrRequest = async (req, res, promptText, jsonTemplate) => {
         // extract base64 part
         const base64Data = imageBase64.replace(/^data:application\/pdf;base64,/, "");
         const buffer = Buffer.from(base64Data, 'base64');
-        const pdfData = await pdfParse(buffer);
+        const options = maxPages > 0 ? { max: maxPages } : {};
+        const pdfData = await pdfParse(buffer, options);
         payload = pdfData.text; // replace the payload with raw text
     }
 
@@ -239,4 +240,18 @@ exports.llOcr = async (req, res) => {
   "learningLicenseExpiryDate": ""
 }`;
   return processOcrRequest(req, res, prompt, template);
+};
+
+exports.insuranceOcr = async (req, res) => {
+  const prompt = 'Extract the details from this vehicle insurance policy document. Extract vehicle number, policy number, policy holder name, valid from date (return in DD-MM-YYYY format), valid to date (return in DD-MM-YYYY format), and insurance company name (e.g., HDFC ERGO, ICICI Lombard, etc.). If multiple policy holder names or owners are mentioned, pick the primary one. Map the validity period correctly as shown in the document.';
+  const template = `{
+  "vehicleNumber": "",
+  "policyNumber": "",
+  "policyHolderName": "",
+  "validFrom": "",
+  "validTo": "",
+  "insuranceCompany": ""
+}`;
+  // Send 2 pages as requested
+  return processOcrRequest(req, res, prompt, template, 2);
 };
