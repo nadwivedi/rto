@@ -225,7 +225,7 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
   if (!isOpen) return null
 
   return (
-    <div className='fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-0 md:p-4 overflow-y-auto'>
+    <div className='fixed inset-0 bg-black/60 flex items-center justify-center z-[70] p-0 md:p-4 overflow-y-auto'>
       <div className='bg-white rounded-none md:rounded-3xl shadow-2xl w-[95%] md:max-w-4xl 2xl:max-w-5xl md:w-full my-0 md:my-8 h-full md:h-auto md:max-h-[95vh] flex flex-col'>
         {/* Header */}
         <div className='bg-gradient-to-r from-blue-600 to-indigo-600 px-3 sm:px-4 2xl:px-6 py-1.5 2xl:py-3 text-white flex-shrink-0 rounded-t-none md:rounded-t-3xl'>

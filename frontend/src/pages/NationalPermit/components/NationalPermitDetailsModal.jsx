@@ -22,7 +22,7 @@ const NationalPermitDetailsModal = ({ isOpen, onClose, permit, onViewBill }) => 
   if (!isOpen || !permit) return null
 
   return (
-    <div className='fixed inset-0 bg-black/60  flex items-center justify-center z-50 p-4'>
+    <div className='fixed inset-0 bg-black/60  flex items-center justify-center z-[70] p-4'>
       <div className='bg-white rounded-3xl shadow-2xl max-w-5xl w-full max-h-[90vh] overflow-hidden'>
         {/* Modal Header */}
         <div className='bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white'>

@@ -19,7 +19,7 @@ const NocDetailModal = ({ isOpen, onClose, record }) => {
   const validFeeItems = record.feeBreakup?.filter((item) => item.amount && Number(item.amount) > 0) || []
 
   return (
-    <div className='fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4'>
+    <div className='fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-2 md:p-4'>
       <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
         <div className='bg-gradient-to-r from-teal-600 to-cyan-600 p-3 md:p-4 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>

@@ -17,7 +17,7 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
   if (!isOpen || !transfer) return null
 
   return (
-    <div className='fixed inset-0 bg-black/70  z-50 flex items-center justify-center p-2 md:p-4'>
+    <div className='fixed inset-0 bg-black/70  z-[70] flex items-center justify-center p-2 md:p-4'>
       <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl w-full md:w-[90%] lg:w-[85%] xl:w-[80%] max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header */}
         <div className='bg-gradient-to-r from-teal-600 via-cyan-600 to-blue-600 p-3 md:p-4 text-white shadow-lg'>

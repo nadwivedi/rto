@@ -230,7 +230,7 @@ const Form20Modal = ({ onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-1 pb-2">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-[70] overflow-y-auto pt-1 pb-2">
       <div className="w-full max-w-[1280px] flex gap-2 px-2">
         {/* Form Section */}
         <div className="flex-1 bg-gray-100 rounded-lg p-2">

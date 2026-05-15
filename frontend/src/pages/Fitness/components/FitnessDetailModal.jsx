@@ -87,7 +87,7 @@ const FitnessDetailModal = ({ isOpen, onClose, fitness }) => {
   }
 
   return (
-    <div className='fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-2 md:p-4'>
+    <div className='fixed inset-0 bg-black/70 z-[70] flex items-center justify-center p-2 md:p-4'>
       <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl w-full md:w-[90%] lg:w-[85%] xl:w-[80%] max-h-[95vh] overflow-hidden flex flex-col'>
         <div className='bg-gradient-to-r from-green-600 via-emerald-600 to-teal-600 p-3 md:p-4 text-white shadow-lg'>
           <div className='flex justify-between items-center gap-2'>

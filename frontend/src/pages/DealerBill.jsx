@@ -549,7 +549,7 @@ const DealerBill = () => {
 
         {/* Preview Modal */}
         {isPreviewOpen && previewBill && (
-          <div className='fixed inset-0 bg-black/70  flex items-center justify-center z-50 p-4'>
+          <div className='fixed inset-0 bg-black/70  flex items-center justify-center z-[70] p-4'>
             <div className='bg-white rounded-3xl shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-hidden'>
               {/* Header */}
               <div className='bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 text-white flex justify-between items-center'>

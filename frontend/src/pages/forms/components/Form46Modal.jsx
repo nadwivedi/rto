@@ -211,7 +211,7 @@ const Form46Modal = ({ onClose }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto pt-1 pb-2">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-[70] overflow-y-auto pt-1 pb-2">
       <div className="flex gap-2 px-2">
         {/* Form Section */}
         <style>{`

@@ -109,7 +109,7 @@ const AddEditPartyModal = ({ isOpen, onClose, onSuccess, editData }) => {
   if (!isOpen) return null
 
   return (
-    <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-3 md:p-4'>
+    <div className='fixed inset-0 bg-black/50 flex items-center justify-center z-[70] p-3 md:p-4'>
       <div className='bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden'>
         {/* Header */}
         <div className='bg-purple-600 text-white px-4 py-3'>

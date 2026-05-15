@@ -75,7 +75,7 @@ const ViewVehicleRegistrationModal = ({ isOpen, onClose, selectedRegistration, o
   }
 
   return (
-    <div className='fixed inset-0 bg-black/70  flex items-center justify-center z-50 p-2 md:p-4 animate-fadeIn'>
+    <div className='fixed inset-0 bg-black/70  flex items-center justify-center z-[70] p-2 md:p-4 animate-fadeIn'>
       <div className='bg-white rounded-xl md:rounded-3xl shadow-2xl w-full md:w-[95%] lg:w-[95%] xl:w-[92%] 2xl:w-[90%] max-h-[98vh] md:max-h-[95vh] overflow-hidden animate-slideUp'>
         {/* Header */}
         <div className='sticky top-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white p-3 md:p-5 z-10 shadow-lg'>

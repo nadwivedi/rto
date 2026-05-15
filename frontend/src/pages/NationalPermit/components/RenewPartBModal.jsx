@@ -115,7 +115,7 @@ const RenewPartBModal = ({ permit, onClose, onRenewalSuccess }) => {
   }
 
   return (
-    <div className='fixed inset-0 bg-black/60  flex items-center justify-center z-50 p-4'>
+    <div className='fixed inset-0 bg-black/60  flex items-center justify-center z-[70] p-4'>
       <div className='bg-white rounded-3xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden flex flex-col'>
         {/* Header */}
         <div className='bg-gradient-to-r from-red-600 via-rose-600 to-pink-600 p-6 text-white flex-shrink-0'>

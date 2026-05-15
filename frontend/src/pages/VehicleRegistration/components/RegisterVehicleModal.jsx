@@ -1607,7 +1607,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
   if (!isOpen) return null
 
   return (
-    <div className='fixed inset-0 bg-black/70  flex items-center justify-center z-50 p-2 md:p-4 animate-fadeIn'>
+    <div className='fixed inset-0 bg-black/70 flex items-center justify-center z-[70] p-2 md:p-4 animate-fadeIn'>
       <div className='bg-white rounded-2xl md:rounded-3xl shadow-2xl w-full max-w-full md:max-w-[90%] max-h-[98vh] md:max-h-[95vh] overflow-hidden animate-slideUp'>
         {/* Header with gradient and icon */}
         <div className='sticky top-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white px-3 py-2 md:px-6 md:py-3 z-10 shadow-lg'>
