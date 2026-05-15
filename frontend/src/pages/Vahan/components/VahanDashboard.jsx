@@ -302,7 +302,7 @@ const VahanDashboard = () => {
   }
 
   return (
-    <div className='h-full overflow-auto p-3'>
+    <div className='h-full overflow-auto p-1 sm:p-3'>
       <div className='grid gap-3 xl:grid-cols-[65%_minmax(0,1fr)]'>
         <section className='min-w-0'>
           <div className='mb-3 grid grid-cols-1 items-center gap-3 text-center md:grid-cols-[auto_1fr]'>
@@ -339,32 +339,32 @@ const VahanDashboard = () => {
               <p className='font-medium text-gray-500'>No documents expiring soon</p>
             </div>
           ) : (
-            <div className='mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white'>
+            <div className='mt-2 sm:mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white'>
               <div className='overflow-x-auto'>
                 <table className='w-full'>
                   <thead className='border-b border-gray-200 bg-gray-50'>
                     <tr>
-                      <th className='px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Party / Vehicle</th>
-                      <th className='px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Doc</th>
-                      <th className='px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Validity</th>
-                      <th className='px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Days Left</th>
+                      <th className='px-2 py-2 sm:px-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Party / Vehicle</th>
+                      <th className='px-2 py-2 sm:px-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Doc</th>
+                      <th className='px-2 py-2 sm:px-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Validity</th>
+                      <th className='px-2 py-2 sm:px-3 text-left text-[11px] font-semibold uppercase tracking-wider text-gray-600'>Days Left</th>
                     </tr>
                   </thead>
                   <tbody className='divide-y divide-gray-200'>
                     {filteredRecords.map((record, index) => (
                       <tr key={index} className='transition-colors hover:bg-gray-50'>
-                        <td className='px-3 py-2'>
+                        <td className='px-2 py-2 sm:px-3'>
                           <div className='space-y-0.5'>
                             <div className='text-xs font-semibold text-gray-800'>{record.ownerName || record.partyName || '-'}</div>
                             <div className='font-mono text-xs font-bold text-blue-900'>{record.vehicleNumber || '-'}</div>
                           </div>
                         </td>
-                        <td className='px-3 py-2'>
+                        <td className='px-2 py-2 sm:px-3'>
                           <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${getDocTypeBadge(record.docType)}`}>
                             {record.docType}
                           </span>
                         </td>
-                        <td className='px-3 py-2'>
+                        <td className='px-2 py-2 sm:px-3'>
                           <div className='space-y-0.5 text-xs font-semibold'>
                             <div className='flex items-baseline'>
                               <span className='w-9 shrink-0 text-gray-900'>From:</span>
@@ -376,7 +376,7 @@ const VahanDashboard = () => {
                             </div>
                           </div>
                         </td>
-                        <td className='px-3 py-2'>
+                        <td className='px-2 py-2 sm:px-3'>
                           <span className={`text-[11px] font-bold ${getDaysRemaining(record.validTo) < 0 ? 'text-red-600' : 'text-orange-600'}`}>
                             {formatExpiryText(record.validTo)}
                           </span>

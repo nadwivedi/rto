@@ -328,7 +328,7 @@ const Vahan = () => {
         </div>
       </aside>
 
-      <div className='min-h-screen bg-slate-100 px-4 pb-8 pt-4 lg:px-6 lg:pt-5'>
+      <div className='min-h-screen bg-slate-100 px-0.5 pb-8 pt-4 sm:px-4 lg:px-6 lg:pt-5'>
         <div className='flex w-full flex-col gap-6 lg:flex-row'>
           <aside className='hidden lg:block lg:fixed lg:left-0 lg:top-[4.75rem] lg:h-[calc(100vh-4.75rem)] lg:w-60 xl:w-64 2xl:w-[19rem] lg:overflow-y-auto'>
             <div className='overflow-hidden rounded-[28px] bg-slate-900 text-white shadow-2xl'>
@@ -396,7 +396,7 @@ const Vahan = () => {
           </aside>
 
           <main id='vahan-dashboard' className='flex-1 lg:ml-60 xl:ml-64 2xl:ml-[19rem]'>
-            <div className='bg-white rounded-2xl shadow-lg border border-gray-200 min-h-[calc(100vh-6rem)]'>
+            <div className='bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 min-h-[calc(100vh-6rem)]'>
               <VahanDashboard />
             </div>
           </main>
