@@ -92,7 +92,7 @@ const Login = () => {
               <img
                 src='/rtosarthi.avif'
                 alt='RTO Sarthi Logo'
-                className='h-12 mx-auto drop-shadow-lg transform hover:scale-105 transition-transform duration-300'
+                className='h-16 mx-auto drop-shadow-lg transform hover:scale-105 transition-transform duration-300'
               />
             </div>
             <h1 className='text-2xl font-black text-slate-900 mb-0.5 tracking-tight'>Sign In</h1>
