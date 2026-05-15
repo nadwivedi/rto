@@ -167,7 +167,19 @@ const WhatsApp = () => {
                 alt='WhatsApp QR Code'
                 className='w-52 h-52 rounded-xl border-4 border-white shadow-lg'
               />
-              <p className='text-[11px] text-orange-500 mt-2'>QR refreshes automatically every ~30s</p>
+              <p className='text-[11px] text-orange-500 mt-2 mb-3'>QR refreshes automatically every ~30s</p>
+              
+              <button
+                onClick={() => doAction('renew-qr', 'Refreshing QR code...')}
+                disabled={actionBusy === 'renew-qr'}
+                className='flex items-center gap-2 px-4 py-2 bg-white border border-orange-200 text-orange-700 rounded-lg text-xs font-bold hover:bg-orange-100 transition shadow-sm'
+              >
+                {actionBusy === 'renew-qr' ? (
+                  <div className='w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin' />
+                ) : (
+                  <span>🔄 Renew QR Code</span>
+                )}
+              </button>
             </div>
           )}
 

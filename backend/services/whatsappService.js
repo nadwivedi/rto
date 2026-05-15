@@ -5,7 +5,8 @@ const path = require('path')
 const fs = require('fs')
 
 const AUTH_DATA_PATH = process.env.WHATSAPP_AUTH_DIR || '.wwebjs_auth'
-const IDLE_TIMEOUT_MS = 5 * 60 * 1000 // 5 minutes
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000 // 15 minutes
+const QR_IDLE_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes while waiting for QR
 
 class WhatsappUserClient {
   constructor(userId) {
@@ -36,12 +37,13 @@ class WhatsappUserClient {
     })
   }
 
-  resetIdleTimeout() {
+  resetIdleTimeout(isQr = false) {
     if (this.idleTimer) clearTimeout(this.idleTimer)
+    const timeout = isQr ? QR_IDLE_TIMEOUT_MS : IDLE_TIMEOUT_MS
     this.idleTimer = setTimeout(() => {
-      console.log(`[WHATSAPP:${this.userId}] Session idle for 5 minutes. Destroying client to free RAM...`)
+      console.log(`[WHATSAPP:${this.userId}] Session idle for ${timeout/1000/60} minutes. Destroying client to free RAM...`)
       this.destroySession()
-    }, IDLE_TIMEOUT_MS)
+    }, timeout)
   }
 
   async updateStatus(status, extra = {}) {
@@ -123,7 +125,7 @@ class WhatsappUserClient {
           try {
             const qrCodeDataUrl = await QRCode.toDataURL(qr, { width: 300 })
             await this.updateStatus('qr_ready', { qrCodeDataUrl, lastError: null })
-            this.resetIdleTimeout() // Start idle since we are waiting for QR
+            this.resetIdleTimeout(true) // Start longer idle since we are waiting for QR
             resolve()
           } catch (err) {
             console.error(`[WHATSAPP:${this.userId}] QR error:`, err.message)

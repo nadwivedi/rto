@@ -73,6 +73,18 @@ router.post('/logout', async (req, res) => {
   }
 })
 
+// POST Renew QR: Restarts the session to get a fresh QR code
+router.post('/renew-qr', async (req, res) => {
+  try {
+    const userId = req.user.id
+    await whatsappService.destroySession(userId)
+    whatsappService.initializeSession(userId)
+    res.json({ message: 'QR renewal initiated. New QR will appear shortly.' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
 // POST Manual trigger — immediately scan + send (for testing, one-click from UI)
 router.post('/trigger-check', async (req, res) => {
   try {
