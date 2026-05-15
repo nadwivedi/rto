@@ -197,6 +197,15 @@ const Login = () => {
             <p className='text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em]'>
               © {new Date().getFullYear()} RTO Sarthi
             </p>
+            <a 
+              href="https://softwarebytes.in" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="mt-4 flex items-center justify-center gap-2 group hover:opacity-80 transition-opacity"
+            >
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Developed by</span>
+              <img src="/softwarebytes logo.webp" alt="Softwarebytes" className="h-10 opacity-70 group-hover:opacity-100 transition-opacity" />
+            </a>
           </div>
         </div>
       </div>

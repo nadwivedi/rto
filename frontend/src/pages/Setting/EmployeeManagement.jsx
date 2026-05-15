@@ -147,48 +147,91 @@ const EmployeeManagement = () => {
       {loading ? (
         <div className='text-center py-4'>Loading employees...</div>
       ) : (
-        <div className='overflow-x-auto'>
-          <table className='w-full text-sm text-left border'>
-            <thead className='bg-gray-50 text-gray-600 font-semibold border-b'>
-              <tr>
-                <th className='px-4 py-3'>Name</th>
-                <th className='px-4 py-3'>Mobile</th>
-                <th className='px-4 py-3'>Status</th>
-                <th className='px-4 py-3'>Permissions</th>
-                <th className='px-4 py-3 text-right'>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {employees.length === 0 ? (
+        <div className='mt-4'>
+          {/* Table for Desktop */}
+          <div className='hidden md:block overflow-x-auto'>
+            <table className='w-full text-sm text-left border'>
+              <thead className='bg-gray-50 text-gray-600 font-semibold border-b'>
                 <tr>
-                  <td colSpan="5" className='text-center py-4 text-gray-500'>No employees found.</td>
+                  <th className='px-4 py-3'>Name</th>
+                  <th className='px-4 py-3'>Mobile</th>
+                  <th className='px-4 py-3'>Status</th>
+                  <th className='px-4 py-3'>Permissions</th>
+                  <th className='px-4 py-3 text-right'>Actions</th>
                 </tr>
-              ) : (
-                employees.map(emp => (
-                  <tr key={emp._id} className='border-b hover:bg-gray-50'>
-                    <td className='px-4 py-3 font-medium text-gray-900'>{emp.name}</td>
-                    <td className='px-4 py-3'>{emp.mobile}</td>
-                    <td className='px-4 py-3'>
-                      <span className={`px-2 py-1 rounded-full text-xs font-semibold ${emp.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {emp.isActive ? 'Active' : 'Inactive'}
-                      </span>
-                    </td>
-                    <td className='px-4 py-3'>
-                      <div className='flex gap-1 text-xs'>
-                        <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.view ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>View</span>
-                        <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.add ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>Add</span>
-                        <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.edit ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400'}`}>Edit</span>
-                      </div>
-                    </td>
-                    <td className='px-4 py-3 text-right'>
-                      <button onClick={() => handleEdit(emp)} className='text-blue-600 hover:text-blue-800 mr-3 font-medium'>Edit</button>
-                      <button onClick={() => handleDelete(emp._id)} className='text-red-500 hover:text-red-700 font-medium'>Delete</button>
-                    </td>
+              </thead>
+              <tbody>
+                {employees.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className='text-center py-4 text-gray-500'>No employees found.</td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  employees.map(emp => (
+                    <tr key={emp._id} className='border-b hover:bg-gray-50 transition-colors'>
+                      <td className='px-4 py-3 font-medium text-gray-900'>{emp.name}</td>
+                      <td className='px-4 py-3'>{emp.mobile}</td>
+                      <td className='px-4 py-3'>
+                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${emp.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                          {emp.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className='px-4 py-3'>
+                        <div className='flex gap-1 text-xs'>
+                          <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.view ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>View</span>
+                          <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.add ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>Add</span>
+                          <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.edit ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400'}`}>Edit</span>
+                        </div>
+                      </td>
+                      <td className='px-4 py-3 text-right'>
+                        <button onClick={() => handleEdit(emp)} className='text-blue-600 hover:text-blue-800 mr-3 font-semibold transition-colors'>Edit</button>
+                        <button onClick={() => handleDelete(emp._id)} className='text-red-500 hover:text-red-700 font-semibold transition-colors'>Delete</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Cards for Mobile */}
+          <div className='md:hidden space-y-3'>
+            {employees.length === 0 ? (
+              <div className='text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-300 text-gray-500 text-sm font-medium'>
+                No employees found
+              </div>
+            ) : (
+              employees.map(emp => (
+                <div key={emp._id} className='bg-slate-50/50 rounded-xl p-4 border border-slate-200 shadow-sm'>
+                  <div className='flex justify-between items-start mb-3'>
+                    <div className='flex items-center gap-3'>
+                      <div className='w-10 h-10 rounded-full bg-teal-100 text-teal-700 flex items-center justify-center font-bold text-sm'>
+                        {emp.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h3 className='font-bold text-slate-900 text-sm'>{emp.name}</h3>
+                        <p className='text-xs text-slate-500 font-medium mt-0.5'>{emp.mobile}</p>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ${emp.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                      {emp.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                  
+                  <div className='flex items-center justify-between mt-4 pt-3 border-t border-slate-200'>
+                    <div className='flex gap-1.5'>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight ${emp.permissions?.view ? 'bg-blue-100 text-blue-700' : 'bg-slate-100 text-slate-400'}`}>View</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight ${emp.permissions?.add ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>Add</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight ${emp.permissions?.edit ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-400'}`}>Edit</span>
+                    </div>
+                    <div className='flex gap-4'>
+                      <button onClick={() => handleEdit(emp)} className='text-xs font-bold text-blue-600 active:scale-95 transition-transform'>Edit</button>
+                      <button onClick={() => handleDelete(emp._id)} className='text-xs font-bold text-rose-500 active:scale-95 transition-transform'>Delete</button>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       )}
 

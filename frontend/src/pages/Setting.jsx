@@ -98,7 +98,7 @@ const Setting = () => {
 
           <div className='space-y-3'>
             <label className='text-sm font-semibold text-gray-700'>Select Theme</label>
-            <div className='flex flex-wrap gap-3'>
+            <div className='grid grid-cols-2 sm:flex sm:flex-wrap gap-3'>
               {Object.keys(themes).map((themeName) => {
                 const themeData = themes[themeName]
                 const isSelected = currentTheme === themeName
@@ -324,6 +324,18 @@ const Setting = () => {
       </div>
 
 
+      {/* Developed by Footer */}
+      <div className="mt-12 pt-8 border-t border-gray-100 text-center pb-8">
+        <a 
+          href="https://softwarebytes.in" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 group hover:opacity-80 transition-opacity bg-white px-6 py-3 rounded-2xl shadow-sm border border-gray-100"
+        >
+          <span className="text-xs font-bold text-gray-400 uppercase tracking-[0.2em]">Developed by</span>
+          <img src="/softwarebytes logo.webp" alt="Softwarebytes Logo" className="h-12 grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-300" />
+        </a>
+      </div>
     </div>
   )
 }
