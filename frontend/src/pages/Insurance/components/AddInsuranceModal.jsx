@@ -24,7 +24,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     paid: '0',
     balance: '0',
     insuranceCompany: '',
-    insuranceDocument: ''
+    insuranceDocument: '',
+    renewPremium: '0'
   })
 
   const [fetchingVehicle, setFetchingVehicle] = useState(false)
@@ -66,7 +67,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         mobileNumber: initialData.mobileNumber || '',
         agentName: initialData.agentName || '',
         agentContact: initialData.agentContact || '',
-        insuranceDocument: initialData.insuranceDocument || ''
+        insuranceDocument: initialData.insuranceDocument || '',
+        renewPremium: initialData.renewPremium?.toString() || '0'
       })
 
       // Set insurance document preview if exists
@@ -94,7 +96,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         paid: '0',
         balance: '0',
         insuranceCompany: '',
-        insuranceDocument: ''
+        insuranceDocument: '',
+        renewPremium: '0'
       })
       setFetchingVehicle(false)
       setVehicleValidation({ isValid: false, message: '' })
@@ -333,7 +336,14 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           finalValue = value.replace(/^0+/, '') || '0'
         } else if (name === 'paid' && formData.paid === '0') {
           finalValue = value.replace(/^0+/, '') || '0'
+        } else if (name === 'renewPremium' && formData.renewPremium === '0') {
+          finalValue = value.replace(/^0+/, '') || '0'
         }
+      }
+
+      if (name === 'renewPremium') {
+        setFormData(prev => ({ ...prev, renewPremium: finalValue }))
+        return
       }
 
       setFormData(prev => {
@@ -609,6 +619,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       balance: parseFloat(formData.balance) || 0,
       insuranceCompany: formData.insuranceCompany || '',
       insuranceDocument: formData.insuranceDocument || '',
+      renewPremium: parseFloat(formData.renewPremium) || 0,
       status: 'Active'
     }
 
@@ -929,7 +940,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 Payment Information
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4'>
                 {/* Total Fee */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -988,6 +999,24 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     value={formData.balance}
                     readOnly
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-emerald-50 font-semibold text-gray-700'
+                  />
+                </div>
+
+                {/* Renew Premium */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Renew Premium (₹)
+                  </label>
+                  <input
+                    type='number'
+                    name='renewPremium'
+                    value={formData.renewPremium}
+                    onChange={handleChange}
+                    onFocus={(e) => e.target.select()}
+                    onKeyDown={handleInputKeyDown}
+                    placeholder='For next year'
+                    tabIndex="10"
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>
               </div>

@@ -7,6 +7,11 @@ const waSessionSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  sessionId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
   status: {
     type: String,
     enum: ['disconnected', 'qr_ready', 'initializing', 'authenticated', 'auth_failure'],
