@@ -89,12 +89,9 @@ const PWAPrompt = () => {
           </div>
           
           <div className="flex-1 pr-6">
-            <h3 className="text-lg font-bold text-white mb-1">
+            <h3 className="text-lg font-bold text-white mb-4">
               Install RTO Sarthi
             </h3>
-            <p className="text-sm text-slate-400 leading-relaxed mb-4">
-              Add RTO Sarthi to your home screen for quick access and a better experience.
-            </p>
             
             <div className="flex gap-3">
               <button
