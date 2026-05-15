@@ -86,83 +86,83 @@ const Login = () => {
       </div>
 
       <div className='w-full max-w-md z-10'>
-        <div className='bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl p-8 border border-white/20'>
-          <div className='text-center mb-8'>
-            <div className='mb-6'>
+        <div className='bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl p-6 sm:p-8 border border-white/20'>
+          <div className='text-center mb-6'>
+            <div className='mb-4'>
               <img
                 src='/rtosarthi.avif'
                 alt='RTO Sarthi Logo'
-                className='h-16 mx-auto drop-shadow-lg transform hover:scale-105 transition-transform duration-300'
+                className='h-12 mx-auto drop-shadow-lg transform hover:scale-105 transition-transform duration-300'
               />
             </div>
-            <h1 className='text-3xl font-black text-slate-900 mb-1 tracking-tight'>Sign In</h1>
-            <p className='text-slate-500 text-xs font-medium uppercase tracking-[0.2em]'>RTO Management System</p>
+            <h1 className='text-2xl font-black text-slate-900 mb-0.5 tracking-tight'>Sign In</h1>
+            <p className='text-slate-500 text-[10px] font-medium uppercase tracking-[0.2em]'>RTO Management System</p>
           </div>
 
           {/* Login Type Toggle */}
-          <div className='flex p-1.5 mb-8 bg-slate-100 rounded-2xl border border-slate-200'>
+          <div className='flex p-1 mb-6 bg-slate-100 rounded-xl border border-slate-200'>
             <button
               onClick={() => { setLoginType('admin'); setError(''); }}
-              className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${loginType === 'admin'
-                  ? 'bg-white text-blue-600 shadow-md'
+              className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${loginType === 'admin'
+                  ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              <ShieldCheck size={14} />
+              <ShieldCheck size={12} />
               ADMIN
             </button>
             <button
               onClick={() => { setLoginType('staff'); setError(''); }}
-              className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${loginType === 'staff'
-                  ? 'bg-white text-blue-600 shadow-md'
+              className={`flex-1 py-2 text-[10px] font-bold rounded-lg transition-all duration-300 flex items-center justify-center gap-2 ${loginType === 'staff'
+                  ? 'bg-white text-blue-600 shadow-sm'
                   : 'text-slate-500 hover:text-slate-700'
                 }`}
             >
-              <User size={14} />
+              <User size={12} />
               STAFF
             </button>
           </div>
 
           {/* Error Message */}
           {error && (
-            <div className='mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl animate-in fade-in slide-in-from-top-1'>
-              <div className='flex items-center gap-3'>
-                <div className='bg-red-500 rounded-lg p-1.5 shadow-lg shadow-red-500/20'>
-                  <ShieldCheck className='w-3 h-3 text-white' />
+            <div className='mb-4 p-3 bg-red-50 border border-red-100 rounded-xl animate-in fade-in slide-in-from-top-1'>
+              <div className='flex items-center gap-2'>
+                <div className='bg-red-500 rounded-md p-1 shadow-md shadow-red-500/10'>
+                  <ShieldCheck className='w-2.5 h-2.5 text-white' />
                 </div>
-                <p className='text-sm text-red-600 font-semibold'>{error}</p>
+                <p className='text-xs text-red-600 font-semibold'>{error}</p>
               </div>
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className='space-y-5'>
+          <form onSubmit={handleSubmit} className='space-y-4'>
             <div>
-              <label className='block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1'>
+              <label className='block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1'>
                 Email or Mobile
               </label>
               <div className='relative group'>
-                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                  <Mail className='w-5 h-5 text-slate-400 group-focus-within:text-blue-600 transition-colors' />
+                <div className='absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none'>
+                  <Mail className='w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors' />
                 </div>
                 <input
                   type='text'
                   name='identifier'
                   value={formData.identifier}
                   onChange={handleChange}
-                  placeholder='Enter identifier'
-                  className='w-full bg-slate-50 border border-slate-200 text-slate-900 pl-12 pr-4 py-3.5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all placeholder:text-slate-400 font-medium'
+                  placeholder='Enter mobile or email'
+                  className='w-full bg-slate-50 border border-slate-200 text-slate-900 pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all placeholder:text-slate-400 placeholder:text-xs font-medium'
                   disabled={loading}
                 />
               </div>
             </div>
 
             <div>
-              <label className='block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1'>
+              <label className='block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-1.5 ml-1'>
                 Password
               </label>
               <div className='relative group'>
-                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
-                  <Lock className='w-5 h-5 text-slate-400 group-focus-within:text-blue-600 transition-colors' />
+                <div className='absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none'>
+                  <Lock className='w-4 h-4 text-slate-400 group-focus-within:text-blue-600 transition-colors' />
                 </div>
                 <input
                   type='password'
@@ -170,7 +170,7 @@ const Login = () => {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder='••••••••'
-                  className='w-full bg-slate-50 border border-slate-200 text-slate-900 pl-12 pr-4 py-3.5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all placeholder:text-slate-400 font-medium'
+                  className='w-full bg-slate-50 border border-slate-200 text-slate-900 pl-10 pr-4 py-2.5 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-600/5 focus:border-blue-600 transition-all placeholder:text-slate-400 placeholder:text-xs font-medium'
                   disabled={loading}
                 />
               </div>
@@ -179,21 +179,21 @@ const Login = () => {
             <button
               type='submit'
               disabled={loading}
-              className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-2xl font-bold transition-all duration-300 shadow-xl shadow-blue-600/20 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] mt-4'
+              className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-3 rounded-xl font-bold transition-all duration-300 shadow-lg shadow-blue-600/10 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] mt-2'
             >
               {loading ? (
-                <Loader2 className='animate-spin h-5 w-5 text-white' />
+                <Loader2 className='animate-spin h-4 w-4 text-white' />
               ) : (
                 <>
-                  <span>Sign In</span>
-                  <ArrowRight className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
+                  <span className='text-sm'>Sign In</span>
+                  <ArrowRight className='w-4 h-4 group-hover:translate-x-1 transition-transform' />
                 </>
               )}
             </button>
           </form>
 
           {/* Footer */}
-          <div className='mt-10 pt-6 border-t border-slate-100 text-center'>
+          <div className='mt-6 pt-4 border-t border-slate-100 text-center'>
             <p className='text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em]'>
               © {new Date().getFullYear()} RTO Sarthi
             </p>

@@ -37,6 +37,18 @@ const PWAPrompt = () => {
     };
   }, []);
 
+  useEffect(() => {
+    let timer;
+    if (isVisible) {
+      timer = setTimeout(() => {
+        setIsVisible(false);
+      }, 10000); // 10 seconds
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isVisible]);
+
   const handleInstallClick = async () => {
     if (!deferredPrompt) return;
 
@@ -60,16 +72,15 @@ const PWAPrompt = () => {
 
   return (
     <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-md transition-all duration-500 opacity-100 translate-y-0">
-      <div className="relative overflow-hidden rounded-2xl border border-white/20 bg-white/20 p-6 backdrop-blur-xl shadow-2xl">
-        {/* Glow effect */}
-        <div className="absolute -top-10 -right-10 h-32 w-32 bg-blue-500/20 blur-3xl" />
-        <div className="absolute -bottom-10 -left-10 h-32 w-32 bg-indigo-500/20 blur-3xl" />
+      <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900 p-6 shadow-2xl shadow-black/50">
+        {/* Subtle accent glow */}
+        <div className="absolute -top-10 -right-10 h-32 w-32 bg-blue-600/10 blur-3xl pointer-events-none" />
 
         <button 
           onClick={handleClose}
-          className="absolute top-4 right-4 p-1 rounded-full hover:bg-white/10 transition-colors text-white/60 hover:text-white"
+          className="absolute top-4 right-4 p-1.5 rounded-full hover:bg-white/5 transition-colors text-slate-400 hover:text-white"
         >
-          <X size={20} />
+          <X size={18} />
         </button>
 
         <div className="flex items-start gap-4">
@@ -81,20 +92,20 @@ const PWAPrompt = () => {
             <h3 className="text-lg font-bold text-white mb-1">
               Install RTO Sarthi
             </h3>
-            <p className="text-sm text-white/70 leading-relaxed mb-4">
+            <p className="text-sm text-slate-400 leading-relaxed mb-4">
               Add RTO Sarthi to your home screen for quick access and a better experience.
             </p>
             
             <div className="flex gap-3">
               <button
                 onClick={handleInstallClick}
-                className="flex-1 bg-white text-blue-600 hover:bg-blue-50 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all active:scale-95 shadow-lg shadow-white/10"
+                className="flex-1 bg-blue-600 text-white hover:bg-blue-500 py-2.5 px-4 rounded-xl font-semibold text-sm transition-all active:scale-95 shadow-lg shadow-blue-600/20"
               >
                 Install App
               </button>
               <button
                 onClick={handleClose}
-                className="px-4 py-2.5 rounded-xl text-white font-medium text-sm hover:bg-white/10 transition-colors"
+                className="px-4 py-2.5 rounded-xl text-slate-300 font-medium text-sm hover:bg-white/5 transition-colors"
               >
                 Later
               </button>
