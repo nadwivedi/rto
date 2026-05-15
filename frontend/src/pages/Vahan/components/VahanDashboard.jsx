@@ -355,17 +355,17 @@ const VahanDashboard = () => {
                       <tr key={index} className='transition-colors hover:bg-gray-50'>
                         <td className='px-2 py-2 sm:px-3'>
                           <div className='space-y-0.5'>
-                            <div className='text-xs font-semibold text-gray-800'>{record.ownerName || record.partyName || '-'}</div>
-                            <div className='font-mono text-xs font-bold text-blue-900'>{record.vehicleNumber || '-'}</div>
+                            <div className='text-[10px] sm:text-xs font-semibold text-gray-800'>{record.ownerName || record.partyName || '-'}</div>
+                            <div className='font-mono text-[10px] sm:text-xs font-bold text-blue-900'>{record.vehicleNumber || '-'}</div>
                           </div>
                         </td>
                         <td className='px-2 py-2 sm:px-3'>
-                          <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${getDocTypeBadge(record.docType)}`}>
+                          <span className={`rounded px-1.5 py-0.5 text-[9px] sm:text-[11px] font-semibold ${getDocTypeBadge(record.docType)}`}>
                             {record.docType}
                           </span>
                         </td>
                         <td className='px-2 py-2 sm:px-3'>
-                          <div className='space-y-0.5 text-xs font-semibold'>
+                          <div className='space-y-0.5 text-[10px] sm:text-xs font-semibold'>
                             <div className='flex items-baseline'>
                               <span className='w-9 shrink-0 text-gray-900'>From:</span>
                               <span className='text-green-700'>{formatDate(record.validFrom)}</span>
@@ -377,7 +377,7 @@ const VahanDashboard = () => {
                           </div>
                         </td>
                         <td className='px-2 py-2 sm:px-3'>
-                          <span className={`text-[11px] font-bold ${getDaysRemaining(record.validTo) < 0 ? 'text-red-600' : 'text-orange-600'}`}>
+                          <span className={`text-[10px] sm:text-[11px] font-bold ${getDaysRemaining(record.validTo) < 0 ? 'text-red-600' : 'text-orange-600'}`}>
                             {formatExpiryText(record.validTo)}
                           </span>
                         </td>
@@ -411,7 +411,7 @@ const VahanDashboard = () => {
               {pendingParties.map((party) => (
                 <div key={party.partyId} className='flex items-center justify-between gap-3 px-3 py-2 hover:bg-orange-50/40'>
                   <div className='min-w-0'>
-                    <div className='truncate text-sm font-semibold text-gray-800'>{party.partyName || '-'}</div>
+                    <div className='truncate text-[11px] sm:text-sm font-semibold text-gray-800'>{party.partyName || '-'}</div>
                     <div className='text-xs text-gray-500'>{party.vehicleCount || 0} vehicle{party.vehicleCount === 1 ? '' : 's'}</div>
                   </div>
                   <div className='shrink-0 text-sm font-black text-orange-600'>{formatCurrency(party.totalPending)}</div>
