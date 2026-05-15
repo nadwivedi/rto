@@ -7,12 +7,16 @@ const AuthContext = createContext(null)
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
+  const [admin, setAdmin] = useState(null)
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false)
 
   const clearAuthState = () => {
     setUser(null)
+    setAdmin(null)
     setIsAuthenticated(false)
+    setIsAdminAuthenticated(false)
   }
 
   // Check if user is already logged in on mount
@@ -22,27 +26,46 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      // Skip auth check if on login page
-      if (window.location.pathname === '/login' || window.location.pathname === '/admin-access') {
+      // Skip auth check if on certain pages
+      const publicPaths = ['/login', '/admin-access', '/adm']
+      if (publicPaths.includes(window.location.pathname)) {
         setLoading(false)
         return
       }
 
-      // Verify token by fetching user profile
-      const response = await axios.get(`${BACKEND_URL}/api/auth/profile`, {
-        withCredentials: true
-      })
-
-      if (response.data.success) {
-        const userData = response.data.data.user
-        setUser(userData)
-        setIsAuthenticated(true)
-      } else {
-        clearAuthState()
+      // 1. Try checking for regular user session
+      try {
+        const userResponse = await axios.get(`${BACKEND_URL}/api/auth/profile`, {
+          withCredentials: true
+        })
+        if (userResponse.data.success) {
+          setUser(userResponse.data.data.user)
+          setIsAuthenticated(true)
+          setLoading(false)
+          return
+        }
+      } catch (e) {
+        // Fall through to admin check
       }
+
+      // 2. Try checking for admin session
+      try {
+        const adminResponse = await axios.get(`${BACKEND_URL}/api/admin/auth/profile`, {
+          withCredentials: true
+        })
+        if (adminResponse.data.success) {
+          setAdmin(adminResponse.data.data.admin)
+          setIsAdminAuthenticated(true)
+          setLoading(false)
+          return
+        }
+      } catch (e) {
+        // Both failed
+      }
+
+      clearAuthState()
     } catch (error) {
       console.error('Auth check error:', error)
-      // Only clear auth if token is invalid (401), not on network errors
       if (error.response?.status === 401) {
         clearAuthState()
       }
@@ -69,8 +92,12 @@ export const AuthProvider = ({ children }) => {
   const value = {
     user,
     setUser,
+    admin,
+    setAdmin,
     isAuthenticated,
     setIsAuthenticated,
+    isAdminAuthenticated,
+    setIsAdminAuthenticated,
     loading,
     logout,
     checkAuth

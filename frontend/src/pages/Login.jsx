@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { Mail, Lock, User, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react'
 import axios from 'axios'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
@@ -16,7 +17,6 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  // Redirect to home if already authenticated
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       navigate('/')
@@ -52,11 +52,8 @@ const Login = () => {
       })
 
       if (response.data.success) {
-        // Update auth context
         setUser(response.data.data.user)
         setIsAuthenticated(true)
-
-        // Redirect to home/dashboard
         navigate('/')
       } else {
         setError(response.data.message || 'Login failed')
@@ -69,118 +66,111 @@ const Login = () => {
     }
   }
 
-  // Show loading spinner while checking authentication
   if (authLoading) {
     return (
-      <div className='min-h-screen bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 flex items-center justify-center p-4'>
-        <div className='bg-white rounded-2xl shadow-2xl p-8'>
-          <div className='flex flex-col items-center justify-center'>
-            <svg className='animate-spin h-12 w-12 text-blue-600 mb-4' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
-              <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
-              <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
-            </svg>
-            <p className='text-gray-600 font-semibold'>Checking authentication...</p>
-          </div>
+      <div className='min-h-screen bg-[#0f172a] flex items-center justify-center p-4'>
+        <div className='flex flex-col items-center gap-4'>
+          <Loader2 className='animate-spin text-blue-500 w-12 h-12' />
+          <p className='text-slate-400 font-medium animate-pulse'>Authenticating...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className='min-h-screen bg-gradient-to-br from-blue-500 via-cyan-500 to-teal-500 flex items-center justify-center p-4'>
-      <div className='w-full max-w-md'>
-        {/* Login Card */}
-        <div className='bg-white rounded-2xl shadow-2xl p-8'>
-          {/* Logo/Header */}
-          <div className='text-center mb-6'>
-            <div className='w-20 h-20 bg-gradient-to-br from-blue-600 to-cyan-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg'>
-              <svg className='w-10 h-10 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' />
-              </svg>
+    <div className='min-h-screen bg-gradient-to-br from-slate-950 via-blue-950 to-slate-950 flex flex-col items-center justify-center p-4 relative overflow-hidden font-inter'>
+      {/* Background Decorative Elements */}
+      <div className='absolute top-0 left-0 w-full h-full overflow-hidden z-0'>
+        <div className='absolute -top-[10%] -left-[10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px]'></div>
+        <div className='absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-emerald-600/10 rounded-full blur-[120px]'></div>
+      </div>
+
+      <div className='w-full max-w-md z-10'>
+        <div className='bg-white/95 backdrop-blur-md rounded-[2.5rem] shadow-2xl p-8 border border-white/20'>
+          <div className='text-center mb-8'>
+            <div className='mb-6'>
+              <img
+                src='/rtosarthi.avif'
+                alt='RTO Sarthi Logo'
+                className='h-16 mx-auto drop-shadow-lg transform hover:scale-105 transition-transform duration-300'
+              />
             </div>
-            <h1 className='text-3xl font-black text-gray-800 mb-2'>RTO Login</h1>
-            <p className='text-gray-500 text-sm'>Sign in to access your account</p>
+            <h1 className='text-3xl font-black text-slate-900 mb-1 tracking-tight'>Sign In</h1>
+            <p className='text-slate-500 text-xs font-medium uppercase tracking-[0.2em]'>RTO Management System</p>
           </div>
 
           {/* Login Type Toggle */}
-          <div className='flex p-1 mb-6 bg-gray-100 rounded-xl'>
+          <div className='flex p-1.5 mb-8 bg-slate-100 rounded-2xl border border-slate-200'>
             <button
               onClick={() => { setLoginType('admin'); setError(''); }}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                loginType === 'admin'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${loginType === 'admin'
+                  ? 'bg-white text-blue-600 shadow-md'
+                  : 'text-slate-500 hover:text-slate-700'
+                }`}
             >
-              Admin Login
+              <ShieldCheck size={14} />
+              ADMIN
             </button>
             <button
               onClick={() => { setLoginType('staff'); setError(''); }}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${
-                loginType === 'staff'
-                  ? 'bg-white text-blue-600 shadow-sm'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
+              className={`flex-1 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 flex items-center justify-center gap-2 ${loginType === 'staff'
+                  ? 'bg-white text-blue-600 shadow-md'
+                  : 'text-slate-500 hover:text-slate-700'
+                }`}
             >
-              Staff Login
+              <User size={14} />
+              STAFF
             </button>
           </div>
 
-
           {/* Error Message */}
           {error && (
-            <div className='mb-6 p-4 bg-red-50 border border-red-200 rounded-lg'>
-              <div className='flex items-center gap-2'>
-                <svg className='w-5 h-5 text-red-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
-                </svg>
-                <p className='text-sm text-red-800'>{error}</p>
+            <div className='mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl animate-in fade-in slide-in-from-top-1'>
+              <div className='flex items-center gap-3'>
+                <div className='bg-red-500 rounded-lg p-1.5 shadow-lg shadow-red-500/20'>
+                  <ShieldCheck className='w-3 h-3 text-white' />
+                </div>
+                <p className='text-sm text-red-600 font-semibold'>{error}</p>
               </div>
             </div>
           )}
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className='space-y-6'>
+          <form onSubmit={handleSubmit} className='space-y-5'>
             <div>
-              <label className='block text-sm font-bold text-gray-700 mb-2'>
-                Email or Mobile Number
+              <label className='block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1'>
+                Email or Mobile
               </label>
-              <div className='relative'>
-                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                  <svg className='w-5 h-5 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z' />
-                  </svg>
+              <div className='relative group'>
+                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
+                  <Mail className='w-5 h-5 text-slate-400 group-focus-within:text-blue-600 transition-colors' />
                 </div>
                 <input
                   type='text'
                   name='identifier'
                   value={formData.identifier}
                   onChange={handleChange}
-                  placeholder='Enter email or mobile number'
-                  className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm'
+                  placeholder='Enter identifier'
+                  className='w-full bg-slate-50 border border-slate-200 text-slate-900 pl-12 pr-4 py-3.5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all placeholder:text-slate-400 font-medium'
                   disabled={loading}
                 />
               </div>
-              <p className='mt-1 text-xs text-gray-500'>Use your registered email or 10-digit mobile number</p>
             </div>
 
             <div>
-              <label className='block text-sm font-bold text-gray-700 mb-2'>
+              <label className='block text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2 ml-1'>
                 Password
               </label>
-              <div className='relative'>
-                <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                  <svg className='w-5 h-5 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' />
-                  </svg>
+              <div className='relative group'>
+                <div className='absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none'>
+                  <Lock className='w-5 h-5 text-slate-400 group-focus-within:text-blue-600 transition-colors' />
                 </div>
                 <input
                   type='password'
                   name='password'
                   value={formData.password}
                   onChange={handleChange}
-                  placeholder='Enter your password'
-                  className='w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm'
+                  placeholder='••••••••'
+                  className='w-full bg-slate-50 border border-slate-200 text-slate-900 pl-12 pr-4 py-3.5 rounded-2xl focus:outline-none focus:ring-4 focus:ring-blue-600/10 focus:border-blue-600 transition-all placeholder:text-slate-400 font-medium'
                   disabled={loading}
                 />
               </div>
@@ -189,26 +179,23 @@ const Login = () => {
             <button
               type='submit'
               disabled={loading}
-              className='w-full bg-gradient-to-r from-blue-600 to-cyan-600 text-white py-3 rounded-lg font-bold hover:from-blue-700 hover:to-cyan-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none'
+              className='w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-2xl font-bold transition-all duration-300 shadow-xl shadow-blue-600/20 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] mt-4'
             >
               {loading ? (
-                <div className='flex items-center justify-center gap-2'>
-                  <svg className='animate-spin h-5 w-5 text-white' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
-                    <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
-                    <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
-                  </svg>
-                  <span>Signing in...</span>
-                </div>
+                <Loader2 className='animate-spin h-5 w-5 text-white' />
               ) : (
-                'Sign In'
+                <>
+                  <span>Sign In</span>
+                  <ArrowRight className='w-5 h-5 group-hover:translate-x-1 transition-transform' />
+                </>
               )}
             </button>
           </form>
 
           {/* Footer */}
-          <div className='mt-8 text-center'>
-            <p className='text-xs text-gray-400'>
-              RTO Management System
+          <div className='mt-10 pt-6 border-t border-slate-100 text-center'>
+            <p className='text-[10px] text-slate-400 font-bold uppercase tracking-[0.3em]'>
+              © {new Date().getFullYear()} RTO Sarthi
             </p>
           </div>
         </div>

@@ -1,50 +1,50 @@
-const mongoose = require('mongoose');
-const bcrypt = require('bcryptjs');
-const readline = require('readline');
-const Admin = require('../models/Admin');
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config()
+const mongoose = require('mongoose')
+const bcrypt = require('bcryptjs')
+const readline = require('readline')
+const Admin = require('../models/Admin')
+const connectDB = require('../utils/mongodb')
 
-const createAdmin = async (email, password) => {
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+})
+
+const question = (query) => new Promise((resolve) => rl.question(query, resolve))
+
+async function createAdmin() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
+    await connectDB()
+    console.log('Connected to MongoDB.')
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const email = await question('Enter Admin Email: ')
+    const password = await question('Enter Admin Password: ')
 
-    const admin = new Admin({
-      email,
-      password: hashedPassword,
-    });
+    if (!email || !password) {
+      console.log('Email and password are required')
+      process.exit(1)
+    }
 
-    await admin.save();
+    let admin = await Admin.findOne({ email: email.toLowerCase() })
+    if (admin) {
+      console.log('Admin already exists')
+      process.exit(1)
+    }
 
-    console.log('Admin created successfully');
-  } catch (error) {
-    console.error('Error creating admin:', error);
+    const hashedPassword = await bcrypt.hash(password, 10)
+    admin = new Admin({
+      email: email.toLowerCase(),
+      password: hashedPassword
+    })
+
+    await admin.save()
+    console.log('Admin created successfully')
+  } catch (err) {
+    console.error(err.message)
   } finally {
-    mongoose.disconnect();
+    mongoose.disconnect()
+    rl.close()
   }
-};
-
-const emailArg = process.argv[2];
-const passwordArg = process.argv[3];
-
-if (emailArg && passwordArg) {
-  createAdmin(emailArg, passwordArg);
-} else {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  rl.question('Enter email: ', (email) => {
-    rl.question('Enter password: ', (password) => {
-      if (!email || !password) {
-        console.log('Email and password are required.');
-        rl.close();
-        process.exit(1);
-      }
-      createAdmin(email, password);
-      rl.close();
-    });
-  });
 }
+
+createAdmin()

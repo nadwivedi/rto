@@ -33,6 +33,7 @@ import Vahan from './pages/Vahan'
 import Sarthi from './pages/Sarthi'
 import WhatsApp from './pages/WhatsApp/WhatsApp'
 import Javak from './pages/Javak/Javak'
+import PWAPrompt from './components/PWAPrompt'
 
 function LegacyPartyDetailRedirect() {
   const { partyId } = useParams()
@@ -154,6 +155,7 @@ function App() {
       <AuthProvider>
         <ThemeProvider>
           <ToastContainer />
+          <PWAPrompt />
           <Routes>
             <Route path='/login' element={<Login />} />
             <Route path='/admin-access' element={<AdminAccess />} />
