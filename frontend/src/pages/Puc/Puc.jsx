@@ -144,6 +144,11 @@ const Puc = () => {
   const parseExcelDate = (excelDate) => {
     if (!excelDate) return "";
     if (typeof excelDate === 'string' && excelDate.includes('-')) {
+      const parts = excelDate.split('-');
+      // Check if format is YYYY-MM-DD
+      if (parts.length === 3 && parts[0].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
       return excelDate;
     }
     if (typeof excelDate === 'number') {
