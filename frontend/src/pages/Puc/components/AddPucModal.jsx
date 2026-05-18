@@ -14,6 +14,7 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
     vehicleNumber: prefilledVehicleNumber,
     ownerName: prefilledOwnerName,
     mobileNumber: prefilledMobileNumber,
+    vehicleModel: '',
     validFrom: '',
     validTo: '',
     totalFee: '',
@@ -39,6 +40,7 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
         vehicleNumber: prefilledVehicleNumber,
         ownerName: prefilledOwnerName,
         mobileNumber: prefilledMobileNumber,
+        vehicleModel: '',
         validFrom: '',
         validTo: '',
         totalFee: '',
@@ -137,7 +139,8 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
               ...prev,
               vehicleNumber: vehicleData.registrationNumber,
               ownerName: vehicleData.ownerName || prev.ownerName,
-              mobileNumber: vehicleData.mobileNumber || prev.mobileNumber
+              mobileNumber: vehicleData.mobileNumber || prev.mobileNumber,
+              vehicleModel: vehicleData.modelName || prev.vehicleModel
             }))
             const validation = validateVehicleNumberRealtime(vehicleData.registrationNumber)
             setVehicleValidation(validation)
@@ -185,7 +188,8 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
       ...prev,
       vehicleNumber: vehicle.registrationNumber,
       ownerName: vehicle.ownerName || prev.ownerName,
-      mobileNumber: vehicle.mobileNumber || prev.mobileNumber
+      mobileNumber: vehicle.mobileNumber || prev.mobileNumber,
+      vehicleModel: vehicle.modelName || prev.vehicleModel
     }))
     setShowVehicleDropdown(false)
     setVehicleMatches([])
@@ -358,6 +362,7 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
       vehicleNumber: formData.vehicleNumber,
       ownerName: formData.ownerName,
       mobileNumber: formData.mobileNumber,
+      vehicleModel: formData.vehicleModel,
       validFrom: formData.validFrom,
       validTo: formData.validTo,
       totalFee: parseFloat(formData.totalFee) || 0,
@@ -505,7 +510,7 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
       )}
 
       <div className='fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-2 md:p-4'>
-        <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
+        <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header */}
         <div className='bg-gradient-to-r from-green-600 to-emerald-600 p-2 md:p-3 text-white flex-shrink-0'>
           <div className='flex items-center justify-between gap-3'>
@@ -571,7 +576,7 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 Vehicle Details
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4'>
                 {/* Vehicle Number */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -682,6 +687,21 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                     onChange={handleChange}
                     placeholder='10-digit number'
                     maxLength='10'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white'
+                  />
+                </div>
+
+                {/* Vehicle Model */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Vehicle Model
+                  </label>
+                  <input
+                    type='text'
+                    name='vehicleModel'
+                    value={formData.vehicleModel}
+                    onChange={handleChange}
+                    placeholder='e.g. Swift, Innova'
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white'
                   />
                 </div>

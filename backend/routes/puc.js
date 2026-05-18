@@ -5,6 +5,9 @@ const pucController = require('../controllers/pucController')
 // GET export all PUC records (must be before '/')
 router.get('/export', pucController.exportAllPuc)
 
+// POST bulk import
+router.post('/import/bulk', pucController.bulkImportPuc)
+
 // Get all PUC records
 router.get('/', pucController.getAllPuc)
 

@@ -11,6 +11,7 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
     vehicleNumber: '',
     ownerName: '',
     mobileNumber: '',
+    vehicleModel: '',
     validFrom: '',
     validTo: '',
     totalFee: '',
@@ -33,6 +34,7 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
         vehicleNumber: puc.vehicleNumber || '',
         ownerName: puc.ownerName || '',
         mobileNumber: puc.mobileNumber || '',
+        vehicleModel: puc.vehicleModel || '',
         validFrom: puc.validFrom || '',
         validTo: puc.validTo || '',
         totalFee: puc.totalFee?.toString() || '0',
@@ -53,6 +55,7 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
       setFormData({
         vehicleNumber: '',
         mobileNumber: '',
+        vehicleModel: '',
         validFrom: '',
         validTo: '',
         totalFee: '',
@@ -130,7 +133,8 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
             setFormData(prev => ({
               ...prev,
               vehicleNumber: vehicleData.registrationNumber,
-              mobileNumber: vehicleData.mobileNumber || prev.mobileNumber
+              mobileNumber: vehicleData.mobileNumber || prev.mobileNumber,
+              vehicleModel: vehicleData.modelName || prev.vehicleModel
             }))
             const validation = validateVehicleNumberRealtime(vehicleData.registrationNumber)
             setVehicleValidation(validation)
@@ -177,7 +181,8 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
     setFormData(prev => ({
       ...prev,
       vehicleNumber: vehicle.registrationNumber,
-      mobileNumber: vehicle.mobileNumber || prev.mobileNumber
+      mobileNumber: vehicle.mobileNumber || prev.mobileNumber,
+      vehicleModel: vehicle.modelName || prev.vehicleModel
     }))
     setShowVehicleDropdown(false)
     setVehicleMatches([])
@@ -352,6 +357,7 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
     setFormData({
       vehicleNumber: '',
       mobileNumber: '',
+      vehicleModel: '',
       validFrom: '',
       validTo: '',
       totalFee: '',
@@ -400,7 +406,7 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
                 Vehicle Details
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4'>
                 {/* Vehicle Number */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -514,6 +520,21 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
                     placeholder='10-digit number'
                     maxLength='10'
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+                  />
+                </div>
+
+                {/* Vehicle Model */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Vehicle Model
+                  </label>
+                  <input
+                    type='text'
+                    name='vehicleModel'
+                    value={formData.vehicleModel}
+                    onChange={handleChange}
+                    placeholder='e.g. Swift, Innova'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white'
                   />
                 </div>
               </div>

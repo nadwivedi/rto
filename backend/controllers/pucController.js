@@ -325,7 +325,7 @@ exports.getPucById = async (req, res) => {
 // Create new PUC record
 exports.createPuc = async (req, res) => {
   try {
-    const { vehicleNumber, ownerName, mobileNumber, validFrom, validTo, totalFee, paid, balance, partyId: reqPartyId } = req.body
+    const { vehicleNumber, ownerName, mobileNumber, vehicleModel, validFrom, validTo, totalFee, paid, balance, partyId: reqPartyId } = req.body
 
     // Validate required fields
     if (!vehicleNumber ) {
@@ -389,6 +389,7 @@ exports.createPuc = async (req, res) => {
       vehicleNumber,
       ownerName,
       mobileNumber,
+      vehicleModel,
       validFrom,
       validTo,
       totalFee,
@@ -419,7 +420,7 @@ exports.createPuc = async (req, res) => {
 // Update PUC record
 exports.updatePuc = async (req, res) => {
   try {
-    const { vehicleNumber, ownerName, mobileNumber, validFrom, validTo, totalFee, paid, balance, partyId } = req.body
+    const { vehicleNumber, ownerName, mobileNumber, vehicleModel, validFrom, validTo, totalFee, paid, balance, partyId } = req.body
 
     const puc = await Puc.findOne({ _id: req.params.id, userId: req.user.id })
 
@@ -455,6 +456,7 @@ exports.updatePuc = async (req, res) => {
     if (vehicleNumber) puc.vehicleNumber = vehicleNumber
     if (ownerName !== undefined) puc.ownerName = ownerName
     if (mobileNumber !== undefined) puc.mobileNumber = mobileNumber
+    if (vehicleModel !== undefined) puc.vehicleModel = vehicleModel
     if (validFrom) puc.validFrom = validFrom
     if (validTo) {
         puc.validTo = validTo
@@ -645,6 +647,107 @@ exports.incrementWhatsAppCount = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error updating WhatsApp message count',
+      error: error.message
+    })
+  }
+}
+
+// Bulk import PUC records
+exports.bulkImportPuc = async (req, res) => {
+  try {
+    const { records } = req.body
+
+    if (!records || !Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No records provided for import'
+      })
+    }
+
+    let successCount = 0
+    let failedCount = 0
+    const errors = []
+
+    for (const [index, record] of records.entries()) {
+      try {
+        const { vehicleNumber, ownerName, mobileNumber, vehicleModel, validFrom, validTo } = record
+
+        if (!vehicleNumber || !validFrom || !validTo) {
+          throw new Error('Vehicle Number, Valid From, and Valid To are required fields')
+        }
+
+        // We set totalFee, paid, balance to 0 as requested
+        const totalFee = 0
+        const paid = 0
+        const balance = 0
+
+        // Calculate status
+        const status = getPucStatus(validTo)
+
+        // Find partyId if possible
+        let partyId = null
+        const vehicle = await VehicleRegistration.findOne({
+          registrationNumber: vehicleNumber.toUpperCase().trim(),
+          userId: req.user.id
+        }).select('partyId')
+        
+        if (vehicle && vehicle.partyId) {
+          partyId = vehicle.partyId
+        }
+
+        // Mark any existing non-renewed PUC records for this vehicle as expired and renewed
+        await Puc.updateMany(
+          {
+            vehicleNumber: vehicleNumber.toUpperCase().trim(),
+            userId: req.user.id,
+            isRenewed: false
+          },
+          {
+            $set: {
+              status: 'expired',
+              isRenewed: true
+            }
+          }
+        )
+
+        // Create new PUC record
+        const puc = new Puc({
+          vehicleNumber: vehicleNumber.toUpperCase().trim(),
+          ownerName: ownerName || '',
+          mobileNumber: mobileNumber || '',
+          vehicleModel: vehicleModel || '',
+          validFrom,
+          validTo,
+          totalFee,
+          paid,
+          balance,
+          status,
+          userId: req.user.id,
+          partyId
+        })
+
+        await puc.save()
+        successCount++
+      } catch (err) {
+        failedCount++
+        errors.push({ index, vehicleNumber: record.vehicleNumber, error: err.message })
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Bulk import completed. Successfully imported ${successCount} records.`,
+      data: {
+        success: successCount,
+        failed: failedCount,
+        errors
+      }
+    })
+  } catch (error) {
+    console.error('Error during bulk import:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Server error during bulk import',
       error: error.message
     })
   }
