@@ -732,6 +732,12 @@ const ViewVehicleRegistrationModal = ({ isOpen, onClose, selectedRegistration, o
                     <div className='text-xs md:text-sm font-bold text-gray-900 mt-0.5'>{selectedRegistration.fuelType}</div>
                   </div>
                 )}
+                {selectedRegistration.bodyType && (
+                  <div className='bg-white/80 p-2 rounded-lg'>
+                    <div className='text-[10px] md:text-xs font-semibold text-gray-600'>Body Type</div>
+                    <div className='text-xs md:text-sm font-bold text-gray-900 mt-0.5'>{selectedRegistration.bodyType}</div>
+                  </div>
+                )}
                 {(selectedRegistration.ladenWeight !== undefined && selectedRegistration.ladenWeight !== null) && (
                   <div className='bg-white/80 p-2 rounded-lg'>
                     <div className='text-[10px] md:text-xs font-semibold text-gray-600'>Laden Weight</div>

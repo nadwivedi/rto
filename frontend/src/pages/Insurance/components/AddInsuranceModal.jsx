@@ -25,7 +25,16 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     balance: '0',
     insuranceCompany: '',
     insuranceDocument: '',
-    renewPremium: '0'
+    renewPremium: '0',
+    // RC fields extracted from insurance document
+    chassisNumber: '',
+    engineNumber: '',
+    makerName: '',
+    makerModel: '',
+    manufactureYear: '',
+    cubicCapacity: '',
+    seatingCapacity: '',
+    bodyType: ''
   })
 
   const [fetchingVehicle, setFetchingVehicle] = useState(false)
@@ -311,8 +320,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
     // Handle vehicle number - convert to uppercase and validate only (no enforcement)
     if (name === 'vehicleNumber') {
-      // Convert to uppercase
-      const upperValue = value.toUpperCase()
+      // Convert to uppercase and strip hyphens/spaces (handles formats like CG-23-J-8800)
+      const upperValue = value.toUpperCase().replace(/[\s-]/g, '')
 
       // Validate in real-time (only show validation if 9 or 10 characters)
       const validation = (upperValue.length === 9 || upperValue.length === 10)
@@ -444,7 +453,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           const updated = { ...prev }
           
           if (resultData.vehicleNumber) {
-            updated.vehicleNumber = resultData.vehicleNumber.toUpperCase().replace(/\s+/g, '')
+            updated.vehicleNumber = resultData.vehicleNumber.toUpperCase().replace(/[\s-]/g, '')
             // Validate the vehicle number
             const validation = validateVehicleNumberRealtime(updated.vehicleNumber)
             setVehicleValidation(validation)
@@ -473,6 +482,16 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           if (resultData.insuranceCompany) {
             updated.insuranceCompany = resultData.insuranceCompany.toUpperCase()
           }
+
+          // RC fields extracted from insurance document
+          if (resultData.chassisNumber) updated.chassisNumber = resultData.chassisNumber.toUpperCase()
+          if (resultData.engineNumber) updated.engineNumber = resultData.engineNumber.toUpperCase()
+          if (resultData.makerName) updated.makerName = resultData.makerName.toUpperCase()
+          if (resultData.makerModel) updated.makerModel = resultData.makerModel.toUpperCase()
+          if (resultData.manufactureYear) updated.manufactureYear = resultData.manufactureYear
+          if (resultData.cubicCapacity) updated.cubicCapacity = resultData.cubicCapacity
+          if (resultData.seatingCapacity) updated.seatingCapacity = resultData.seatingCapacity
+          if (resultData.bodyType) updated.bodyType = resultData.bodyType.toUpperCase()
           
           return updated
         })
@@ -620,7 +639,18 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       insuranceCompany: formData.insuranceCompany || '',
       insuranceDocument: formData.insuranceDocument || '',
       renewPremium: parseFloat(formData.renewPremium) || 0,
-      status: 'Active'
+      status: 'Active',
+      // RC details extracted from insurance document (used for auto-creating vehicle record)
+      rcDetails: {
+        chassisNumber: formData.chassisNumber || '',
+        engineNumber: formData.engineNumber || '',
+        makerName: formData.makerName || '',
+        makerModel: formData.makerModel || '',
+        manufactureYear: formData.manufactureYear ? Number(formData.manufactureYear) : null,
+        cubicCapacity: formData.cubicCapacity ? Number(formData.cubicCapacity) : null,
+        seatingCapacity: formData.seatingCapacity ? Number(formData.seatingCapacity) : null,
+        bodyType: formData.bodyType || ''
+      }
     }
 
     setIsSubmitting(true)
@@ -635,10 +665,13 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       if (response.data.success) {
         toast.success(isEditMode ? 'Insurance record updated successfully!' : 'Insurance record added successfully!')
 
+        // If vehicle was auto-created, inform the user
+        if (!isEditMode && response.data.vehicleAutoCreated) {
+          toast.info('✅ Vehicle record also auto-created in Vahan from insurance data.', { autoClose: 5000 })
+        }
+
         // Call onSubmit callback to notify parent (for refresh)
         if (onSubmit) {
-          // If the parent passed a function that expects formData, we might still want to pass it
-          // but usually it's just for refresh.
           onSubmit(submitData)
         }
 

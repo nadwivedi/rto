@@ -34,7 +34,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, insuranceCompany, vehicleNumber, mobileNumber, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, partyId: reqPartyId } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, vehicleNumber, mobileNumber, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, partyId: reqPartyId, rcDetails } = req.body
 
     // Validate required fields
 
@@ -132,6 +132,43 @@ exports.createInsurance = async (req, res) => {
     const newInsurance = new Insurance(insuranceData)
     await newInsurance.save()
 
+    // Auto-create VehicleRegistration if it doesn't already exist
+    let vehicleAutoCreated = false
+    try {
+      const normalizedVehicleNumber = vehicleNumber.toUpperCase().trim()
+      const existingVehicle = await VehicleRegistration.findOne({
+        registrationNumber: normalizedVehicleNumber,
+        userId: req.user.id
+      })
+      if (!existingVehicle) {
+        const vehiclePayload = {
+          registrationNumber: normalizedVehicleNumber,
+          chassisNumber: rcDetails?.chassisNumber || 'N/A',
+          engineNumber: rcDetails?.engineNumber || '',
+          ownerName: policyHolderName || '',
+          mobileNumber: mobileNumber || '',
+          makerName: rcDetails?.makerName || '',
+          makerModel: rcDetails?.makerModel || '',
+          manufactureYear: rcDetails?.manufactureYear || null,
+          cubicCapacity: rcDetails?.cubicCapacity || null,
+          seatingCapacity: rcDetails?.seatingCapacity || null,
+          bodyType: rcDetails?.bodyType || '',
+          userId: req.user.id,
+          partyId: partyId || undefined
+        }
+        // Link the insurance document as the RC image if no RC image exists
+        if (insuranceDocument) {
+          vehiclePayload.rcImage = insuranceDocument
+        }
+        await VehicleRegistration.create(vehiclePayload)
+        vehicleAutoCreated = true
+        console.log(`[Insurance] Auto-created vehicle registration for ${normalizedVehicleNumber}`)
+      }
+    } catch (vehicleErr) {
+      // Non-blocking — insurance is already saved, just log the error
+      console.error('[Insurance] Could not auto-create vehicle registration:', vehicleErr.message)
+    }
+
     // Queue alerts then immediately try to send (uses existing limits + session logic)
     try {
       await checkUserAndQueueAlerts(req.user.id)
@@ -143,6 +180,7 @@ exports.createInsurance = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Insurance record created successfully',
+      vehicleAutoCreated,
       data: newInsurance
     })
   } catch (error) {

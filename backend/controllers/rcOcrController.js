@@ -134,10 +134,10 @@ ${jsonTemplate}`;
     }
 
     if (typeof extractedData.registrationNumber === 'string') {
-      extractedData.registrationNumber = extractedData.registrationNumber.replace(/\s+/g, '');
+      extractedData.registrationNumber = extractedData.registrationNumber.replace(/[\s-]/g, '');
     }
     if (typeof extractedData.vehicleNumber === 'string') {
-      extractedData.vehicleNumber = extractedData.vehicleNumber.replace(/\s+/g, '');
+      extractedData.vehicleNumber = extractedData.vehicleNumber.replace(/[\s-]/g, '');
     }
 
     res.json({
@@ -243,15 +243,29 @@ exports.llOcr = async (req, res) => {
 };
 
 exports.insuranceOcr = async (req, res) => {
-  const prompt = 'Extract the details from this vehicle insurance policy document. Extract vehicle number, policy number, policy holder name, valid from date (return in DD-MM-YYYY format), valid to date (return in DD-MM-YYYY format), and insurance company name (e.g., HDFC ERGO, ICICI Lombard, etc.). If multiple policy holder names or owners are mentioned, pick the primary one. Map the validity period correctly as shown in the document.';
+  const prompt = `Extract the details from this vehicle insurance policy document.
+- Extract the vehicle registration number (remove any hyphens/spaces, e.g. CG-23-J-8800 should become CG23J8800).
+- Extract the policy number, policy holder name, insurance company name (e.g. HDFC ERGO, ICICI Lombard).
+- Extract valid from date and valid to date in DD-MM-YYYY format.
+- Also extract as many of these RC/vehicle details as available in the document: chassis number, engine number, make/manufacturer name, model name, year of manufacture, cubic capacity (CC), seating capacity, body type.
+- If a field is not present, return empty string "".
+- If multiple policy holder names or owners are mentioned, pick the primary one.`;
   const template = `{
   "vehicleNumber": "",
   "policyNumber": "",
   "policyHolderName": "",
   "validFrom": "",
   "validTo": "",
-  "insuranceCompany": ""
+  "insuranceCompany": "",
+  "chassisNumber": "",
+  "engineNumber": "",
+  "makerName": "",
+  "makerModel": "",
+  "manufactureYear": "",
+  "cubicCapacity": "",
+  "seatingCapacity": "",
+  "bodyType": ""
 }`;
-  // Send 2 pages as requested
+  // Send 2 pages to capture both the policy and RC schedule
   return processOcrRequest(req, res, prompt, template, 2);
 };
