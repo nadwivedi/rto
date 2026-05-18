@@ -6,6 +6,7 @@ import * as XLSX from "xlsx";
 import AddButton from "../../components/AddButton";
 import AddPucModal from "./components/AddPucModal";
 import EditPucModal from "./components/EditPucModal";
+import PreviewPucImportModal from "./components/PreviewPucImportModal";
 import Pagination from "../../components/Pagination";
 import SearchBar from "../../components/SearchBar";
 import StatisticsCard from "../../components/StatisticsCard";
@@ -29,6 +30,8 @@ const Puc = () => {
   const [selectedPuc, setSelectedPuc] = useState(null);
   const [loading, setLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+  const [previewData, setPreviewData] = useState([]);
   const fileInputRef = useRef(null);
   const [statusFilter, setStatusFilter] = useState("all"); // 'all', 'expiring_soon', 'expired', 'pending'
   const [pagination, setPagination] = useState({
@@ -185,21 +188,13 @@ const Puc = () => {
             return;
           }
 
-          const response = await axios.post(`${API_URL}/api/puc/import/bulk`, {
-            records: formattedRecords
-          }, { withCredentials: true });
-
-          if (response.data.success) {
-            toast.success(response.data.message);
-            fetchPucRecords();
-            fetchStatistics();
-          } else {
-            toast.error(response.data.message || 'Import failed');
-          }
+          setPreviewData(formattedRecords);
+          setIsPreviewModalOpen(true);
+          setIsUploading(false);
+          if (fileInputRef.current) fileInputRef.current.value = '';
         } catch (err) {
           console.error('Error parsing excel:', err);
           toast.error('Error parsing Excel file. Please ensure it is correctly formatted.');
-        } finally {
           setIsUploading(false);
           if (fileInputRef.current) fileInputRef.current.value = '';
         }
@@ -210,6 +205,30 @@ const Puc = () => {
       toast.error('Could not read the file.');
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    setIsUploading(true);
+    try {
+      const response = await axios.post(`${API_URL}/api/puc/import/bulk`, {
+        records: previewData
+      }, { withCredentials: true });
+
+      if (response.data.success) {
+        toast.success(response.data.message);
+        fetchPucRecords();
+        fetchStatistics();
+        setIsPreviewModalOpen(false);
+        setPreviewData([]);
+      } else {
+        toast.error(response.data.message || 'Import failed');
+      }
+    } catch (error) {
+      console.error('Error importing bulk data:', error);
+      toast.error(error.response?.data?.message || 'Error saving data.');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -981,6 +1000,15 @@ const Puc = () => {
           puc={selectedPuc}
         />
       )}
+
+      {/* Preview Modal */}
+      <PreviewPucImportModal
+        isOpen={isPreviewModalOpen}
+        onClose={() => setIsPreviewModalOpen(false)}
+        data={previewData}
+        onSave={handleConfirmImport}
+        isSaving={isUploading}
+      />
 
     </>
   );
