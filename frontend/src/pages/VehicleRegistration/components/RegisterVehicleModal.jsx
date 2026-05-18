@@ -172,24 +172,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
       }
     }
 
-    if (currentFieldName === 'partySearch' && e.key === 'Enter') {
-      if (!formData.partyId) {
-        e.preventDefault()
-        const exactParty = findMatchingParty(formData.ownerName)
 
-        if (exactParty) {
-          handlePartySelect(exactParty)
-          // Don't return here, let it fall through to navigation logic
-        } else if (formData.ownerName.trim()) {
-          toast.error('Party is required. Choose an existing party or create a new party with Alt+N.', { position: 'top-right', autoClose: 3000 })
-          setNewParty(prev => ({ ...prev, partyName: formData.ownerName }))
-          return
-        } else {
-          toast.error('Please choose a party from dropdown or create a new party.', { position: 'top-right', autoClose: 3000 })
-          return
-        }
-      }
-    }
 
     if (e.key === 'Enter') {
       e.preventDefault() // Prevent default form submission
@@ -607,12 +590,12 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
       updated.email = matchedParty.email || ''
       updated.address = matchedParty.address || ''
       updated.partyId = matchedParty._id
-    } else if (extractedData.ownerName) {
-      updated.ownerName = ''
-      updated.sonWifeDaughterOf = ''
-      updated.mobileNumber = ''
-      updated.email = ''
-      updated.address = ''
+    } else {
+      if (extractedData.ownerName && (!onlyEmpty || !updated.ownerName)) updated.ownerName = String(extractedData.ownerName).toUpperCase()
+      if (extractedData.sonWifeDaughterOf && (!onlyEmpty || !updated.sonWifeDaughterOf)) updated.sonWifeDaughterOf = String(extractedData.sonWifeDaughterOf).toUpperCase()
+      if (extractedData.mobileNumber && (!onlyEmpty || !updated.mobileNumber)) updated.mobileNumber = String(extractedData.mobileNumber)
+      if (extractedData.email && (!onlyEmpty || !updated.email)) updated.email = String(extractedData.email)
+      if (extractedData.address && (!onlyEmpty || !updated.address)) updated.address = String(extractedData.address).toUpperCase()
       updated.partyId = ''
     }
 
@@ -1552,10 +1535,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
       return
     }
 
-    if (!formData.partyId) {
-      toast.error('Please select a party from the dropdown or create a new party with Alt+N.')
-      return
-    }
+
 
     setLoading(true)
     setError('')
@@ -2293,8 +2273,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
                   <div className='group'>
                     <label className='flex items-center justify-between gap-2 text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2'>
                       <span>
-                        Party / Owner <span className='text-red-500'>*</span>
-                        <span className='text-purple-500 text-[10px] md:text-xs font-normal'> (select from dropdown)</span>
+                        Party / Owner <span className='text-xs font-normal text-gray-500'>(Optional)</span>
                       </span>
                       <button
                         type='button'
@@ -2354,17 +2333,17 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
                         </div>
                       )}
                       {formData.ownerName && !formData.partyId && !showPartySuggestions && (
-                        <div className='mt-1.5 flex items-start justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-[10px] text-amber-700 md:text-xs'>
-                          <span>Select a party from the dropdown. Typed text will not be saved as owner.</span>
+                        <div className='mt-1.5 flex items-start justify-between gap-2 rounded-lg border border-purple-200 bg-purple-50 px-2.5 py-2 text-[10px] text-purple-700 md:text-xs'>
+                          <span>Optionally select a party from the dropdown, or continue with the custom owner details typed below.</span>
                           <button
                             type='button'
                             onMouseDown={(e) => {
                               e.preventDefault()
                               openAddPartyModal()
                             }}
-                            className='shrink-0 font-bold text-amber-800 hover:text-amber-900'
+                            className='shrink-0 font-bold text-purple-800 hover:text-purple-900'
                           >
-                            Create
+                            Create Party
                           </button>
                         </div>
                       )}
