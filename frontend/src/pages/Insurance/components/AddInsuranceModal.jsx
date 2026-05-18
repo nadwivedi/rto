@@ -34,7 +34,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     manufactureYear: '',
     cubicCapacity: '',
     seatingCapacity: '',
-    bodyType: ''
+    bodyType: '',
+    address: ''
   })
 
   const [fetchingVehicle, setFetchingVehicle] = useState(false)
@@ -77,7 +78,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         agentName: initialData.agentName || '',
         agentContact: initialData.agentContact || '',
         insuranceDocument: initialData.insuranceDocument || '',
-        renewPremium: initialData.renewPremium?.toString() || '0'
+        renewPremium: initialData.renewPremium?.toString() || '0',
+        address: ''
       })
 
       // Set insurance document preview if exists
@@ -106,7 +108,16 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         balance: '0',
         insuranceCompany: '',
         insuranceDocument: '',
-        renewPremium: '0'
+        renewPremium: '0',
+        address: '',
+        chassisNumber: '',
+        engineNumber: '',
+        makerName: '',
+        makerModel: '',
+        manufactureYear: '',
+        cubicCapacity: '',
+        seatingCapacity: '',
+        bodyType: ''
       })
       setFetchingVehicle(false)
       setVehicleValidation({ isValid: false, message: '' })
@@ -492,6 +503,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           if (resultData.cubicCapacity) updated.cubicCapacity = resultData.cubicCapacity
           if (resultData.seatingCapacity) updated.seatingCapacity = resultData.seatingCapacity
           if (resultData.bodyType) updated.bodyType = resultData.bodyType.toUpperCase()
+          if (resultData.address) updated.address = resultData.address.toUpperCase()
           
           return updated
         })
@@ -593,8 +605,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       // Get current tabIndex
       const currentTabIndex = parseInt(e.target.getAttribute('tabIndex'))
 
-      // If we're on the last field (paid = tabIndex 9), submit the form
-      if (currentTabIndex === 9) {
+      // If we're on the last field (paid = tabIndex 10), submit the form
+      if (currentTabIndex === 10) {
         document.querySelector('form')?.requestSubmit()
         return
       }
@@ -649,7 +661,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         manufactureYear: formData.manufactureYear ? Number(formData.manufactureYear) : null,
         cubicCapacity: formData.cubicCapacity ? Number(formData.cubicCapacity) : null,
         seatingCapacity: formData.seatingCapacity ? Number(formData.seatingCapacity) : null,
-        bodyType: formData.bodyType || ''
+        bodyType: formData.bodyType || '',
+        address: formData.address || ''
       }
     }
 
@@ -916,6 +929,23 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                   />
                 </div>
+
+                {/* Owner's Address */}
+                <div className='md:col-span-3'>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Owner's Address
+                  </label>
+                  <input
+                    type='text'
+                    name='address'
+                    value={formData.address}
+                    onChange={handleChange}
+                    onKeyDown={handleInputKeyDown}
+                    placeholder="Enter owner's address (extracted automatically from PDF)"
+                    tabIndex="6"
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white uppercase'
+                  />
+                </div>
               </div>
             </div>
 
@@ -939,7 +969,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     placeholder='DD-MM-YYYY'
-                    tabIndex="6"
+                    tabIndex="7"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white'
                     required
                   />
@@ -958,7 +988,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     placeholder='DD-MM-YYYY'
-                    tabIndex="7"
+                    tabIndex="8"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white'
                   />
                   <p className='text-xs text-gray-500 mt-1'>Auto-calculated: 1 year from Valid From date minus 1 day</p>
@@ -987,7 +1017,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="8"
+                    tabIndex="9"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                     required
                   />
@@ -1006,7 +1036,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="9"
+                    tabIndex="10"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 font-semibold ${
                       paidExceedsTotal
                         ? 'border-red-500 focus:ring-red-500 bg-red-50'
@@ -1048,7 +1078,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder='For next year'
-                    tabIndex="10"
+                    tabIndex="11"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>

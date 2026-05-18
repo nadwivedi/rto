@@ -153,6 +153,7 @@ exports.createInsurance = async (req, res) => {
           cubicCapacity: rcDetails?.cubicCapacity || null,
           seatingCapacity: rcDetails?.seatingCapacity || null,
           bodyType: rcDetails?.bodyType || '',
+          address: rcDetails?.address || '',
           userId: req.user.id,
           partyId: partyId || undefined
         }
@@ -163,6 +164,13 @@ exports.createInsurance = async (req, res) => {
         await VehicleRegistration.create(vehiclePayload)
         vehicleAutoCreated = true
         console.log(`[Insurance] Auto-created vehicle registration for ${normalizedVehicleNumber}`)
+      } else {
+        // Vehicle already exists, update address on vehicle details if provided
+        if (rcDetails?.address) {
+          existingVehicle.address = rcDetails.address
+          await existingVehicle.save()
+          console.log(`[Insurance] Saved extracted owner's address on existing vehicle registration: ${normalizedVehicleNumber}`)
+        }
       }
     } catch (vehicleErr) {
       // Non-blocking — insurance is already saved, just log the error
@@ -525,7 +533,7 @@ exports.getInsuranceByPolicyNumber = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, insuranceCompany, vehicleNumber, mobileNumber, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, partyId } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, vehicleNumber, mobileNumber, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, partyId, rcDetails } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -581,6 +589,24 @@ exports.updateInsurance = async (req, res) => {
     if (renewPremium !== undefined) insurance.renewPremium = Number(renewPremium) || 0
 
     const updatedInsurance = await insurance.save()
+
+    // Update existing vehicle registration if address is provided in rcDetails
+    if (rcDetails?.address) {
+      try {
+        const normalizedVehicleNumber = (vehicleNumber || insurance.vehicleNumber).toUpperCase().trim()
+        const vehicle = await VehicleRegistration.findOne({
+          registrationNumber: normalizedVehicleNumber,
+          userId: req.user.id
+        })
+        if (vehicle) {
+          vehicle.address = rcDetails.address
+          await vehicle.save()
+          console.log(`[Insurance Update] Updated address on vehicle registration: ${normalizedVehicleNumber}`)
+        }
+      } catch (vehicleErr) {
+        console.error('[Insurance Update] Could not update vehicle address:', vehicleErr.message)
+      }
+    }
 
     // Queue alerts then immediately try to send (uses existing limits + session logic)
     try {

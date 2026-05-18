@@ -247,6 +247,7 @@ exports.insuranceOcr = async (req, res) => {
 - Extract the vehicle registration number (remove any hyphens/spaces, e.g. CG-23-J-8800 should become CG23J8800).
 - Extract the policy number, policy holder name, insurance company name (e.g. HDFC ERGO, ICICI Lombard).
 - Extract valid from date and valid to date in DD-MM-YYYY format.
+- Extract the policy holder / owner's address if present in the document.
 - Also extract as many of these RC/vehicle details as available in the document: chassis number, engine number, make/manufacturer name, model name, year of manufacture, cubic capacity (CC), seating capacity, body type.
 - If a field is not present, return empty string "".
 - If multiple policy holder names or owners are mentioned, pick the primary one.`;
@@ -257,6 +258,7 @@ exports.insuranceOcr = async (req, res) => {
   "validFrom": "",
   "validTo": "",
   "insuranceCompany": "",
+  "address": "",
   "chassisNumber": "",
   "engineNumber": "",
   "makerName": "",
@@ -269,3 +271,4 @@ exports.insuranceOcr = async (req, res) => {
   // Send 2 pages to capture both the policy and RC schedule
   return processOcrRequest(req, res, prompt, template, 2);
 };
+
