@@ -89,7 +89,7 @@ function ProtectedLayout() {
           '/dealer-bill',
           '/party'
         ];
-        
+
         if (location.pathname.startsWith('/party/')) {
           navigate('/party');
         } else if (vahanHubPages.includes(location.pathname) || sarthiHubPages.includes(location.pathname)) {

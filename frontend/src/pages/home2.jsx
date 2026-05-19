@@ -49,12 +49,35 @@ const HeaderSection = ({ title, subtitle, gradient, icon }) => (
   </div>
 )
 
+import React, { useState, useEffect } from 'react'
+import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const Home2 = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
+  const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(true)
+
+  useEffect(() => {
+    const checkWhatsAppStatus = async () => {
+      try {
+        const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+        const res = await axios.get(`${API_URL}/api/whatsapp/status`, { withCredentials: true })
+        setIsWhatsAppConnected(res.data?.status === 'authenticated')
+      } catch (error) {
+        console.error('[WhatsApp] Status check error:', error)
+        setIsWhatsAppConnected(false)
+      }
+    }
+    
+    if (user?.type !== 'staff') {
+      checkWhatsAppStatus()
+      const interval = setInterval(checkWhatsAppStatus, 10000)
+      return () => clearInterval(interval)
+    }
+  }, [user])
+
   const vahanColors = {
     bg: 'bg-sky-50',
     text: 'text-sky-700',
@@ -77,16 +100,35 @@ const Home2 = () => {
     <div className='min-h-screen bg-slate-100 px-2 py-6 sm:px-6 lg:px-10'>
       <div className='mx-auto max-w-6xl'>
         {/* Top Navbar Options */}
-        <div className='flex justify-end gap-2 sm:gap-3 mb-6 sm:mb-8'>
-          {user?.type !== 'staff' && (
-            <button
+        <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6 sm:mb-8 w-full bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-slate-200/50 shadow-sm'>
+          {/* WhatsApp Not Connected Alert */}
+          {!isWhatsAppConnected && user?.type !== 'staff' ? (
+            <div 
               onClick={() => navigate('/whatsapp')}
-              className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-emerald-600 transition-all duration-300 font-bold text-xs sm:text-base'
+              className='flex items-center gap-2 px-3.5 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl shadow-inner text-xs sm:text-sm font-bold animate-pulse hover:shadow-md hover:scale-[1.01] hover:bg-rose-100/80 transition-all duration-300 cursor-pointer w-full md:w-auto'
             >
-              <span className='text-base sm:text-xl'>💬</span>
-              WhatsApp
-            </button>
+              <span className='text-sm sm:text-base animate-bounce'>⚠️</span>
+              <span>Your WhatsApp is not connected. Please connect your WhatsApp to send message</span>
+            </div>
+          ) : (
+            <div className="hidden md:block"></div>
           )}
+
+          {/* Buttons Group */}
+          <div className='flex items-center justify-end gap-2 sm:gap-3 w-full md:w-auto'>
+            {user?.type !== 'staff' && (
+              <button
+                onClick={() => navigate('/whatsapp')}
+                className={`flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl shadow-sm transition-all duration-300 font-bold text-xs sm:text-base ${
+                  isWhatsAppConnected 
+                    ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-md' 
+                    : 'bg-red-500 text-white hover:bg-red-600 hover:shadow-md animate-pulse border border-red-300'
+                }`}
+              >
+                <span className='text-base sm:text-xl'>💬</span>
+                {isWhatsAppConnected ? 'WhatsApp' : 'Connect WA'}
+              </button>
+            )}
           <button
             onClick={() => navigate('/javak')}
             className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-indigo-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold text-xs sm:text-base'
@@ -102,6 +144,7 @@ const Home2 = () => {
             Setting
           </button>
         </div>
+      </div>
 
         <div className='grid gap-8 md:grid-cols-2'>
           <button
