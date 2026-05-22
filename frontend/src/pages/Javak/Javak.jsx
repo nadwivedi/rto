@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { enforceVehicleNumberFormat } from '../../utils/vehicleNoCheck'
@@ -57,12 +57,23 @@ const Javak = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editTask, setEditTask] = useState(null)
 
-  const fetchJavaks = async () => {
+  // Search (backend query on every keystroke)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [totalRecords, setTotalRecords] = useState(0)
+  const searchDebounceRef = useRef(null)
+  const isInitialFetch = useRef(true)
+
+  const fetchJavaks = async (search = searchQuery) => {
+    const trimmed = search.trim()
     try {
       setLoading(true)
-      const response = await axios.get(`${API_URL}/api/javak`, { withCredentials: true })
+      const response = await axios.get(`${API_URL}/api/javak`, {
+        params: trimmed ? { search: trimmed } : {},
+        withCredentials: true
+      })
       if (response.data.success) {
         setJavaks(response.data.data)
+        setTotalRecords(response.data.totalRecords ?? response.data.data.length)
       }
     } catch (error) {
       console.error('Error fetching javaks:', error)
@@ -73,8 +84,19 @@ const Javak = () => {
   }
 
   useEffect(() => {
-    fetchJavaks()
-  }, [])
+    if (isInitialFetch.current) {
+      isInitialFetch.current = false
+      fetchJavaks(searchQuery)
+      return
+    }
+    if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    searchDebounceRef.current = setTimeout(() => {
+      fetchJavaks(searchQuery)
+    }, 300)
+    return () => {
+      if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
+    }
+  }, [searchQuery])
 
   const handleToggleStatus = async (id, currentStatus) => {
     try {
@@ -157,8 +179,8 @@ const Javak = () => {
       const response = await axios.post(`${API_URL}/api/javak`, newEntry, { withCredentials: true })
       toast.success('Task added successfully')
       
-      // Update list without reloading completely
-      setJavaks(prev => [response.data.data, ...prev].sort((a,b) => new Date(b.date) - new Date(a.date) || new Date(b.createdAt) - new Date(a.createdAt)))
+      // Refresh list (respects active search / recent limit)
+      fetchJavaks()
       
       // Reset form but keep the date
       setNewEntry(prev => ({
@@ -198,14 +220,21 @@ const Javak = () => {
     return dateString
   }
 
-  const groupedJavaks = javaks.reduce((groups, task) => {
-    const date = task.date
-    if (!groups[date]) groups[date] = []
-    groups[date].push(task)
-    return groups
-  }, {})
+  const groupedJavaks = useMemo(() => {
+    return javaks.reduce((groups, task) => {
+      const date = task.date
+      if (!groups[date]) groups[date] = []
+      groups[date].push(task)
+      return groups
+    }, {})
+  }, [javaks])
 
-  const sortedDates = Object.keys(groupedJavaks).sort((a, b) => new Date(b) - new Date(a))
+  const sortedDates = useMemo(
+    () => Object.keys(groupedJavaks).sort((a, b) => new Date(b) - new Date(a)),
+    [groupedJavaks]
+  )
+
+  const hasSearch = searchQuery.trim().length > 0
 
   return (
     <div className='min-h-screen bg-gray-100 px-4 pb-8 pt-4 lg:px-8 lg:pt-6'>
@@ -312,6 +341,55 @@ const Javak = () => {
           )}
         </div>
 
+        {/* Search */}
+        <div className='bg-white rounded-lg border border-gray-200 shadow-sm px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3'>
+          <div className='relative flex-1 max-w-xl'>
+            <svg
+              className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none'
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
+            </svg>
+            <input
+              type='text'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder='Search by party name or vehicle number...'
+              className='w-full pl-10 pr-10 py-2.5 text-sm border border-slate-300 rounded-lg bg-white focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 outline-none transition-all uppercase placeholder:normal-case'
+            />
+            {searchQuery && (
+              <button
+                type='button'
+                onClick={() => setSearchQuery('')}
+                className='absolute right-2 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 rounded'
+                title='Clear search'
+              >
+                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                </svg>
+              </button>
+            )}
+          </div>
+          {hasSearch ? (
+            <p className='text-sm text-slate-600 shrink-0'>
+              <span className='font-semibold text-cyan-700'>{javaks.length}</span>
+              {' '}of {totalRecords} match{totalRecords !== 1 ? 'es' : ''}
+              {totalRecords > javaks.length && (
+                <span className='text-slate-400'> (showing first {javaks.length})</span>
+              )}
+            </p>
+          ) : (
+            <p className='text-sm text-slate-500 shrink-0'>
+              Showing recent <span className='font-semibold text-slate-700'>{javaks.length}</span>
+              {totalRecords > javaks.length && (
+                <> of <span className='font-semibold text-slate-700'>{totalRecords}</span> — search to find older records</>
+              )}
+            </p>
+          )}
+        </div>
+
         {/* Data List grouped by date */}
         {loading ? (
           <div className='flex justify-center items-center h-64 rounded-lg border border-gray-200 bg-white'>
@@ -320,10 +398,30 @@ const Javak = () => {
         ) : sortedDates.length === 0 ? (
           <div className='rounded-lg border border-gray-200 bg-white p-12 text-center'>
             <div className='mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100 text-gray-500'>
-              <svg className='h-6 w-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M12 4v16m8-8H4' /></svg>
+              {hasSearch ? (
+                <svg className='h-6 w-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' /></svg>
+              ) : (
+                <svg className='h-6 w-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M12 4v16m8-8H4' /></svg>
+              )}
             </div>
-            <h3 className='text-lg font-bold text-slate-800 mb-1'>No tracked tasks yet</h3>
-            <p className='text-slate-500'>Type into the boxes above and press Enter to save your first task!</p>
+            {hasSearch ? (
+              <>
+                <h3 className='text-lg font-bold text-slate-800 mb-1'>No matching tasks</h3>
+                <p className='text-slate-500'>No party name or vehicle number matches &quot;{searchQuery.trim()}&quot;</p>
+                <button
+                  type='button'
+                  onClick={() => setSearchQuery('')}
+                  className='mt-4 text-sm font-medium text-cyan-700 hover:text-cyan-800 underline'
+                >
+                  Clear search
+                </button>
+              </>
+            ) : (
+              <>
+                <h3 className='text-lg font-bold text-slate-800 mb-1'>No tracked tasks yet</h3>
+                <p className='text-slate-500'>Type into the boxes above and press Enter to save your first task!</p>
+              </>
+            )}
           </div>
         ) : (
           <div className='space-y-6'>
