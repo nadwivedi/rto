@@ -25,13 +25,17 @@ exports.createJavak = async (req, res) => {
 
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 
-const DEFAULT_LIST_LIMIT = 100
-const SEARCH_RESULT_LIMIT = 500
+const PAGE_SIZE = 400
+const MAX_PAGE_SIZE = 400
 
-// Get Javak entries — recent list by default; full DB search when ?search= is provided
+// Get Javak entries with offset pagination (default 400 per page)
 exports.getJavaks = async (req, res) => {
   try {
     const search = (req.query.search || '').trim()
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1)
+    const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || PAGE_SIZE, 1), MAX_PAGE_SIZE)
+    const skip = (page - 1) * limit
+
     const filter = { userId: req.user.id }
 
     if (search) {
@@ -44,23 +48,19 @@ exports.getJavaks = async (req, res) => {
 
     const totalRecords = await Javak.countDocuments(filter)
 
-    let query = Javak.find(filter).sort({ date: -1, createdAt: -1 })
-
-    if (search) {
-      query = query.limit(SEARCH_RESULT_LIMIT)
-    } else {
-      const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || DEFAULT_LIST_LIMIT, 1), DEFAULT_LIST_LIMIT)
-      query = query.limit(limit)
-    }
-
-    const javaks = await query
+    const javaks = await Javak.find(filter)
+      .sort({ date: -1, createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
 
     res.status(200).json({
       success: true,
       data: javaks,
       totalRecords,
-      isSearch: Boolean(search),
-      limit: search ? SEARCH_RESULT_LIMIT : (javaks.length < totalRecords ? javaks.length : totalRecords)
+      page,
+      limit,
+      hasMore: skip + javaks.length < totalRecords,
+      isSearch: Boolean(search)
     })
   } catch (error) {
     console.error('Error fetching javaks:', error)

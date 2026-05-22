@@ -5,6 +5,7 @@ import { enforceVehicleNumberFormat } from '../../utils/vehicleNoCheck'
 import AddJavakModal from './components/AddJavakModal'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+const PAGE_SIZE = 400
 const inputClass = 'w-full px-3 py-2 border border-slate-400/80 rounded-lg bg-white/95 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 outline-none text-sm transition-all shadow-sm shadow-slate-200/60'
 
 // Component for Inline Editing
@@ -57,41 +58,58 @@ const Javak = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editTask, setEditTask] = useState(null)
 
-  // Search (backend query on every keystroke)
+  // Search + pagination (400 per page, load more on demand)
   const [searchQuery, setSearchQuery] = useState('')
   const [totalRecords, setTotalRecords] = useState(0)
+  const [hasMore, setHasMore] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
   const searchDebounceRef = useRef(null)
   const isInitialFetch = useRef(true)
 
-  const fetchJavaks = async (search = searchQuery) => {
+  const fetchJavaks = async ({ search = searchQuery, page = 1, append = false } = {}) => {
     const trimmed = search.trim()
     try {
-      setLoading(true)
+      if (append) setLoadingMore(true)
+      else setLoading(true)
+
       const response = await axios.get(`${API_URL}/api/javak`, {
-        params: trimmed ? { search: trimmed } : {},
+        params: {
+          page,
+          limit: PAGE_SIZE,
+          ...(trimmed ? { search: trimmed } : {})
+        },
         withCredentials: true
       })
       if (response.data.success) {
-        setJavaks(response.data.data)
-        setTotalRecords(response.data.totalRecords ?? response.data.data.length)
+        const newData = response.data.data || []
+        setJavaks(prev => (append ? [...prev, ...newData] : newData))
+        setTotalRecords(response.data.totalRecords ?? newData.length)
+        setHasMore(Boolean(response.data.hasMore))
       }
     } catch (error) {
       console.error('Error fetching javaks:', error)
       toast.error('Failed to load tasks')
     } finally {
       setLoading(false)
+      setLoadingMore(false)
     }
+  }
+
+  const handleLoadMore = () => {
+    if (!hasMore || loadingMore || loading) return
+    const nextPage = Math.floor(javaks.length / PAGE_SIZE) + 1
+    fetchJavaks({ page: nextPage, append: true })
   }
 
   useEffect(() => {
     if (isInitialFetch.current) {
       isInitialFetch.current = false
-      fetchJavaks(searchQuery)
+      fetchJavaks({ search: searchQuery, page: 1, append: false })
       return
     }
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
     searchDebounceRef.current = setTimeout(() => {
-      fetchJavaks(searchQuery)
+      fetchJavaks({ search: searchQuery, page: 1, append: false })
     }, 300)
     return () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
@@ -372,26 +390,18 @@ const Javak = () => {
               </button>
             )}
           </div>
-          {hasSearch ? (
-            <p className='text-sm text-slate-600 shrink-0'>
-              <span className='font-semibold text-cyan-700'>{javaks.length}</span>
-              {' '}of {totalRecords} match{totalRecords !== 1 ? 'es' : ''}
-              {totalRecords > javaks.length && (
-                <span className='text-slate-400'> (showing first {javaks.length})</span>
-              )}
-            </p>
-          ) : (
-            <p className='text-sm text-slate-500 shrink-0'>
-              Showing recent <span className='font-semibold text-slate-700'>{javaks.length}</span>
-              {totalRecords > javaks.length && (
-                <> of <span className='font-semibold text-slate-700'>{totalRecords}</span> — search to find older records</>
-              )}
-            </p>
-          )}
+          <p className='text-sm text-slate-600 shrink-0'>
+            Showing <span className='font-semibold text-cyan-700'>{javaks.length}</span>
+            {' '}of <span className='font-semibold text-slate-700'>{totalRecords}</span>
+            {hasSearch ? ' matches' : ' tasks'}
+            {hasMore && (
+              <span className='text-slate-400'> — use Load more below</span>
+            )}
+          </p>
         </div>
 
         {/* Data List grouped by date */}
-        {loading ? (
+        {loading && javaks.length === 0 ? (
           <div className='flex justify-center items-center h-64 rounded-lg border border-gray-200 bg-white'>
             <div className='w-12 h-12 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin'></div>
           </div>
@@ -506,6 +516,31 @@ const Javak = () => {
                 </div>
               </div>
             ))}
+
+            {hasMore && (
+              <div className='flex flex-col items-center gap-2 py-4'>
+                <button
+                  type='button'
+                  onClick={handleLoadMore}
+                  disabled={loadingMore}
+                  className='inline-flex items-center gap-2 rounded-lg border border-cyan-200 bg-white px-6 py-3 text-sm font-semibold text-cyan-800 shadow-sm transition-colors hover:bg-cyan-50 disabled:cursor-not-allowed disabled:opacity-60'
+                >
+                  {loadingMore ? (
+                    <>
+                      <span className='h-4 w-4 animate-spin rounded-full border-2 border-cyan-600 border-t-transparent' />
+                      Loading more...
+                    </>
+                  ) : (
+                    <>
+                      Load more
+                      <span className='text-xs font-normal text-slate-500'>
+                        ({javaks.length} of {totalRecords} shown)
+                      </span>
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
