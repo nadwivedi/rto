@@ -89,21 +89,29 @@ const getAlertForDay = (diffDays, rule) => {
   return null
 }
 
-const buildMessage = ({ alert, serviceName, vehicleNo, expiryDate, signature = 'RTO Services', renewPremium = 0 }) => {
+const formatMessageFooter = (signature, address) => {
+  let footer = `\n\n- ${signature}`
+  if (address) footer += `\n${address}`
+  return footer
+}
+
+const buildMessage = ({ alert, serviceName, vehicleNo, expiryDate, signature = 'RTO Services', address = '', renewPremium = 0 }) => {
   let premiumText = '';
   if (serviceName === 'Insurance' && renewPremium > 0) {
     premiumText = `\n\n*Your new premium will be ₹${renewPremium.toLocaleString('en-IN')}*`;
   }
 
+  const footer = formatMessageFooter(signature, address)
+
   if (alert.type === 'upcoming') {
-    return `Dear Customer,\n\nYour *${serviceName}* document for vehicle *${vehicleNo}* will expire on *${expiryDate}* (${alert.label}).${premiumText}\n\nPlease renew it soon to avoid penalties.\n\n- ${signature}`
+    return `Dear Customer,\n\nYour *${serviceName}* document for vehicle *${vehicleNo}* will expire on *${expiryDate}* (${alert.label}).${premiumText}\n\nPlease visit for renewal to avoid penalties.${footer}`
   }
 
   if (alert.type === 'today') {
-    return `Dear Customer,\n\nYour *${serviceName}* document for vehicle *${vehicleNo}* *expires TODAY* (${expiryDate}).${premiumText}\n\nPlease renew urgently to avoid fines.\n\n- ${signature}`
+    return `Dear Customer,\n\nYour *${serviceName}* document for vehicle *${vehicleNo}* *expires TODAY* (${expiryDate}).${premiumText}\n\nPlease renew urgently to avoid fines.${footer}`
   }
 
-  return `Dear Customer,\n\nYour *${serviceName}* document for vehicle *${vehicleNo}* expired on *${expiryDate}* (${alert.label}).${premiumText}\n\nPlease renew immediately to avoid heavy fines.\n\n- ${signature}`
+  return `Dear Customer,\n\nYour *${serviceName}* document for vehicle *${vehicleNo}* expired on *${expiryDate}* (${alert.label}).${premiumText}\n\nPlease renew immediately to avoid heavy fines.${footer}`
 }
 
 const getNationalPermitPartLine = ({ partLabel, alert, expiryText }) => {
@@ -118,11 +126,12 @@ const getNationalPermitPartLine = ({ partLabel, alert, expiryText }) => {
   return `- *${partLabel}* expired on *${expiryText}* (${alert.label})`
 }
 
-const buildNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'RTO Services' }) => {
+const buildNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'RTO Services', address = '' }) => {
   const lines = partAlerts.map(getNationalPermitPartLine).join('\n')
+  const footer = formatMessageFooter(signature, address)
 
   if (partAlerts.length > 1) {
-    return `Dear Customer,\n\nYour *NP* for vehicle *${vehicleNo}* is going to expire for both *Part A* and *Part B*:\n${lines}\n\nPlease renew it soon to avoid penalties.\n\n- ${signature}`
+    return `Dear Customer,\n\nYour *NP* for vehicle *${vehicleNo}* is going to expire for both *Part A* and *Part B*:\n${lines}\n\nPlease visit for renewal to avoid penalties.${footer}`
   }
 
   const part = partAlerts[0]
@@ -132,7 +141,8 @@ const buildNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'RTO Se
     serviceName,
     vehicleNo,
     expiryDate: part.expiryText,
-    signature
+    signature,
+    address
   })
 }
 
@@ -159,8 +169,9 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
     const getUserInfo = async (uid) => {
       if (userInfos.has(uid)) return userInfos.get(uid)
       const user = await User.findById(uid).lean()
-      const info = { 
-        signature: user?.billName || user?.name || 'RTO Services' 
+      const info = {
+        signature: user?.billName || user?.name || 'RTO Services',
+        address: user?.address?.trim() || ''
       }
       userInfos.set(uid, info)
       return info
@@ -225,6 +236,7 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
           vehicleNo,
           expiryDate: doc[source.dateField],
           signature: userInfo.signature,
+          address: userInfo.address,
           renewPremium: doc.renewPremium || 0
         })
 
@@ -318,7 +330,8 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
       const messageBody = buildNationalPermitMessage({
         partAlerts: missingPartAlerts,
         vehicleNo,
-        signature: userInfo.signature
+        signature: userInfo.signature,
+        address: userInfo.address
       })
 
       await MessageLog.create({

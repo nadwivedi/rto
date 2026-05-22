@@ -292,18 +292,17 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
                 <h1 className='text-xl 2xl:text-4xl font-bold italic mb-1 2xl:mb-1' style={{ whiteSpace: 'nowrap' }}>
                   {userInfo?.billName ? userInfo.billName.toUpperCase() : (userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')}
                 </h1>
-                <p className='text-[9.5px] 2xl:text-sm italic mb-1.5 2xl:mb-2'>
+                <p className='text-[8.5px] 2xl:text-xs mb-1 2xl:mb-1.5'>
+                  {userInfo?.address || 'GF-17, Ground Floor, Shyam Plaza, Opp. Bus Stand, Pandri, RAIPUR'}
+                </p>
+                <p className={`text-[9.5px] 2xl:text-sm italic ${userInfo?.email ? 'mb-1.5 2xl:mb-2' : 'mb-2.5 2xl:mb-3'}`}>
                   {userInfo?.billDescription ? `(${userInfo.billDescription})` : '(Transport Consultant)'}
                 </p>
-                <p className='text-[8.5px] 2xl:text-xs mb-2.5 2xl:mb-3'>
-                  {userInfo?.address || 'GF-17, Ground Floor, Shyam Plaza, Opp. Bus Stand, Pandri, RAIPUR'}
-                  {userInfo?.email && (
-                    <>
-                      <br />
-                      Email : {userInfo.email}
-                    </>
-                  )}
-                </p>
+                {userInfo?.email && (
+                  <p className='text-[8.5px] 2xl:text-xs mb-2.5 2xl:mb-3'>
+                    Email : {userInfo.email}
+                  </p>
+                )}
               </div>
             </div>
 

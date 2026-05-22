@@ -126,17 +126,7 @@ async function generateCustomBillPDF(customBill, userInfo) {
 
       yPos += 42
 
-      // Subtitle (use billDescription if available, otherwise fall back to 'Transport Consultant')
-      doc.fontSize(13)
-        .font('Helvetica-Oblique')
-        .text((userInfo && userInfo.billDescription ? `(${userInfo.billDescription})` : '(Transport Consultant)'), 0, yPos, {
-          width: pageWidth,
-          align: 'center'
-        })
-
-      yPos += 25
-
-      // Address
+      // Address (below bill name)
       doc.fontSize(11)
         .font('Helvetica')
 
@@ -147,6 +137,16 @@ async function generateCustomBillPDF(customBill, userInfo) {
         })
         yPos += 15
       }
+
+      // Subtitle (use billDescription if available, otherwise fall back to 'Transport Consultant')
+      doc.fontSize(13)
+        .font('Helvetica-Oblique')
+        .text((userInfo && userInfo.billDescription ? `(${userInfo.billDescription})` : '(Transport Consultant)'), 0, yPos, {
+          width: pageWidth,
+          align: 'center'
+        })
+
+      yPos += 25
 
       // Email
       if (userInfo && userInfo.email) {

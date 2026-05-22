@@ -241,18 +241,17 @@ const EditDealerBillModal = ({ isOpen, onClose, onSuccess, billData }) => {
                 <h1 className='text-lg md:text-4xl font-bold italic mb-1' style={{ whiteSpace: 'nowrap' }}>
                   {userInfo?.billName ? userInfo.billName.toUpperCase() : (userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')}
                 </h1>
-                <p className='text-[10px] md:text-sm italic mb-2'>
+                <p className='text-[9px] md:text-xs mb-1'>
+                  {userInfo?.address || 'GF-17, Ground Floor, Shyam Plaza, Opp. Bus Stand, Pandri, RAIPUR'}
+                </p>
+                <p className={`text-[10px] md:text-sm italic ${userInfo?.email ? 'mb-2' : 'mb-3'}`}>
                   {userInfo?.billDescription ? `(${userInfo.billDescription})` : '(Transport Consultant)'}
                 </p>
-                <p className='text-[9px] md:text-xs mb-3'>
-                  {userInfo?.address || 'GF-17, Ground Floor, Shyam Plaza, Opp. Bus Stand, Pandri, RAIPUR'}
-                  {userInfo?.email && (
-                    <>
-                      <br />
-                      Email : {userInfo.email}
-                    </>
-                  )}
-                </p>
+                {userInfo?.email && (
+                  <p className='text-[9px] md:text-xs mb-3'>
+                    Email : {userInfo.email}
+                  </p>
+                )}
               </div>
             </div>
 
