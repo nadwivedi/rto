@@ -148,7 +148,7 @@ const processAllPendingMessages = async () => {
 }
 
 const initWhatsAppMessageSender = () => {
-    cron.schedule('*/1 * * * *', () => {
+    cron.schedule('*/5 * * * *', () => {
         processAllPendingMessages()
     })
     console.log('[CRON] WhatsApp Message Sender initiated (runs every 5 minutes)')

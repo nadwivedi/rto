@@ -90,28 +90,29 @@ const getAlertForDay = (diffDays, rule) => {
 }
 
 const formatMessageFooter = (signature, address) => {
-  let footer = `\n\n- ${signature}`
-  if (address) footer += `\n${address}`
+  let footer = `\n\n────────────────\n*${signature}*`
+  if (address) footer += `\n\n📍 ${address}`
   return footer
 }
 
 const buildMessage = ({ alert, serviceName, vehicleNo, expiryDate, signature = 'RTO Services', address = '', renewPremium = 0 }) => {
-  let premiumText = '';
+  let premiumText = ''
   if (serviceName === 'Insurance' && renewPremium > 0) {
-    premiumText = `\n\n*Your new premium will be ₹${renewPremium.toLocaleString('en-IN')}*`;
+    premiumText = `\n\n💰 *Your new premium will be ₹${renewPremium.toLocaleString('en-IN')}*`
   }
 
   const footer = formatMessageFooter(signature, address)
+  const docLine = `📄 *${serviceName}* · 🚗 *${vehicleNo}*`
 
   if (alert.type === 'upcoming') {
-    return `Dear Customer,\n\nYour *${serviceName}* document for vehicle *${vehicleNo}* will expire on *${expiryDate}* (${alert.label}).${premiumText}\n\nPlease visit for renewal to avoid penalties.${footer}`
+    return `Dear Customer,\n\n${docLine}\n📅 Expires on *${expiryDate}* _(${alert.label})_${premiumText}\n\n⚠️ Please visit for renewal to avoid penalties.${footer}`
   }
 
   if (alert.type === 'today') {
-    return `Dear Customer,\n\nYour *${serviceName}* document for vehicle *${vehicleNo}* *expires TODAY* (${expiryDate}).${premiumText}\n\nPlease renew urgently to avoid fines.${footer}`
+    return `Dear Customer,\n\n${docLine}\n🔴 *Expires TODAY* · *${expiryDate}*${premiumText}\n\n⚠️ Please renew urgently to avoid fines.${footer}`
   }
 
-  return `Dear Customer,\n\nYour *${serviceName}* document for vehicle *${vehicleNo}* expired on *${expiryDate}* (${alert.label}).${premiumText}\n\nPlease renew immediately to avoid heavy fines.${footer}`
+  return `Dear Customer,\n\n${docLine}\n❌ Expired on *${expiryDate}* _(${alert.label})_${premiumText}\n\n⚠️ Please renew immediately to avoid heavy fines.${footer}`
 }
 
 const getNationalPermitPartLine = ({ partLabel, alert, expiryText }) => {
@@ -131,7 +132,7 @@ const buildNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'RTO Se
   const footer = formatMessageFooter(signature, address)
 
   if (partAlerts.length > 1) {
-    return `Dear Customer,\n\nYour *NP* for vehicle *${vehicleNo}* is going to expire for both *Part A* and *Part B*:\n${lines}\n\nPlease visit for renewal to avoid penalties.${footer}`
+    return `Dear Customer,\n\n📄 *National Permit* · 🚗 *${vehicleNo}*\nBoth *Part A* and *Part B* are due:\n${lines}\n\n⚠️ Please visit for renewal to avoid penalties.${footer}`
   }
 
   const part = partAlerts[0]
