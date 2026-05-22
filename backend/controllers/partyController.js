@@ -11,6 +11,7 @@ const BusPermit = require('../models/BusPermit')
 const TemporaryPermit = require('../models/TemporaryPermit')
 const TemporaryPermitOtherState = require('../models/TemporaryPermitOtherState')
 const MoneyReceived = require('../models/MoneyReceived')
+const HpaHpt = require('../models/HpaHpt')
 const { logError, getUserFriendlyError } = require('../utils/errorLogger')
 
 // Get all parties
@@ -94,7 +95,8 @@ exports.getAllParties = async (req, res) => {
           nationalPermitPending,
           busPermitPending,
           temporaryPermitPending,
-          temporaryPermitOtherStatePending
+          temporaryPermitOtherStatePending,
+          hpaHptPending
         ] = await Promise.all([
           Tax.aggregate([
             { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balanceAmount: { $gt: 0 } } },
@@ -135,6 +137,10 @@ exports.getAllParties = async (req, res) => {
           TemporaryPermitOtherState.aggregate([
             { $match: { vehicleNo: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
             { $group: { _id: null, total: { $sum: '$balance' } } }
+          ]),
+          HpaHpt.aggregate([
+            { $match: { vehicleNumber: { $in: vehicleNumbers }, userId: req.user.id, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
           ])
         ])
 
@@ -148,7 +154,8 @@ exports.getAllParties = async (req, res) => {
           (nationalPermitPending[0]?.total || 0) +
           (busPermitPending[0]?.total || 0) +
           (temporaryPermitPending[0]?.total || 0) +
-          (temporaryPermitOtherStatePending[0]?.total || 0)
+          (temporaryPermitOtherStatePending[0]?.total || 0) +
+          (hpaHptPending[0]?.total || 0)
 
         return {
           ...party,
@@ -519,14 +526,15 @@ exports.getPendingPaymentsByParty = async (req, res) => {
     }
 
     // Get pending payments from all service models
-    const [taxPending, fitnessPending, insurancePending, pucPending, cgPermitPending, nationalPermitPending, busPermitPending] = await Promise.all([
+    const [taxPending, fitnessPending, insurancePending, pucPending, cgPermitPending, nationalPermitPending, busPermitPending, hpaHptPending] = await Promise.all([
       Tax.find({ vehicleNumber: { $in: vehicleNumbers }, userId, balanceAmount: { $gt: 0 } }).lean(),
       Fitness.find({ vehicleNumber: { $in: vehicleNumbers }, userId, balance: { $gt: 0 } }).lean(),
       Insurance.find({ vehicleNumber: { $in: vehicleNumbers }, userId, balance: { $gt: 0 } }).lean(),
       Puc.find({ vehicleNumber: { $in: vehicleNumbers }, userId, balance: { $gt: 0 } }).lean(),
       CgPermit.find({ vehicleNumber: { $in: vehicleNumbers }, userId, balance: { $gt: 0 } }).lean(),
       NationalPermit.find({ vehicleNumber: { $in: vehicleNumbers }, userId, balance: { $gt: 0 } }).lean(),
-      BusPermit.find({ vehicleNumber: { $in: vehicleNumbers }, userId, balance: { $gt: 0 } }).lean()
+      BusPermit.find({ vehicleNumber: { $in: vehicleNumbers }, userId, balance: { $gt: 0 } }).lean(),
+      HpaHpt.find({ vehicleNumber: { $in: vehicleNumbers }, userId, balance: { $gt: 0 } }).lean()
     ])
 
     // Calculate totals
@@ -537,8 +545,9 @@ exports.getPendingPaymentsByParty = async (req, res) => {
     const cgPermitTotal = cgPermitPending.reduce((sum, c) => sum + (c.balance || 0), 0)
     const nationalPermitTotal = nationalPermitPending.reduce((sum, n) => sum + (n.balance || 0), 0)
     const busPermitTotal = busPermitPending.reduce((sum, b) => sum + (b.balance || 0), 0)
+    const hpaHptTotal = hpaHptPending.reduce((sum, h) => sum + (h.balance || 0), 0)
 
-    const totalPending = taxTotal + fitnessTotal + insuranceTotal + pucTotal + cgPermitTotal + nationalPermitTotal + busPermitTotal
+    const totalPending = taxTotal + fitnessTotal + insuranceTotal + pucTotal + cgPermitTotal + nationalPermitTotal + busPermitTotal + hpaHptTotal
 
     // Compile all pending records with type
     const records = [
@@ -548,7 +557,8 @@ exports.getPendingPaymentsByParty = async (req, res) => {
       ...pucPending.map(r => ({ ...r, type: 'PUC', pendingAmount: r.balance })),
       ...cgPermitPending.map(r => ({ ...r, type: 'CG Permit', pendingAmount: r.balance })),
       ...nationalPermitPending.map(r => ({ ...r, type: 'National Permit', pendingAmount: r.balance })),
-      ...busPermitPending.map(r => ({ ...r, type: 'Bus Permit', pendingAmount: r.balance }))
+      ...busPermitPending.map(r => ({ ...r, type: 'Bus Permit', pendingAmount: r.balance })),
+      ...hpaHptPending.map(r => ({ ...r, type: r.type === 'hpa' ? 'HPA' : 'HPT', pendingAmount: r.balance }))
     ]
 
     res.json({
@@ -562,7 +572,8 @@ exports.getPendingPaymentsByParty = async (req, res) => {
           puc: pucTotal,
           cgPermit: cgPermitTotal,
           nationalPermit: nationalPermitTotal,
-          busPermit: busPermitTotal
+          busPermit: busPermitTotal,
+          hpaHpt: hpaHptTotal
         },
         records
       }
@@ -629,7 +640,8 @@ exports.getPartyWisePendingSummary = async (req, res) => {
           nationalPermitPending,
           busPermitPending,
           temporaryPermitPending,
-          temporaryPermitOtherStatePending
+          temporaryPermitOtherStatePending,
+          hpaHptPending
         ] = await Promise.all([
           Tax.aggregate([
             { $match: { vehicleNumber: { $in: partyVehicles }, userId: userId, balanceAmount: { $gt: 0 } } },
@@ -670,6 +682,10 @@ exports.getPartyWisePendingSummary = async (req, res) => {
           TemporaryPermitOtherState.aggregate([
             { $match: { vehicleNo: { $in: partyVehicles }, userId: userId, balance: { $gt: 0 } } },
             { $group: { _id: null, total: { $sum: '$balance' } } }
+          ]),
+          HpaHpt.aggregate([
+            { $match: { vehicleNumber: { $in: partyVehicles }, userId: userId, balance: { $gt: 0 } } },
+            { $group: { _id: null, total: { $sum: '$balance' } } }
           ])
         ])
 
@@ -683,7 +699,8 @@ exports.getPartyWisePendingSummary = async (req, res) => {
           (nationalPermitPending[0]?.total || 0) +
           (busPermitPending[0]?.total || 0) +
           (temporaryPermitPending[0]?.total || 0) +
-          (temporaryPermitOtherStatePending[0]?.total || 0)
+          (temporaryPermitOtherStatePending[0]?.total || 0) +
+          (hpaHptPending[0]?.total || 0)
 
         return {
           partyId: party._id,
@@ -788,7 +805,8 @@ exports.getAllWorkByParty = async (req, res) => {
       nationalPermitRecords,
       busPermitRecords,
       temporaryPermitRecords,
-      temporaryPermitOtherStateRecords
+      temporaryPermitOtherStateRecords,
+      hpaHptRecords
     ] = await Promise.all([
       Tax.find({ vehicleNumber: { $in: vehicleNumbers }, userId }).sort({ createdAt: -1 }).lean(),
       Fitness.find({ vehicleNumber: { $in: vehicleNumbers }, userId }).sort({ createdAt: -1 }).lean(),
@@ -799,7 +817,8 @@ exports.getAllWorkByParty = async (req, res) => {
       NationalPermit.find({ vehicleNumber: { $in: vehicleNumbers }, userId }).sort({ createdAt: -1 }).lean(),
       BusPermit.find({ vehicleNumber: { $in: vehicleNumbers }, userId }).sort({ createdAt: -1 }).lean(),
       TemporaryPermit.find({ vehicleNumber: { $in: vehicleNumbers }, userId }).sort({ createdAt: -1 }).lean(),
-      TemporaryPermitOtherState.find({ vehicleNo: { $in: vehicleNumbers }, userId }).sort({ createdAt: -1 }).lean()
+      TemporaryPermitOtherState.find({ vehicleNo: { $in: vehicleNumbers }, userId }).sort({ createdAt: -1 }).lean(),
+      HpaHpt.find({ vehicleNumber: { $in: vehicleNumbers }, userId }).sort({ createdAt: -1 }).lean()
     ])
 
     // Calculate pending amounts
@@ -813,13 +832,15 @@ exports.getAllWorkByParty = async (req, res) => {
     const busPermitPending = busPermitRecords.reduce((sum, r) => sum + (r.balance || 0), 0)
     const temporaryPermitPending = temporaryPermitRecords.reduce((sum, r) => sum + (r.balance || 0), 0)
     const temporaryPermitOtherStatePending = temporaryPermitOtherStateRecords.reduce((sum, r) => sum + (r.balance || 0), 0)
+    const hpaHptPendingAmount = hpaHptRecords.reduce((sum, r) => sum + (r.balance || 0), 0)
 
     const totalPending = taxPending + fitnessPending + insurancePending + pucPending + gpsPending +
-      cgPermitPending + nationalPermitPending + busPermitPending + temporaryPermitPending + temporaryPermitOtherStatePending
+      cgPermitPending + nationalPermitPending + busPermitPending + temporaryPermitPending + temporaryPermitOtherStatePending + hpaHptPendingAmount
 
     const totalRecords = taxRecords.length + fitnessRecords.length + insuranceRecords.length +
       pucRecords.length + gpsRecords.length + cgPermitRecords.length + nationalPermitRecords.length +
-      busPermitRecords.length + temporaryPermitRecords.length + temporaryPermitOtherStateRecords.length
+      busPermitRecords.length + temporaryPermitRecords.length + temporaryPermitOtherStateRecords.length +
+      hpaHptRecords.length
 
     res.json({
       success: true,
@@ -837,7 +858,8 @@ exports.getAllWorkByParty = async (req, res) => {
           nationalPermit: nationalPermitRecords,
           busPermit: busPermitRecords,
           temporaryPermit: temporaryPermitRecords,
-          temporaryPermitOtherState: temporaryPermitOtherStateRecords
+          temporaryPermitOtherState: temporaryPermitOtherStateRecords,
+          hpaHpt: hpaHptRecords
         },
         pendingBreakdown: {
           tax: taxPending,
@@ -849,7 +871,8 @@ exports.getAllWorkByParty = async (req, res) => {
           nationalPermit: nationalPermitPending,
           busPermit: busPermitPending,
           temporaryPermit: temporaryPermitPending,
-          temporaryPermitOtherState: temporaryPermitOtherStatePending
+          temporaryPermitOtherState: temporaryPermitOtherStatePending,
+          hpaHpt: hpaHptPendingAmount
         },
         summary: {
           totalVehicles: vehicles.length,

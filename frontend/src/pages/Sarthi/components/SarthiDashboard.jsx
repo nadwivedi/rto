@@ -9,7 +9,8 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
     dl: 0,
     transfer: 0,
     noc: 0,
-    renewal: 0
+    renewal: 0,
+    hpaHpt: 0
   })
   const [loading, setLoading] = useState(true)
 
@@ -22,18 +23,20 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
       setLoading(true)
       // For now using individual counts if summary endpoint doesn't exist
       // In a real scenario, you'd have an API that returns these counts
-      const [dlRes, transferRes, nocRes, renewalRes] = await Promise.all([
+      const [dlRes, transferRes, nocRes, renewalRes, hpaHptRes] = await Promise.all([
         axios.get(`${BACKEND_URL}/api/driving-licence`, { withCredentials: true }),
         axios.get(`${BACKEND_URL}/api/vehicle-transfers`, { withCredentials: true }),
         axios.get(`${BACKEND_URL}/api/noc`, { withCredentials: true }),
-        axios.get(`${BACKEND_URL}/api/registration-renewal`, { withCredentials: true })
+        axios.get(`${BACKEND_URL}/api/registration-renewal`, { withCredentials: true }),
+        axios.get(`${BACKEND_URL}/api/hpa-hpt/statistics`, { withCredentials: true })
       ])
 
       setStats({
         dl: dlRes.data.data?.length || 0,
         transfer: transferRes.data.data?.length || 0,
         noc: nocRes.data.data?.length || 0,
-        renewal: renewalRes.data.data?.length || 0
+        renewal: renewalRes.data.data?.length || 0,
+        hpaHpt: hpaHptRes.data.data?.total || 0
       })
     } catch (error) {
       console.error('Error fetching Sarthi stats:', error)
@@ -74,6 +77,14 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
       icon: <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>, 
       gradient: 'from-sky-400 to-blue-600', 
       glow: 'shadow-blue-500/20'
+    },
+    { 
+      title: 'HPA+HPT', 
+      count: stats.hpaHpt, 
+      path: '/hpa-hpt', 
+      icon: <svg className="w-7 h-7 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>, 
+      gradient: 'from-rose-400 to-pink-600', 
+      glow: 'shadow-rose-500/20'
     }
   ]
 
@@ -95,7 +106,7 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
         </button>
       </div>
 
-      <div className='grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5 lg:gap-6 px-2'>
+      <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-5 lg:gap-6 px-2'>
         {statCards.map((card) => (
           <Link 
             key={card.title} 
@@ -166,6 +177,23 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
                     </div>
                 </div>
                 <div className='flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-orange-600 transition-colors group-hover:bg-orange-50'>
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </div>
+            </Link>
+
+            <Link to='/hpa-hpt' className='group p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between'>
+                <div className='flex items-center gap-4'>
+                    <div className='w-12 h-12 rounded-xl bg-rose-50 border border-rose-100/50 flex items-center justify-center text-rose-600 font-bold text-[10px] transition-transform duration-300 group-hover:scale-110'>
+                      HPA
+                    </div>
+                    <div>
+                        <p className='font-bold text-slate-800 text-[15px]'>HPA+HPT List</p>
+                        <p className='text-xs font-medium text-slate-500 mt-0.5'>Hypothecation addition &amp; termination</p>
+                    </div>
+                </div>
+                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-rose-600 transition-colors group-hover:bg-rose-50'>
                   <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>

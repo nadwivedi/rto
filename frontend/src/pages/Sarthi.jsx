@@ -5,11 +5,12 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import AddVehicleTransferModal from './VehicleTransfer/components/AddVehicleTransferModal'
 import { Menu, X, FileText } from 'lucide-react'
-
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 import AddNocModal from './Noc/components/AddNocModal'
 import AddRegistrationRenewalModal from './RegistrationRenewal/components/AddRegistrationRenewalModal'
+import AddHpaHptModal from './HpaHpt/components/AddHpaHptModal'
 import SarthiDashboard from './Sarthi/components/SarthiDashboard'
+
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
 const sarthiOptions = [
   { 
@@ -39,6 +40,13 @@ const sarthiOptions = [
     icon: <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>, 
     bgGradient: 'bg-gradient-to-br from-sky-400 to-blue-600',
     shadow: 'shadow-blue-500/30'
+  },
+  { 
+    title: 'HPA+HPT', 
+    note: 'Hypothecation addition & termination', 
+    icon: <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>, 
+    bgGradient: 'bg-gradient-to-br from-rose-400 to-pink-600',
+    shadow: 'shadow-rose-500/30'
   }
 ]
 
@@ -46,7 +54,8 @@ const quickButtons = [
   { title: 'DL List', shortLabel: 'DL', path: '/driving', tone: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100' },
   { title: 'Transfer List', shortLabel: 'Transfer', path: '/vehicle-transfer', tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100' },
   { title: 'NOC List', shortLabel: 'NOC', path: '/noc', tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' },
-  { title: 'Renewal List', shortLabel: 'Renewal', path: '/registration-renewal', tone: 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100' }
+  { title: 'Renewal List', shortLabel: 'Renewal', path: '/registration-renewal', tone: 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100' },
+  { title: 'HPA+HPT List', shortLabel: 'HPA+HPT', path: '/hpa-hpt', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100' }
 ]
 
 const Sarthi = () => {
@@ -355,6 +364,14 @@ const Sarthi = () => {
           isOpen={true}
           onClose={closeModal}
           onSuccess={closeModal}
+        />
+      )}
+
+      {activeModal === 'HPA+HPT' && (
+        <AddHpaHptModal
+          isOpen={true}
+          onClose={closeModal}
+          onSubmit={closeModal}
         />
       )}
     </>

@@ -164,6 +164,10 @@ const PartyDetail = () => {
       allWork.push(normalizeWorkItem(item, 'Temp Permit (OS)', 'teal'))
     })
 
+    data.work.hpaHpt?.forEach(item => {
+      allWork.push(normalizeWorkItem(item, item.type === 'hpa' ? 'HPA' : 'HPT', 'rose'))
+    })
+
     let runningBalance = 0
 
     const chronologicalRows = allWork
@@ -179,74 +183,69 @@ const PartyDetail = () => {
     return chronologicalRows.reverse()
   }
 
+
   // Get all pending payments (balance > 0)
   const getPendingPayments = () => {
     if (!data?.work) return []
     const pending = []
 
     data.work.tax?.forEach(item => {
-      if (item.balanceAmount > 0) {
-        pending.push({ ...item, type: 'Tax', typeColor: 'blue' })
-      }
+      const norm = normalizeWorkItem(item, 'Tax', 'blue')
+      if (norm.balanceAmount > 0) pending.push(norm)
     })
 
     data.work.fitness?.forEach(item => {
-      if (item.balanceAmount > 0) {
-        pending.push({ ...item, type: 'Fitness', typeColor: 'green' })
-      }
+      const norm = normalizeWorkItem(item, 'Fitness', 'green')
+      if (norm.balanceAmount > 0) pending.push(norm)
     })
 
     data.work.insurance?.forEach(item => {
-      if (item.balanceAmount > 0) {
-        pending.push({ ...item, type: 'Insurance', typeColor: 'purple' })
-      }
+      const norm = normalizeWorkItem(item, 'Insurance', 'purple')
+      if (norm.balanceAmount > 0) pending.push(norm)
     })
 
     data.work.puc?.forEach(item => {
-      if (item.balanceAmount > 0) {
-        pending.push({ ...item, type: 'PUC', typeColor: 'orange' })
-      }
+      const norm = normalizeWorkItem(item, 'PUC', 'orange')
+      if (norm.balanceAmount > 0) pending.push(norm)
     })
 
     data.work.gps?.forEach(item => {
-      if (item.balanceAmount > 0) {
-        pending.push({ ...item, type: 'GPS', typeColor: 'cyan' })
-      }
+      const norm = normalizeWorkItem(item, 'GPS', 'cyan')
+      if (norm.balanceAmount > 0) pending.push(norm)
     })
 
     data.work.cgPermit?.forEach(item => {
-      if (item.balanceAmount > 0) {
-        pending.push({ ...item, type: 'CG Permit', typeColor: 'red' })
-      }
+      const norm = normalizeWorkItem(item, 'CG Permit', 'red')
+      if (norm.balanceAmount > 0) pending.push(norm)
     })
 
     data.work.nationalPermit?.forEach(item => {
-      if (item.balanceAmount > 0) {
-        pending.push({ ...item, type: 'National Permit', typeColor: 'indigo' })
-      }
+      const norm = normalizeWorkItem(item, 'National Permit', 'indigo')
+      if (norm.balanceAmount > 0) pending.push(norm)
     })
 
     data.work.busPermit?.forEach(item => {
-      if (item.balanceAmount > 0) {
-        pending.push({ ...item, type: 'Bus Permit', typeColor: 'pink' })
-      }
+      const norm = normalizeWorkItem(item, 'Bus Permit', 'pink')
+      if (norm.balanceAmount > 0) pending.push(norm)
     })
 
     data.work.temporaryPermit?.forEach(item => {
-      if (item.balanceAmount > 0) {
-        pending.push({ ...item, type: 'Temporary Permit', typeColor: 'amber' })
-      }
+      const norm = normalizeWorkItem(item, 'Temporary Permit', 'amber')
+      if (norm.balanceAmount > 0) pending.push(norm)
     })
 
     data.work.temporaryPermitOtherState?.forEach(item => {
-      if (item.balanceAmount > 0) {
-        pending.push({ ...item, type: 'Temp Permit (OS)', typeColor: 'teal' })
-      }
+      const norm = normalizeWorkItem(item, 'Temp Permit (OS)', 'teal')
+      if (norm.balanceAmount > 0) pending.push(norm)
+    })
+
+    data.work.hpaHpt?.forEach(item => {
+      const norm = normalizeWorkItem(item, item.type === 'hpa' ? 'HPA' : 'HPT', 'rose')
+      if (norm.balanceAmount > 0) pending.push(norm)
     })
 
     return pending.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
   }
-
   const getTypeColorClass = (color) => {
     const colors = {
       blue: 'bg-blue-100 text-blue-800',
@@ -258,7 +257,8 @@ const PartyDetail = () => {
       indigo: 'bg-indigo-100 text-indigo-800',
       pink: 'bg-pink-100 text-pink-800',
       amber: 'bg-amber-100 text-amber-800',
-      teal: 'bg-teal-100 text-teal-800'
+      teal: 'bg-teal-100 text-teal-800',
+      rose: 'bg-rose-100 text-rose-800'
     }
     return colors[color] || 'bg-gray-100 text-gray-800'
   }

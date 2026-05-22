@@ -17,6 +17,7 @@ import TemporaryPermitOtherState from './pages/TemporaryPermitOtherState/Tempora
 import VehicleRegistration from './pages/VehicleRegistration/VehicleRegistration'
 import Insurance from './pages/Insurance/Insurance'
 import Fitness from './pages/Fitness/Fitness'
+import HpaHpt from './pages/HpaHpt/HpaHpt'
 import VehicleTransfer from './pages/VehicleTransfer/VehicleTransfer'
 import RegistrationRenewal from './pages/RegistrationRenewal/RegistrationRenewal'
 import DealerBill from './pages/DealerBill'
@@ -71,7 +72,7 @@ function ProtectedLayout() {
 
         const vahanHubPages = ['/vahan', '/whatsapp', '/setting', '/javak'];
         const sarthiHubPages = ['/sarthi'];
-        const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal'];
+        const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal', '/hpa-hpt'];
 
         const vahanSubPages = [
           '/vehicle-registration',
@@ -126,6 +127,7 @@ function ProtectedLayout() {
               <Route path='/vehicle-registration' element={<VehicleRegistration />} />
               <Route path='/insurance' element={<Insurance />} />
               <Route path='/fitness' element={<Fitness />} />
+              <Route path='/hpa-hpt' element={<HpaHpt />} />
               <Route path='/tax' element={<Tax />} />
               <Route path='/vehicle-transfer' element={<VehicleTransfer />} />
               <Route path='/noc' element={<Noc />} />
