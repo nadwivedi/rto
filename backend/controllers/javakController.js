@@ -23,14 +23,45 @@ exports.createJavak = async (req, res) => {
   }
 }
 
-// Get all Javak entries for the user
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+
+const DEFAULT_LIST_LIMIT = 100
+const SEARCH_RESULT_LIMIT = 500
+
+// Get Javak entries — recent list by default; full DB search when ?search= is provided
 exports.getJavaks = async (req, res) => {
   try {
-    // Sort by date descending (newest dates first), then createdAt descending
-    const javaks = await Javak.find({ userId: req.user.id })
-      .sort({ date: -1, createdAt: -1 })
-    
-    res.status(200).json({ success: true, data: javaks })
+    const search = (req.query.search || '').trim()
+    const filter = { userId: req.user.id }
+
+    if (search) {
+      const pattern = escapeRegex(search)
+      filter.$or = [
+        { partyName: { $regex: pattern, $options: 'i' } },
+        { vehicleNo: { $regex: pattern, $options: 'i' } }
+      ]
+    }
+
+    const totalRecords = await Javak.countDocuments(filter)
+
+    let query = Javak.find(filter).sort({ date: -1, createdAt: -1 })
+
+    if (search) {
+      query = query.limit(SEARCH_RESULT_LIMIT)
+    } else {
+      const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || DEFAULT_LIST_LIMIT, 1), DEFAULT_LIST_LIMIT)
+      query = query.limit(limit)
+    }
+
+    const javaks = await query
+
+    res.status(200).json({
+      success: true,
+      data: javaks,
+      totalRecords,
+      isSearch: Boolean(search),
+      limit: search ? SEARCH_RESULT_LIMIT : (javaks.length < totalRecords ? javaks.length : totalRecords)
+    })
   } catch (error) {
     console.error('Error fetching javaks:', error)
     res.status(500).json({ success: false, message: 'Server error while fetching javaks' })

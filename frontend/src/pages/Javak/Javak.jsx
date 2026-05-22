@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { enforceVehicleNumberFormat } from '../../utils/vehicleNoCheck'
+import AddJavakModal from './components/AddJavakModal'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 const inputClass = 'w-full px-3 py-2 border border-slate-400/80 rounded-lg bg-white/95 focus:ring-2 focus:ring-cyan-500/20 focus:border-cyan-600 outline-none text-sm transition-all shadow-sm shadow-slate-200/60'
@@ -52,6 +53,10 @@ const Javak = () => {
   // Cell inline editing state: { id, field }
   const [editingCell, setEditingCell] = useState(null)
 
+  // Edit modal state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editTask, setEditTask] = useState(null)
+
   const fetchJavaks = async () => {
     try {
       setLoading(true)
@@ -97,6 +102,21 @@ const Javak = () => {
       toast.error('Failed to update field')
       fetchJavaks()
     }
+  }
+
+  const handleEdit = (task) => {
+    setEditTask(task)
+    setIsEditModalOpen(true)
+  }
+
+  const handleEditModalClose = () => {
+    setIsEditModalOpen(false)
+    setEditTask(null)
+  }
+
+  const handleEditSuccess = () => {
+    handleEditModalClose()
+    fetchJavaks()
   }
 
   const handleDelete = async (id) => {
@@ -328,7 +348,7 @@ const Javak = () => {
                         <th className='px-3 py-2 w-56'>Purpose</th>
                         <th className='px-3 py-2 w-56'>Remark</th>
                         <th className='px-3 py-2 w-32 text-center'>Status</th>
-                        <th className='px-3 py-2 w-24 text-right'>Action</th>
+                        <th className='px-3 py-2 w-28 text-right'>Action</th>
                       </tr>
                     </thead>
                     <tbody className='divide-y divide-gray-200'>
@@ -371,9 +391,11 @@ const Javak = () => {
                               )}
                             </button>
                           </td>
-                          <td className='px-3 py-2 text-right w-24'>
+                          <td className='px-3 py-2 text-right w-28'>
                             <div className='flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity'>
-
+                              <button onClick={() => handleEdit(task)} className='p-1.5 text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors' title='Edit'>
+                                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' /></svg>
+                              </button>
                               <button onClick={() => handleDelete(task._id)} className='p-1.5 text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg transition-colors' title='Delete'>
                                 <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' /></svg>
                               </button>
@@ -392,6 +414,13 @@ const Javak = () => {
 
 
       
+      <AddJavakModal
+        isOpen={isEditModalOpen}
+        onClose={handleEditModalClose}
+        onSuccess={handleEditSuccess}
+        editData={editTask}
+      />
+
       {/* Simple animation definition for the loader */}
       <style dangerouslySetInnerHTML={{__html: `
         @keyframes moveIndeterminate {
