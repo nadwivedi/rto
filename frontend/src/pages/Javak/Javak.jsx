@@ -58,15 +58,16 @@ const Javak = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [editTask, setEditTask] = useState(null)
 
-  // Search + pagination (400 per page, load more on demand)
+  // Search + status filter + pagination (400 per page, load more on demand)
   const [searchQuery, setSearchQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all') // 'all' | 'pending' | 'done'
   const [totalRecords, setTotalRecords] = useState(0)
   const [hasMore, setHasMore] = useState(false)
   const [loadingMore, setLoadingMore] = useState(false)
   const searchDebounceRef = useRef(null)
-  const isInitialFetch = useRef(true)
+  const prevStatusFilter = useRef(statusFilter)
 
-  const fetchJavaks = async ({ search = searchQuery, page = 1, append = false } = {}) => {
+  const fetchJavaks = async ({ search = searchQuery, status = statusFilter, page = 1, append = false } = {}) => {
     const trimmed = search.trim()
     try {
       if (append) setLoadingMore(true)
@@ -76,7 +77,8 @@ const Javak = () => {
         params: {
           page,
           limit: PAGE_SIZE,
-          ...(trimmed ? { search: trimmed } : {})
+          ...(trimmed ? { search: trimmed } : {}),
+          ...(status && status !== 'all' ? { status } : {})
         },
         withCredentials: true
       })
@@ -102,25 +104,33 @@ const Javak = () => {
   }
 
   useEffect(() => {
-    if (isInitialFetch.current) {
-      isInitialFetch.current = false
-      fetchJavaks({ search: searchQuery, page: 1, append: false })
-      return
-    }
+    const statusChanged = prevStatusFilter.current !== statusFilter
+    prevStatusFilter.current = statusFilter
+    const delay = statusChanged ? 0 : 300
+
     if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
     searchDebounceRef.current = setTimeout(() => {
-      fetchJavaks({ search: searchQuery, page: 1, append: false })
-    }, 300)
+      fetchJavaks({ search: searchQuery, status: statusFilter, page: 1, append: false })
+    }, delay)
+
     return () => {
       if (searchDebounceRef.current) clearTimeout(searchDebounceRef.current)
     }
-  }, [searchQuery])
+  }, [searchQuery, statusFilter])
 
   const handleToggleStatus = async (id, currentStatus) => {
+    const newStatus = !currentStatus
     try {
-      // Optimistic update
-      setJavaks(prev => prev.map(j => j._id === id ? { ...j, isWorkDone: !currentStatus } : j))
-      await axios.patch(`${API_URL}/api/javak/${id}/status`, { isWorkDone: !currentStatus }, { withCredentials: true })
+      setJavaks(prev => {
+        const next = prev.map(j => j._id === id ? { ...j, isWorkDone: newStatus } : j)
+        if (statusFilter === 'pending' && newStatus) return next.filter(j => j._id !== id)
+        if (statusFilter === 'done' && !newStatus) return next.filter(j => j._id !== id)
+        return next
+      })
+      if (statusFilter !== 'all') {
+        setTotalRecords(prev => Math.max(0, prev - 1))
+      }
+      await axios.patch(`${API_URL}/api/javak/${id}/status`, { isWorkDone: newStatus }, { withCredentials: true })
     } catch (error) {
       toast.error('Failed to update status')
       fetchJavaks()
@@ -359,8 +369,46 @@ const Javak = () => {
           )}
         </div>
 
-        {/* Search */}
-        <div className='bg-white rounded-lg border border-gray-200 shadow-sm px-5 py-4 flex flex-col sm:flex-row sm:items-center gap-3'>
+        {/* Search & status filters */}
+        <div className='bg-white rounded-lg border border-gray-200 shadow-sm px-5 py-4 flex flex-col gap-4'>
+          <div className='flex flex-wrap items-center gap-2'>
+            <span className='text-xs font-semibold uppercase text-slate-500 mr-1'>Status</span>
+            <button
+              type='button'
+              onClick={() => setStatusFilter('all')}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                statusFilter === 'all'
+                  ? 'bg-slate-700 text-white shadow-sm'
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              All
+            </button>
+            <button
+              type='button'
+              onClick={() => setStatusFilter('pending')}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                statusFilter === 'pending'
+                  ? 'bg-rose-600 text-white shadow-sm'
+                  : 'bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200'
+              }`}
+            >
+              Pending
+            </button>
+            <button
+              type='button'
+              onClick={() => setStatusFilter('done')}
+              className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                statusFilter === 'done'
+                  ? 'bg-emerald-600 text-white shadow-sm'
+                  : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200'
+              }`}
+            >
+              Work Done
+            </button>
+          </div>
+
+          <div className='flex flex-col sm:flex-row sm:items-center gap-3'>
           <div className='relative flex-1 max-w-xl'>
             <svg
               className='absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none'
@@ -398,6 +446,7 @@ const Javak = () => {
               <span className='text-slate-400'> — use Load more below</span>
             )}
           </p>
+          </div>
         </div>
 
         {/* Data List grouped by date */}

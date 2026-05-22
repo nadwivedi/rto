@@ -32,11 +32,18 @@ const MAX_PAGE_SIZE = 400
 exports.getJavaks = async (req, res) => {
   try {
     const search = (req.query.search || '').trim()
+    const status = (req.query.status || '').trim().toLowerCase()
     const page = Math.max(parseInt(req.query.page, 10) || 1, 1)
     const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || PAGE_SIZE, 1), MAX_PAGE_SIZE)
     const skip = (page - 1) * limit
 
     const filter = { userId: req.user.id }
+
+    if (status === 'pending') {
+      filter.isWorkDone = false
+    } else if (status === 'done') {
+      filter.isWorkDone = true
+    }
 
     if (search) {
       const pattern = escapeRegex(search)
