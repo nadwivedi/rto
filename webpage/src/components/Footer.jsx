@@ -1,67 +1,113 @@
 import { Link } from 'react-router-dom'
-import './Footer.css'
-
-const Logo = () => (
-  <Link to="/" className="nav-logo">
-    <div className="logo-icon">
-      <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-        <circle cx="14" cy="14" r="14" fill="url(#fLogo)"/>
-        <path d="M8 14C8 10.686 10.686 8 14 8C17.314 8 20 10.686 20 14C20 17.314 17.314 20 14 20" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
-        <circle cx="14" cy="14" r="3" fill="white"/>
-        <defs>
-          <linearGradient id="fLogo" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#044eb9"/><stop offset="1" stopColor="#ff6b00"/>
-          </linearGradient>
-        </defs>
-      </svg>
-    </div>
-    <span className="logo-text">RTO <span className="logo-accent">Sarthi</span></span>
-  </Link>
-)
+import Logo from './Logo'
+import { container } from '../lib/styles'
+import {
+  EMAIL,
+  PHONE_PRIMARY,
+  PHONE_SECONDARY,
+  phonePrimaryDisplay,
+  phoneSecondaryDisplay,
+} from '../data/contact'
 
 export default function Footer() {
+  const year = new Date().getFullYear()
+
   return (
-    <footer className="footer">
-      <div className="container">
-        <div className="footer-grid">
-          <div className="footer-brand">
-            <Logo />
-            <p className="footer-tagline">
-              Smart software for smart RTO agents. Built with ❤️ by{' '}
-              <a href="https://softwarebytes.in" target="_blank" rel="noopener noreferrer" className="footer-link">SoftwareBytes</a>.
+    <footer className="border-t border-slate-200/80 bg-slate-100 py-9 text-slate-600 lg:py-10">
+      <div className={container}>
+        <div className="mb-7 grid gap-7 sm:grid-cols-2 lg:grid-cols-4 lg:gap-6">
+          <div>
+            <Link to="/" className="inline-block">
+              <Logo showText={false} size="footer" />
+            </Link>
+            <p className="mt-4 max-w-xs text-xs leading-relaxed text-slate-500 sm:text-[0.8125rem]">
+              India&apos;s Best RTO Agent Software — built for agents, insurance partners, and PUC
+              centers who need reliable expiry tracking and client management.
             </p>
           </div>
-          <div className="footer-links-col">
-            <h4>Pages</h4>
-            <ul>
-              <li><Link to="/">Home</Link></li>
-              <li><Link to="/about">About</Link></li>
-              <li><Link to="/features">Features</Link></li>
-              <li><Link to="/contact">Contact</Link></li>
+
+          <div>
+            <h4 className="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-slate-800">
+              Product
+            </h4>
+            <ul className="space-y-1.5 text-xs sm:text-[0.8125rem]">
+              <li>
+                <Link to="/features" className="hover:text-brand-800">
+                  Features
+                </Link>
+              </li>
+              <li>
+                <Link to="/" className="hover:text-brand-800">
+                  Dashboard
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="hover:text-brand-800">
+                  Pricing &amp; Demo
+                </Link>
+              </li>
             </ul>
           </div>
-          <div className="footer-links-col">
-            <h4>Features</h4>
-            <ul>
-              <li><Link to="/features">Expiry Alerts</Link></li>
-              <li><Link to="/features">WhatsApp Reminders</Link></li>
-              <li><Link to="/features">Auto Document Entry</Link></li>
-              <li><Link to="/features">Party Management</Link></li>
+
+          <div>
+            <h4 className="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-slate-800">
+              Company
+            </h4>
+            <ul className="space-y-1.5 text-xs sm:text-[0.8125rem]">
+              <li>
+                <Link to="/about" className="hover:text-brand-800">
+                  About Us
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="hover:text-brand-800">
+                  Contact
+                </Link>
+              </li>
+              <li>
+                <a href="https://softwarebytes.in" target="_blank" rel="noopener noreferrer" className="hover:text-brand-800">
+                  SoftwareBytes
+                </a>
+              </li>
             </ul>
           </div>
-          <div className="footer-links-col">
-            <h4>Contact</h4>
-            <ul>
-              <li><a href="tel:6264682508">📞 6264682508</a></li>
-              <li><a href="tel:9202469725">📞 9202469725</a></li>
-              <li><a href="mailto:softwarebytesindia@gmail.com">✉️ softwarebytesindia@gmail.com</a></li>
+
+          <div>
+            <h4 className="mb-2.5 text-[0.6875rem] font-semibold uppercase tracking-wider text-slate-800">
+              Contact
+            </h4>
+            <ul className="space-y-1.5 text-xs sm:text-[0.8125rem]">
+              <li>
+                <a href={`mailto:${EMAIL}`} className="hover:text-brand-800">
+                  {EMAIL}
+                </a>
+              </li>
+              <li>
+                <a href={`tel:+91${PHONE_PRIMARY}`} className="hover:text-brand-800">
+                  {phonePrimaryDisplay}
+                </a>
+              </li>
+              <li>
+                <a href={`tel:+91${PHONE_SECONDARY}`} className="hover:text-brand-800">
+                  {phoneSecondaryDisplay}
+                </a>
+              </li>
+              <li>Raipur, Chhattisgarh, India</li>
             </ul>
           </div>
         </div>
-        <div className="footer-bottom">
-          <p>© 2026 RTO Sarthi. Developed by{' '}
-            <a href="https://softwarebytes.in" target="_blank" rel="noopener noreferrer">SoftwareBytes</a>
-            {' '}– Raipur, Chhattisgarh.</p>
+
+        <div className="flex flex-col gap-2 border-t border-slate-200 pt-5 text-center text-[0.6875rem] text-slate-500 sm:flex-row sm:justify-between sm:text-left sm:text-xs">
+          <span>
+            &copy; {year} RTO Sarthi. Developed by{' '}
+            <a href="https://softwarebytes.in" target="_blank" rel="noopener noreferrer" className="font-medium text-brand-800 hover:text-accent-600 hover:underline">
+              SoftwareBytes
+            </a>
+            , Raipur.
+          </span>
+          <a href="https://rtosarthi.com" className="font-medium text-brand-800 hover:text-accent-600 hover:underline">
+            RTOSarthi.com
+          </a>
         </div>
       </div>
     </footer>

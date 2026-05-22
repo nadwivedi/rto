@@ -1,123 +1,122 @@
-import { Link } from 'react-router-dom'
-import SEO from '../components/SEO'
-import './Features.css'
+import SectionHeading from '../components/SectionHeading'
+import FeatureCard from '../components/FeatureCard'
+import Button from '../components/Button'
+import { coreFeatures, detailedFeatures } from '../data/features'
+import { IconCheck } from '../components/Icons'
+import FeatureIcon from '../components/FeatureIcon'
+import {
+  container,
+  section,
+  pageHero,
+  sectionMuted,
+  grid3,
+  ctaBand,
+  glassCard,
+  labelOnDark,
+  h1Page,
+  bodyMuted,
+  cn,
+} from '../lib/styles'
 
 export default function Features() {
-  const featureDetails = [
-    {
-      id: 'party-management',
-      title: 'Manage Party & Pending Balance',
-      desc: 'Keep a comprehensive record of all your clients (parties). Easily track their details, vehicle history, and monitor outstanding pending balances in real-time from a centralized dashboard.',
-      icon: '👥',
-      color: 'purple'
-    },
-    {
-      id: 'billing',
-      title: 'Create Bills for Party',
-      desc: 'Generate professional bills and invoices for your clients with just a few clicks. Maintain a clear ledger of all transactions and share invoices directly with parties.',
-      icon: '🧾',
-      color: 'blue'
-    },
-    {
-      id: 'expiry-alerts',
-      title: 'Expiry Alerts for Party',
-      desc: 'Never miss a renewal date. Get proactive alerts for upcoming expirations of Fitness, Permit, Tax, and PUC documents, organized by priority.',
-      icon: '⏰',
-      color: 'amber'
-    },
-    {
-      id: 'whatsapp-automation',
-      title: 'Automated WhatsApp Messages',
-      desc: 'Save time and improve client communication. The system automatically sends personalized WhatsApp reminders to parties before their documents expire.',
-      icon: '💬',
-      color: 'green'
-    },
-    {
-      id: 'ai-entry',
-      title: 'Automatic Entry Using AI',
-      desc: 'Eliminate manual data entry errors. Upload a document or click a photo, and our advanced AI instantly extracts and fills in the vehicle details.',
-      icon: '🤖',
-      color: 'teal'
-    },
-    {
-      id: 'balance-alerts',
-      title: 'Pending Balance Alerts',
-      desc: 'Stay on top of your finances. Receive automated alerts for parties with overdue balances, helping you follow up and manage cash flow effectively.',
-      icon: '💳',
-      color: 'rose'
-    }
-  ]
-
   return (
     <>
-      <SEO 
-        title="Features | RTO Sarthi"
-        description="Explore the features of RTO Sarthi. AI automatic entry, WhatsApp reminders, expiry alerts, billing, and complete party management."
-        url="/features"
-        keywords="rto software features, whatsapp reminder for rto, automatic rc entry, rto party management"
-      />
-      {/* PAGE HERO */}
-      <section className="page-hero">
-        <div className="page-hero-bg">
-          <div className="shape shape-1"></div>
-          <div className="shape shape-2"></div>
-        </div>
-        <div className="container">
-          <div className="page-hero-content">
-            <div className="hero-badge">Powerful Capabilities</div>
-            <h1 className="hero-title">Features of <span className="gradient-text">RTO Sarthi</span></h1>
-            <p className="hero-description">
-              Discover the comprehensive suite of tools designed to automate your workflow, manage clients, and grow your RTO agency.
-            </p>
+      <section className={pageHero}>
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(250,86,8,0.15),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(17,76,171,0.2),transparent_45%)]"
+          aria-hidden
+        />
+        <div className={cn(container, 'relative z-10')}>
+          <span className={labelOnDark}>Features</span>
+          <h1 className={cn(h1Page, 'mb-2')}>Powerful tools for modern RTO agents</h1>
+          <p className="mx-auto max-w-lg text-xs text-white/85 sm:text-[0.8125rem] lg:text-sm">
+            Automate paperwork, alert clients on WhatsApp, bulk-import PUC and insurance data, and
+            manage every vehicle from one secure platform.
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-2">
+            {['Document OCR', 'WhatsApp Alerts', 'Excel Bulk Upload', 'Multi-Agent Roles'].map(
+              (tag) => (
+                <span
+                  key={tag}
+                  className="rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[0.625rem] font-medium sm:text-[0.6875rem]"
+                >
+                  {tag}
+                </span>
+              ),
+            )}
           </div>
         </div>
       </section>
 
-      {/* FEATURES DETAIL SECTION */}
-      <section className="features-detail-section">
-        <div className="container">
-          <div className="features-list">
-            {featureDetails.map((feat, index) => (
-              <div key={feat.id} className={`feature-row ${index % 2 !== 0 ? 'reverse' : ''}`}>
-                <div className="feature-content">
-                  <div className={`feature-icon-large ${feat.color}`}>
-                    {feat.icon}
-                  </div>
-                  <h2 className="feature-heading">{feat.title}</h2>
-                  <p className="feature-body">{feat.desc}</p>
-                  <ul className="feature-bullets">
-                    <li><span className="bullet-check">✓</span> Time-saving automation</li>
-                    <li><span className="bullet-check">✓</span> Easy-to-use interface</li>
-                    <li><span className="bullet-check">✓</span> Secure data management</li>
-                  </ul>
-                </div>
-                <div className="feature-image-placeholder">
-                  <div className={`mockup-window ${feat.color}-theme`}>
-                    <div className="mockup-header-sm">
-                      <span className="dot"></span><span className="dot"></span><span className="dot"></span>
-                    </div>
-                    <div className="mockup-body-placeholder">
-                      <div className="mockup-icon">{feat.icon}</div>
-                      <div className="mockup-text">{feat.title} Dashboard View</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <section className={section}>
+        <div className={container}>
+          <SectionHeading
+            label="Overview"
+            title="Core capabilities"
+            description="Six pillars that make RTO Sarthi the complete operating system for your desk."
+          />
+          <div className={grid3}>
+            {coreFeatures.map((f) => (
+              <FeatureCard key={f.title} {...f} />
             ))}
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="cta-section">
-        <div className="container">
-          <div className="cta-card">
-            <div className="cta-glow"></div>
-            <h2 className="cta-title">Ready to experience these features?</h2>
-            <p className="cta-desc">Get in touch with us and see how RTO Sarthi can transform your agency.</p>
-            <div className="cta-actions">
-              <Link to="/contact" className="btn btn-white">Contact Us</Link>
-              <Link to="/" className="btn btn-outline-white">Back to Home</Link>
+      <section className={cn(section, sectionMuted)}>
+        <div className={container}>
+          <SectionHeading
+            label="Deep dive"
+            title="How each feature works"
+            description="Practical details for agents who need software that matches real office work."
+          />
+          {detailedFeatures.map((feature) => (
+            <div
+              key={feature.id}
+              id={feature.id}
+              className="grid items-center gap-5 border-b border-slate-200/80 py-7 last:border-0 lg:grid-cols-2 lg:gap-8 lg:py-9"
+            >
+              <div className={feature.reverse ? 'lg:order-2' : ''}>
+                <h3 className="mb-2 text-base font-bold text-slate-900 sm:text-lg lg:text-[1.15rem]">
+                  {feature.title}
+                </h3>
+                <p className={cn(bodyMuted, 'mb-3')}>{feature.description}</p>
+                <ul className="flex flex-col gap-1.5">
+                  {feature.points.map((point) => (
+                    <li key={point} className="flex items-start gap-2 text-xs text-slate-600 sm:text-[0.8125rem]">
+                      <span className="shrink-0 text-emerald-500 [&_svg]:h-4 [&_svg]:w-4">
+                        <IconCheck />
+                      </span>
+                      {point}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className={cn(`${glassCard} flex min-h-[180px] flex-col items-center justify-center gap-3 p-6 lg:min-h-[200px]`, feature.reverse && 'lg:order-1')}>
+                <FeatureIcon icon={feature.icon} variant={feature.iconVariant} className="mb-0 h-14 w-14 [&_svg]:h-6 [&_svg]:w-6" />
+                <p className="text-center text-xs text-slate-500 sm:text-[0.8125rem]">
+                  Built for speed and accuracy at your RTO desk
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className={section}>
+        <div className={container}>
+          <div className={ctaBand}>
+            <h2 className="relative z-10 mb-2 text-lg font-bold text-white sm:text-xl">See RTO Sarthi in action</h2>
+            <p className="relative z-10 mx-auto mb-4 max-w-md text-xs text-white/90 sm:text-sm">
+              Book a 20-minute demo with our team in Raipur — we&apos;ll walk through your exact workflow.
+            </p>
+            <div className="relative z-10 flex flex-wrap justify-center gap-2">
+              <Button href="/contact" variant="secondary" size="lg">
+                Book Demo
+              </Button>
+              <Button href="/contact" variant="ghost" size="lg">
+                Start Free Trial
+              </Button>
             </div>
           </div>
         </div>

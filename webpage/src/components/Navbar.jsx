@@ -1,50 +1,104 @@
 import { useState, useEffect } from 'react'
-import { NavLink, Link } from 'react-router-dom'
-import './Navbar.css'
+import { NavLink } from 'react-router-dom'
+import { IconMenu, IconClose } from './Icons'
+import Logo from './Logo'
+import Button from './Button'
+import { cn, container, navHeight } from '../lib/styles'
+
+const links = [
+  { to: '/', label: 'Home' },
+  { to: '/features', label: 'Features' },
+  { to: '/about', label: 'About' },
+  { to: '/contact', label: 'Contact' },
+]
+
+const navLinkClass = ({ isActive }) =>
+  cn(
+    'rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors lg:px-3 lg:text-sm',
+    isActive
+      ? 'bg-brand-50 text-brand-800'
+      : 'text-slate-600 hover:bg-brand-50 hover:text-brand-800',
+  )
 
 export default function Navbar() {
-  const [scrolled, setScrolled] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
+  const [scrolled, setScrolled] = useState(false)
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20)
-    window.addEventListener('scroll', onScroll)
+    const onScroll = () => setScrolled(window.scrollY > 8)
+    window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [menuOpen])
+
   return (
-    <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-      <div className="nav-container">
-        <Link to="/" className="nav-logo">
-          <div className="logo-icon">
-            <svg width="24" height="24" viewBox="0 0 28 28" fill="none">
-              <circle cx="14" cy="14" r="14" fill="url(#lg1)"/>
-              <path d="M8 14C8 10.686 10.686 8 14 8C17.314 8 20 10.686 20 14C20 17.314 17.314 20 14 20" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
-              <circle cx="14" cy="14" r="3" fill="white"/>
-              <defs>
-                <linearGradient id="lg1" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-                  <stop stopColor="#044eb9"/><stop offset="1" stopColor="#ff6b00"/>
-                </linearGradient>
-              </defs>
-            </svg>
+    <>
+      <header
+        className={cn(
+          'fixed inset-x-0 top-0 z-50 border-b border-slate-200 bg-white transition-shadow',
+          navHeight,
+          scrolled && 'shadow-[0_4px_20px_rgba(15,23,42,0.06)]',
+        )}
+      >
+        <div className={cn(container, 'flex h-full items-center justify-between')}>
+          <NavLink to="/" className="shrink-0" onClick={() => setMenuOpen(false)}>
+            <Logo showText={false} size="nav" />
+          </NavLink>
+
+          <nav className="hidden items-center gap-0.5 md:flex" aria-label="Main navigation">
+            {links.map(({ to, label }) => (
+              <NavLink key={to} to={to} end={to === '/'} className={navLinkClass}>
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="hidden items-center gap-2 md:flex">
+            <Button href="/contact" variant="secondary" size="sm">
+              Book Demo
+            </Button>
+            <Button href="/contact" variant="primary" size="sm">
+              Start Free Trial
+            </Button>
           </div>
-          <span className="logo-text">RTO <span className="logo-accent">Sarthi</span></span>
-        </Link>
 
-        <div className={`nav-links ${menuOpen ? 'open' : ''}`}>
-          <NavLink to="/" end className={({isActive}) => `nav-link${isActive ? ' active' : ''}`} onClick={() => setMenuOpen(false)}>Home</NavLink>
-          <NavLink to="/about" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`} onClick={() => setMenuOpen(false)}>About</NavLink>
-          <NavLink to="/features" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`} onClick={() => setMenuOpen(false)}>Features</NavLink>
-          <NavLink to="/contact" className={({isActive}) => `nav-link${isActive ? ' active' : ''}`} onClick={() => setMenuOpen(false)}>Contact</NavLink>
-          <Link to="/contact" className="nav-cta" onClick={() => setMenuOpen(false)}>Get Started</Link>
+          <button
+            type="button"
+            className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-800 md:hidden [&_svg]:h-4 [&_svg]:w-4"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(!menuOpen)}
+          >
+            {menuOpen ? <IconClose /> : <IconMenu />}
+          </button>
         </div>
+      </header>
 
-        <button className="hamburger" onClick={() => setMenuOpen(o => !o)} aria-label="Toggle menu">
-          <span className={menuOpen ? 'open' : ''}></span>
-          <span className={menuOpen ? 'open' : ''}></span>
-          <span className={menuOpen ? 'open' : ''}></span>
-        </button>
-      </div>
-    </nav>
+      <nav
+        className={cn(
+          'fixed inset-x-0 bottom-0 top-14 z-40 flex flex-col gap-1 border-t border-brand-100 bg-white p-4 transition-transform duration-200 sm:top-[3.75rem] lg:top-16 md:hidden',
+          menuOpen ? 'translate-x-0' : 'translate-x-full',
+        )}
+        aria-label="Mobile navigation"
+      >
+        {links.map(({ to, label }) => (
+          <NavLink key={to} to={to} end={to === '/'} className={navLinkClass} onClick={() => setMenuOpen(false)}>
+            {label}
+          </NavLink>
+        ))}
+        <Button href="/contact" variant="primary" className="mt-3 w-full" onClick={() => setMenuOpen(false)}>
+          Start Free Trial
+        </Button>
+        <Button href="/contact" variant="secondary" className="w-full" onClick={() => setMenuOpen(false)}>
+          Book Demo
+        </Button>
+      </nav>
+    </>
   )
 }

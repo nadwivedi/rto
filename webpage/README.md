@@ -1,16 +1,39 @@
-# React + Vite
+# RTO Sarthi — Marketing Website
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Premium SaaS marketing site for [RTOSarthi.com](https://rtosarthi.com), built with React + Vite.
 
-Currently, two official plugins are available:
+## Pages
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Home** — Hero, features, dashboard preview, why choose us, testimonials, CTA
+- **Features** — Full product capability breakdown
+- **About** — Mission and SoftwareBytes background
+- **Contact** — Form, office info, map placeholder, social links
 
-## React Compiler
+## Development
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```bash
+cd webpage
+npm install
+npm run dev
+```
 
-## Expanding the ESLint configuration
+Open http://localhost:5173
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Production build
+
+```bash
+npm run build
+npm run preview
+```
+
+Static files output to `dist/` — deploy to any static host or serve behind your main domain.
+
+## Stack
+
+- React 19
+- React Router
+- Vite 8
+- **Tailwind CSS v4** (`@tailwindcss/vite`)
+- Compact layout on mobile through laptop (`max-w-5xl`, smaller type on `lg`/`xl`)
+
+Developed by **SoftwareBytes**, Raipur, Chhattisgarh, India.
