@@ -1,0 +1,5 @@
+# https://rtosarthi.com/robots.txt
+User-agent: *
+Allow: /
+
+Sitemap: https://rtosarthi.com/sitemap.xml

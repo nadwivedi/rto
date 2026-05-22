@@ -46,6 +46,11 @@ export default function Footer() {
                   Pricing &amp; Demo
                 </Link>
               </li>
+              <li>
+                <Link to="/sitemap" className="hover:text-brand-800">
+                  Sitemap
+                </Link>
+              </li>
             </ul>
           </div>
 
