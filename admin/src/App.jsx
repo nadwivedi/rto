@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Users from './pages/Users';
+import Blogs from './pages/Blogs';
 import VehicleRegistrations from './pages/VehicleRegistrations';
 import Export from './pages/Export';
 import CreateVehicleFromJson from './pages/CreateVehicleFromJson';
@@ -63,6 +64,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Users />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/blogs"
+                element={
+                  <ProtectedRoute>
+                    <Blogs />
                   </ProtectedRoute>
                 }
               />

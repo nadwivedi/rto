@@ -117,6 +117,8 @@ const whatsappRoutes = require('./routes/whatsapp')
 const whatsappSettingsRoutes = require('./routes/whatsappSettings')
 const javakRoutes = require('./routes/javak')
 const hpaHptRoutes = require('./routes/hpaHpt')
+const blogRoutes = require('./routes/blogRoutes')
+const publicBlogRoutes = require('./routes/publicBlogRoutes')
 
 // Use Routes
 
@@ -125,6 +127,7 @@ app.use('/api/admin/auth', adminAuthRoutes)
 app.use('/api/admin/users', adminUsersRoutes)
 app.use('/api/admin/vehicle-registrations', adminVehicleRegistrationsRoutes)
 app.use('/api/admin/export', exportRoutes)
+app.use('/api/admin/blogs', blogRoutes)
 
 // User routes
 app.use('/api/auth', authRoutes)
@@ -154,6 +157,9 @@ app.use('/api/whatsapp', userAuth, whatsappRoutes)
 app.use('/api/whatsapp-settings', userAuth, whatsappSettingsRoutes)
 app.use('/api/javak', userAuth, javakRoutes)
 app.use('/api/hpa-hpt', userAuth, hpaHptRoutes)
+
+// Public routes (no auth)
+app.use('/api/blogs', publicBlogRoutes)
 
 // Root route
 app.get('/', (req, res) => {
