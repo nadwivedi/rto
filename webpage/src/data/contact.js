@@ -10,7 +10,7 @@ export const SOCIAL_LINKS = {
   linkedin: 'https://www.linkedin.com/company/rto-sarthi/',
   x: 'https://x.com/rtosarthi',
   instagram: 'https://www.instagram.com/rtosarthi/',
-  facebook: 'https://facebook.com',
+  facebook: 'https://www.facebook.com/rtosarthi',
 }
 
 export function formatPhone(digits) {
