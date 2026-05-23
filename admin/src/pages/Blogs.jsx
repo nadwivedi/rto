@@ -25,10 +25,11 @@ const RichTextEditor = ({ value, onChange }) => {
   const [linkUrl, setLinkUrl] = useState('')
   const [linkText, setLinkText] = useState('')
   const [linkRel, setLinkRel] = useState('follow')
+  const savedRangeRef = useRef(null)
 
   const exec = (command, val = null) => {
-    document.execCommand(command, false, val)
     editorRef.current?.focus()
+    document.execCommand(command, false, val)
     emitChange()
   }
 
@@ -46,12 +47,38 @@ const RichTextEditor = ({ value, onChange }) => {
 
   const handleInsertLink = () => {
     if (!linkUrl) return
-    const anchor = `<a href="${linkUrl}" target="_blank" rel="${linkRel === 'nofollow' ? 'nofollow noopener noreferrer' : 'noopener noreferrer'}">${linkText || linkUrl}</a>`
+    if (savedRangeRef.current) {
+      const sel = window.getSelection()
+      sel.removeAllRanges()
+      sel.addRange(savedRangeRef.current)
+    }
+    const rel = linkRel === 'nofollow' ? 'nofollow noopener noreferrer' : 'noopener noreferrer'
+    const anchor = `<a href="${linkUrl}" target="_blank" rel="${rel}">${linkText || linkUrl}</a>`
     exec('insertHTML', anchor)
+    savedRangeRef.current = null
     setShowLinkModal(false)
     setLinkUrl('')
     setLinkText('')
     setLinkRel('follow')
+  }
+
+  const toggleBlock = (tag) => {
+    editorRef.current?.focus()
+    const sel = window.getSelection()
+    if (!sel || !sel.anchorNode) { exec('formatBlock', `<${tag}>`); return }
+    let node = sel.anchorNode
+    while (node && node !== editorRef.current) {
+      if (node.nodeType === 1 && ['H2', 'H3', 'H4', 'P', 'DIV'].includes(node.tagName)) {
+        if (node.tagName.toLowerCase() === tag) {
+          exec('formatBlock', '<p>')
+        } else {
+          exec('formatBlock', `<${tag}>`)
+        }
+        return
+      }
+      node = node.parentNode
+    }
+    exec('formatBlock', `<${tag}>`)
   }
 
   const ToolbarBtn = ({ cmd, val, title, icon }) => (
@@ -71,9 +98,9 @@ const RichTextEditor = ({ value, onChange }) => {
         <ToolbarBtn cmd='italic' title='Italic' icon='<i>I</i>' />
         <ToolbarBtn cmd='underline' title='Underline' icon='<u>U</u>' />
         <div className='w-px h-5 bg-gray-300 mx-1' />
-        <ToolbarBtn cmd='formatBlock' val='h2' title='Heading 2' icon='H2' />
-        <ToolbarBtn cmd='formatBlock' val='h3' title='Heading 3' icon='H3' />
-        <ToolbarBtn cmd='formatBlock' val='p' title='Paragraph' icon='¶' />
+        <button type='button' title='Heading 2' onMouseDown={(e) => { e.preventDefault(); toggleBlock('h2') }} className='p-1.5 hover:bg-gray-200 rounded text-gray-700 text-sm font-semibold min-w-[28px] flex items-center justify-center'>H2</button>
+        <button type='button' title='Heading 3' onMouseDown={(e) => { e.preventDefault(); toggleBlock('h3') }} className='p-1.5 hover:bg-gray-200 rounded text-gray-700 text-sm font-semibold min-w-[28px] flex items-center justify-center'>H3</button>
+        <button type='button' title='Paragraph' onMouseDown={(e) => { e.preventDefault(); exec('formatBlock', '<p>') }} className='p-1.5 hover:bg-gray-200 rounded text-gray-700 text-sm font-semibold min-w-[28px] flex items-center justify-center'>¶</button>
         <div className='w-px h-5 bg-gray-300 mx-1' />
         <ToolbarBtn cmd='insertUnorderedList' title='Bullet list' icon='&#8226;' />
         <ToolbarBtn cmd='insertOrderedList' title='Numbered list' icon='1.' />
@@ -83,7 +110,11 @@ const RichTextEditor = ({ value, onChange }) => {
           title='Insert Link'
           onMouseDown={(e) => {
             e.preventDefault()
+            editorRef.current?.focus()
             const sel = window.getSelection()
+            if (sel && sel.rangeCount > 0) {
+              savedRangeRef.current = sel.getRangeAt(0).cloneRange()
+            }
             setLinkText(sel ? sel.toString() : '')
             setShowLinkModal(true)
           }}
@@ -101,7 +132,7 @@ const RichTextEditor = ({ value, onChange }) => {
         contentEditable
         suppressContentEditableWarning
         onInput={emitChange}
-        className='min-h-[300px] p-4 text-sm text-gray-800 focus:outline-none prose prose-sm max-w-none'
+        className='min-h-[300px] p-4 text-gray-800 focus:outline-none [&_h2]:text-2xl [&_h2]:font-extrabold [&_h2]:text-gray-900 [&_h2]:mt-6 [&_h2]:mb-3 [&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:mt-5 [&_h3]:mb-2 [&_a]:text-blue-600 [&_a]:underline [&_ul]:list-disc [&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-6 [&_li]:mb-1 [&_p]:mb-1 [&_p]:leading-snug [&_b]:font-bold [&_strong]:font-bold'
         data-placeholder='Write your blog content here...'
       />
 
@@ -151,6 +182,7 @@ const Blogs = () => {
   const [editingId, setEditingId] = useState(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [uploading, setUploading] = useState(false)
   const [formData, setFormData] = useState({
     title: '',
     slug: '',
@@ -186,6 +218,48 @@ const Blogs = () => {
     const { name, value, type, checked } = e.target
     setFormData((prev) => ({ ...prev, [name]: type === 'checkbox' ? checked : value }))
     setError('')
+  }
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be under 5MB')
+      return
+    }
+
+    try {
+      setUploading(true)
+      setError('')
+
+      const reader = new FileReader()
+      reader.onload = async (event) => {
+        const base64 = event.target.result
+        const res = await fetch(`${BACKEND_URL}/api/admin/blogs/upload-image`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64 })
+        })
+        const data = await res.json()
+        if (data.success) {
+          setFormData((prev) => ({ ...prev, coverImage: data.data.url }))
+        } else {
+          setError(data.message || 'Failed to upload image')
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch (err) {
+      setError('Failed to upload image')
+    } finally {
+      setUploading(false)
+    }
   }
 
   const handleSubmit = async (e) => {
@@ -412,8 +486,37 @@ const Blogs = () => {
                     <textarea name='excerpt' value={formData.excerpt} onChange={handleChange} placeholder='Brief summary of the blog post...' rows={2} className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none' />
                   </div>
                   <div className='sm:col-span-2'>
-                    <label className='block text-sm font-semibold text-gray-700 mb-1'>Cover Image URL</label>
-                    <input type='text' name='coverImage' value={formData.coverImage} onChange={handleChange} placeholder='https://example.com/image.jpg' className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent' />
+                    <label className='block text-sm font-semibold text-gray-700 mb-1'>Cover Image</label>
+                    <div className='flex items-start gap-3'>
+                      <div className='flex-1'>
+                        <input type='text' name='coverImage' value={formData.coverImage} onChange={handleChange} placeholder='Or paste image URL...' className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent' />
+                      </div>
+                      <label className={`px-4 py-2 text-sm font-semibold rounded-lg cursor-pointer transition-all flex items-center gap-2 ${uploading ? 'bg-gray-300 text-gray-500' : 'bg-indigo-600 text-white hover:bg-indigo-700'}`}>
+                        {uploading ? (
+                          <>
+                            <svg className='w-4 h-4 animate-spin' fill='none' viewBox='0 0 24 24'>
+                              <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' />
+                              <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z' />
+                            </svg>
+                            Uploading...
+                          </>
+                        ) : (
+                          <>
+                            <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' />
+                            </svg>
+                            Upload
+                          </>
+                        )}
+                        <input type='file' accept='image/*' onChange={handleImageUpload} className='hidden' disabled={uploading} />
+                      </label>
+                    </div>
+                    {formData.coverImage && (
+                      <div className='mt-2 relative inline-block'>
+                        <img src={formData.coverImage.startsWith('http') ? formData.coverImage : `${BACKEND_URL}${formData.coverImage}`} alt='Preview' className='h-24 w-auto rounded-lg border border-gray-200 object-cover' onError={(e) => { e.target.style.display = 'none' }} />
+                        <button type='button' onClick={() => setFormData((prev) => ({ ...prev, coverImage: '' }))} className='absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center hover:bg-red-600 cursor-pointer' title='Remove'>×</button>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className='block text-sm font-semibold text-gray-700 mb-1'>Tags <span className='text-gray-400'>(Comma separated)</span></label>

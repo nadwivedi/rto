@@ -1,4 +1,11 @@
 const Blog = require('../models/Blog')
+const fs = require('fs')
+const path = require('path')
+
+const blogUploadsDir = path.join(__dirname, '..', 'uploads', 'blog-images')
+if (!fs.existsSync(blogUploadsDir)) {
+  fs.mkdirSync(blogUploadsDir, { recursive: true })
+}
 
 const generateSlug = (title) => {
   return title
@@ -116,6 +123,34 @@ exports.create = async (req, res) => {
     res.status(201).json({ success: true, message: 'Blog created successfully', data: blog })
   } catch (error) {
     console.error('Create blog error:', error)
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
+
+exports.uploadImage = async (req, res) => {
+  try {
+    const { image } = req.body
+    if (!image) {
+      return res.status(400).json({ success: false, message: 'Image data is required' })
+    }
+
+    const matches = image.match(/^data:image\/(\w+);base64,(.+)$/)
+    if (!matches) {
+      return res.status(400).json({ success: false, message: 'Invalid image format. Use base64 data URI.' })
+    }
+
+    const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1]
+    const data = Buffer.from(matches[2], 'base64')
+    const filename = `blog-${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`
+    const filePath = path.join(blogUploadsDir, filename)
+
+    fs.writeFileSync(filePath, data)
+
+    const url = `/uploads/blog-images/${filename}`
+
+    res.json({ success: true, message: 'Image uploaded successfully', data: { url } })
+  } catch (error) {
+    console.error('Upload image error:', error)
     res.status(500).json({ success: false, message: error.message })
   }
 }

@@ -97,7 +97,7 @@ const BlogPost = () => {
 
         {blog.coverImage && (
           <div className='mb-8 rounded-2xl overflow-hidden shadow-sm'>
-            <img src={blog.coverImage} alt={blog.title} className='w-full h-auto' />
+            <img src={blog.coverImage?.startsWith('/uploads') ? `${API_URL}${blog.coverImage}` : blog.coverImage} alt={blog.title} className='w-full h-auto' />
           </div>
         )}
 
