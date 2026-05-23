@@ -160,12 +160,6 @@ const EditTemporaryPermitOtherStateModal = ({ permit, onClose, onPermitUpdated }
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Validate vehicle number before submitting
-    if (!vehicleValidation.isValid && formData.vehicleNo) {
-      toast.error('Please enter a valid vehicle number in the format: CG04AA1234 (10 chars) or CG04G1234 (9 chars)')
-      return
-    }
-
     // Validate payment amount
     if (paidExceedsTotal) {
       toast.error('Paid amount cannot be more than the total fee!')

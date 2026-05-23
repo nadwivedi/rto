@@ -334,10 +334,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       // Convert to uppercase and strip hyphens/spaces (handles formats like CG-23-J-8800)
       const upperValue = value.toUpperCase().replace(/[\s-]/g, '')
 
-      // Validate in real-time (only show validation if 9 or 10 characters)
-      const validation = (upperValue.length === 9 || upperValue.length === 10)
-        ? validateVehicleNumberRealtime(upperValue)
-        : { isValid: false, message: '' }
+      const validation = validateVehicleNumberRealtime(upperValue)
       setVehicleValidation(validation)
 
       setFormData(prev => ({
@@ -623,12 +620,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-
-    // Validate vehicle number before submitting
-    if (!vehicleValidation.isValid && formData.vehicleNumber) {
-      toast.error('Please enter a valid vehicle number in the format: CG04AA1234 (10 chars) or CG04G1234 (9 chars), no spaces')
-      return
-    }
 
     // Validate paid amount doesn't exceed total fee
     if (paidExceedsTotal) {

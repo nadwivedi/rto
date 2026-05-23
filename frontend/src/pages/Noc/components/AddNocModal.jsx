@@ -155,11 +155,6 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!vehicleValidation.isValid && formData.vehicleNumber) {
-      setError('Please enter a valid vehicle number in the format: CG01AB1234')
-      return
-    }
-
     if (paidExceedsTotal) {
       setError('Paid amount cannot be more than total fee')
       return

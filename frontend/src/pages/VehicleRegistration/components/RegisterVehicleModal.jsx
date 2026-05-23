@@ -369,7 +369,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
       // 1. Registration number is 9 or 10 characters (complete)
       // 2. Vehicle validation is valid
       // 3. Not in edit mode (editData is null)
-      if ((regNumber.length === 9 || regNumber.length === 10) && vehicleValidation.isValid && !editData) {
+      if ((regNumber.length >= 7 && regNumber.length <= 10) && vehicleValidation.isValid && !editData) {
         setCheckingVehicle(true)
         setVehicleAlreadyExists(false)
 

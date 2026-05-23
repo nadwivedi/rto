@@ -229,7 +229,7 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
 
     if (name === 'vehicleNumber') {
       const upperValue = value.toUpperCase()
-      const validation = (upperValue.length === 9 || upperValue.length === 10) ? validateVehicleNumberRealtime(upperValue) : { isValid: false, message: '' }
+      const validation = validateVehicleNumberRealtime(upperValue)
       setVehicleValidation(validation)
 
       setFormData(prev => ({
@@ -331,13 +331,8 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
   const handleSubmit = (e) => {
     e.preventDefault()
 
-    if ((formData.vehicleNumber.length === 9 || formData.vehicleNumber.length === 10) && !vehicleValidation.isValid) {
-      alert('Please enter a valid vehicle number in the format: CG04AA1234 (10 chars) or CG04G1234 (9 chars)')
-      return
-    }
-
-    if (formData.vehicleNumber && formData.vehicleNumber.length !== 9 && formData.vehicleNumber.length !== 10) {
-      alert('Vehicle number must be 9 or 10 characters')
+    if (formData.vehicleNumber && formData.vehicleNumber.length > 10) {
+      alert('Vehicle number must be 10 characters or less')
       return
     }
 

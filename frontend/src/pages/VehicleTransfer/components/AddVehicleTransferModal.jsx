@@ -161,12 +161,6 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Validate vehicle number before submitting
-    if (!vehicleValidation.isValid && formData.vehicleNumber) {
-      setError('Please enter a valid vehicle number in the format: CG01AB1234 (10 characters, no spaces)')
-      return
-    }
-
     // Validate paid amount doesn't exceed total fee
     if (paidExceedsTotal) {
       setError('Paid amount cannot be more than the total fee!')

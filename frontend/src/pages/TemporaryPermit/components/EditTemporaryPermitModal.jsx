@@ -342,8 +342,7 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
       // Convert to uppercase
       const upperValue = value.toUpperCase()
 
-      // Validate in real-time (only show validation if 9 or 10 characters)
-      const validation = (upperValue.length === 9 || upperValue.length === 10) ? validateVehicleNumberRealtime(upperValue) : { isValid: false, message: '' }
+      const validation = validateVehicleNumberRealtime(upperValue)
       setVehicleValidation(validation)
 
       setFormData(prev => ({
@@ -402,15 +401,9 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    // Validate vehicle number before submitting (must be 9 or 10 characters and valid format)
-    if ((formData.vehicleNumber.length === 9 || formData.vehicleNumber.length === 10) && !vehicleValidation.isValid) {
-      alert('Please enter a valid vehicle number in the format: CG04AA1234 (10 chars) or CG04G1234 (9 chars)')
-      return
-    }
-
-    // Ensure vehicle number is 9 or 10 characters for submission
-    if (formData.vehicleNumber && formData.vehicleNumber.length !== 9 && formData.vehicleNumber.length !== 10) {
-      alert('Vehicle number must be 9 or 10 characters')
+    // Ensure vehicle number is 7-10 characters for submission
+    if (formData.vehicleNumber && formData.vehicleNumber.length > 10) {
+      alert('Vehicle number must be 10 characters or less')
       return
     }
 

@@ -284,10 +284,7 @@ const EditTaxModal = ({ isOpen, onClose, onSubmit, tax }) => {
       // Convert to uppercase
       const upperValue = value.toUpperCase()
 
-      // Validate in real-time (only show validation if 9 or 10 characters)
-      const validation = (upperValue.length === 9 || upperValue.length === 10)
-        ? validateVehicleNumberRealtime(upperValue)
-        : { isValid: false, message: '' }
+      const validation = validateVehicleNumberRealtime(upperValue)
       setVehicleValidation(validation)
 
       setFormData(prev => ({
@@ -335,12 +332,6 @@ const EditTaxModal = ({ isOpen, onClose, onSubmit, tax }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-
-    // Validate vehicle number before submitting
-    if (!vehicleValidation.isValid && formData.vehicleNumber) {
-      alert('Please enter a valid vehicle number in the format: CG04AA1234 (10 characters, no spaces)')
-      return
-    }
 
     // Validate paid amount doesn't exceed total fee
     if (paidExceedsTotal) {
