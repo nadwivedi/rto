@@ -1,6 +1,6 @@
 import SectionHeading from '../components/SectionHeading'
 import Button from '../components/Button'
-import { IconMapPin, IconMail, IconPhone, IconWhatsApp } from '../components/Icons'
+import { IconMapPin, IconMail, IconPhone, IconWhatsApp, IconLinkedIn, IconX, IconInstagram, IconFacebook } from '../components/Icons'
 import {
   EMAIL,
   PHONE_PRIMARY,
@@ -8,6 +8,7 @@ import {
   phonePrimaryDisplay,
   phoneSecondaryDisplay,
   whatsappUrl,
+  SOCIAL_LINKS,
 } from '../data/contact'
 import {
   container,
@@ -130,23 +131,21 @@ export default function Contact() {
           </div>
 
           <div className="mt-5 flex justify-center gap-2" aria-label="Social links">
-            {[
-              { href: 'https://linkedin.com', label: 'in' },
-              { href: 'https://facebook.com', label: 'fb' },
-              { href: 'https://instagram.com', label: 'ig' },
-              { href: whatsappUrl, label: 'wa' },
-            ].map((s) => (
-              <a
-                key={s.label}
-                href={s.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                title={s.label}
-                className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-xs font-bold text-slate-600 transition-colors hover:bg-[#25D366] hover:text-white"
-              >
-                {s.label}
-              </a>
-            ))}
+            <a href={SOCIAL_LINKS.linkedin} target="_blank" rel="noopener noreferrer" title="LinkedIn" className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-[#0A66C2] hover:text-white [&_svg]:h-5 [&_svg]:w-5">
+              <IconLinkedIn />
+            </a>
+            <a href={SOCIAL_LINKS.x} target="_blank" rel="noopener noreferrer" title="X" className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-black hover:text-white [&_svg]:h-5 [&_svg]:w-5">
+              <IconX />
+            </a>
+            <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" title="Instagram" className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-[#E4405F] hover:text-white [&_svg]:h-5 [&_svg]:w-5">
+              <IconInstagram />
+            </a>
+            <a href={SOCIAL_LINKS.facebook} target="_blank" rel="noopener noreferrer" title="Facebook" className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-[#1877F2] hover:text-white [&_svg]:h-5 [&_svg]:w-5">
+              <IconFacebook />
+            </a>
+            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" title="WhatsApp" className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 text-slate-600 transition-colors hover:bg-[#25D366] hover:text-white [&_svg]:h-5 [&_svg]:w-5">
+              <IconWhatsApp />
+            </a>
           </div>
         </div>
       </section>

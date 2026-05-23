@@ -6,6 +6,13 @@ export const EMAIL = 'rtosarthi@gmail.com'
 
 export const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hello RTO Sarthi, I would like to know more about your software.')}`
 
+export const SOCIAL_LINKS = {
+  linkedin: 'https://www.linkedin.com/company/rto-sarthi/',
+  x: 'https://x.com/rtosarthi',
+  instagram: 'https://www.instagram.com/rtosarthi/',
+  facebook: 'https://facebook.com',
+}
+
 export function formatPhone(digits) {
   const n = digits.replace(/\D/g, '')
   if (n.length === 10) {

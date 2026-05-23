@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import Logo from './Logo'
+import { IconLinkedIn, IconX, IconInstagram, IconFacebook } from './Icons'
 import { container } from '../lib/styles'
 import {
   EMAIL,
@@ -7,6 +8,7 @@ import {
   PHONE_SECONDARY,
   phonePrimaryDisplay,
   phoneSecondaryDisplay,
+  SOCIAL_LINKS,
 } from '../data/contact'
 
 export default function Footer() {
@@ -99,6 +101,12 @@ export default function Footer() {
               </li>
               <li>Raipur, Chhattisgarh, India</li>
             </ul>
+            <div className="mt-3 flex gap-2">
+              <a href={SOCIAL_LINKS.linkedin} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-200 text-slate-500 transition-colors hover:bg-[#0A66C2] hover:text-white [&_svg]:h-3.5 [&_svg]:w-3.5" title="LinkedIn"><IconLinkedIn /></a>
+              <a href={SOCIAL_LINKS.x} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-200 text-slate-500 transition-colors hover:bg-black hover:text-white [&_svg]:h-3.5 [&_svg]:w-3.5" title="X"><IconX /></a>
+              <a href={SOCIAL_LINKS.instagram} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-200 text-slate-500 transition-colors hover:bg-[#E4405F] hover:text-white [&_svg]:h-3.5 [&_svg]:w-3.5" title="Instagram"><IconInstagram /></a>
+              <a href={SOCIAL_LINKS.facebook} target="_blank" rel="noopener noreferrer" className="flex h-7 w-7 items-center justify-center rounded-md bg-slate-200 text-slate-500 transition-colors hover:bg-[#1877F2] hover:text-white [&_svg]:h-3.5 [&_svg]:w-3.5" title="Facebook"><IconFacebook /></a>
+            </div>
           </div>
         </div>
 
