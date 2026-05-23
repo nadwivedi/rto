@@ -1,6 +1,13 @@
 const axios = require('axios');
 const pdfParse = require('pdf-parse');
 
+let groqKeyIndex = 0;
+const getGroqApiKey = () => {
+  const keys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2].filter(Boolean)
+  groqKeyIndex = (groqKeyIndex + 1) % keys.length
+  return keys[groqKeyIndex]
+}
+
 const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase64 = null) => {
   if (isPdf) {
     // If PDF, imageBase64 is actually raw text extracted by pdf-parse
@@ -23,7 +30,7 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
       },
       {
         headers: {
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+          'Authorization': `Bearer ${getGroqApiKey()}`,
           'Content-Type': 'application/json'
         }
       }
@@ -72,7 +79,7 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
       },
       {
         headers: {
-          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+          'Authorization': `Bearer ${getGroqApiKey()}`,
           'Content-Type': 'application/json'
         }
       }
