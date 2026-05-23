@@ -17,6 +17,10 @@ export const DEFAULT_KEYWORDS = [
   'RTO Sarthi software',
   'RTO digital software',
   'tax fitness PUC insurance reminder',
+  'PUC agent software',
+  'PUC agent software India',
+  'PUC center software',
+  'PUC certificate management software',
   'RTO agent Raipur',
   'SoftwareBytes',
   'RTOSarthi',
@@ -46,9 +50,15 @@ export const PAGE_SEO = {
       'Contact RTO Sarthi for free trial and demo. Call, WhatsApp, or email SoftwareBytes, Raipur. Simplify your RTO workflow with India\'s best RTO agent software.',
     path: '/contact',
   },
+  '/puc-agent-software': {
+    title: `PUC Agent Software | RTO Sarthi - ${TAGLINE}`,
+    description:
+      'PUC agent software for Indian PUC centers. Bulk Excel upload, PDF auto-entry, WhatsApp expiry reminders, and complete RTO & insurance management — all in one platform.',
+    path: '/puc-agent-software',
+  },
   '/sitemap': {
     title: `Sitemap | RTO Sarthi - ${TAGLINE}`,
-    description: 'Sitemap of RTO Sarthi website — Home, Features, About, and Contact pages.',
+    description: 'Sitemap of RTO Sarthi website — Home, Features, PUC Agent Software, About, and Contact pages.',
     path: '/sitemap',
   },
 }

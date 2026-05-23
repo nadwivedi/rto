@@ -39,6 +39,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/puc-agent-software" className="hover:text-brand-800">
+                  PUC Agent Software
+                </Link>
+              </li>
+              <li>
                 <Link to="/" className="hover:text-brand-800">
                   Dashboard
                 </Link>
