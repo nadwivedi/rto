@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
-const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://rtosarthi.com'
+const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://app.rtosarthi.com'
 console.log(BACKEND_URL);
 
 const formatDateTime = (value) => {
