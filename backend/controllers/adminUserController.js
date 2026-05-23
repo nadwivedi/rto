@@ -267,7 +267,7 @@ exports.createUser = async (req, res) => {
 // Update user
 exports.updateUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, subscriptionExpiresAt, monthlyPrice } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -346,6 +346,18 @@ exports.updateUser = async (req, res) => {
       user.billDescription = billDescription.trim() ? billDescription.trim() : undefined
     }
     if (isActive !== undefined) user.isActive = isActive
+    if (subscriptionExpiresAt !== undefined) {
+      const d = new Date(subscriptionExpiresAt)
+      if (!Number.isNaN(d.getTime())) {
+        user.subscriptionExpiresAt = d
+      }
+    }
+    if (monthlyPrice !== undefined) {
+      const price = Number(monthlyPrice)
+      if (!Number.isNaN(price) && price >= 0) {
+        user.monthlyPrice = price
+      }
+    }
     if (password !== undefined && password.trim()) {
       if (password.length < 4) {
         return res.status(400).json({
@@ -374,7 +386,9 @@ exports.updateUser = async (req, res) => {
         rto: user.rto,
         billName: user.billName,
         billDescription: user.billDescription,
-        isActive: user.isActive
+        isActive: user.isActive,
+        subscriptionExpiresAt: user.subscriptionExpiresAt,
+        monthlyPrice: user.monthlyPrice
       }
     })
   } catch (error) {

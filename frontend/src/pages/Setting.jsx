@@ -84,6 +84,47 @@ const Setting = () => {
 
       {/* Settings Cards */}
       <div className='space-y-4'>
+        {/* Subscription Info */}
+        <div className='bg-white rounded-xl p-6 shadow-lg border border-gray-200'>
+          <div className='flex items-center gap-3 mb-4'>
+            <div className='w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center text-white text-xl'>
+              💳
+            </div>
+            <div>
+              <h2 className='text-lg font-bold text-gray-800'>Subscription</h2>
+              <p className='text-xs text-gray-500'>Your subscription plan and status</p>
+            </div>
+          </div>
+          <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+            <div className='p-4 bg-gray-50 rounded-lg'>
+              <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>Expires On</p>
+              <p className='text-lg font-bold text-gray-800 mt-1'>
+                {user?.subscriptionExpiresAt
+                  ? new Date(user.subscriptionExpiresAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                  : 'Not set'}
+              </p>
+            </div>
+            <div className='p-4 bg-gray-50 rounded-lg'>
+              <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>Days Remaining</p>
+              <p className={`text-lg font-bold mt-1 ${(() => {
+                if (!user?.subscriptionExpiresAt) return 'text-gray-400'
+                const days = Math.ceil((new Date(user.subscriptionExpiresAt) - new Date()) / (1000 * 60 * 60 * 24))
+                if (days <= 0) return 'text-red-600'
+                if (days <= 7) return 'text-orange-500'
+                return 'text-emerald-600'
+              })()}`}>
+                {(() => {
+                  if (!user?.subscriptionExpiresAt) return 'N/A'
+                  const days = Math.ceil((new Date(user.subscriptionExpiresAt) - new Date()) / (1000 * 60 * 60 * 24))
+                  if (days <= 0) return 'Expired'
+                  if (days === 1) return '1 day'
+                  return `${days} days`
+                })()}
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Theme Settings */}
         <div className='bg-white rounded-xl p-6 shadow-lg border border-gray-200'>
           <div className='flex items-center gap-3 mb-4'>

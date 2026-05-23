@@ -74,6 +74,8 @@ const Users = () => {
     rto: '',
     billName: '',
     billDescription: '',
+    subscriptionExpiresAt: '',
+    monthlyPrice: '',
     password: ''
   })
   const [error, setError] = useState('')
@@ -170,7 +172,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', password: '' })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', password: '' })
         fetchUsers()
       } else {
         setError(data.message || `Failed to ${isEditMode ? 'update' : 'create'} user`)
@@ -193,6 +195,8 @@ const Users = () => {
       rto: user.rto || '',
       billName: user.billName || '',
       billDescription: user.billDescription || '',
+      subscriptionExpiresAt: user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString().split('T')[0] : '',
+      monthlyPrice: user.monthlyPrice ?? '',
       password: '' // Don't populate password for security
     })
     setShowModal(true)
@@ -319,6 +323,8 @@ const Users = () => {
                     <th className='px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase'>Name</th>
                     <th className='px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase'>Contact</th>
                     <th className='px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase'>Status</th>
+                    <th className='px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase'>Subscription</th>
+                    <th className='px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase'>Price (₹)</th>
                     <th className='px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase'>Last Login</th>
                     <th className='px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase'>Last Activity</th>
                     <th className='px-6 py-3 text-left text-xs font-bold text-gray-700 uppercase'>Created</th>
@@ -363,6 +369,12 @@ const Users = () => {
                         }`}>
                           {user.isActive ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+                      <td className='px-6 py-4 text-xs text-gray-700'>
+                        {user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toLocaleDateString() : '-'}
+                      </td>
+                      <td className='px-6 py-4 text-sm text-gray-700'>
+                        {user.monthlyPrice != null ? `₹${user.monthlyPrice}` : '-'}
                       </td>
                       <td className='px-6 py-4 text-xs text-gray-700'>
                         <div className={user.lastLogin ? 'text-gray-700' : 'text-gray-400'}>
@@ -442,6 +454,10 @@ const Users = () => {
                       {user.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </div>
+                  <div className='flex flex-wrap gap-2 text-[11px] text-gray-500 pt-1 pb-1'>
+                    <span>Sub: {user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toLocaleDateString() : '-'}</span>
+                    <span>Price: {user.monthlyPrice != null ? `₹${user.monthlyPrice}` : '-'}</span>
+                  </div>
                   <div className='flex justify-between items-center pt-2 border-t border-gray-100'>
                     <div className='text-[11px] text-gray-500 space-y-0.5'>
                       <div>Last Login: <span className={user.lastLogin ? 'text-gray-700 font-medium' : 'text-gray-400'}>{formatDateTime(user.lastLogin)}</span></div>
@@ -479,8 +495,9 @@ const Users = () => {
 
       {/* Create User Modal */}
       {showModal && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 overflow-y-auto'>
-          <div className='bg-white rounded-lg shadow-xl max-w-md w-full p-4 sm:p-6 my-8'>
+        <div className='fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto'>
+          <div className='flex items-start justify-center min-h-full px-2 sm:px-4 py-4 sm:py-8'>
+          <div className='bg-white rounded-lg shadow-xl max-w-xl sm:max-w-2xl w-full p-4 sm:p-6'>
             <div className='flex justify-between items-center mb-3 sm:mb-4'>
               <h2 className='text-lg sm:text-xl font-bold text-gray-800'>
                 {isEditMode ? 'Edit User' : 'Create New User'}
@@ -501,7 +518,7 @@ const Users = () => {
               </div>
             )}
 
-            <form onSubmit={handleSubmit} className='space-y-3 sm:space-y-4'>
+            <form onSubmit={handleSubmit} className='space-y-3'>
               <div>
                 <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
                   Name <span className='text-red-500'>*</span>
@@ -517,145 +534,178 @@ const Users = () => {
                 />
               </div>
 
-              <div>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                  Mobile <span className='text-red-500'>*</span>
-                </label>
-                <input
-                  type='text'
-                  name='mobile1'
-                  value={formData.mobile1}
-                  onChange={handleChange}
-                  placeholder='10-digit mobile number'
-                  maxLength={10}
-                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  required
-                />
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Mobile <span className='text-red-500'>*</span>
+                  </label>
+                  <input
+                    type='text'
+                    name='mobile1'
+                    value={formData.mobile1}
+                    onChange={handleChange}
+                    placeholder='10-digit mobile number'
+                    maxLength={10}
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                    required
+                  />
+                </div>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Mobile 2 <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <input
+                    type='text'
+                    name='mobile2'
+                    value={formData.mobile2}
+                    onChange={handleChange}
+                    placeholder='10-digit mobile number'
+                    maxLength={10}
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                  Mobile 2 <span className='text-gray-400'>(Optional)</span>
-                </label>
-                <input
-                  type='text'
-                  name='mobile2'
-                  value={formData.mobile2}
-                  onChange={handleChange}
-                  placeholder='10-digit mobile number'
-                  maxLength={10}
-                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                />
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Email <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <input
+                    type='email'
+                    name='email'
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder='email@example.com'
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                  />
+                </div>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    State <span className='text-red-500'>*</span>
+                  </label>
+                  <select
+                    name='state'
+                    value={formData.state}
+                    onChange={handleChange}
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase'
+                    required
+                  >
+                    <option value=''>Select State</option>
+                    {INDIAN_STATES.map((state) => (
+                      <option key={state} value={state.toUpperCase()}>
+                        {state.toUpperCase()}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
 
-              <div>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                  Email <span className='text-gray-400'>(Optional)</span>
-                </label>
-                <input
-                  type='email'
-                  name='email'
-                  value={formData.email}
-                  onChange={handleChange}
-                  placeholder='email@example.com'
-                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                />
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div className='sm:col-span-2'>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Address <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <textarea
+                    name='address'
+                    value={formData.address}
+                    onChange={handleChange}
+                    placeholder='Enter full address'
+                    rows={2}
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none'
+                  />
+                </div>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    RTO <span className='text-red-500'>*</span>
+                  </label>
+                  <input
+                    type='text'
+                    name='rto'
+                    value={formData.rto}
+                    onChange={handleChange}
+                    placeholder='RTO code'
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase'
+                    required
+                  />
+                </div>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Password {isEditMode ? <span className='text-gray-400'>(Opt)</span> : <span className='text-red-500'>*</span>}
+                  </label>
+                  <input
+                    type='password'
+                    name='password'
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder={isEditMode ? 'Leave blank to keep' : 'Min 4 chars'}
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                    required={!isEditMode}
+                    minLength={4}
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                  Address <span className='text-gray-400'>(Optional)</span>
-                </label>
-                <textarea
-                  name='address'
-                  value={formData.address}
-                  onChange={handleChange}
-                  placeholder='Enter full address'
-                  rows={3}
-                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none'
-                />
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Bill Name <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <input
+                    type='text'
+                    name='billName'
+                    value={formData.billName}
+                    onChange={handleChange}
+                    placeholder='Name on bills'
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                  />
+                </div>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Bill Description <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <input
+                    type='text'
+                    name='billDescription'
+                    value={formData.billDescription}
+                    onChange={handleChange}
+                    placeholder='e.g. Transport Consultant'
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                  State <span className='text-red-500'>*</span>
-                </label>
-                <select
-                  name='state'
-                  value={formData.state}
-                  onChange={handleChange}
-                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase'
-                  required
-                >
-                  <option value=''>Select State</option>
-                  {INDIAN_STATES.map((state) => (
-                    <option key={state} value={state.toUpperCase()}>
-                      {state.toUpperCase()}
-                    </option>
-                  ))}
-                </select>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Subscription Expires <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <input
+                    type='date'
+                    name='subscriptionExpiresAt'
+                    value={formData.subscriptionExpiresAt}
+                    onChange={handleChange}
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                  />
+                </div>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Monthly Price (₹) <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <input
+                    type='number'
+                    name='monthlyPrice'
+                    value={formData.monthlyPrice}
+                    onChange={handleChange}
+                    placeholder='0'
+                    min='0'
+                    step='0.01'
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                  />
+                </div>
               </div>
 
-              <div>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                  RTO <span className='text-red-500'>*</span>
-                </label>
-                <input
-                  type='text'
-                  name='rto'
-                  value={formData.rto}
-                  onChange={handleChange}
-                  placeholder='Enter RTO code'
-                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase'
-                  required
-                />
-              </div>
-
-              <div>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                  Bill Name <span className='text-gray-400'>(Optional - Displayed on bills)</span>
-                </label>
-                <input
-                  type='text'
-                  name='billName'
-                  value={formData.billName}
-                  onChange={handleChange}
-                  placeholder='Name to display on bills'
-                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                />
-              </div>
-
-              <div>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                  Bill Description <span className='text-gray-400'>(Optional - e.g., Transport Consultant)</span>
-                </label>
-                <input
-                  type='text'
-                  name='billDescription'
-                  value={formData.billDescription}
-                  onChange={handleChange}
-                  placeholder='Description to display on bills'
-                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                />
-              </div>
-
-              <div>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                  Password {isEditMode ? <span className='text-gray-400'>(Leave blank to keep unchanged)</span> : <span className='text-red-500'>*</span>}
-                </label>
-                <input
-                  type='password'
-                  name='password'
-                  value={formData.password}
-                  onChange={handleChange}
-                  placeholder={isEditMode ? 'Leave blank to keep current password' : 'Minimum 4 characters'}
-                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  required={!isEditMode}
-                  minLength={4}
-                />
-              </div>
-
-              <div className='flex gap-2 sm:gap-3 mt-4 sm:mt-6'>
+              <div className='flex gap-2 sm:gap-3 pt-2'>
                 <button
                   type='button'
                   onClick={handleCloseModal}
@@ -671,6 +721,7 @@ const Users = () => {
                 </button>
               </div>
             </form>
+          </div>
           </div>
         </div>
       )}

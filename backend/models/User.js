@@ -80,6 +80,13 @@ const userSchema = new mongoose.Schema({
   },
   lastActivity: {
     type: Date
+  },
+  subscriptionExpiresAt: {
+    type: Date
+  },
+  monthlyPrice: {
+    type: Number,
+    min: 0
   }
 }, {
   timestamps: true

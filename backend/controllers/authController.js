@@ -424,6 +424,8 @@ exports.getProfile = async (req, res) => {
           rto: user.rto,
           billName: user.billName,
           billDescription: user.billDescription,
+          subscriptionExpiresAt: user.subscriptionExpiresAt,
+          monthlyPrice: user.monthlyPrice,
           type: 'user',
           lastLogin: user.lastLogin,
           lastActivity: user.lastActivity
