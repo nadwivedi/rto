@@ -43,8 +43,9 @@ app.use(cookieParser())
 // Serve static files (PDFs) from uploads folder
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   setHeaders: (res, filePath) => {
-    if (filePath.endsWith('.pdf')) {
-      // Allow inline viewing but also enable download
+    if (filePath.endsWith('.avif')) {
+      res.setHeader('Content-Type', 'image/avif')
+    } else if (filePath.endsWith('.pdf')) {
       res.setHeader('Content-Type', 'application/pdf')
       res.setHeader('Access-Control-Expose-Headers', 'Content-Disposition')
     }

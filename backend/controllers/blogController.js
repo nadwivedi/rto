@@ -1,6 +1,7 @@
 const Blog = require('../models/Blog')
 const fs = require('fs')
 const path = require('path')
+const sharp = require('sharp')
 
 const blogUploadsDir = path.join(__dirname, '..', 'uploads', 'blog-images')
 if (!fs.existsSync(blogUploadsDir)) {
@@ -139,12 +140,30 @@ exports.uploadImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid image format. Use base64 data URI.' })
     }
 
-    const ext = matches[1] === 'jpeg' ? 'jpg' : matches[1]
-    const data = Buffer.from(matches[2], 'base64')
-    const filename = `blog-${Date.now()}-${Math.round(Math.random() * 1e9)}.${ext}`
+    const buffer = Buffer.from(matches[2], 'base64')
+
+    const fileSizeInMB = buffer.length / (1024 * 1024)
+    if (fileSizeInMB > 12) {
+      return res.status(400).json({
+        success: false,
+        message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit`
+      })
+    }
+
+    let finalBuffer = buffer
+    try {
+      finalBuffer = await sharp(buffer)
+        .resize({ width: 1200, withoutEnlargement: true })
+        .avif({ quality: 60 })
+        .toBuffer()
+    } catch (sharpErr) {
+      console.error('Sharp AVIF conversion error:', sharpErr)
+    }
+
+    const filename = `blog-${Date.now()}-${Math.round(Math.random() * 1e9)}.avif`
     const filePath = path.join(blogUploadsDir, filename)
 
-    fs.writeFileSync(filePath, data)
+    fs.writeFileSync(filePath, finalBuffer)
 
     const url = `/uploads/blog-images/${filename}`
 
