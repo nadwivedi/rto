@@ -225,7 +225,7 @@ exports.getPublicBlogs = async (req, res) => {
     const totalPages = Math.ceil(totalRecords / limitNum)
 
     const blogs = await Blog.find(query)
-      .select('title slug excerpt coverImage author tags publishedAt')
+      .select('title slug excerpt coverImage author tags publishedAt updatedAt')
       .sort({ publishedAt: -1 })
       .skip(skip)
       .limit(limitNum)

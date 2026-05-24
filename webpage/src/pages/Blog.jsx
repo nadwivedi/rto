@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { SITE_NAME, absoluteUrl } from '../config/seo'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -8,6 +9,35 @@ const formatDate = (value) => {
   const d = new Date(value)
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
 }
+
+function upsertMeta(attr, key, content) {
+  if (!content) return
+  let el = document.querySelector(`meta[${attr}="${key}"]`)
+  if (!el) {
+    el = document.createElement('meta')
+    el.setAttribute(attr, key)
+    document.head.appendChild(el)
+  }
+  el.setAttribute('content', content)
+}
+
+function upsertLink(rel, href) {
+  if (!href) return
+  let el = document.querySelector(`link[rel="${rel}"]`)
+  if (!el) {
+    el = document.createElement('link')
+    el.setAttribute('rel', rel)
+    document.head.appendChild(el)
+  }
+  el.setAttribute('href', href)
+}
+
+function removeLink(rel) {
+  const el = document.querySelector(`link[rel="${rel}"]`)
+  if (el) el.remove()
+}
+
+const PAGE_DESC = 'Read the latest blogs on RTO agent software, PUC center management, vehicle registration tips, insurance renewal guides, and WhatsApp alert strategies. Stay updated with RTO Sarthi.'
 
 const Blog = () => {
   const [blogs, setBlogs] = useState([])
@@ -18,6 +48,27 @@ const Blog = () => {
   useEffect(() => {
     fetchBlogs()
   }, [page])
+
+  useEffect(() => {
+    const baseTitle = 'Blog - RTO Agent Software Tips & Guides | RTO Sarthi'
+    const title = page > 1 ? `${baseTitle} - Page ${page}` : baseTitle
+    document.title = title
+    upsertMeta('name', 'description', PAGE_DESC)
+    upsertMeta('property', 'og:title', title)
+    upsertMeta('property', 'og:description', PAGE_DESC)
+    upsertMeta('property', 'og:url', absoluteUrl('/blog'))
+    upsertMeta('property', 'og:type', 'website')
+    upsertMeta('property', 'og:locale', 'en_IN')
+    upsertMeta('property', 'og:site_name', SITE_NAME)
+    upsertMeta('name', 'twitter:title', title)
+    upsertMeta('name', 'twitter:description', PAGE_DESC)
+    upsertMeta('name', 'twitter:card', 'summary_large_image')
+    upsertLink('canonical', absoluteUrl('/blog'))
+    if (page > 1) upsertLink('prev', absoluteUrl(`/blog?page=${page - 1}`))
+    else removeLink('prev')
+    if (page < totalPages) upsertLink('next', absoluteUrl(`/blog?page=${page + 1}`))
+    else removeLink('next')
+  }, [page, totalPages])
 
   const fetchBlogs = async () => {
     try {

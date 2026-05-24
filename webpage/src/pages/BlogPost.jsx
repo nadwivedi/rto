@@ -32,6 +32,31 @@ function upsertJsonLd(id, data) {
   el.textContent = JSON.stringify(data)
 }
 
+function removeLink(rel) {
+  const el = document.querySelector(`link[rel="${rel}"]`)
+  if (el) el.remove()
+}
+
+function upsertLink(rel, href) {
+  if (!href) return
+  let el = document.querySelector(`link[rel="${rel}"]`)
+  if (!el) {
+    el = document.createElement('link')
+    el.setAttribute('rel', rel)
+    document.head.appendChild(el)
+  }
+  el.setAttribute('href', href)
+}
+
+const getReadingTime = (html) => {
+  if (!html) return 1
+  const div = document.createElement('div')
+  div.innerHTML = html
+  const text = div.textContent || ''
+  const words = text.trim() ? text.trim().split(/\s+/).length : 0
+  return Math.max(1, Math.ceil(words / 200))
+}
+
 const BlogPost = () => {
   const { slug } = useParams()
   const [blog, setBlog] = useState(null)
@@ -79,6 +104,20 @@ const BlogPost = () => {
         upsertMeta('name', 'twitter:title', title)
         upsertMeta('name', 'twitter:description', desc)
         upsertMeta('name', 'twitter:card', 'summary_large_image')
+        upsertMeta('property', 'og:locale', 'en_IN')
+        upsertMeta('property', 'article:modified_time', data.data.updatedAt || '')
+        upsertLink('canonical', absoluteUrl(`/blog/${slug}`))
+        removeLink('prev')
+        removeLink('next')
+        upsertJsonLd('breadcrumb', {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Home', item: absoluteUrl('/') },
+            { '@type': 'ListItem', position: 2, name: 'Blog', item: absoluteUrl('/blog') },
+            { '@type': 'ListItem', position: 3, name: data.data.title, item: absoluteUrl(`/blog/${slug}`) },
+          ],
+        })
         upsertJsonLd('blogposting', {
           '@context': 'https://schema.org',
           '@type': 'BlogPosting',
@@ -169,6 +208,8 @@ const BlogPost = () => {
               <span className='font-medium text-indigo-600'>Written by {blog.author}</span>
               <span>•</span>
               <time>{formatDate(blog.publishedAt)}</time>
+              <span>•</span>
+              <span>{getReadingTime(blog.content)} min read</span>
             </div>
 
             <h1 className='text-lg sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight'>
@@ -235,7 +276,28 @@ const BlogPost = () => {
         </aside>
       </div>
 
-      <div className='mt-8 sm:mt-10 md:mt-12 pt-5 sm:pt-6 md:pt-8 border-t border-gray-200 text-center lg:hidden'>
+      {sidebarBlogs.filter(b => b._id !== blog._id).length > 0 && (
+        <div className='mt-8 sm:mt-10 md:mt-12 pt-5 sm:pt-6 md:pt-8 border-t border-gray-200'>
+          <h2 className='text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-5'>Related Blogs</h2>
+          <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5'>
+            {sidebarBlogs.filter(b => b._id !== blog._id).slice(0, 3).map(b => (
+              <Link key={b._id} to={`/blog/${b.slug}`} className='group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300'>
+                {b.coverImage && (
+                  <div className='h-36 sm:h-40 bg-gray-100 overflow-hidden'>
+                    <img src={b.coverImage?.startsWith('/uploads') ? `${API_URL}${b.coverImage}` : b.coverImage} alt={b.title} loading='lazy' className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500' />
+                  </div>
+                )}
+                <div className='p-3 sm:p-4'>
+                  <p className='text-xs sm:text-sm font-semibold text-gray-800 group-hover:text-indigo-600 leading-snug transition-colors line-clamp-2'>{b.title}</p>
+                  <p className='text-[10px] sm:text-xs text-gray-500 mt-1'>{formatDate(b.publishedAt)}</p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className='mt-6 sm:mt-8 pt-4 sm:pt-5 border-t border-gray-200 text-center'>
         <Link to='/blog' className='inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold transition-colors'>
           ← Back to Blog
         </Link>
