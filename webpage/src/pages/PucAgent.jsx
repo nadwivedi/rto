@@ -72,24 +72,24 @@ const steps = [
 const testimonials = [
   {
     quote:
-      'WhatsApp alerts alone saved our desk from dozens of missed PUC renewals. Clients appreciate the reminder before we even call.',
-    name: 'Vikram Sahu',
-    role: 'RTO Agent & PUC Center Owner',
+      'I run a PUC center and also do insurance renewals. RTO Sarthi handles both — PUC expiry tracking and insurance management in one place. The Excel upload alone saves me a full day every month.',
+    name: 'Sandeep Yadav',
+    role: 'PUC Center Owner & Insurance Agent',
+    location: 'Bhilai',
+  },
+  {
+    quote:
+      'Earlier I used to call each customer manually for PUC renewal. Now RTO Sarthi sends WhatsApp alerts automatically. My customers are happier and I get more renewals without any extra work.',
+    name: 'Priya Sharma',
+    role: 'PUC Agent',
     location: 'Raipur',
   },
   {
     quote:
-      'Bulk PUC upload through Excel changed our month-end process. What took two days now finishes in an afternoon.',
-    name: 'Neha Agrawal',
-    role: 'Insurance & PUC Agent',
-    location: 'Bilaspur',
-  },
-  {
-    quote:
-      'The dashboard shows exactly what PUC expires this week. My staff starts the day with a clear list — no more digging through registers.',
-    name: 'Ramesh Patel',
-    role: 'PUC Center Owner',
-    location: 'Durg',
+      'The PDF upload feature is a game changer. I just scan the PUC certificate and the system reads all the details — vehicle number, expiry date, everything. No more typing mistakes in my register.',
+    name: 'Amit Verma',
+    role: 'PUC Center Operator',
+    location: 'Korba',
   },
 ]
 

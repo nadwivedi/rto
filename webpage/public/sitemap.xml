@@ -25,6 +25,18 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://rtosarthi.com/blog</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://rtosarthi.com/rto-agent-software</loc>
+    <lastmod>2026-05-23</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
     <loc>https://rtosarthi.com/puc-agent-software</loc>
     <lastmod>2026-05-23</lastmod>
     <changefreq>monthly</changefreq>

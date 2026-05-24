@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
+import { SITE_NAME, absoluteUrl } from '../config/seo'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -7,6 +8,28 @@ const formatDate = (value) => {
   if (!value) return ''
   const d = new Date(value)
   return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
+}
+
+function upsertMeta(attr, key, content) {
+  if (!content) return
+  let el = document.querySelector(`meta[${attr}="${key}"]`)
+  if (!el) {
+    el = document.createElement('meta')
+    el.setAttribute(attr, key)
+    document.head.appendChild(el)
+  }
+  el.setAttribute('content', content)
+}
+
+function upsertJsonLd(id, data) {
+  let el = document.querySelector(`script[data-jsonld="${id}"]`)
+  if (!el) {
+    el = document.createElement('script')
+    el.setAttribute('type', 'application/ld+json')
+    el.setAttribute('data-jsonld', id)
+    document.head.appendChild(el)
+  }
+  el.textContent = JSON.stringify(data)
 }
 
 const BlogPost = () => {
@@ -30,9 +53,50 @@ const BlogPost = () => {
       const data = await res.json()
       if (data.success) {
         setBlog(data.data)
-        document.title = data.data.seoTitle || data.data.title + ' - RTO Sarthi'
-        const metaDesc = document.querySelector('meta[name="description"]')
-        if (metaDesc) metaDesc.content = data.data.seoDescription || data.data.excerpt || ''
+        const title = data.data.seoTitle || `${data.data.title} - RTO Sarthi`
+        const desc = data.data.seoDescription || data.data.excerpt || ''
+        document.title = title
+        upsertMeta('name', 'description', desc)
+        upsertMeta('name', 'keywords', `RTO blog, ${data.data.tags?.join(', ') || ''}, RTO Sarthi, RTO agent software`)
+        upsertMeta('property', 'og:title', title)
+        upsertMeta('property', 'og:description', desc)
+        upsertMeta('property', 'og:url', absoluteUrl(`/blog/${slug}`))
+        upsertMeta('property', 'og:type', 'article')
+        upsertMeta('property', 'article:published_time', data.data.publishedAt || '')
+        if (data.data.tags) {
+          data.data.tags.forEach(tag => {
+            const el = document.createElement('meta')
+            el.setAttribute('property', 'article:tag')
+            el.setAttribute('content', tag)
+            document.head.appendChild(el)
+          })
+        }
+        if (data.data.coverImage) {
+          const img = data.data.coverImage.startsWith('/uploads') ? `${API_URL}${data.data.coverImage}` : data.data.coverImage
+          upsertMeta('property', 'og:image', img)
+          upsertMeta('name', 'twitter:image', img)
+        }
+        upsertMeta('name', 'twitter:title', title)
+        upsertMeta('name', 'twitter:description', desc)
+        upsertMeta('name', 'twitter:card', 'summary_large_image')
+        upsertJsonLd('blogposting', {
+          '@context': 'https://schema.org',
+          '@type': 'BlogPosting',
+          headline: data.data.title,
+          description: data.data.excerpt || '',
+          author: {
+            '@type': 'Person',
+            name: data.data.author || 'RTO Sarthi',
+          },
+          datePublished: data.data.publishedAt || '',
+          dateModified: data.data.updatedAt || data.data.publishedAt || '',
+          image: data.data.coverImage?.startsWith('/uploads') ? `${API_URL}${data.data.coverImage}` : data.data.coverImage,
+          publisher: {
+            '@type': 'Organization',
+            name: SITE_NAME,
+          },
+          mainEntityOfPage: absoluteUrl(`/blog/${slug}`),
+        })
       } else {
         setError('Blog post not found')
       }
@@ -97,7 +161,7 @@ const BlogPost = () => {
           <article>
             {blog.coverImage && (
               <div className='mb-4 sm:mb-5 md:mb-6 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm max-w-full md:max-w-[75%] lg:max-w-[100%] mx-auto'>
-                <img src={blog.coverImage?.startsWith('/uploads') ? `${API_URL}${blog.coverImage}` : blog.coverImage} alt={blog.title} className='w-full h-auto' />
+                <img src={blog.coverImage?.startsWith('/uploads') ? `${API_URL}${blog.coverImage}` : blog.coverImage} alt={`${blog.title} - ${SITE_NAME}`} className='w-full h-auto' />
               </div>
             )}
 
@@ -145,7 +209,7 @@ const BlogPost = () => {
                       <div className='flex gap-2.5 xl:gap-3'>
                         {b.coverImage && (
                           <div className='w-14 h-14 xl:w-16 xl:h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100'>
-                            <img src={b.coverImage?.startsWith('/uploads') ? `${API_URL}${b.coverImage}` : b.coverImage} alt={b.title} className='w-full h-full object-cover' />
+                            <img src={b.coverImage?.startsWith('/uploads') ? `${API_URL}${b.coverImage}` : b.coverImage} alt={b.title} loading='lazy' className='w-full h-full object-cover' />
                           </div>
                         )}
                         <div className='flex-1 min-w-0'>
