@@ -349,11 +349,22 @@ const WhatsApp = () => {
                     const d = new Date(log.createdAt);
                     const dateStr = d.toLocaleDateString('en-IN');
                     const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+                    const sentD = log.sentAt ? new Date(log.sentAt) : null;
+                    const sentDateStr = sentD ? sentD.toLocaleDateString('en-IN') : null;
+                    const sentTimeStr = sentD ? sentD.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : null;
                     return (
                     <tr key={log._id} className='hover:bg-gray-50 transition'>
                       <td className='py-3 px-4 whitespace-nowrap'>
+                        <div className='text-xs text-gray-500'>Created</div>
                         <div className='text-sm text-gray-800 font-medium'>{dateStr}</div>
                         <div className='text-xs text-gray-500'>{timeStr}</div>
+                        {sentD && (
+                          <>
+                            <div className='text-xs text-gray-400 mt-1'>Sent</div>
+                            <div className='text-sm text-gray-800 font-medium'>{sentDateStr}</div>
+                            <div className='text-xs text-gray-500'>{sentTimeStr}</div>
+                          </>
+                        )}
                       </td>
                       <td className='py-3 px-4'>
                         <div className='text-sm text-gray-800 font-bold'>{log.ownerName || 'Unknown Party'}</div>
