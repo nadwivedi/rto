@@ -20,7 +20,7 @@ const TemporaryPermitOtherStateSchema = new mongoose.Schema({
   },
   permitHolder: {
     type: String,
-    required: true,
+    required: false,
     trim: true
   },
   vehicleNo: {

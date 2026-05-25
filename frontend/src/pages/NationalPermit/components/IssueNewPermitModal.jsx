@@ -721,7 +721,7 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
                     )}
                   </div>
                   <p className='text-xs text-gray-500 mt-1'>
-                    Search by: Full number (CG04AA1234), Series (AA4793), or Last 4 digits (4793)
+
                   </p>
                   {vehicleValidation.message && !fetchingVehicle && !showVehicleDropdown && (
                     <p className={`text-xs mt-1 ${vehicleValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
@@ -880,7 +880,6 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
                     tabIndex="3"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono'
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Optional field - please go ahead</p>
                 </div>
 
                 {/* Permit Holder Name */}
@@ -973,7 +972,6 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
                     tabIndex="7"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold'
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Optional field - please go ahead</p>
                 </div>
 
                 <div>

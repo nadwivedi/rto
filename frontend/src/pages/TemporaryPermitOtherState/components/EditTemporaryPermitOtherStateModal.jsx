@@ -296,7 +296,6 @@ const EditTemporaryPermitOtherStateModal = ({ permit, onClose, onPermitUpdated }
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-mono'
                     placeholder='TP-OS-001'
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Optional field - please go ahead</p>
                 </div>
 
                 {/* Permit Holder Name */}
@@ -355,7 +354,7 @@ const EditTemporaryPermitOtherStateModal = ({ permit, onClose, onPermitUpdated }
                     placeholder='DD-MM-YYYY'
                     required
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Smart input: type 5 → 05-, auto-expands years</p>
+
                 </div>
 
                 {/* Valid To */}

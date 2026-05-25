@@ -579,7 +579,7 @@ const IssueBusPermitModal = ({ isOpen, onClose, onSubmit, initialData = null }) 
                     )}
                   </div>
                   {/* <p className='text-xs text-gray-500 mt-1'>
-                    Search by: Full number (CG04AA1234 or CG04G1234), Series (AA4793), or Last 4 digits (4793)
+
                   </p> */}
                   {vehicleValidation.message && !fetchingVehicle && !showVehicleDropdown && (
                     <p className={`text-xs mt-1 ${vehicleValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>

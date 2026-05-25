@@ -495,7 +495,7 @@ const RenewTemporaryPermitModal = ({ isOpen, onClose, onSubmit, oldPermit }) => 
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent'
                     required
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Smart input: type 5 → 05-, auto-expands years</p>
+
                 </div>
 
                 {/* Valid To (Auto-calculated) */}

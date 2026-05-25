@@ -49,14 +49,7 @@ exports.createPermit = async (req, res) => {
     } = req.body
 
     // 1. Validate required fields
-    // permitNumber is now optional, so no validation needed
-
-    if (!permitHolder || permitHolder.trim() === '') {
-      return res.status(400).json({
-        success: false,
-        message: 'Permit holder name is required'
-      })
-    }
+    // permitNumber and permitHolder are now optional
 
     if (!vehicleNumber || vehicleNumber.trim() === '') {
       return res.status(400).json({
@@ -104,25 +97,7 @@ exports.createPermit = async (req, res) => {
       }
     }
 
-    // 3. Validate vehicle number format (should be 10 characters)
-    const cleanVehicleNumber = vehicleNumber.trim().replace(/\s+/g, '')
-    if (cleanVehicleNumber.length !== 10) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle number must be exactly 10 characters'
-      })
-    }
-
-    // Additional validation: Vehicle number should follow pattern (e.g., CG01AB1234)
-    const vehicleNumberPattern = /^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$/
-    if (!vehicleNumberPattern.test(cleanVehicleNumber)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle number format is invalid (e.g., CG01AB1234)'
-      })
-    }
-
-    // 4. Validate vehicle type
+    // 3. Validate vehicle type
     if (!['CV', 'PV'].includes(vehicleType.toUpperCase())) {
       return res.status(400).json({
         success: false,
@@ -611,26 +586,7 @@ exports.updatePermit = async (req, res) => {
       }
     }
 
-    // 3. Validate vehicle number format (if provided)
-    if (vehicleNumber && vehicleNumber.trim() !== '') {
-      const cleanVehicleNumber = vehicleNumber.trim().replace(/\s+/g, '')
-      if (cleanVehicleNumber.length !== 10) {
-        return res.status(400).json({
-          success: false,
-          message: 'Vehicle number must be exactly 10 characters'
-        })
-      }
-
-      const vehicleNumberPattern = /^[A-Z]{2}[0-9]{2}[A-Z]{1,2}[0-9]{4}$/
-      if (!vehicleNumberPattern.test(cleanVehicleNumber)) {
-        return res.status(400).json({
-          success: false,
-          message: 'Vehicle number format is invalid (e.g., CG01AB1234)'
-        })
-      }
-    }
-
-    // 4. Validate vehicle type (if provided)
+    // 3. Validate vehicle type (if provided)
     if (vehicleType && !['CV', 'PV'].includes(vehicleType.toUpperCase())) {
       return res.status(400).json({
         success: false,

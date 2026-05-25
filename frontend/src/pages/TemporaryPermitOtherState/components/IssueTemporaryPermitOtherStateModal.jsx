@@ -343,8 +343,8 @@ const IssueTemporaryPermitOtherStateModal = ({ onClose, onPermitIssued }) => {
       return
     }
 
-    // Validation (permitNumber is now optional)
-    if (!formData.permitHolder || !formData.vehicleNo ||
+    // Validation (permitNumber and permitHolder are now optional)
+    if (!formData.vehicleNo ||
         !formData.mobileNo || !formData.validFrom || !formData.validTo) {
       toast.error('Please fill all required fields')
       return
@@ -523,7 +523,7 @@ const IssueTemporaryPermitOtherStateModal = ({ onClose, onPermitIssued }) => {
                     )}
                   </div>
                   <p className='text-xs text-gray-500 mt-1'>
-                    Search by: Full number (CG04AA1234), Series (AA4793), or Last 4 digits (4793)
+
                   </p>
                   {vehicleValidation.message && !fetchingVehicle && !showVehicleDropdown && (
                     <p className={`text-xs mt-1 ${vehicleValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
@@ -553,13 +553,12 @@ const IssueTemporaryPermitOtherStateModal = ({ onClose, onPermitIssued }) => {
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-mono'
                     placeholder='TP-OS-001'
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Optional field - please go ahead</p>
                 </div>
 
                 {/* Permit Holder Name */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Permit Holder Name <span className='text-red-500'>*</span>
+                    Permit Holder Name <span className='text-xs text-gray-500 font-normal'>(Optional)</span>
                   </label>
                   <input
                     type='text'
@@ -567,9 +566,8 @@ const IssueTemporaryPermitOtherStateModal = ({ onClose, onPermitIssued }) => {
                     value={formData.permitHolder}
                     onChange={handleChange}
                     onKeyDown={handleKeyDown}
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white'
                     placeholder='Enter holder name'
-                    required
                   />
                 </div>
 
@@ -615,7 +613,7 @@ const IssueTemporaryPermitOtherStateModal = ({ onClose, onPermitIssued }) => {
                     placeholder='DD-MM-YYYY'
                     required
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Smart input: type 5 → 05-, auto-expands years</p>
+
                 </div>
 
                 {/* Valid To */}

@@ -483,7 +483,7 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
                     <p className='text-xs text-green-600 mt-1'>✓ Vehicle found - Details verified</p>
                   )}
                   <p className='text-xs mt-1 text-gray-500'>
-                    Search by: Full number (CG04AA1234), Series (AA4793), or Last 4 digits (4793)
+
                   </p>
                 </div>
 

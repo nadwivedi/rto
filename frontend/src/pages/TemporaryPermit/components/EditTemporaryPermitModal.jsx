@@ -539,7 +539,7 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
                     )}
                   </div>
                   <p className='text-xs text-gray-500 mt-1'>
-                    Search by: Full number (CG04AA1234), Series (AA4793), or Last 4 digits (4793)
+
                   </p>
                   {vehicleValidation.message && !fetchingVehicle && !showVehicleDropdown && (
                     <p className={`text-xs mt-1 ${vehicleValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
@@ -568,7 +568,6 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
                     placeholder='TP001234567'
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-mono'
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Optional field - please go ahead</p>
                 </div>
 
                 {/* Permit Holder Name */}
@@ -645,7 +644,7 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
                     required
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Smart input: type 5 → 05-, auto-expands years</p>
+
                 </div>
 
                 {/* Valid To (Auto-calculated) */}

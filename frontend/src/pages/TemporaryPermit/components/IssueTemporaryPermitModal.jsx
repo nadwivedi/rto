@@ -480,11 +480,11 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
     <div className='fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-2 md:p-4'>
       <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-6xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header */}
-        <div className='bg-gradient-to-r from-orange-600 to-red-600 p-2 md:p-3 text-white flex-shrink-0'>
+        <div className='bg-gradient-to-r from-teal-600 to-cyan-600 p-2 md:p-3 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>
             <div>
               <h2 className='text-lg md:text-2xl font-bold'>Add New Temporary Permit</h2>
-              <p className='text-orange-100 text-xs md:text-sm mt-1'>Issue temporary vehicle permit (CV: 3 months - 1 day, PV: 4 months - 1 day)</p>
+              <p className='text-teal-100 text-xs md:text-sm mt-1'>Issue temporary vehicle permit (CV: 3 months - 1 day, PV: 4 months - 1 day)</p>
             </div>
             <button
               onClick={onClose}
@@ -501,9 +501,9 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
         <form onSubmit={handleSubmit} className='flex flex-col flex-1 overflow-hidden'>
           <div className='flex-1 overflow-y-auto p-3 md:p-6'>
             {/* Section 1: Basic Information */}
-            <div className='bg-gradient-to-r from-orange-50 to-red-50 border-2 border-orange-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+            <div className='bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
-                <span className='bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>1</span>
+                <span className='bg-teal-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>1</span>
                 Basic Information
               </h3>
 
@@ -523,19 +523,19 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                       placeholder='CG04AA1234 or CG04G1234'
                       maxLength='10'
                       tabIndex="1"
-                      className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent font-mono ${
-                        formData.vehicleNumber && !vehicleValidation.isValid
-                          ? 'border-red-500 focus:ring-red-500'
-                          : formData.vehicleNumber && vehicleValidation.isValid
-                          ? 'border-green-500 focus:ring-green-500'
-                          : 'border-gray-300 focus:ring-orange-500'
-                      }`}
+className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent font-mono bg-white ${
+  formData.vehicleNumber && !vehicleValidation.isValid
+    ? 'border-red-500 focus:ring-red-500'
+    : formData.vehicleNumber && vehicleValidation.isValid
+    ? 'border-green-500 focus:ring-green-500'
+    : 'border-gray-300 focus:ring-teal-500'
+}`}
                       required
                       autoFocus
                     />
                     {fetchingVehicle && (
                       <div className='absolute right-3 top-2.5'>
-                        <svg className='animate-spin h-5 w-5 text-orange-500' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
+                        <svg className='animate-spin h-5 w-5 text-teal-500' xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24'>
                           <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
                           <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
                         </svg>
@@ -551,9 +551,9 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
 
                     {/* Dropdown for multiple vehicle matches */}
                     {showVehicleDropdown && vehicleMatches.length > 0 && (
-                      <div className='absolute z-50 w-full mt-1 bg-white border border-orange-300 rounded-lg shadow-lg max-h-60 overflow-y-auto'>
-                        <div className='p-2 bg-orange-50 border-b border-orange-200'>
-                          <p className='text-xs font-semibold text-orange-700'>
+                      <div className='absolute z-50 w-full mt-1 bg-white border border-teal-300 rounded-lg shadow-lg max-h-60 overflow-y-auto'>
+                        <div className='p-2 bg-teal-50 border-b border-teal-200'>
+                          <p className='text-xs font-semibold text-teal-700'>
                             {vehicleMatches.length} vehicles found - Use ↑↓ arrows to navigate, Enter to select
                           </p>
                         </div>
@@ -564,14 +564,14 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                             onClick={() => handleVehicleSelect(vehicle)}
                             className={`p-3 cursor-pointer border-b border-gray-100 last:border-b-0 transition ${
                               index === selectedDropdownIndex
-                                ? 'bg-orange-100 border-l-4 border-l-orange-600'
-                                : 'hover:bg-orange-50'
+                                ? 'bg-teal-100 border-l-4 border-l-teal-600'
+                                : 'hover:bg-teal-50'
                             }`}
                           >
                             <div className='flex justify-between items-start'>
                               <div>
                                 <p className={`font-mono font-bold text-sm ${
-                                  index === selectedDropdownIndex ? 'text-orange-800' : 'text-orange-700'
+                                  index === selectedDropdownIndex ? 'text-teal-800' : 'text-teal-700'
                                 }`}>
                                   {vehicle.registrationNumber}
                                 </p>
@@ -585,7 +585,7 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                                 )}
                               </div>
                               <svg className={`w-5 h-5 ${
-                                index === selectedDropdownIndex ? 'text-orange-600' : 'text-orange-400'
+                                index === selectedDropdownIndex ? 'text-teal-600' : 'text-teal-400'
                               }`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                                 <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
                               </svg>
@@ -596,7 +596,7 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                     )}
                   </div>
                   <p className='text-xs text-gray-500 mt-1'>
-                    Search by: Full number (CG04AA1234), Series (AA4793), or Last 4 digits (4793)
+
                   </p>
                   {vehicleValidation.message && !fetchingVehicle && !showVehicleDropdown && (
                     <p className={`text-xs mt-1 ${vehicleValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
@@ -625,15 +625,14 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                     onKeyDown={handleInputKeyDown}
                     placeholder='TP001234567'
                     tabIndex="2"
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-mono'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent font-mono bg-white'
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Optional field - please go ahead</p>
                 </div>
 
                 {/* Permit Holder Name */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Permit Holder Name <span className='text-red-500'>*</span>
+                    Permit Holder Name <span className='text-xs text-gray-500 font-normal'>(Optional)</span>
                   </label>
                   <input
                     type='text'
@@ -643,8 +642,7 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                     onKeyDown={handleInputKeyDown}
                     placeholder='Rajesh Transport Services'
                     tabIndex="3"
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
-                    required
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white'
                   />
                 </div>
 
@@ -653,17 +651,17 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Mobile Number
                   </label>
-                  <input
-                    type='tel'
-                    name='mobileNumber'
-                    value={formData.mobileNumber}
-                    onChange={handleChange}
-                    onKeyDown={handleInputKeyDown}
-                    placeholder='10-digit number'
-                    maxLength='10'
-                    tabIndex="4"
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
-                  />
+<input
+                  type='tel'
+                  name='mobileNumber'
+                  value={formData.mobileNumber}
+                  onChange={handleChange}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder='10-digit number'
+                  maxLength='10'
+                  tabIndex="4"
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent bg-white'
+                />
                 </div>
 
                 {/* Vehicle Type */}
@@ -677,7 +675,7 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     tabIndex="5"
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent font-semibold'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent font-semibold bg-white'
                     required
                   >
                     <option value=''>Select Vehicle Type</option>
@@ -701,18 +699,18 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Valid From <span className='text-red-500'>*</span>
                   </label>
-                  <input
-                    type='text'
-                    name='validFrom'
-                    value={formData.validFrom}
-                    onChange={handleChange}
-                    onKeyDown={handleInputKeyDown}
-                    placeholder='DD-MM-YYYY'
-                    tabIndex="6"
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                    required
+<input
+                  type='text'
+                  name='validFrom'
+                  value={formData.validFrom}
+                  onChange={handleChange}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder='DD-MM-YYYY'
+                  tabIndex="6"
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
+                  required
                   />
-                  <p className='text-xs text-gray-500 mt-1'>Smart input: type 5 → 05-, auto-expands years</p>
+
                 </div>
 
                 {/* Valid To (Auto-calculated but editable) */}
@@ -720,18 +718,18 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Valid To <span className='text-xs text-blue-500'>(Auto-filled, Editable)</span>
                   </label>
-                  <input
-                    type='text'
-                    name='validTo'
-                    value={formData.validTo}
-                    onChange={handleChange}
-                    onKeyDown={handleInputKeyDown}
-                    placeholder='DD-MM-YYYY or Auto-filled'
-                    tabIndex="7"
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  />
+<input
+                  type='text'
+                  name='validTo'
+                  value={formData.validTo}
+                  onChange={handleChange}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder='DD-MM-YYYY or Auto-filled'
+                  tabIndex="7"
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
+                />
                   <p className='text-xs text-gray-500 mt-1'>
-                    Auto-filled: CV = +3 months - 1 day, PV = +4 months - 1 day. You can edit this date.
+
                   </p>
                 </div>
               </div>
@@ -775,11 +773,11 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
                     tabIndex="9"
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 font-semibold ${
-                      paidExceedsTotal
-                        ? 'border-red-500 focus:ring-red-500 bg-red-50'
-                        : 'border-gray-300 focus:ring-emerald-500 focus:border-transparent'
-                    }`}
+className={`w-full px-3 py-2 border rounded-lg focus:ring-2 font-semibold ${
+  paidExceedsTotal
+    ? 'border-red-500 focus:ring-red-500 bg-red-50'
+    : 'border-gray-300 focus:ring-emerald-500 focus:border-transparent bg-white'
+}`}
                     required
                   />
                   {paidExceedsTotal && (
@@ -844,7 +842,7 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
 
               <button
                 type='submit'
-                className='flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-orange-600 to-red-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 cursor-pointer'
+                className='flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-teal-600 to-cyan-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 cursor-pointer'
               >
                 <svg className='w-4 h-4 md:w-5 md:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />

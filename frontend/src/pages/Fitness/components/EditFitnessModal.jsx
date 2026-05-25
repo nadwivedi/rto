@@ -547,7 +547,7 @@ const EditFitnessModal = ({ isOpen, onClose, onSuccess, fitness }) => {
                   {/* Helper text */}
                   {!vehicleValidation.message && !formData.vehicleNumber && !vehicleError && (
                     <p className='text-xs mt-1 text-gray-500'>
-                      Search by: Full number (CG04AA1234), Series (AA4793), or Last 4 digits (4793)
+
                     </p>
                   )}
                 </div>

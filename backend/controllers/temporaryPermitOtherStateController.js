@@ -36,14 +36,7 @@ exports.createPermit = async (req, res) => {
     const { permitNumber, permitHolder, vehicleNo, mobileNo, validFrom, validTo, totalFee, paid, balance, notes, partyId } = req.body
 
     // Validate required fields
-    // permitNumber is now optional, so no validation needed
-
-    if (!permitHolder) {
-      return res.status(400).json({
-        success: false,
-        message: 'Permit holder name is required'
-      })
-    }
+    // permitNumber and permitHolder are now optional
 
     if (!vehicleNo) {
       return res.status(400).json({
