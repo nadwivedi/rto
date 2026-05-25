@@ -111,11 +111,8 @@ export default function Seo() {
     upsertMeta('name', 'twitter:description', seo.description)
     upsertMeta('name', 'twitter:image', absoluteUrl('/rtosarthi.avif'))
 
-    if (pathname === '/rto-agent-software' || pathname === '/puc-agent-software') {
-      const fullName = pathname === '/rto-agent-software'
-        ? 'RTO Sarthi - RTO Agent Software'
-        : 'RTO Sarthi - PUC Agent Software'
-      upsertJsonLd('software', getSoftwareJsonLd(fullName, seo.description, url))
+    if (pathname === '/puc-agent-software') {
+      upsertJsonLd('software', getSoftwareJsonLd('RTO Sarthi - PUC Agent Software', seo.description, url))
     } else {
       removeJsonLd('software')
     }

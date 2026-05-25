@@ -62,13 +62,6 @@ export const PAGE_SEO = {
     path: '/blog',
     keywords: 'RTO blog, RTO agent tips, PUC center guide, vehicle registration blog, RTO software blog, RTO Sarthi blog, insurance renewal tips',
   },
-  '/rto-agent-software': {
-    title: `RTO Agent Software India - India's Best RTO Agent Software | RTO Sarthi`,
-    description:
-      'India\'s best RTO agent software for RTO agents, PUC centers, and insurance partners. AI-powered document entry, automated WhatsApp expiry alerts, bulk Excel upload, employee panel with limited access, pending balance alerts, and smart dashboard. Built for Indian RTO workflows by SoftwareBytes, Raipur. Start free trial today.',
-    path: '/rto-agent-software',
-    keywords: 'RTO agent software India, best RTO agent software, RTO software for agents, RTO desk software India, RTO management software, RTO Sarthi, RTO agent software Raipur, best RTO software India 2026',
-  },
   '/puc-agent-software': {
     title: `PUC Agent Software India - Best PUC Center Management Software | RTO Sarthi`,
     description:

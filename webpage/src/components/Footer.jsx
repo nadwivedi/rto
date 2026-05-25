@@ -39,11 +39,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/rto-agent-software" className="hover:text-brand-800">
-                  RTO Agent Software
-                </Link>
-              </li>
-              <li>
                 <Link to="/puc-agent-software" className="hover:text-brand-800">
                   PUC Agent Software
                 </Link>

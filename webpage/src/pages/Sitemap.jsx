@@ -6,7 +6,6 @@ import { TAGLINE } from '../config/seo'
 const pages = [
   { to: '/', label: 'Home', desc: 'RTO Sarthi overview, demo video, features & testimonials' },
   { to: '/features', label: 'Features', desc: 'AI, WhatsApp alerts, bulk upload, dashboard & more' },
-  { to: '/rto-agent-software', label: 'RTO Agent Software', desc: 'India\'s best RTO agent software — AI document entry, WhatsApp alerts, bulk upload, client & vehicle management' },
   { to: '/puc-agent-software', label: 'PUC Agent Software', desc: 'Bulk Excel upload, PDF auto-entry, WhatsApp PUC reminders & complete RTO/insurance management' },
   { to: '/about', label: 'About', desc: 'About RTO Sarthi and SoftwareBytes, Raipur' },
   { to: '/contact', label: 'Contact', desc: 'Phone, WhatsApp, email and office details' },
