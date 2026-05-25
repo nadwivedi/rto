@@ -130,7 +130,7 @@ const WhatsApp = () => {
         <p className='text-sm text-gray-600'>Connect WhatsApp to send automated document expiry alerts to clients.</p>
       </div>
 
-      <div className='grid grid-cols-1 lg:grid-cols-3 gap-6'>
+      <div className='grid grid-cols-1 lg:grid-cols-5 gap-6'>
         {/* ---- STATUS + CONTROLS CARD ---- */}
         <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-6 lg:col-span-1 space-y-4'>
           <h2 className='text-base font-bold text-gray-800 flex items-center gap-2'>
@@ -274,7 +274,7 @@ const WhatsApp = () => {
         </div>
 
         {/* ---- LOGS CARD ---- */}
-        <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-6 lg:col-span-2'>
+        <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-6 lg:col-span-4'>
           <div className='flex items-center justify-between mb-4'>
             <h2 className='text-base font-bold text-gray-800 flex items-center gap-2'>
               📋 Recent Message Logs
