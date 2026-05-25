@@ -21,4 +21,7 @@ router.post('/speed-governor-image', uploadController.uploadSpeedGovernorImage)
 // POST upload Insurance Document image/PDF (base64, max 12MB)
 router.post('/insurance-document', uploadController.uploadInsuranceDocument)
 
+// POST upload Temporary Permit Document image/PDF (base64, max 12MB)
+router.post('/temporary-permit-document', uploadController.uploadTemporaryPermitDocument)
+
 module.exports = router

@@ -478,6 +478,7 @@ const TemporaryPermit = () => {
         paid: Number(formData.paid) || 0,
         balance: Number(formData.balance) || 0,
         notes: formData.notes || "",
+        temporaryPermitDocument: formData.temporaryPermitDocument || "",
       };
 
       // Make POST request to backend

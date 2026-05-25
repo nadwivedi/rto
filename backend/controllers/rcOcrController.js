@@ -279,3 +279,20 @@ exports.insuranceOcr = async (req, res) => {
   return processOcrRequest(req, res, prompt, template, 2);
 };
 
+exports.temporaryPermitOcr = async (req, res) => {
+  const prompt = `Extract the details from this temporary permit / trip permit document.
+- Extract the vehicle registration number (remove any hyphens/spaces).
+- Extract the valid from date and valid to date in DD-MM-YYYY format.
+- Determine if the vehicle type is Commercial Vehicle (CV) or Passenger Vehicle (PV) based on the document content. Look for keywords like "COMMERCIAL", "GOODS", "FREIGHT", "CARGO" for CV, and "PASSENGER", "PV", "PRIVATE", "PERSONAL" for PV. If not clear, return empty string.
+- Extract the permit holder name if present.
+- If a field is not present, return empty string "".`;
+  const template = `{
+  "vehicleNumber": "",
+  "validFrom": "",
+  "validTo": "",
+  "vehicleType": "",
+  "permitHolderName": ""
+}`;
+  return processOcrRequest(req, res, prompt, template, 1);
+};
+

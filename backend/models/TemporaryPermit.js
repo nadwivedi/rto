@@ -93,6 +93,12 @@ const TemporaryPermitSchema = new mongoose.Schema({
   },
   lastWhatsappSentAt: {
     type: Date
+  },
+
+  // Uploaded permit document path
+  temporaryPermitDocument: {
+    type: String,
+    trim: true
   }
 }, {
   timestamps: true
