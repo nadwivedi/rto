@@ -1525,7 +1525,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
 
     // Validate registration number before submitting
     if (!vehicleValidation.isValid && formData.registrationNumber) {
-      toast.error('Please enter a valid registration number in the format: CG04AA1234 (10 characters, no spaces)')
+      toast.error('Please enter a valid registration number in the format: CG04AA1234 (max 10 characters)')
       return
     }
 

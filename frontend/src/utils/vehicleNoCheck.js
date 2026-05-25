@@ -68,11 +68,11 @@ export const cleanVehicleNumber = (vehicleNumber) => {
  * Enforces vehicle number format as user types
  * @param {string} currentValue - Current input value
  * @param {string} newValue - New value being typed
- * @returns {string} - Uppercased, no spaces, max 10 chars
+ * @returns {string} - Uppercased, max 10 chars
  */
 export const enforceVehicleNumberFormat = (currentValue, newValue) => {
   if (!newValue) return ''
-  return newValue.replace(/\s+/g, '').toUpperCase().slice(0, 10)
+  return newValue.toUpperCase().slice(0, 10)
 }
 
 /**

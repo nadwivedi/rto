@@ -331,8 +331,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
     // Handle vehicle number - convert to uppercase and validate only (no enforcement)
     if (name === 'vehicleNumber') {
-      // Convert to uppercase and strip hyphens/spaces (handles formats like CG-23-J-8800)
-      const upperValue = value.toUpperCase().replace(/[\s-]/g, '')
+      // Convert to uppercase only (preserves spaces like KA23 8968)
+      const upperValue = value.toUpperCase()
 
       const validation = validateVehicleNumberRealtime(upperValue)
       setVehicleValidation(validation)
@@ -461,7 +461,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           const updated = { ...prev }
           
           if (resultData.vehicleNumber) {
-            updated.vehicleNumber = resultData.vehicleNumber.toUpperCase().replace(/[\s-]/g, '')
+            updated.vehicleNumber = resultData.vehicleNumber.toUpperCase()
             // Validate the vehicle number
             const validation = validateVehicleNumberRealtime(updated.vehicleNumber)
             setVehicleValidation(validation)
