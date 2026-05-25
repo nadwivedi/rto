@@ -484,9 +484,14 @@ const Users = () => {
                           )}
                         </td>
                         <td className='px-5 py-3.5'>
-                          <div className='text-xs'>
+                          <div className='text-xs space-y-1'>
                             <div className={user.lastLogin ? 'text-gray-600' : 'text-gray-300'}>
+                              <span className='text-gray-400'>Login:</span>{' '}
                               <span className='font-medium'>{formatDateTime(user.lastLogin)}</span>
+                            </div>
+                            <div className={user.lastActivity ? 'text-gray-600' : 'text-gray-300'}>
+                              <span className='text-gray-400'>Activity:</span>{' '}
+                              <span className='font-medium'>{formatDateTime(user.lastActivity)}</span>
                             </div>
                           </div>
                         </td>
@@ -577,9 +582,10 @@ const Users = () => {
                         </div>
                       </div>
                     </div>
-                    <div className='flex items-center justify-between pt-2 border-t border-gray-100'>
+                      <div className='flex items-center justify-between pt-2 border-t border-gray-100'>
                       <div className='text-[10px] text-gray-400'>
-                        Last login: {formatDateTime(user.lastLogin)}
+                        Login: {formatDateTime(user.lastLogin)}{' '}
+                        | Activity: {formatDateTime(user.lastActivity)}
                       </div>
                       <div className='flex gap-1'>
                         <button
