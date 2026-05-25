@@ -333,17 +333,18 @@ const WhatsApp = () => {
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Document</th>
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Message Preview</th>
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Status</th>
+                  <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Sent At</th>
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center'>Action</th>
                 </tr>
               </thead>
               <tbody className='divide-y divide-gray-100'>
                 {loading ? (
-                  <tr><td colSpan='6' className='py-8 text-center text-sm text-gray-400'>Loading...</td></tr>
+                  <tr><td colSpan='7' className='py-8 text-center text-sm text-gray-400'>Loading...</td></tr>
                 ) : logs.length === 0 ? (
-                  <tr><td colSpan='6' className='py-8 text-center text-sm text-gray-400'>No messages logged yet. They will appear here once alerts are triggered.</td></tr>
+                  <tr><td colSpan='7' className='py-8 text-center text-sm text-gray-400'>No messages logged yet. They will appear here once alerts are triggered.</td></tr>
                 ) : (
                   logs.filter(log => statusFilter === 'all' || log.status === statusFilter).length === 0 ? (
-                    <tr><td colSpan='6' className='py-8 text-center text-sm text-gray-400'>No {statusFilter} messages found.</td></tr>
+                    <tr><td colSpan='7' className='py-8 text-center text-sm text-gray-400'>No {statusFilter} messages found.</td></tr>
                   ) :
                   logs.filter(log => statusFilter === 'all' || log.status === statusFilter).map((log) => {
                     const d = new Date(log.createdAt);
@@ -355,16 +356,8 @@ const WhatsApp = () => {
                     return (
                     <tr key={log._id} className='hover:bg-gray-50 transition'>
                       <td className='py-3 px-4 whitespace-nowrap'>
-                        <div className='text-xs text-gray-500'>Created</div>
                         <div className='text-sm text-gray-800 font-medium'>{dateStr}</div>
                         <div className='text-xs text-gray-500'>{timeStr}</div>
-                        {sentD && (
-                          <>
-                            <div className='text-xs text-gray-400 mt-1'>Sent</div>
-                            <div className='text-sm text-gray-800 font-medium'>{sentDateStr}</div>
-                            <div className='text-xs text-gray-500'>{sentTimeStr}</div>
-                          </>
-                        )}
                       </td>
                       <td className='py-3 px-4'>
                         <div className='text-sm text-gray-800 font-bold'>{log.ownerName || 'Unknown Party'}</div>
@@ -397,6 +390,16 @@ const WhatsApp = () => {
                           <div className='text-[10px] text-red-500 mt-1 max-w-[120px] truncate' title={log.errorReason}>
                             {log.errorReason}
                           </div>
+                        )}
+                      </td>
+                      <td className='py-3 px-4 whitespace-nowrap'>
+                        {sentD ? (
+                          <>
+                            <div className='text-sm text-gray-800 font-medium'>{sentDateStr}</div>
+                            <div className='text-xs text-gray-500'>{sentTimeStr}</div>
+                          </>
+                        ) : (
+                          <span className='text-xs text-gray-400'>-</span>
                         )}
                       </td>
                       <td className='py-3 px-4 text-center border-l border-gray-100'>
