@@ -45,7 +45,8 @@ exports.createPermit = async (req, res) => {
       paid,
       balance,
       notes,
-      partyId
+      partyId,
+      temporaryPermitDocument
     } = req.body
 
     // 1. Validate required fields
@@ -184,6 +185,7 @@ exports.createPermit = async (req, res) => {
     if (permitNumber && permitNumber.trim() !== '') permitData.permitNumber = permitNumber.trim()
     if (mobileNumber && mobileNumber.trim() !== '') permitData.mobileNumber = mobileNumber.trim()
     if (notes && notes.trim() !== '') permitData.notes = notes.trim()
+    if (temporaryPermitDocument && temporaryPermitDocument.trim() !== '') permitData.temporaryPermitDocument = temporaryPermitDocument.trim()
 
     // Mark any existing non-renewed temporary permits for this vehicle as expired and renewed
     await TemporaryPermit.updateMany(
@@ -552,7 +554,8 @@ exports.updatePermit = async (req, res) => {
       paid,
       balance,
       notes,
-      partyId
+      partyId,
+      temporaryPermitDocument
     } = req.body
 
     // 1. Validate required fields
@@ -659,6 +662,7 @@ exports.updatePermit = async (req, res) => {
     if (mobileNumber !== undefined) updateData.mobileNumber = mobileNumber ? mobileNumber.trim() : ''
     if (notes !== undefined) updateData.notes = notes ? notes.trim() : ''
     if (partyId !== undefined) updateData.partyId = partyId || null
+    if (temporaryPermitDocument !== undefined) updateData.temporaryPermitDocument = temporaryPermitDocument ? temporaryPermitDocument.trim() : ''
     // Note: status is managed by cron job and should not be manually updated
 
     const updatedPermit = await TemporaryPermit.findOneAndUpdate(

@@ -141,6 +141,7 @@ const TemporaryPermit = () => {
         isRenewed: permit.isRenewed || false, // IMPORTANT: Include isRenewed field
         whatsappMessageCount: permit.whatsappMessageCount || 0,
         lastWhatsappSentAt: permit.lastWhatsappSentAt || null,
+        temporaryPermitDocument: permit.temporaryPermitDocument || '',
       }));
 
       setPermits(transformedPermits);
@@ -1038,6 +1039,35 @@ const TemporaryPermit = () => {
                         </td>
                         <td className="px-4 2xl:px-6 py-3 2xl:py-5">
                           <div className="flex items-center justify-end gap-0.5 2xl:gap-1">
+                            {permit.temporaryPermitDocument && (
+                              <a
+                                href={`${API_URL}${permit.temporaryPermitDocument}`}
+                                target='_blank'
+                                rel='noopener noreferrer'
+                                className='p-1.5 2xl:p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition-all group-hover:scale-110 duration-200 inline-flex'
+                                title='View Document'
+                              >
+                                <svg
+                                  className='w-4 h-4 2xl:w-5 2xl:h-5'
+                                  fill='none'
+                                  stroke='currentColor'
+                                  viewBox='0 0 24 24'
+                                >
+                                  <path
+                                    strokeLinecap='round'
+                                    strokeLinejoin='round'
+                                    strokeWidth={2}
+                                    d='M15 12a3 3 0 11-6 0 3 3 0 016 0z'
+                                  />
+                                  <path
+                                    strokeLinecap='round'
+                                    strokeLinejoin='round'
+                                    strokeWidth={2}
+                                    d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z'
+                                  />
+                                </svg>
+                              </a>
+                            )}
                             <button
                               onClick={() => handleEditClick(permit)}
                               className="p-1.5 2xl:p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all group-hover:scale-110 duration-200"

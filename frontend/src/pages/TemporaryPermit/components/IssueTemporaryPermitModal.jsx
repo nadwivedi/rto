@@ -41,6 +41,7 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
   const [isExtracting, setIsExtracting] = useState(false)
   const [uploadingDoc, setUploadingDoc] = useState(false)
   const [temporaryPermitDocumentBase64, setTemporaryPermitDocumentBase64] = useState('')
+  const [docPreview, setDocPreview] = useState(null)
   const dropdownItemRefs = useRef([])
   const isOcrUpdate = useRef(false)
 
@@ -52,8 +53,14 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
         vehicleNumber: initialData.vehicleNumber || '',
         permitHolderName: initialData.permitHolderName || '',
         vehicleType: initialData.vehicleType || '',
-        mobileNumber: initialData.mobileNumber || ''
+        mobileNumber: initialData.mobileNumber || '',
+        temporaryPermitDocument: initialData.temporaryPermitDocument || ''
       }))
+      if (initialData.temporaryPermitDocument) {
+        setDocPreview(`${API_URL}${initialData.temporaryPermitDocument}`)
+      } else {
+        setDocPreview(null)
+      }
     } else if (!isOpen) {
       // Reset form when modal closes
       setFormData({
@@ -78,6 +85,7 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
       setSelectedDropdownIndex(0)
       setManuallyEditedValidTo(false)
       setTemporaryPermitDocumentBase64('')
+      setDocPreview(null)
     }
   }, [initialData, isOpen])
 
@@ -548,6 +556,7 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
 
         if (response.data.success) {
           setFormData(prev => ({ ...prev, temporaryPermitDocument: response.data.data.path }))
+          setDocPreview(base64String)
           toast.success('Permit document uploaded successfully')
         }
       } catch (error) {
@@ -559,6 +568,14 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
     }
     reader.readAsDataURL(file)
     e.target.value = ''
+  }
+
+  const handleRemoveDoc = () => {
+    setDocPreview(null)
+    setFormData(prev => ({
+      ...prev,
+      temporaryPermitDocument: ''
+    }))
   }
 
   const handleSubmit = (e) => {
@@ -601,6 +618,7 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
     setSelectedDropdownIndex(0)
     setManuallyEditedValidTo(false)
     setTemporaryPermitDocumentBase64('')
+    setDocPreview(null)
     onClose()
   }
 
@@ -617,38 +635,65 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
               <p className='text-teal-100 text-xs md:text-sm mt-1'>Issue temporary vehicle permit (CV: 3 months - 1 day, PV: 4 months - 1 day)</p>
             </div>
             <div className='flex items-center gap-2'>
-              {/* AI Upload Quick Button */}
-              <div className='relative overflow-hidden rounded-lg'>
-                <button
-                  type='button'
-                  disabled={isExtracting || uploadingDoc}
-                  className='flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/25 disabled:opacity-60 md:px-4 md:py-2 md:text-sm'
-                >
-                  {isExtracting ? (
-                    <>
-                      <svg className='h-4 w-4 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
-                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
-                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+              {!docPreview ? (
+                <div className='relative overflow-hidden rounded-lg'>
+                  <button
+                    type='button'
+                    disabled={isExtracting || uploadingDoc}
+                    className='flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/25 disabled:opacity-60 md:px-4 md:py-2 md:text-sm'
+                  >
+                    {isExtracting ? (
+                      <>
+                        <svg className='h-4 w-4 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
+                          <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                          <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                        </svg>
+                        Extracting
+                      </>
+                    ) : (
+                      <>
+                        <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3' />
+                        </svg>
+                        AI Upload
+                      </>
+                    )}
+                  </button>
+                  <input
+                    type='file'
+                    accept='image/*, application/pdf'
+                    disabled={isExtracting || uploadingDoc}
+                    onChange={handlePermitDocUpload}
+                    className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
+                  />
+                </div>
+              ) : (
+                <div className='relative'>
+                  {docPreview.startsWith('data:application/pdf') || docPreview.includes('.pdf') ? (
+                    <div className='flex items-center gap-2 rounded-lg bg-white/15 px-3 py-1.5 text-xs md:text-sm text-white ring-1 ring-white/30'>
+                      <svg className='w-5 h-5 text-red-300' fill='currentColor' viewBox='0 0 20 20'>
+                        <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
                       </svg>
-                      Extracting
-                    </>
+                      <span className='font-semibold'>Permit PDF</span>
+                      <a href={docPreview} target='_blank' rel='noopener noreferrer' className='text-cyan-200 hover:text-white underline'>
+                        View
+                      </a>
+                    </div>
                   ) : (
-                    <>
-                      <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3' />
-                      </svg>
-                      AI Upload
-                    </>
+                    <img src={docPreview} alt='Permit Document Preview' className='h-10 md:h-12 rounded-lg ring-1 ring-white/30' />
                   )}
-                </button>
-                <input
-                  type='file'
-                  accept='image/*, application/pdf'
-                  disabled={isExtracting || uploadingDoc}
-                  onChange={handlePermitDocUpload}
-                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
-                />
-              </div>
+                  <button
+                    type='button'
+                    onClick={handleRemoveDoc}
+                    className='absolute -top-1.5 -right-1.5 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition-all shadow-lg'
+                    title='Remove document'
+                  >
+                    <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                    </svg>
+                  </button>
+                </div>
+              )}
               <button
               onClick={onClose}
               className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
