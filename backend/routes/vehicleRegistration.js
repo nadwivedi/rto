@@ -14,6 +14,9 @@ router.get('/statistics', vehicleRegistrationController.getStatistics)
 // GET check if vehicle exists (must be before other routes)
 router.get('/check-exists/:registrationNumber', vehicleRegistrationController.checkVehicleExists)
 
+// GET vehicle ledger - all work done for a vehicle
+router.get('/ledger/:registrationNumber', vehicleRegistrationController.getVehicleLedger)
+
 // GET single vehicle registration by ID
 router.get('/:id', vehicleRegistrationController.getRegistrationById)
 

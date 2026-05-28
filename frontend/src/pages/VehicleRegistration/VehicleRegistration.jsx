@@ -10,6 +10,7 @@ import { getTheme, getVehicleNumberDesign } from '../../context/ThemeContext'
 import { getVehicleNumberParts } from '../../utils/vehicleNoCheck'
 import RegisterVehicleModal from './components/RegisterVehicleModal'
 import ViewVehicleRegistrationModal from './components/ViewVehicleRegistrationModal'
+import VehicleLedgerModal from './components/VehicleLedgerModal'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -33,6 +34,8 @@ const VehicleRegistration = () => {
   })
   const [selectedRegistration, setSelectedRegistration] = useState(null)
   const [showDetailsModal, setShowDetailsModal] = useState(false)
+  const [showLedgerModal, setShowLedgerModal] = useState(false)
+  const [ledgerRegistration, setLedgerRegistration] = useState(null)
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -142,6 +145,13 @@ const VehicleRegistration = () => {
   const handleViewDetails = (registration) => {
     setSelectedRegistration(registration)
     setShowDetailsModal(true)
+  }
+
+  const handleOpenLedger = (registration) => {
+    const vehicleNum = registration.registrationNumber || registration.vehicleNumber
+    if (vehicleNum) {
+      navigate(`/vehicle-ledger/${vehicleNum}`)
+    }
   }
 
 
@@ -259,6 +269,15 @@ const VehicleRegistration = () => {
 
                           {/* Action Buttons */}
                           <div className='flex items-center gap-1'>
+                            <button
+                              onClick={() => handleOpenLedger(registration)}
+                              className='p-1.5 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all cursor-pointer'
+                              title='View Ledger'
+                            >
+                              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' />
+                              </svg>
+                            </button>
                             <button
                               onClick={() => handleViewDetails(registration)}
                               className='p-1.5 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all cursor-pointer'
@@ -490,6 +509,15 @@ const VehicleRegistration = () => {
                         <td className='px-4 2xl:px-6 py-3 2xl:py-4'>
                           <div className='flex items-center justify-end gap-0.5 pr-1'>
                             <button
+                              onClick={() => handleOpenLedger(registration)}
+                              className='p-1.5 2xl:p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all duration-200 cursor-pointer'
+                              title='Vehicle Ledger'
+                            >
+                              <svg className='w-4 h-4 2xl:w-5 2xl:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' />
+                              </svg>
+                            </button>
+                            <button
                               onClick={() => handleViewDetails(registration)}
                               className='p-1.5 2xl:p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200 cursor-pointer'
                               title='View Details'
@@ -564,6 +592,18 @@ const VehicleRegistration = () => {
           onClose={() => setShowDetailsModal(false)}
           selectedRegistration={selectedRegistration}
           onRefresh={() => fetchRegistrations()}
+        />
+      )}
+
+      {/* Vehicle Ledger Modal */}
+      {showLedgerModal && (
+        <VehicleLedgerModal
+          isOpen={showLedgerModal}
+          onClose={() => {
+            setShowLedgerModal(false)
+            setLedgerRegistration(null)
+          }}
+          registration={ledgerRegistration}
         />
       )}
     </>

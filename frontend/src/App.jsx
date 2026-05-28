@@ -15,6 +15,7 @@ import BusPermit from './pages/BusPermit/BusPermit'
 import TemporaryPermit from './pages/TemporaryPermit/TemporaryPermit'
 import TemporaryPermitOtherState from './pages/TemporaryPermitOtherState/TemporaryPermitOtherState'
 import VehicleRegistration from './pages/VehicleRegistration/VehicleRegistration'
+import VehicleLedgerPage from './pages/VehicleRegistration/VehicleLedgerPage'
 import Insurance from './pages/Insurance/Insurance'
 import Fitness from './pages/Fitness/Fitness'
 import HpaHpt from './pages/HpaHpt/HpaHpt'
@@ -125,6 +126,7 @@ function ProtectedLayout() {
               <Route path='/temporary-permit-other-state' element={<TemporaryPermitOtherState />} />
               <Route path='/vehicle-registartion' element={<VehicleRegistration />} />
               <Route path='/vehicle-registration' element={<VehicleRegistration />} />
+              <Route path='/vehicle-ledger/:registrationNumber' element={<VehicleLedgerPage />} />
               <Route path='/insurance' element={<Insurance />} />
               <Route path='/fitness' element={<Fitness />} />
               <Route path='/hpa-hpt' element={<HpaHpt />} />

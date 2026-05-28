@@ -7,6 +7,11 @@ const Puc = require('../models/Puc')
 const Gps = require('../models/Gps')
 const CgPermit = require('../models/CgPermit')
 const NationalPermit = require('../models/NationalPermit')
+const BusPermit = require('../models/BusPermit')
+const TemporaryPermit = require('../models/TemporaryPermit')
+const TemporaryPermitOtherState = require('../models/TemporaryPermitOtherState')
+const HpaHpt = require('../models/HpaHpt')
+const Noc = require('../models/Noc')
 const { logError, getUserFriendlyError } = require('../utils/errorLogger')
 
 const parseYear = (val) => {
@@ -678,6 +683,133 @@ exports.getStatistics = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message,
+    })
+  }
+}
+
+// Get complete vehicle ledger - all work done across all services
+exports.getVehicleLedger = async (req, res) => {
+  try {
+    const registrationNumber = req.params.registrationNumber.toUpperCase()
+    const userId = req.user.id
+
+    // Query all services in parallel
+    const [
+      fitnessRecords,
+      taxRecords,
+      insuranceRecords,
+      pucRecords,
+      gpsRecords,
+      cgPermitRecords,
+      nationalPermitRecords,
+      busPermitRecords,
+      temporaryPermitRecords,
+      temporaryPermitOtherStateRecords,
+      hpaHptRecords,
+      nocRecords
+    ] = await Promise.all([
+      Fitness.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      Tax.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      Insurance.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      Puc.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      Gps.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      CgPermit.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      NationalPermit.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      BusPermit.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      TemporaryPermit.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      TemporaryPermitOtherState.find({ vehicleNo: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      HpaHpt.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      Noc.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean()
+    ])
+
+    // Helper to compute section totals
+    const sumSection = (records, totalField, paidField, balanceField) => ({
+      totalFee: records.reduce((sum, r) => sum + (r[totalField] || 0), 0),
+      paid: records.reduce((sum, r) => sum + (r[paidField] || 0), 0),
+      balance: records.reduce((sum, r) => sum + (r[balanceField] || 0), 0)
+    })
+
+    const sections = {
+      fitness: {
+        records: fitnessRecords,
+        ...sumSection(fitnessRecords, 'totalFee', 'paid', 'balance')
+      },
+      tax: {
+        records: taxRecords,
+        ...sumSection(taxRecords, 'totalAmount', 'paidAmount', 'balanceAmount')
+      },
+      insurance: {
+        records: insuranceRecords,
+        ...sumSection(insuranceRecords, 'totalFee', 'paid', 'balance')
+      },
+      puc: {
+        records: pucRecords,
+        ...sumSection(pucRecords, 'totalFee', 'paid', 'balance')
+      },
+      gps: {
+        records: gpsRecords,
+        ...sumSection(gpsRecords, 'totalFee', 'paid', 'balance')
+      },
+      cgPermit: {
+        records: cgPermitRecords,
+        ...sumSection(cgPermitRecords, 'totalFee', 'paid', 'balance')
+      },
+      nationalPermit: {
+        records: nationalPermitRecords,
+        ...sumSection(nationalPermitRecords, 'totalFee', 'paid', 'balance')
+      },
+      busPermit: {
+        records: busPermitRecords,
+        ...sumSection(busPermitRecords, 'totalFee', 'paid', 'balance')
+      },
+      temporaryPermit: {
+        records: temporaryPermitRecords,
+        ...sumSection(temporaryPermitRecords, 'totalFee', 'paid', 'balance')
+      },
+      temporaryPermitOtherState: {
+        records: temporaryPermitOtherStateRecords,
+        ...sumSection(temporaryPermitOtherStateRecords, 'totalFee', 'paid', 'balance')
+      },
+      hpaHpt: {
+        records: hpaHptRecords,
+        ...sumSection(hpaHptRecords, 'totalFee', 'paid', 'balance')
+      },
+      noc: {
+        records: nocRecords,
+        ...sumSection(nocRecords, 'totalFee', 'paid', 'balance')
+      }
+    }
+
+    // Compute grand total across all sections
+    const grandTotal = Object.values(sections).reduce(
+      (acc, s) => ({
+        totalFee: acc.totalFee + s.totalFee,
+        paid: acc.paid + s.paid,
+        balance: acc.balance + s.balance
+      }),
+      { totalFee: 0, paid: 0, balance: 0 }
+    )
+
+    const totalRecords = Object.values(sections).reduce((sum, s) => sum + s.records.length, 0)
+
+    res.json({
+      success: true,
+      data: {
+        registrationNumber,
+        totalRecords,
+        sections,
+        grandTotal
+      }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: new Date().toISOString()
     })
   }
 }
