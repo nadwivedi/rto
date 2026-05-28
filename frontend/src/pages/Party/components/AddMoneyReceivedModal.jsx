@@ -1,7 +1,14 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
-import { getTodayDate, handleDateBlur, handleSmartDateInput } from '../../../utils/dateFormatter'
+// Gets today's date as YYYY-MM-DD for the native date input default value
+const getTodayISO = () => {
+  const today = new Date()
+  const y = today.getFullYear()
+  const m = String(today.getMonth() + 1).padStart(2, '0')
+  const d = String(today.getDate()).padStart(2, '0')
+  return `${y}-${m}-${d}`
+}
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -14,7 +21,7 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     partyId: '',
     amount: '',
-    moneyReceivedDate: getTodayDate(),
+    moneyReceivedDate: getTodayISO(),   // stored as YYYY-MM-DD (native date input format)
     vehicleNumber: '',
     remark: ''
   })
@@ -83,18 +90,6 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
 
   const handleChange = (event) => {
     const { name, value } = event.target
-
-    if (name === 'moneyReceivedDate') {
-      const formatted = handleSmartDateInput(value, formData.moneyReceivedDate || '')
-      if (formatted !== null) {
-        setFormData((current) => ({
-          ...current,
-          moneyReceivedDate: formatted
-        }))
-      }
-      return
-    }
-
     setFormData((current) => ({
       ...current,
       [name]: value
@@ -122,12 +117,17 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
 
     try {
       setSaving(true)
+
+      // Convert YYYY-MM-DD → DD-MM-YYYY for the backend
+      const [yr, mo, dy] = formData.moneyReceivedDate.split('-')
+      const dateForBackend = `${dy}-${mo}-${yr}`
+
       const response = await axios.post(
         `${API_URL}/api/parties/money-received`,
         {
           partyId: formData.partyId || undefined,
           amount,
-          moneyReceivedDate: formData.moneyReceivedDate,
+          moneyReceivedDate: dateForBackend,
           vehicleNumber: formData.vehicleNumber || undefined,
           remark: formData.remark || undefined
         },
@@ -179,17 +179,21 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
 
         <form onSubmit={handleSubmit} className='space-y-4 p-6'>
+          {/* Informational Hint */}
+          <div className='bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2.5 text-xs font-semibold text-indigo-700 flex items-start gap-2.5 shadow-sm'>
+            <svg className='w-4.5 h-4.5 text-indigo-600 flex-shrink-0 mt-0.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
+            </svg>
+            <span>You must select at least **one** field: either a **Vehicle Number**, a **Party**, or both. Selecting a vehicle automatically populates its owner!</span>
+          </div>
           <div>
             <label className='mb-1 block text-sm font-bold text-slate-700'>Date</label>
             <input
-              type='text'
+              type='date'
               name='moneyReceivedDate'
               value={formData.moneyReceivedDate}
               onChange={handleChange}
-              onBlur={(event) => handleDateBlur(event, setFormData)}
               disabled={saving}
-              placeholder='DD-MM-YYYY'
-              maxLength='10'
               className='w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100'
               required
             />
