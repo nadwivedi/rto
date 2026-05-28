@@ -585,6 +585,54 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
         else if (fuel.includes('ELECT') || fuel.includes('EV')) updated[key] = 'Electric'
         else if (fuel.includes('HYBRID')) updated[key] = 'Hybrid'
         else updated[key] = String(extractedData[key]).trim()
+      } else if (key === 'vehicleType') {
+        const typeVal = String(extractedData[key]).toUpperCase().trim()
+        if (typeVal.includes('NON') || typeVal.includes('N.T') || typeVal.includes('NT')) {
+          updated[key] = 'Non-Transport'
+        } else if (typeVal.includes('TRANS') || typeVal.includes('TR') || typeVal === 'T') {
+          updated[key] = 'Transport'
+        } else {
+          updated[key] = String(extractedData[key]).trim()
+        }
+      } else if (key === 'vehicleCategory') {
+        const catVal = String(extractedData[key]).toUpperCase().trim()
+        if (catVal.includes('GOODS') || catVal.includes('CARRIER') || catVal === 'GC') {
+          updated[key] = 'Goods Carrier'
+        } else if (catVal.includes('PCV') || catVal.includes('PASSENGER COMMERCIAL')) {
+          updated[key] = 'PCV'
+        } else if (catVal.includes('LMV-NT')) {
+          updated[key] = 'LMV-NT'
+        } else if (catVal.includes('LMV-TR')) {
+          updated[key] = 'LMV-TR'
+        } else if (catVal.includes('LMV')) {
+          updated[key] = 'LMV'
+        } else if (catVal.includes('MMV')) {
+          updated[key] = 'MMV'
+        } else if (catVal.includes('HMV')) {
+          updated[key] = 'HMV'
+        } else if (catVal.includes('HGV')) {
+          updated[key] = 'HGV'
+        } else if (catVal.includes('MGV')) {
+          updated[key] = 'MGV'
+        } else if (catVal.includes('LGV')) {
+          updated[key] = 'LGV'
+        } else if (catVal.includes('MCWG')) {
+          updated[key] = 'MCWG'
+        } else if (catVal.includes('MCWOG')) {
+          updated[key] = 'MCWOG'
+        } else if (catVal.includes('MOTOR CAB') || catVal.includes('CAB')) {
+          updated[key] = 'Motor Cab'
+        } else if (catVal.includes('TRAILER')) {
+          updated[key] = 'Multiaxle Trailer'
+        } else if (catVal.includes('TRACTOR')) {
+          updated[key] = 'Tractor'
+        } else if (catVal.includes('CONSTRUCTION')) {
+          updated[key] = 'Construction Vehicle'
+        } else if (catVal.includes('RICKSHAW') || catVal.includes('E-RICKSHAW')) {
+          updated[key] = 'E-Rickshaw'
+        } else {
+          updated[key] = String(extractedData[key]).trim()
+        }
       } else {
         updated[key] = String(extractedData[key]).toUpperCase()
       }
@@ -2030,10 +2078,10 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
                     </div>
                   </div>
 
-                  {/* Vehicle Category */}
+                  {/* Vehicle Class */}
                   <div className='group'>
                     <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1.5 md:mb-2'>
-                      Vehicle Category
+                      Vehicle Class
                     </label>
                     <div className='relative'>
                       <div className='absolute inset-y-0 left-0 pl-2.5 md:pl-4 flex items-center pointer-events-none'>
