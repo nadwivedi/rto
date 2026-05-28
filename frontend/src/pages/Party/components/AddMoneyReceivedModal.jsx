@@ -19,8 +19,10 @@ const VehicleCombobox = ({ vehicles, value, onChange, disabled, loading }) => {
   const [query, setQuery] = useState('')
   const [showQuery, setShowQuery] = useState(false)
   const [dropdownStyle, setDropdownStyle] = useState({})
+  const [highlightedIndex, setHighlightedIndex] = useState(0) // 0 is "None", > 0 are filtered items
   const wrapperRef = useRef(null)
   const inputRef = useRef(null)
+  const listRef = useRef(null)
 
   const selected = vehicles.find(v => v.registrationNumber === value)
 
@@ -85,6 +87,57 @@ const VehicleCombobox = ({ vehicles, value, onChange, disabled, loading }) => {
     setQuery(e.target.value)
     setShowQuery(true)
     setOpen(true)
+    setHighlightedIndex(0) // Reset highlight on search
+  }
+
+  const scrollToIndex = (index) => {
+    if (!listRef.current) return
+    const buttons = listRef.current.querySelectorAll('button')
+    if (buttons[index]) {
+      buttons[index].scrollIntoView({ block: 'nearest' })
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (!open) {
+      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+        e.preventDefault()
+        setOpen(true)
+        setShowQuery(true)
+        setQuery('')
+      }
+      return
+    }
+
+    const maxIndex = filtered.length
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setHighlightedIndex(prev => {
+        const next = prev < maxIndex ? prev + 1 : prev
+        scrollToIndex(next)
+        return next
+      })
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlightedIndex(prev => {
+        const next = prev > 0 ? prev - 1 : 0
+        scrollToIndex(next)
+        return next
+      })
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      if (highlightedIndex === 0) {
+        handleSelect('')
+      } else if (filtered[highlightedIndex - 1]) {
+        handleSelect(filtered[highlightedIndex - 1].registrationNumber)
+      }
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      setOpen(false)
+      setQuery('')
+      setShowQuery(false)
+      inputRef.current?.blur()
+    }
   }
 
   const handleSelect = (regNum) => {
@@ -113,14 +166,16 @@ const VehicleCombobox = ({ vehicles, value, onChange, disabled, loading }) => {
       className='rounded-2xl border border-slate-200 bg-white shadow-2xl overflow-hidden flex flex-col'
     >
       {/* Scrollable list fills all height */}
-      <div className='flex-1 overflow-y-auto py-1.5'>
+      <div ref={listRef} className='flex-1 overflow-y-auto py-1.5'>
         {/* None/clear option */}
         <button
           type='button'
           tabIndex={-1}
           onMouseDown={(e) => { e.preventDefault(); handleSelect('') }}
+          onMouseEnter={() => setHighlightedIndex(0)}
           className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition
-            ${!value ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}
+            ${!value ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-200'}
+            ${highlightedIndex === 0 && value ? 'bg-slate-200' : ''}
           `}
         >
           <span className='w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0'>
@@ -142,8 +197,9 @@ const VehicleCombobox = ({ vehicles, value, onChange, disabled, loading }) => {
           </div>
         )}
 
-        {filtered.map(v => {
+        {filtered.map((v, index) => {
           const isSelected = v.registrationNumber === value
+          const isHighlighted = highlightedIndex === index + 1
           const reg = v.registrationNumber
           const idx = query ? reg.toLowerCase().indexOf(query.toLowerCase()) : -1
           return (
@@ -152,8 +208,9 @@ const VehicleCombobox = ({ vehicles, value, onChange, disabled, loading }) => {
               type='button'
               tabIndex={-1}
               onMouseDown={(e) => { e.preventDefault(); handleSelect(v.registrationNumber) }}
+              onMouseEnter={() => setHighlightedIndex(index + 1)}
               className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition
-                ${isSelected ? 'bg-emerald-50' : 'hover:bg-slate-50'}
+                ${isSelected ? 'bg-emerald-50' : (isHighlighted ? 'bg-slate-200' : 'hover:bg-slate-200')}
               `}
             >
               <span className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0
@@ -222,6 +279,7 @@ const VehicleCombobox = ({ vehicles, value, onChange, disabled, loading }) => {
             value={displayValue}
             onFocus={handleFocus}
             onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
             disabled={disabled}
             placeholder={loading ? 'Loading vehicles…' : 'Search or select vehicle…'}
             autoComplete='off'
