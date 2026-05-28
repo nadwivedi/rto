@@ -238,7 +238,7 @@ const VehicleRegistration = () => {
                 <div className='block lg:hidden'>
                   <div className='p-4 space-y-3'>
                     {filteredRegistrations.map((registration) => (
-                      <div key={registration._id} className='bg-white rounded-lg shadow border border-gray-200 overflow-hidden hover:shadow-md transition-shadow'>
+                      <div key={registration._id} onClick={() => handleOpenLedger(registration)} className='bg-white rounded-lg shadow border border-gray-200 overflow-hidden hover:shadow-md transition-shadow cursor-pointer'>
                         {/* Card Header with Avatar and Actions */}
                         <div className='bg-gray-50 p-3 flex items-start justify-between border-b border-gray-200'>
                           <div className='min-w-0 flex-1 mr-2'>
@@ -270,16 +270,7 @@ const VehicleRegistration = () => {
                           {/* Action Buttons */}
                           <div className='flex items-center gap-1'>
                             <button
-                              onClick={() => handleOpenLedger(registration)}
-                              className='p-1.5 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-all cursor-pointer'
-                              title='View Ledger'
-                            >
-                              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleViewDetails(registration)}
+                              onClick={(e) => { e.stopPropagation(); handleViewDetails(registration); }}
                               className='p-1.5 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-all cursor-pointer'
                               title='View'
                             >
@@ -289,7 +280,7 @@ const VehicleRegistration = () => {
                               </svg>
                             </button>
                             <button
-                              onClick={() => handleEdit(registration)}
+                              onClick={(e) => { e.stopPropagation(); handleEdit(registration); }}
                               className='p-1.5 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-all cursor-pointer'
                               title='Edit'
                             >
@@ -298,7 +289,7 @@ const VehicleRegistration = () => {
                               </svg>
                             </button>
                             <button
-                              onClick={() => handleDelete(registration._id)}
+                              onClick={(e) => { e.stopPropagation(); handleDelete(registration._id); }}
                               className='p-1.5 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-md transition-all cursor-pointer'
                               title='Delete'
                             >
@@ -404,7 +395,7 @@ const VehicleRegistration = () => {
                   </thead>
                   <tbody className='divide-y divide-gray-200'>
                     {filteredRegistrations.map((registration) => (
-                      <tr key={registration._id} className='hover:bg-gradient-to-r hover:from-blue-50/50 hover:via-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 group'>
+                      <tr key={registration._id} onClick={() => handleOpenLedger(registration)} className='hover:bg-gradient-to-r hover:from-blue-50/50 hover:via-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 group cursor-pointer'>
                         <td className='px-4 2xl:px-6 py-3 2xl:py-4'>
                           <div>
                             <div className='mb-1'>
@@ -509,16 +500,7 @@ const VehicleRegistration = () => {
                         <td className='px-4 2xl:px-6 py-3 2xl:py-4'>
                           <div className='flex items-center justify-end gap-0.5 pr-1'>
                             <button
-                              onClick={() => handleOpenLedger(registration)}
-                              className='p-1.5 2xl:p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-all duration-200 cursor-pointer'
-                              title='Vehicle Ledger'
-                            >
-                              <svg className='w-4 h-4 2xl:w-5 2xl:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleViewDetails(registration)}
+                              onClick={(e) => { e.stopPropagation(); handleViewDetails(registration); }}
                               className='p-1.5 2xl:p-2 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all duration-200 cursor-pointer'
                               title='View Details'
                             >
@@ -528,7 +510,7 @@ const VehicleRegistration = () => {
                               </svg>
                             </button>
                             <button
-                              onClick={() => handleEdit(registration)}
+                              onClick={(e) => { e.stopPropagation(); handleEdit(registration); }}
                               className='p-1.5 2xl:p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 cursor-pointer'
                               title='Edit'
                             >
@@ -537,7 +519,7 @@ const VehicleRegistration = () => {
                               </svg>
                             </button>
                             <button
-                              onClick={() => handleDelete(registration._id)}
+                              onClick={(e) => { e.stopPropagation(); handleDelete(registration._id); }}
                               className='p-1.5 2xl:p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all duration-200 cursor-pointer'
                               title='Delete'
                             >
