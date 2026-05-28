@@ -8,11 +8,15 @@ const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
   const [parties, setParties] = useState([])
   const [loadingParties, setLoadingParties] = useState(false)
+  const [allVehicles, setAllVehicles] = useState([])
+  const [loadingVehicles, setLoadingVehicles] = useState(false)
   const [saving, setSaving] = useState(false)
   const [formData, setFormData] = useState({
     partyId: '',
     amount: '',
-    moneyReceivedDate: getTodayDate()
+    moneyReceivedDate: getTodayDate(),
+    vehicleNumber: '',
+    remark: ''
   })
 
   useEffect(() => {
@@ -32,27 +36,50 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
   useEffect(() => {
     if (!isOpen) return
 
-    const fetchParties = async () => {
+    const fetchData = async () => {
       try {
         setLoadingParties(true)
-        const response = await axios.get(`${API_URL}/api/parties`, {
-          params: { all: true },
-          withCredentials: true
-        })
+        setLoadingVehicles(true)
 
-        if (response.data.success) {
-          setParties(response.data.data || [])
+        const [partiesRes, vehiclesRes] = await Promise.all([
+          axios.get(`${API_URL}/api/parties`, { params: { all: true }, withCredentials: true }),
+          axios.get(`${API_URL}/api/vehicle-registrations`, { params: { limit: 1000 }, withCredentials: true })
+        ])
+
+        if (partiesRes.data.success) {
+          setParties(partiesRes.data.data || [])
+        }
+        if (vehiclesRes.data.success) {
+          setAllVehicles(vehiclesRes.data.data || [])
         }
       } catch (error) {
-        console.error('Error fetching parties:', error)
-        toast.error('Unable to load parties')
+        console.error('Error fetching modal options:', error)
+        toast.error('Unable to load dropdown options')
       } finally {
         setLoadingParties(false)
+        setLoadingVehicles(false)
       }
     }
 
-    fetchParties()
+    fetchData()
   }, [isOpen])
+
+  const handleVehicleChange = (event) => {
+    const vehNum = event.target.value
+    setFormData(prev => {
+      const selectedVeh = allVehicles.find(v => v.registrationNumber === vehNum)
+      const partyIdObj = selectedVeh?.partyId
+      const matchedPartyId = partyIdObj
+        ? (typeof partyIdObj === 'object' ? partyIdObj._id : partyIdObj)
+        : ''
+
+      return {
+        ...prev,
+        vehicleNumber: vehNum,
+        partyId: matchedPartyId || prev.partyId
+      }
+    })
+  }
 
   const handleChange = (event) => {
     const { name, value } = event.target
@@ -77,8 +104,8 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
   const handleSubmit = async (event) => {
     event.preventDefault()
 
-    if (!formData.partyId) {
-      toast.error('Please select a party')
+    if (!formData.partyId && !formData.vehicleNumber) {
+      toast.error('Please select either a Party or a Vehicle Number')
       return
     }
 
@@ -98,9 +125,11 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
       const response = await axios.post(
         `${API_URL}/api/parties/money-received`,
         {
-          partyId: formData.partyId,
+          partyId: formData.partyId || undefined,
           amount,
-          moneyReceivedDate: formData.moneyReceivedDate
+          moneyReceivedDate: formData.moneyReceivedDate,
+          vehicleNumber: formData.vehicleNumber || undefined,
+          remark: formData.remark || undefined
         },
         { withCredentials: true }
       )
@@ -121,6 +150,14 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
     }
   }
 
+  // Filter vehicles by party if a party is selected
+  const displayedVehicles = formData.partyId
+    ? allVehicles.filter(v => {
+        const pId = v.partyId && typeof v.partyId === 'object' ? v.partyId._id : v.partyId
+        return pId === formData.partyId
+      })
+    : allVehicles
+
   if (!isOpen) return null
 
   return (
@@ -138,7 +175,7 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
             </svg>
           </button>
           <h3 className='text-xl font-black text-white'>Add Money Received</h3>
-          <p className='mt-1 text-sm font-semibold text-emerald-50'>Record a payment received from a party.</p>
+          <p className='mt-1 text-sm font-semibold text-emerald-50'>Record a payment received from a party or for a vehicle.</p>
         </div>
 
         <form onSubmit={handleSubmit} className='space-y-4 p-6'>
@@ -159,16 +196,33 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           <div>
-            <label className='mb-1 block text-sm font-bold text-slate-700'>Party</label>
+            <label className='mb-1 block text-sm font-bold text-slate-700'>Vehicle Number (Optional)</label>
+            <select
+              name='vehicleNumber'
+              value={formData.vehicleNumber}
+              onChange={handleVehicleChange}
+              disabled={loadingVehicles || saving}
+              className='w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100'
+            >
+              <option value=''>{loadingVehicles ? 'Loading vehicles...' : 'Select Vehicle (Optional)'}</option>
+              {displayedVehicles.map((v) => (
+                <option key={v._id} value={v.registrationNumber}>
+                  {v.registrationNumber}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className='mb-1 block text-sm font-bold text-slate-700'>Party (Optional)</label>
             <select
               name='partyId'
               value={formData.partyId}
               onChange={handleChange}
               disabled={loadingParties || saving}
               className='w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100'
-              required
             >
-              <option value=''>{loadingParties ? 'Loading parties...' : 'Select party'}</option>
+              <option value=''>{loadingParties ? 'Loading parties...' : 'Select Party (Optional)'}</option>
               {parties.map((party) => (
                 <option key={party._id} value={party._id}>
                   {party.partyName}{party.mobile ? ` - ${party.mobile}` : ''}
@@ -190,6 +244,19 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
               disabled={saving}
               className='w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100'
               required
+            />
+          </div>
+
+          <div>
+            <label className='mb-1 block text-sm font-bold text-slate-700'>Remark (Optional)</label>
+            <input
+              type='text'
+              name='remark'
+              value={formData.remark}
+              onChange={handleChange}
+              placeholder='e.g. Received via GPay, Cash, etc.'
+              disabled={saving}
+              className='w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 disabled:bg-slate-100'
             />
           </div>
 

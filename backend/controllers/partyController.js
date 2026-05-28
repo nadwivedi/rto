@@ -407,12 +407,12 @@ exports.getPartyStatistics = async (req, res) => {
 // Create party money received entry
 exports.createMoneyReceived = async (req, res) => {
   try {
-    const { partyId, amount, moneyReceivedDate } = req.body
+    const { partyId, amount, moneyReceivedDate, vehicleNumber, remark } = req.body
 
-    if (!partyId) {
+    if (!partyId && !vehicleNumber) {
       return res.status(400).json({
         success: false,
-        message: 'Party is required'
+        message: 'Either Party or Vehicle Number is required'
       })
     }
 
@@ -431,19 +431,34 @@ exports.createMoneyReceived = async (req, res) => {
       })
     }
 
-    const party = await Party.findOne({ _id: partyId, userId: req.user.id }).select('_id').lean()
-    if (!party) {
-      return res.status(404).json({
-        success: false,
-        message: 'Party not found'
-      })
+    let finalPartyId = partyId
+    if (!finalPartyId && vehicleNumber) {
+      const vehicle = await VehicleRegistration.findOne({
+        registrationNumber: String(vehicleNumber).trim().toUpperCase(),
+        userId: req.user.id
+      }).select('partyId').lean()
+      if (vehicle && vehicle.partyId) {
+        finalPartyId = vehicle.partyId
+      }
+    }
+
+    if (finalPartyId) {
+      const party = await Party.findOne({ _id: finalPartyId, userId: req.user.id }).select('_id').lean()
+      if (!party) {
+        return res.status(404).json({
+          success: false,
+          message: 'Party not found'
+        })
+      }
     }
 
     const moneyReceived = await MoneyReceived.create({
       userId: req.user.id,
-      partyId,
+      partyId: finalPartyId || undefined,
       amount: receivedAmount,
-      moneyReceivedDate
+      moneyReceivedDate,
+      vehicleNumber: vehicleNumber ? String(vehicleNumber).trim().toUpperCase() : undefined,
+      remark: remark ? String(remark).trim() : undefined
     })
 
     res.status(201).json({

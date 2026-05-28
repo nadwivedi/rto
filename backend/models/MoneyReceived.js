@@ -10,7 +10,6 @@ const moneyReceivedSchema = new mongoose.Schema({
   partyId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Party',
-    required: true,
     index: true
   },
   amount: {
@@ -21,6 +20,14 @@ const moneyReceivedSchema = new mongoose.Schema({
   moneyReceivedDate: {
     type: String,
     required: true,
+    trim: true
+  },
+  vehicleNumber: {
+    type: String,
+    trim: true
+  },
+  remark: {
+    type: String,
     trim: true
   }
 }, {

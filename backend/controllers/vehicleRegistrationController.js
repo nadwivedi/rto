@@ -12,6 +12,7 @@ const TemporaryPermit = require('../models/TemporaryPermit')
 const TemporaryPermitOtherState = require('../models/TemporaryPermitOtherState')
 const HpaHpt = require('../models/HpaHpt')
 const Noc = require('../models/Noc')
+const MoneyReceived = require('../models/MoneyReceived')
 const { logError, getUserFriendlyError } = require('../utils/errorLogger')
 
 const parseYear = (val) => {
@@ -706,7 +707,8 @@ exports.getVehicleLedger = async (req, res) => {
       temporaryPermitRecords,
       temporaryPermitOtherStateRecords,
       hpaHptRecords,
-      nocRecords
+      nocRecords,
+      moneyReceivedRecords
     ] = await Promise.all([
       Fitness.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
       Tax.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
@@ -719,7 +721,8 @@ exports.getVehicleLedger = async (req, res) => {
       TemporaryPermit.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
       TemporaryPermitOtherState.find({ vehicleNo: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
       HpaHpt.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
-      Noc.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean()
+      Noc.find({ vehicleNumber: registrationNumber, userId }).sort({ createdAt: -1 }).lean(),
+      MoneyReceived.find({ vehicleNumber: registrationNumber, userId }).sort({ moneyReceivedDate: -1, createdAt: -1 }).lean()
     ])
 
     // Helper to compute section totals
@@ -777,6 +780,12 @@ exports.getVehicleLedger = async (req, res) => {
       noc: {
         records: nocRecords,
         ...sumSection(nocRecords, 'totalFee', 'paid', 'balance')
+      },
+      moneyReceived: {
+        records: moneyReceivedRecords,
+        totalFee: 0,
+        paid: moneyReceivedRecords.reduce((sum, r) => sum + (r.amount || 0), 0),
+        balance: -moneyReceivedRecords.reduce((sum, r) => sum + (r.amount || 0), 0)
       }
     }
 

@@ -176,6 +176,19 @@ const VehicleLedgerPage = () => {
     sec.temporaryPermitOtherState?.records?.forEach(item => allWork.push(normalizeWorkItem(item, 'Temp Permit (OS)', 'teal')))
     sec.hpaHpt?.records?.forEach(item => allWork.push(normalizeWorkItem(item, item.type === 'hpa' ? 'HPA' : 'HPT', 'rose')))
     sec.noc?.records?.forEach(item => allWork.push(normalizeWorkItem(item, 'NOC', 'slate')))
+    sec.moneyReceived?.records?.forEach(item => {
+      const amount = Number(item.amount || 0)
+      allWork.push({
+        ...item,
+        type: 'Money Received',
+        typeColor: 'green',
+        dateField: item.moneyReceivedDate || item.createdAt,
+        totalAmount: 0,
+        receivedAmount: amount,
+        balanceAmount: -amount,
+        referenceNo: item.remark || ''
+      })
+    })
 
     let runningBalance = 0
     const chronologicalRows = allWork
@@ -271,7 +284,7 @@ const VehicleLedgerPage = () => {
                   </svg>
                 </div>
                 <div>
-                  <h2 className='text-lg font-bold text-gray-900'>Vehicle Work Ledger</h2>
+                  <h2 className='text-lg font-bold text-gray-900'>Vehicle Work Ledger - {vehicleNum}</h2>
                   <p className='text-xs text-gray-600'>{allWork.length} records computed chronologically with running balances</p>
                 </div>
               </div>
@@ -304,10 +317,12 @@ const VehicleLedgerPage = () => {
                             )}
                           </div>
                         </td>
-                        <td className='px-4 py-3.5 text-sm text-gray-900 text-right font-medium'>{formatCurrency(item.totalAmount)}</td>
+                        <td className='px-4 py-3.5 text-sm text-gray-900 text-right font-medium'>
+                          {item.type === 'Money Received' ? '-' : formatCurrency(item.totalAmount)}
+                        </td>
                         <td className='px-4 py-3.5 text-sm text-green-600 text-right font-bold'>{formatCurrency(item.receivedAmount || 0)}</td>
                         <td className={`px-4 py-3.5 text-sm text-right font-bold ${item.balanceAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                          {formatCurrency(item.balanceAmount)}
+                          {item.type === 'Money Received' ? '-' : formatCurrency(item.balanceAmount)}
                         </td>
                         <td className='px-4 py-3.5 text-sm text-orange-700 text-right font-black'>{formatCurrency(item.runningBalance)}</td>
                       </tr>
