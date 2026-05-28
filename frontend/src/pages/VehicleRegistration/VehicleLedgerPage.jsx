@@ -207,38 +207,6 @@ const VehicleLedgerPage = () => {
   return (
     <div className='min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-pink-50 flex flex-col'>
       
-      {/* ── Minimal Navigation Header ── */}
-      <div className='max-w-6xl mx-auto w-full px-3 md:px-4 lg:px-6 pt-6 flex items-center justify-between gap-4'>
-        <div className='flex items-center gap-3'>
-          <button
-            onClick={() => navigate('/vehicle-registration')}
-            className='w-10 h-10 flex items-center justify-center rounded-xl bg-white hover:bg-gray-50 text-gray-700 transition-all duration-200 shadow-sm border border-gray-200 cursor-pointer'
-            title='Back'
-          >
-            <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
-            </svg>
-          </button>
-          <div>
-            <div className='flex items-center gap-2'>
-              {parts ? (
-                <div className={vehicleDesign.container}>
-                  <span className={vehicleDesign.stateCode}>{parts.stateCode}</span>
-                  <span className={vehicleDesign.districtCode}>{parts.districtCode}</span>
-                  <span className={vehicleDesign.series}>{parts.series}</span>
-                  <span className={vehicleDesign.last4Digits}>{parts.last4Digits}</span>
-                </div>
-              ) : (
-                <span className='text-xl font-bold text-gray-900 font-mono tracking-widest'>{vehicleNum}</span>
-              )}
-              {registration?.ownerName && (
-                <span className='text-sm font-semibold text-gray-500'>• {registration.ownerName}</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* ── Main Content Area ── */}
       <div className='flex-1 max-w-6xl mx-auto w-full px-3 md:px-4 lg:px-6 py-6'>
         
