@@ -9,6 +9,20 @@ const CgPermit = require('../models/CgPermit')
 const NationalPermit = require('../models/NationalPermit')
 const { logError, getUserFriendlyError } = require('../utils/errorLogger')
 
+const parseYear = (val) => {
+  if (val === undefined || val === null || val === '') return undefined;
+  return String(val).trim();
+};
+
+const parseNumber = (val) => {
+  if (val === undefined || val === null || val === '') return undefined;
+  if (typeof val === 'number') return val;
+  const cleaned = String(val).replace(/[^0-9.]/g, '');
+  const parsed = parseFloat(cleaned);
+  return isNaN(parsed) ? undefined : parsed;
+};
+
+
 // Get all vehicle registrations
 exports.getAllRegistrations = async (req, res) => {
   try {
@@ -366,18 +380,18 @@ exports.createRegistration = async (req, res) => {
       makerName,
       makerModel,
       colour,
-      seatingCapacity,
+      seatingCapacity: parseNumber(seatingCapacity),
       vehicleClass,
       vehicleType,
-      ladenWeight,
-      unladenWeight,
-      manufactureYear,
+      ladenWeight: parseNumber(ladenWeight),
+      unladenWeight: parseNumber(unladenWeight),
+      manufactureYear: parseYear(manufactureYear),
       vehicleCategory,
-      numberOfCylinders,
-      cubicCapacity,
+      numberOfCylinders: parseNumber(numberOfCylinders),
+      cubicCapacity: parseNumber(cubicCapacity),
       fuelType,
       bodyType,
-      wheelBase
+      wheelBase: parseNumber(wheelBase)
     }
 
     // Only add images if they're provided (optional fields)
@@ -479,18 +493,18 @@ exports.updateRegistration = async (req, res) => {
     if (makerName !== undefined) registration.makerName = makerName
     if (makerModel !== undefined) registration.makerModel = makerModel
     if (colour !== undefined) registration.colour = colour
-    if (seatingCapacity !== undefined) registration.seatingCapacity = seatingCapacity
+    if (seatingCapacity !== undefined) registration.seatingCapacity = parseNumber(seatingCapacity)
     if (vehicleClass !== undefined) registration.vehicleClass = vehicleClass
     if (vehicleType !== undefined) registration.vehicleType = vehicleType
-    if (ladenWeight !== undefined) registration.ladenWeight = ladenWeight
-    if (unladenWeight !== undefined) registration.unladenWeight = unladenWeight
-    if (manufactureYear !== undefined) registration.manufactureYear = manufactureYear
+    if (ladenWeight !== undefined) registration.ladenWeight = parseNumber(ladenWeight)
+    if (unladenWeight !== undefined) registration.unladenWeight = parseNumber(unladenWeight)
+    if (manufactureYear !== undefined) registration.manufactureYear = parseYear(manufactureYear)
     if (vehicleCategory !== undefined) registration.vehicleCategory = vehicleCategory
-    if (numberOfCylinders !== undefined) registration.numberOfCylinders = numberOfCylinders
-    if (cubicCapacity !== undefined) registration.cubicCapacity = cubicCapacity
+    if (numberOfCylinders !== undefined) registration.numberOfCylinders = parseNumber(numberOfCylinders)
+    if (cubicCapacity !== undefined) registration.cubicCapacity = parseNumber(cubicCapacity)
     if (fuelType !== undefined) registration.fuelType = fuelType
     if (bodyType !== undefined) registration.bodyType = bodyType
-    if (wheelBase !== undefined) registration.wheelBase = wheelBase
+    if (wheelBase !== undefined) registration.wheelBase = parseNumber(wheelBase)
 
     const finalPartyId = partyId !== undefined ? partyId : registration.partyId
     if (finalPartyId) {

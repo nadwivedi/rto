@@ -91,7 +91,8 @@ const vehicleRegistrationSchema = new mongoose.Schema({
     type: Number
   },
   manufactureYear: {
-    type: Number
+    type: String,
+    trim: true
   },
   vehicleCategory: {
     type: String,
