@@ -544,9 +544,9 @@ const PartyDetail = () => {
                   <table className='w-full'>
                     <thead className={theme.tableHeader}>
                       <tr>
+                        <th className='px-4 py-3 text-left text-xs font-bold text-white uppercase'>Date</th>
                         <th className='px-4 py-3 text-left text-xs font-bold text-white uppercase'>Type</th>
                         <th className='px-4 py-3 text-left text-xs font-bold text-white uppercase'>Vehicle No.</th>
-                        <th className='px-4 py-3 text-left text-xs font-bold text-white uppercase'>Date</th>
                         <th className='px-4 py-3 text-right text-xs font-bold text-white uppercase'>Total</th>
                         <th className='px-4 py-3 text-right text-xs font-bold text-white uppercase'>Received</th>
                         <th className='px-4 py-3 text-right text-xs font-bold text-white uppercase'>Balance</th>
@@ -556,6 +556,7 @@ const PartyDetail = () => {
                     <tbody className='divide-y divide-gray-200'>
                       {displayedWork.map((item, index) => (
                         <tr key={`${item.type}-${item._id}`} className='hover:bg-gray-50'>
+                          <td className='px-4 py-3 text-sm text-gray-600'>{formatDate(item.dateField || item.createdAt)}</td>
                           <td className='px-4 py-3'>
                             <div className='flex flex-col gap-1'>
                               <span className={`inline-flex w-fit px-2 py-1 text-xs font-semibold rounded-full ${getTypeColorClass(item.typeColor)}`}>
@@ -567,7 +568,6 @@ const PartyDetail = () => {
                             </div>
                           </td>
                           <td className='px-4 py-3 text-sm font-semibold text-gray-900'>{item.vehicleNumber}</td>
-                          <td className='px-4 py-3 text-sm text-gray-600'>{formatDate(item.dateField || item.createdAt)}</td>
                           <td className='px-4 py-3 text-sm text-gray-900 text-right'>
                             {item.type === 'Money Received' ? '-' : formatCurrency(item.totalAmount)}
                           </td>

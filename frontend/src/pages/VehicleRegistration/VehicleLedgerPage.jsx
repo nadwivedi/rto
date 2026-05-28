@@ -341,8 +341,8 @@ const VehicleLedgerPage = () => {
                 <table className='w-full'>
                   <thead className={theme.tableHeader}>
                     <tr>
-                      <th className='px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider'>Type</th>
                       <th className='px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider'>Date</th>
+                      <th className='px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider'>Type</th>
                       <th className='px-4 py-3 text-right text-xs font-bold text-white uppercase tracking-wider'>Total</th>
                       <th className='px-4 py-3 text-right text-xs font-bold text-white uppercase tracking-wider'>Received</th>
                       <th className='px-4 py-3 text-right text-xs font-bold text-white uppercase tracking-wider'>Balance</th>
@@ -352,6 +352,7 @@ const VehicleLedgerPage = () => {
                   <tbody className='divide-y divide-gray-200'>
                     {allWork.map((item) => (
                       <tr key={`${item.type}-${item._id}`} className='hover:bg-gray-50 transition-colors duration-150'>
+                        <td className='px-4 py-3.5 text-sm text-gray-600 whitespace-nowrap'>{formatDate(item.dateField || item.createdAt)}</td>
                         <td className='px-4 py-3.5'>
                           <div className='flex flex-col gap-1'>
                             <span className={`inline-flex w-fit px-2.5 py-0.5 text-xs font-bold rounded-full ${getTypeColorClass(item.typeColor)}`}>
@@ -362,7 +363,6 @@ const VehicleLedgerPage = () => {
                             )}
                           </div>
                         </td>
-                        <td className='px-4 py-3.5 text-sm text-gray-600 whitespace-nowrap'>{formatDate(item.dateField || item.createdAt)}</td>
                         <td className='px-4 py-3.5 text-sm text-gray-900 text-right font-medium'>{formatCurrency(item.totalAmount)}</td>
                         <td className='px-4 py-3.5 text-sm text-green-600 text-right font-bold'>{formatCurrency(item.receivedAmount || 0)}</td>
                         <td className={`px-4 py-3.5 text-sm text-right font-bold ${item.balanceAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
