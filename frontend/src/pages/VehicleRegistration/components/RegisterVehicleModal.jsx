@@ -2049,6 +2049,8 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
                         className='w-full pl-9 md:pl-12 pr-8 md:pr-10 py-1.5 md:py-2 text-xs md:text-sm bg-white border-2 border-gray-200 rounded-lg md:rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all duration-200 font-semibold text-gray-800 appearance-none cursor-pointer'
                       >
                         <option value=''>Select Category</option>
+                        <option value='Goods Carrier'>Goods Carrier</option>
+                        <option value='PCV'>PCV (Passenger Commercial Vehicle)</option>
                         <option value='LMV'>LMV (Light Motor Vehicle)</option>
                         <option value='MMV'>MMV (Medium Motor Vehicle)</option>
                         <option value='HMV'>HMV (Heavy Motor Vehicle)</option>

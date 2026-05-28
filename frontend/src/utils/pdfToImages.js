@@ -7,11 +7,8 @@
  */
 import * as pdfjsLib from 'pdfjs-dist';
 
-// Configure the PDF.js worker (Vite-compatible)
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.mjs',
-  import.meta.url
-).href;
+// Configure the PDF.js worker using unpkg CDN to ensure it works reliably in production (VPS) without Vite path resolution issues.
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjsLib.version || '5.7.284'}/build/pdf.worker.min.mjs`;
 
 /**
  * Render the first `maxPages` pages of a PDF to JPEG base64 strings.

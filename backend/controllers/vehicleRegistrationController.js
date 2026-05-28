@@ -381,12 +381,12 @@ exports.createRegistration = async (req, res) => {
       makerModel,
       colour,
       seatingCapacity: parseNumber(seatingCapacity),
-      vehicleClass,
+      vehicleClass: vehicleClass || vehicleCategory,
       vehicleType,
       ladenWeight: parseNumber(ladenWeight),
       unladenWeight: parseNumber(unladenWeight),
       manufactureYear: parseYear(manufactureYear),
-      vehicleCategory,
+      vehicleCategory: vehicleCategory || vehicleClass,
       numberOfCylinders: parseNumber(numberOfCylinders),
       cubicCapacity: parseNumber(cubicCapacity),
       fuelType,
@@ -494,12 +494,18 @@ exports.updateRegistration = async (req, res) => {
     if (makerModel !== undefined) registration.makerModel = makerModel
     if (colour !== undefined) registration.colour = colour
     if (seatingCapacity !== undefined) registration.seatingCapacity = parseNumber(seatingCapacity)
-    if (vehicleClass !== undefined) registration.vehicleClass = vehicleClass
+    if (vehicleClass !== undefined) {
+      registration.vehicleClass = vehicleClass
+      registration.vehicleCategory = vehicleClass
+    }
     if (vehicleType !== undefined) registration.vehicleType = vehicleType
     if (ladenWeight !== undefined) registration.ladenWeight = parseNumber(ladenWeight)
     if (unladenWeight !== undefined) registration.unladenWeight = parseNumber(unladenWeight)
     if (manufactureYear !== undefined) registration.manufactureYear = parseYear(manufactureYear)
-    if (vehicleCategory !== undefined) registration.vehicleCategory = vehicleCategory
+    if (vehicleCategory !== undefined) {
+      registration.vehicleCategory = vehicleCategory
+      registration.vehicleClass = vehicleCategory
+    }
     if (numberOfCylinders !== undefined) registration.numberOfCylinders = parseNumber(numberOfCylinders)
     if (cubicCapacity !== undefined) registration.cubicCapacity = parseNumber(cubicCapacity)
     if (fuelType !== undefined) registration.fuelType = fuelType
