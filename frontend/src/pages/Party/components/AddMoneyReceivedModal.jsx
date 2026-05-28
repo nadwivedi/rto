@@ -119,11 +119,11 @@ const VehicleCombobox = ({ vehicles, value, onChange, disabled, loading }) => {
           type='button'
           tabIndex={-1}
           onMouseDown={(e) => { e.preventDefault(); handleSelect('') }}
-          className={`w-full flex items-center gap-3 px-3 py-2 text-sm transition
+          className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition
             ${!value ? 'bg-emerald-50 text-emerald-700' : 'text-slate-500 hover:bg-slate-50'}
           `}
         >
-          <span className='w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center flex-shrink-0'>
+          <span className='w-5 h-5 rounded-md bg-slate-100 flex items-center justify-center flex-shrink-0'>
             <svg className='h-3.5 w-3.5 text-slate-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
             </svg>
@@ -152,19 +152,19 @@ const VehicleCombobox = ({ vehicles, value, onChange, disabled, loading }) => {
               type='button'
               tabIndex={-1}
               onMouseDown={(e) => { e.preventDefault(); handleSelect(v.registrationNumber) }}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm transition
+              className={`w-full flex items-center gap-2 px-3 py-1.5 text-xs transition
                 ${isSelected ? 'bg-emerald-50' : 'hover:bg-slate-50'}
               `}
             >
-              <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0
+              <span className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0
                 ${isSelected ? 'bg-emerald-500' : 'bg-slate-100'}`}>
-                <svg className={`h-4 w-4 ${isSelected ? 'text-white' : 'text-slate-500'}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <svg className={`h-3 w-3 ${isSelected ? 'text-white' : 'text-slate-500'}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2}
                     d='M5 17H3a2 2 0 01-2-2V9a2 2 0 012-2h1l2-4h10l2 4h1a2 2 0 012 2v6a2 2 0 01-2 2h-2m-8 0a2 2 0 104 0m-4 0a2 2 0 114 0' />
                 </svg>
               </span>
               <div className='flex-1 text-left min-w-0'>
-                <span className={`font-black tracking-widest block ${isSelected ? 'text-emerald-700' : 'text-slate-900'}`}>
+                <span className={`font-bold tracking-wide block ${isSelected ? 'text-emerald-700' : 'text-slate-900'}`}>
                   {idx >= 0 ? (
                     <>
                       {reg.slice(0, idx)}
@@ -227,7 +227,7 @@ const VehicleCombobox = ({ vehicles, value, onChange, disabled, loading }) => {
             autoComplete='off'
             className={`flex-1 min-w-0 bg-transparent text-sm outline-none
               ${disabled ? 'cursor-not-allowed text-slate-400' : 'cursor-text'}
-              ${selected && !showQuery ? 'font-black tracking-widest text-slate-900' : 'font-semibold text-slate-700 placeholder:text-slate-400'}
+              ${selected && !showQuery ? 'font-bold tracking-wide text-slate-900' : 'font-semibold text-slate-700 placeholder:text-slate-400'}
             `}
           />
           <span className='flex items-center gap-1 flex-shrink-0'>
