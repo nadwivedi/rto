@@ -207,77 +207,40 @@ const VehicleLedgerPage = () => {
   return (
     <div className='min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-pink-50 flex flex-col'>
       
-      {/* ── Page Header ── */}
-      <div className='relative bg-gradient-to-br from-slate-800 via-slate-900 to-gray-900 px-6 py-8 overflow-hidden shadow-md text-white'>
-        <div className='absolute -top-8 -right-8 w-40 h-40 rounded-full bg-indigo-500/10 blur-2xl pointer-events-none' />
-        <div className='absolute -bottom-6 -left-6 w-32 h-32 rounded-full bg-purple-500/10 blur-2xl pointer-events-none' />
-
-        <div className='max-w-6xl mx-auto w-full flex flex-col md:flex-row md:items-center justify-between gap-6 relative'>
-          <div className='flex items-start gap-4'>
-            {/* Back Button */}
-            <button
-              onClick={() => navigate('/vehicle-registration')}
-              className='mt-1 flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-xl bg-white/10 hover:bg-white/20 text-white transition-all duration-200 shadow-sm cursor-pointer border border-white/10'
-              title='Back'
-            >
-              <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
-              </svg>
-            </button>
-
-            <div className='min-w-0'>
-              <p className='text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1.5'>Vehicle Ledger</p>
-              
-              <div className='mb-2'>
-                {parts ? (
-                  <div className={vehicleDesign.container}>
-                    <span className={vehicleDesign.stateCode}>{parts.stateCode}</span>
-                    <span className={vehicleDesign.districtCode}>{parts.districtCode}</span>
-                    <span className={vehicleDesign.series}>{parts.series}</span>
-                    <span className={vehicleDesign.last4Digits}>{parts.last4Digits}</span>
-                  </div>
-                ) : (
-                  <span className='text-2xl font-black text-white font-mono tracking-widest'>{vehicleNum}</span>
-                )}
-              </div>
-
-              {registration?.ownerName && (
-                <p className='text-sm font-semibold text-slate-300 mt-1.5'>Owner: {registration.ownerName}</p>
+      {/* ── Minimal Navigation Header ── */}
+      <div className='max-w-6xl mx-auto w-full px-3 md:px-4 lg:px-6 pt-6 flex items-center justify-between gap-4'>
+        <div className='flex items-center gap-3'>
+          <button
+            onClick={() => navigate('/vehicle-registration')}
+            className='w-10 h-10 flex items-center justify-center rounded-xl bg-white hover:bg-gray-50 text-gray-700 transition-all duration-200 shadow-sm border border-gray-200 cursor-pointer'
+            title='Back'
+          >
+            <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
+            </svg>
+          </button>
+          <div>
+            <div className='flex items-center gap-2'>
+              {parts ? (
+                <div className={vehicleDesign.container}>
+                  <span className={vehicleDesign.stateCode}>{parts.stateCode}</span>
+                  <span className={vehicleDesign.districtCode}>{parts.districtCode}</span>
+                  <span className={vehicleDesign.series}>{parts.series}</span>
+                  <span className={vehicleDesign.last4Digits}>{parts.last4Digits}</span>
+                </div>
+              ) : (
+                <span className='text-xl font-bold text-gray-900 font-mono tracking-widest'>{vehicleNum}</span>
               )}
-              {registration?.mobileNumber && (
-                <p className='text-xs text-slate-500 mt-0.5'>Mobile: {registration.mobileNumber}</p>
+              {registration?.ownerName && (
+                <span className='text-sm font-semibold text-gray-500'>• {registration.ownerName}</span>
               )}
             </div>
           </div>
-
-          {/* Summary Cards */}
-          {!loading && !error && ledger && (
-            <div className='grid grid-cols-2 sm:grid-cols-4 gap-3 w-full md:w-auto md:min-w-[520px]'>
-              <div className='bg-white/5 rounded-xl px-4 py-3 backdrop-blur-sm border border-white/10'>
-                <p className='text-[10px] font-semibold text-slate-400 uppercase tracking-wide'>Total Work</p>
-                <p className='text-lg font-black text-white mt-0.5'>{totalRecords}</p>
-              </div>
-              <div className='bg-white/5 rounded-xl px-4 py-3 backdrop-blur-sm border border-white/10'>
-                <p className='text-[10px] font-semibold text-slate-400 uppercase tracking-wide'>Total Amount</p>
-                <p className='text-lg font-black text-white mt-0.5'>{formatCurrency(ledgerTotals.total)}</p>
-              </div>
-              <div className='bg-white/5 rounded-xl px-4 py-3 backdrop-blur-sm border border-white/10'>
-                <p className='text-[10px] font-semibold text-slate-400 uppercase tracking-wide'>Total Paid</p>
-                <p className='text-lg font-black text-emerald-400 mt-0.5'>{formatCurrency(ledgerTotals.paid)}</p>
-              </div>
-              <div className={`rounded-xl px-4 py-3 backdrop-blur-sm border ${hasPendingBalance ? 'bg-red-500/10 border-red-400/30' : 'bg-white/5 border-white/10'}`}>
-                <p className='text-[10px] font-semibold text-slate-400 uppercase tracking-wide'>Total Balance</p>
-                <p className={`text-lg font-black mt-0.5 ${hasPendingBalance ? 'text-red-300' : 'text-emerald-400'}`}>
-                  {formatCurrency(totalPending)}
-                </p>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
       {/* ── Main Content Area ── */}
-      <div className='flex-1 max-w-6xl mx-auto w-full px-3 md:px-4 lg:px-6 py-8'>
+      <div className='flex-1 max-w-6xl mx-auto w-full px-3 md:px-4 lg:px-6 py-6'>
         
         {/* Loading Spinner */}
         {loading && (
