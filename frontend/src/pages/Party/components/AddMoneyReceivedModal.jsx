@@ -179,13 +179,7 @@ const AddMoneyReceivedModal = ({ isOpen, onClose, onSuccess }) => {
         </div>
 
         <form onSubmit={handleSubmit} className='space-y-4 p-6'>
-          {/* Informational Hint */}
-          <div className='bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-2.5 text-xs font-semibold text-indigo-700 flex items-start gap-2.5 shadow-sm'>
-            <svg className='w-4.5 h-4.5 text-indigo-600 flex-shrink-0 mt-0.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
-            </svg>
-            <span>You must select at least **one** field: either a **Vehicle Number**, a **Party**, or both. Selecting a vehicle automatically populates its owner!</span>
-          </div>
+
           <div>
             <label className='mb-1 block text-sm font-bold text-slate-700'>Date</label>
             <input
