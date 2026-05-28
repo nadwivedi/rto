@@ -220,26 +220,6 @@ const VehicleLedgerPage = () => {
   return (
     <div className='min-h-screen bg-gradient-to-br from-gray-50 via-purple-50 to-pink-50 flex flex-col'>
 
-      {/* ── Top Navigation Bar ── */}
-      <div className='sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-200 shadow-sm'>
-        <div className='max-w-6xl mx-auto px-3 md:px-4 lg:px-6 py-3 flex items-center gap-3'>
-          <button
-            onClick={() => navigate('/vehicle-registration')}
-            className='inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-4 py-2 text-sm font-bold text-gray-700 shadow-sm hover:bg-gray-50 hover:border-gray-300 transition-all'
-          >
-            <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
-            </svg>
-            Back
-          </button>
-          <div className='flex-1 min-w-0'>
-            <span className='text-sm font-extrabold text-gray-900 tracking-wide truncate block'>
-              Vehicle Work Ledger &nbsp;<span className='text-indigo-600'>{vehicleNum}</span>
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* ── Main Content Area ── */}
       <div className='flex-1 max-w-6xl mx-auto w-full px-3 md:px-4 lg:px-6 py-6'>
         
