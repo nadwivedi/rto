@@ -276,21 +276,22 @@ const VehicleLedgerPage = () => {
         {/* Chronological Unified Ledger Table (Matching Party Ledger UI) */}
         {!loading && !error && allWork.length > 0 && (
           <div className='bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden'>
-            <div className='px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-200'>
-              <div className='flex items-center gap-3'>
-                <div className='w-10 h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center flex-shrink-0 shadow-sm'>
-                  <svg className='w-5 h-5 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <div className='px-4 py-3 md:px-6 md:py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-gray-200'>
+              <div className='flex items-center gap-2 md:gap-3'>
+                <div className='w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-green-500 to-emerald-500 flex items-center justify-center flex-shrink-0 shadow-sm'>
+                  <svg className='w-4 h-4 md:w-5 md:h-5 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' />
                   </svg>
                 </div>
                 <div>
-                  <h2 className='text-lg font-bold text-gray-900'>Vehicle Work Ledger - {vehicleNum}</h2>
-                  <p className='text-xs text-gray-600'>{allWork.length} records computed chronologically with running balances</p>
+                  <h2 className='text-sm md:text-lg font-bold text-gray-900'>Vehicle Work Ledger - {vehicleNum}</h2>
+                  <p className='hidden md:block text-xs text-gray-600'>{allWork.length} records computed chronologically with running balances</p>
                 </div>
               </div>
             </div>
 
-            <div className='p-4'>
+            {/* ── Desktop Table ── */}
+            <div className='hidden md:block p-4'>
               <div className='overflow-x-auto'>
                 <table className='w-full'>
                   <thead className={theme.tableHeader}>
@@ -330,6 +331,59 @@ const VehicleLedgerPage = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+
+            {/* ── Mobile Cards ── */}
+            <div className='md:hidden p-3 space-y-2'>
+              {allWork.map((item) => {
+                return (
+                  <div
+                    key={`${item.type}-${item._id}`}
+                    className='bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden'
+                  >
+                    {/* Top row: Date + Type badge */}
+                    <div className='flex items-center justify-between px-3 pt-2 pb-1.5'>
+                      <span className='text-[10px] font-semibold text-gray-500'>{formatDate(item.dateField || item.createdAt)}</span>
+                      <span className={`inline-flex px-2 py-0.5 text-[10px] font-bold rounded-full ${getTypeColorClass(item.typeColor)}`}>
+                        {item.type}
+                      </span>
+                    </div>
+
+                    {/* Reference */}
+                    {item.referenceNo && (
+                      <div className='px-3 pb-0.5'>
+                        <span className='text-[10px] font-semibold text-gray-400'>Ref: {item.referenceNo}</span>
+                      </div>
+                    )}
+
+                    {/* Amounts grid */}
+                    <div className='grid grid-cols-3 gap-px bg-gray-100 mt-1.5 rounded-b-xl overflow-hidden'>
+                      <div className='bg-white px-2.5 py-1.5'>
+                        <p className='text-[10px] font-semibold text-gray-400 uppercase tracking-wider'>Total</p>
+                        <p className='text-xs font-bold text-gray-900'>
+                          {item.type === 'Money Received' ? '-' : formatCurrency(item.totalAmount)}
+                        </p>
+                      </div>
+                      <div className='bg-white px-2.5 py-1.5'>
+                        <p className='text-[10px] font-semibold text-gray-400 uppercase tracking-wider'>Received</p>
+                        <p className='text-xs font-bold text-green-600'>{formatCurrency(item.receivedAmount || 0)}</p>
+                      </div>
+                      <div className='bg-white px-2.5 py-1.5'>
+                        <p className='text-[10px] font-semibold text-gray-400 uppercase tracking-wider'>Balance</p>
+                        <p className={`text-xs font-bold ${item.balanceAmount > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {item.type === 'Money Received' ? '-' : formatCurrency(item.balanceAmount)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Running Balance footer */}
+                    <div className='flex items-center justify-between px-3 py-1.5 bg-orange-50'>
+                      <span className='text-[10px] font-bold text-orange-700 uppercase tracking-wider'>Running Balance</span>
+                      <span className='text-xs font-black text-orange-700'>{formatCurrency(item.runningBalance)}</span>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}
