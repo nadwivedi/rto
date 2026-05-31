@@ -11,6 +11,7 @@ const panUploadsDir = path.join(__dirname, '..', 'uploads', 'pan-images')
 const insuranceUploadsDir = path.join(__dirname, '..', 'uploads', 'insurance-documents')
 const temporaryPermitUploadsDir = path.join(__dirname, '..', 'uploads', 'temporary-permit-documents')
 const speedGovernorUploadsDir = path.join(__dirname, '..', 'uploads', 'speed-governor-images')
+const kycUploadsDir = path.join(__dirname, '..', 'uploads', 'kyc-documents')
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
@@ -29,6 +30,9 @@ if (!fs.existsSync(temporaryPermitUploadsDir)) {
 }
 if (!fs.existsSync(speedGovernorUploadsDir)) {
   fs.mkdirSync(speedGovernorUploadsDir, { recursive: true })
+}
+if (!fs.existsSync(kycUploadsDir)) {
+  fs.mkdirSync(kycUploadsDir, { recursive: true })
 }
 
 // Helper function to delete old RC image file
@@ -867,3 +871,106 @@ exports.uploadTemporaryPermitDocument = async (req, res) => {
     })
   }
 }
+
+// Upload KYC Document (accepts base64 image/PDF)
+exports.uploadKycDocument = async (req, res) => {
+  try {
+    const { imageData, clientName, documentType, side } = req.body
+
+    if (!imageData) {
+      return res.status(400).json({
+        success: false,
+        message: 'Document/Image data is required'
+      })
+    }
+
+    if (!clientName) {
+      return res.status(400).json({
+        success: false,
+        message: 'Client name is required'
+      })
+    }
+
+    // Validate base64 format
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp|avif);base64,/
+    const pdfFormatRegex = /^data:application\/pdf;base64,/
+
+    let fileFormat = null
+    let fileExtension = null
+
+    const imageMatch = imageData.match(imageFormatRegex)
+    const pdfMatch = imageData.match(pdfFormatRegex)
+
+    if (imageMatch) {
+      fileFormat = 'avif' // we can save as avif to optimize size
+      fileExtension = 'avif'
+    } else if (pdfMatch) {
+      fileFormat = 'pdf'
+      fileExtension = 'pdf'
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Only JPG, JPEG, PNG, WebP, AVIF and PDF formats are accepted'
+      })
+    }
+
+    const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
+    const buffer = Buffer.from(base64Data, 'base64')
+
+    let finalBuffer = buffer
+    const fileSizeInMB = finalBuffer.length / (1024 * 1024)
+    if (fileSizeInMB > 12) {
+      return res.status(400).json({
+        success: false,
+        message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit`
+      })
+    }
+
+    if (imageMatch) {
+      try {
+        finalBuffer = await sharp(buffer)
+          .avif({ quality: 60 })
+          .toBuffer()
+      } catch (sharpErr) {
+        console.error('Sharp AVIF conversion error:', sharpErr)
+        fileFormat = imageMatch[1] === 'jpeg' ? 'jpg' : imageMatch[1]
+        fileExtension = fileFormat
+      }
+    }
+
+    // Generate clean filename
+    const sanitizedClientName = clientName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
+    const docPrefix = documentType ? documentType.toLowerCase() : 'kyc'
+    const sideSuffix = side ? `-${side}` : ''
+    const filename = `${docPrefix}-${sanitizedClientName}${sideSuffix}-${Date.now()}.${fileExtension}`
+    const filePath = path.join(kycUploadsDir, filename)
+
+    // Save to disk
+    fs.writeFileSync(filePath, finalBuffer)
+
+    const relativePath = `/uploads/kyc-documents/${filename}`
+
+    res.status(200).json({
+      success: true,
+      message: 'KYC Document uploaded successfully',
+      data: {
+        filename,
+        path: relativePath,
+        size: finalBuffer.length,
+        sizeInMB: (finalBuffer.length / (1024 * 1024)).toFixed(2),
+        format: fileFormat.toUpperCase()
+      }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: new Date().toISOString()
+    })
+  }
+}
+

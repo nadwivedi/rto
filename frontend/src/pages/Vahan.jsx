@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import RegisterVehicleModal from './VehicleRegistration/components/RegisterVehicleModal'
 import IssueNewPermitModal from './NationalPermit/components/IssueNewPermitModal'
 import IssueCgPermitModal from './CgPermit/components/IssueCgPermitModal'
@@ -123,14 +123,19 @@ const PermitTypeSelectModal = ({ onClose, openModal }) => {
     </div>
   );
 };
-
 const Vahan = () => {
+  const navigate = useNavigate()
   const [activeModal, setActiveModal] = useState(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
 
   const openModal = (title) => {
+    const option = vahanOptions.find((o) => o.title === title)
+    if (option && option.path) {
+      navigate(option.path)
+      return
+    }
     setActiveModal(title)
     setIsMobileMenuOpen(false)
     setIsReportModalOpen(false)

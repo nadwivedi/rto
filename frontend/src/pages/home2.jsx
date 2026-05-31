@@ -16,13 +16,22 @@ const sarthiServices = [
   { name: 'Dup RC', icon: '📋', desc: 'Duplicate RC' }
 ]
 
+const kycServices = [
+  { name: 'Aadhar Card', icon: '🪪', desc: 'Front & Back' },
+  { name: 'PAN Card', icon: '💳', desc: 'Verification' },
+  { name: 'GST Doc', icon: '🏢', desc: 'Firm Details' },
+  { name: 'Uploads', icon: '📂', desc: 'Document Hub' },
+  { name: 'Compliance', icon: '🛡️', desc: 'Secured KYC' },
+  { name: 'Registry', icon: '📝', desc: 'Search Database' }
+]
+
 const ServiceCard = ({ service, color, onClick }) => (
   <button
     onClick={onClick}
-    className={`group relative overflow-hidden rounded-xl border-2 border-transparent ${color.bg} p-2 sm:p-3 text-left transition-all duration-300 hover:border-current hover:shadow-lg hover:scale-[1.02]`}
+    className={`group relative overflow-hidden rounded-xl border-2 border-transparent ${color.bg} p-1.5 sm:p-2 text-left transition-all duration-300 hover:border-current hover:shadow-lg hover:scale-[1.02]`}
   >
-    <div className='relative flex flex-col items-center gap-1 sm:gap-2'>
-      <div className={`flex h-8 w-8 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-lg ${color.iconBg} text-base sm:text-xl shadow-sm`}>
+    <div className='relative flex flex-col items-center gap-1 sm:gap-1.5'>
+      <div className={`flex h-7 w-7 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg ${color.iconBg} text-sm sm:text-lg shadow-sm`}>
         {service.icon}
       </div>
       <div className='flex-1 min-w-0 text-center'>
@@ -34,11 +43,11 @@ const ServiceCard = ({ service, color, onClick }) => (
 )
 
 const HeaderSection = ({ title, subtitle, gradient, icon }) => (
-  <div className={`relative overflow-hidden ${gradient} p-4 sm:p-6`}>
+  <div className={`relative overflow-hidden ${gradient} p-3 sm:p-4.5`}>
     <div className='absolute right-0 top-0 h-20 w-20 translate-x-6 translate-y-[-1/2] rounded-full bg-white/10' />
     <div className='absolute -bottom-6 -left-6 h-16 w-16 rounded-full bg-white/10' />
-    <div className='relative flex items-center gap-3'>
-      <div className='flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-white/20 text-2xl sm:text-3xl backdrop-blur-sm'>
+    <div className='relative flex items-center gap-2.5'>
+      <div className='flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-white/20 text-xl sm:text-2xl backdrop-blur-sm'>
         {icon}
       </div>
       <div>
@@ -96,9 +105,18 @@ const Home2 = () => {
     border: 'border-orange-200'
   }
 
+  const kycColors = {
+    bg: 'bg-purple-50',
+    text: 'text-purple-700',
+    subtext: 'text-purple-500',
+    iconBg: 'bg-white shadow-purple-200/50',
+    accent: 'bg-purple-500',
+    border: 'border-purple-200'
+  }
+
   return (
     <div className='min-h-screen bg-slate-100 px-2 py-6 sm:px-6 lg:px-10'>
-      <div className='mx-auto max-w-6xl'>
+      <div className='mx-auto max-w-[1500px]'>
         {/* Top Navbar Options */}
         <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6 sm:mb-8 w-full bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-slate-200/50 shadow-sm'>
           {/* WhatsApp Not Connected Alert */}
@@ -146,7 +164,7 @@ const Home2 = () => {
         </div>
       </div>
 
-        <div className='grid gap-8 md:grid-cols-2'>
+        <div className='grid gap-8 md:grid-cols-2 lg:grid-cols-3'>
           <button
             onClick={() => navigate('/vahan')}
             className='group overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl text-left'
@@ -157,7 +175,7 @@ const Home2 = () => {
               gradient='bg-gradient-to-r from-sky-600 via-cyan-600 to-teal-600'
               icon='🚚'
             />
-            <div className='p-2 sm:p-4'>
+            <div className='p-2 sm:p-3'>
               <div className='grid grid-cols-3 gap-2 sm:gap-3'>
                 {vahanServices.map((service) => (
                   <ServiceCard key={service.name} service={service} color={vahanColors} />
@@ -176,10 +194,29 @@ const Home2 = () => {
               gradient='bg-gradient-to-r from-orange-600 via-amber-600 to-rose-600'
               icon='🚗'
             />
-            <div className='p-2 sm:p-4'>
+            <div className='p-2 sm:p-3'>
               <div className='grid grid-cols-3 gap-2 sm:gap-3'>
                 {sarthiServices.map((service) => (
                   <ServiceCard key={service.name} service={service} color={sarthiColors} />
+                ))}
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => navigate('/kyc')}
+            className='group overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl text-left'
+          >
+            <HeaderSection
+              title='KYC Zone'
+              subtitle='Store & search client KYC documents'
+              gradient='bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600'
+              icon='🛡️'
+            />
+            <div className='p-2 sm:p-3'>
+              <div className='grid grid-cols-3 gap-2 sm:gap-3'>
+                {kycServices.map((service) => (
+                  <ServiceCard key={service.name} service={service} color={kycColors} />
                 ))}
               </div>
             </div>

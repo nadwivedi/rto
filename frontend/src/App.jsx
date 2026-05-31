@@ -33,6 +33,7 @@ import PartyDetail from './pages/Party/PartyDetail'
 import Noc from './pages/Noc/Noc'
 import Vahan from './pages/Vahan'
 import Sarthi from './pages/Sarthi'
+import KycZone from './pages/KycZone/KycZone'
 import WhatsApp from './pages/WhatsApp/WhatsApp'
 import Javak from './pages/Javak/Javak'
 import PWAPrompt from './components/PWAPrompt'
@@ -141,6 +142,7 @@ function ProtectedLayout() {
               <Route path='/dealer-bill' element={<DealerBill />} />
               <Route path='/party' element={<Party />} />
               <Route path='/party/:partyId' element={<PartyDetail />} />
+              <Route path='/kyc' element={<KycZone />} />
               <Route path='/parties' element={<Navigate to='/party' replace />} />
               <Route path='/parties/:partyId' element={<LegacyPartyDetailRedirect />} />
               <Route path='/whatsapp' element={<WhatsApp />} />

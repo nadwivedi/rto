@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import QuickDLApplicationForm from './DrivingLicence/components/QuickDLApplicationForm'
 import axios from 'axios'
 import { toast } from 'react-toastify'
@@ -59,6 +59,7 @@ const quickButtons = [
 ]
 
 const Sarthi = () => {
+  const navigate = useNavigate()
   const [activeModal, setActiveModal] = useState(null)
   const [focusedIndex, setFocusedIndex] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
@@ -66,6 +67,11 @@ const Sarthi = () => {
   const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0)
 
   const openModal = (title) => {
+    const option = sarthiOptions.find((o) => o.title === title)
+    if (option && option.path) {
+      navigate(option.path)
+      return
+    }
     setActiveModal(title)
     setIsMobileMenuOpen(false)
     setIsReportModalOpen(false)
