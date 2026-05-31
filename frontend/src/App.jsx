@@ -72,7 +72,7 @@ function ProtectedLayout() {
         const isModalOpen = document.querySelector('.bg-slate-900\\/60, .fixed.inset-0, [role="dialog"]') !== null;
         if (isModalOpen) return;
 
-        const vahanHubPages = ['/vahan', '/whatsapp', '/setting', '/javak'];
+        const vahanHubPages = ['/vahan', '/whatsapp', '/setting', '/javak', '/kyc'];
         const sarthiHubPages = ['/sarthi'];
         const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal', '/hpa-hpt'];
 

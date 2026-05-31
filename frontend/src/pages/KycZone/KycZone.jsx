@@ -218,7 +218,7 @@ const KycZone = () => {
             { label: 'GST Document', val: stats.gst, color: 'border-slate-200 bg-white hover:border-pink-300', icon: <ShieldCheck className="text-pink-600" size={16} />, iconBg: 'bg-pink-50' },
             { label: 'Other Docs', val: stats.other, color: 'border-slate-200 bg-white hover:border-slate-350', icon: <FileText className="text-slate-600" size={16} />, iconBg: 'bg-slate-100' },
           ].map((card, i) => (
-            <div key={i} className={`bg-white border ${card.color} rounded-2xl p-3.5 shadow-sm transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]`}>
+            <div key={i} className={`${i >= 2 ? 'hidden lg:block' : ''} bg-white border ${card.color} rounded-2xl p-3.5 shadow-sm transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]`}>
               <div className="flex items-center justify-between mb-1.5">
                 <span className="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider">{card.label}</span>
                 <div className={`p-1.5 ${card.iconBg} rounded-lg flex items-center justify-center`}>{card.icon}</div>
@@ -238,7 +238,7 @@ const KycZone = () => {
               placeholder="Search by client name or document number..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all text-sm font-semibold"
+              className="w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/10 transition-all text-xs sm:text-sm font-semibold"
             />
           </div>
 
@@ -286,15 +286,101 @@ const KycZone = () => {
             </button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <>
+          {/* ── Desktop Table View ── */}
+          <div className="hidden lg:block bg-white border border-slate-200 rounded-[2rem] shadow-sm overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200">
+                    <th className="text-left px-4 py-3.5 text-[10px] font-black uppercase tracking-wider text-slate-500">Client Name</th>
+                    <th className="text-left px-4 py-3.5 text-[10px] font-black uppercase tracking-wider text-slate-500">Document Type</th>
+                    <th className="text-left px-4 py-3.5 text-[10px] font-black uppercase tracking-wider text-slate-500">Document Number</th>
+                    <th className="text-left px-4 py-3.5 text-[10px] font-black uppercase tracking-wider text-slate-500">Preview</th>
+                    <th className="text-left px-4 py-3.5 text-[10px] font-black uppercase tracking-wider text-slate-500">Remarks</th>
+                    <th className="text-center px-4 py-3.5 text-[10px] font-black uppercase tracking-wider text-slate-500">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {kycRecords.map((record) => (
+                    <tr key={record._id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="px-4 py-3.5">
+                        <span className="font-bold text-slate-800">{record.clientName}</span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className={`inline-block px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                          record.documentType === 'Aadhar' ? 'bg-teal-50 text-teal-700' :
+                          record.documentType === 'PAN' ? 'bg-orange-50 text-orange-700' :
+                          record.documentType === 'GST' ? 'bg-pink-50 text-pink-700' :
+                          'bg-slate-50 text-slate-600'
+                        }`}>
+                          {record.documentType}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <span className="font-mono text-xs font-semibold text-slate-600">
+                          {record.documentNumber || '—'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-1.5">
+                          {record.documentType === 'Aadhar' ? (
+                            <>
+                              {record.aadharFront ? (
+                                <button onClick={() => setPreviewUrl(record.aadharFront)} className="flex items-center gap-1 px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-[10px] font-bold transition-all" title="View Front">
+                                  <Eye size={10} /> Front
+                                </button>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">No Front</span>
+                              )}
+                              {record.aadharBack ? (
+                                <button onClick={() => setPreviewUrl(record.aadharBack)} className="flex items-center gap-1 px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-[10px] font-bold transition-all" title="View Back">
+                                  <Eye size={10} /> Back
+                                </button>
+                              ) : (
+                                <span className="text-[10px] text-slate-400 italic">No Back</span>
+                              )}
+                            </>
+                          ) : record.documentFile ? (
+                            <button onClick={() => setPreviewUrl(record.documentFile)} className="flex items-center gap-1 px-2.5 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-[10px] font-bold transition-all" title="View Document">
+                              <Eye size={10} /> View File
+                            </button>
+                          ) : (
+                            <span className="text-[10px] text-slate-400 italic">No file</span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 max-w-[200px]">
+                        {record.remarks ? (
+                          <span className="text-xs text-slate-500 line-clamp-1">{record.remarks}</span>
+                        ) : (
+                          <span className="text-xs text-slate-300">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center justify-center gap-1">
+                          <button onClick={() => handleEdit(record)} className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all" title="Edit">
+                            <Edit3 size={13} className="text-slate-600" />
+                          </button>
+                          <button onClick={() => handleDelete(record._id)} className="p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-all" title="Delete">
+                            <Trash2 size={13} className="text-rose-600" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* ── Mobile Card View ── */}
+          <div className="lg:hidden grid grid-cols-1 gap-4">
             {kycRecords.map((record) => (
-              <div 
-                key={record._id} 
-                className="group bg-white border border-slate-200 hover:border-slate-300 rounded-[2rem] p-6 shadow-sm relative overflow-hidden transition-all duration-300 hover:translate-y-[-3px] hover:shadow-lg"
-              >
-                <div className="flex items-center justify-between mb-4">
+              <div key={record._id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <span className={`px-3 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
                       record.documentType === 'Aadhar' ? 'bg-teal-50 text-teal-700 border border-teal-100' :
                       record.documentType === 'PAN' ? 'bg-orange-50 text-orange-700 border border-orange-100' :
                       record.documentType === 'GST' ? 'bg-pink-50 text-pink-700 border border-pink-100' :
@@ -303,89 +389,56 @@ const KycZone = () => {
                       {record.documentType}
                     </span>
                     {record.documentNumber && (
-                      <span className="text-xs text-slate-450 font-mono font-bold">
-                        {record.documentNumber}
-                      </span>
+                      <span className="text-[10px] text-slate-500 font-mono font-bold">{record.documentNumber}</span>
                     )}
                   </div>
-                  
-                  <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                    <button 
-                      onClick={() => handleEdit(record)}
-                      className="p-2 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all"
-                      title="Edit"
-                    >
-                      <Edit3 size={14} className="text-slate-600" />
+                  <div className="flex items-center gap-1">
+                    <button onClick={() => handleEdit(record)} className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all" title="Edit">
+                      <Edit3 size={13} className="text-slate-600" />
                     </button>
-                    <button 
-                      onClick={() => handleDelete(record._id)}
-                      className="p-2 bg-rose-50 hover:bg-rose-100 rounded-xl transition-all"
-                      title="Delete"
-                    >
-                      <Trash2 size={14} className="text-rose-600" />
+                    <button onClick={() => handleDelete(record._id)} className="p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-all" title="Delete">
+                      <Trash2 size={13} className="text-rose-600" />
                     </button>
                   </div>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-800 mb-1 group-hover:text-purple-600 transition-colors">
-                  {record.clientName}
-                </h3>
-
                 {record.remarks && (
-                  <p className="text-xs text-slate-500 line-clamp-2 mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                    {record.remarks}
-                  </p>
+                  <p className="text-xs text-slate-500 mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">{record.remarks}</p>
                 )}
 
-                {/* File Preview Link & Previews */}
-                <div className="mt-4 pt-4 border-t border-slate-100 space-y-2.5">
-                  {record.documentType === 'Aadhar' ? (
-                    <div className="grid grid-cols-2 gap-2">
-                      {record.aadharFront ? (
-                        <button
-                          onClick={() => setPreviewUrl(record.aadharFront)}
-                          className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-teal-600 transition-all"
-                        >
-                          <Eye size={12} />
-                          Front Side
-                        </button>
-                      ) : (
-                        <div className="py-2.5 px-3 bg-slate-50/40 border border-dashed border-slate-200 rounded-xl text-xs text-slate-400 text-center font-bold">
-                          No Front image
-                        </div>
-                      )}
-
-                      {record.aadharBack ? (
-                        <button
-                          onClick={() => setPreviewUrl(record.aadharBack)}
-                          className="flex items-center justify-center gap-1.5 py-2.5 px-3 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-teal-600 transition-all"
-                        >
-                          <Eye size={12} />
-                          Back Side
-                        </button>
-                      ) : (
-                        <div className="py-2.5 px-3 bg-slate-50/40 border border-dashed border-slate-200 rounded-xl text-xs text-slate-400 text-center font-bold">
-                          No Back image
-                        </div>
-                      )}
-                    </div>
-                  ) : record.documentFile ? (
-                    <button
-                      onClick={() => setPreviewUrl(record.documentFile)}
-                      className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-200 hover:border-slate-300 rounded-xl text-xs font-bold text-purple-600 transition-all"
-                    >
-                      <Eye size={14} />
-                      View Document File
-                    </button>
-                  ) : (
-                    <div className="py-3 px-4 bg-slate-50/40 border border-dashed border-slate-200 rounded-xl text-xs text-slate-400 text-center font-bold">
-                      No document file uploaded
-                    </div>
-                  )}
+                <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
+                  <h3 className="text-base font-bold text-slate-800 truncate">{record.clientName}</h3>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {record.documentType === 'Aadhar' ? (
+                      <>
+                        {record.aadharFront ? (
+                          <button onClick={() => setPreviewUrl(record.aadharFront)} className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-[10px] font-bold transition-all">
+                            <Eye size={11} /> Front
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 italic">No Front</span>
+                        )}
+                        {record.aadharBack ? (
+                          <button onClick={() => setPreviewUrl(record.aadharBack)} className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-[10px] font-bold transition-all">
+                            <Eye size={11} /> Back
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 italic">No Back</span>
+                        )}
+                      </>
+                    ) : record.documentFile ? (
+                      <button onClick={() => setPreviewUrl(record.documentFile)} className="flex items-center gap-1 px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-[10px] font-bold transition-all">
+                        <Eye size={11} /> View File
+                      </button>
+                    ) : (
+                      <span className="text-[10px] text-slate-400 italic">No file</span>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
           </div>
+          </>
         )}
       </div>
 
@@ -398,11 +451,18 @@ const KycZone = () => {
               <div className="flex items-center gap-2">
                 <a 
                   href={`${API_URL}${previewUrl}`} 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold transition-all animate-pulse"
+                  download
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 rounded-lg text-xs font-bold transition-all"
                 >
                   <FileDown size={14} />
+                  Download
+                </a>
+                <a 
+                  href={`${API_URL}${previewUrl}`} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-lg text-xs font-bold transition-all"
+                >
                   Open in New Tab
                 </a>
                 <button 
