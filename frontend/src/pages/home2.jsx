@@ -43,16 +43,16 @@ const ServiceCard = ({ service, color, onClick }) => (
 )
 
 const HeaderSection = ({ title, subtitle, gradient, icon }) => (
-  <div className={`relative overflow-hidden ${gradient} p-3 sm:p-4.5`}>
+  <div className={`relative overflow-hidden ${gradient} p-2.5 sm:p-3`}>
     <div className='absolute right-0 top-0 h-20 w-20 translate-x-6 translate-y-[-1/2] rounded-full bg-white/10' />
     <div className='absolute -bottom-6 -left-6 h-16 w-16 rounded-full bg-white/10' />
-    <div className='relative flex items-center gap-2.5'>
-      <div className='flex h-9 w-9 sm:h-11 sm:w-11 items-center justify-center rounded-xl bg-white/20 text-xl sm:text-2xl backdrop-blur-sm'>
+    <div className='relative flex items-center gap-2'>
+      <div className='flex h-8 w-8 sm:h-9 sm:w-9 items-center justify-center rounded-xl bg-white/20 text-lg sm:text-xl backdrop-blur-sm'>
         {icon}
       </div>
       <div>
-        <h2 className='text-lg sm:text-2xl font-bold text-white'>{title}</h2>
-        <p className='text-[10px] sm:text-sm text-white/80 hidden sm:block'>{subtitle}</p>
+        <h2 className='text-base sm:text-lg font-bold text-white'>{title}</h2>
+        <p className='text-[10px] sm:text-xs text-white/80 hidden sm:block'>{subtitle}</p>
       </div>
     </div>
   </div>
@@ -205,7 +205,7 @@ const Home2 = () => {
         </div>
       </div>
 
-        <div className='grid gap-8 md:grid-cols-2 lg:grid-cols-3'>
+        <div className='grid gap-4 lg:gap-5 md:grid-cols-2 lg:grid-cols-3'>
           <button
             onClick={() => navigate('/vahan')}
             className='group overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl text-left'
@@ -216,8 +216,8 @@ const Home2 = () => {
               gradient='bg-gradient-to-r from-sky-600 via-cyan-600 to-teal-600'
               icon='🚚'
             />
-            <div className='p-2 sm:p-3'>
-              <div className='grid grid-cols-3 gap-2 sm:gap-3'>
+            <div className='p-1.5 sm:p-2'>
+              <div className='grid grid-cols-3 gap-1.5 sm:gap-2'>
                 {vahanServices.map((service) => (
                   <ServiceCard key={service.name} service={service} color={vahanColors} />
                 ))}
@@ -235,8 +235,8 @@ const Home2 = () => {
               gradient='bg-gradient-to-r from-orange-600 via-amber-600 to-rose-600'
               icon='🚗'
             />
-            <div className='p-2 sm:p-3'>
-              <div className='grid grid-cols-3 gap-2 sm:gap-3'>
+            <div className='p-1.5 sm:p-2'>
+              <div className='grid grid-cols-3 gap-1.5 sm:gap-2'>
                 {sarthiServices.map((service) => (
                   <ServiceCard key={service.name} service={service} color={sarthiColors} />
                 ))}
@@ -254,7 +254,7 @@ const Home2 = () => {
               gradient='bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600'
               icon='🛡️'
             />
-            <div className='p-2 sm:p-3'>
+            <div className='p-1.5 sm:p-2'>
               <div className='grid grid-cols-3 gap-2 sm:gap-3'>
                 {kycServices.map((service) => (
                   <ServiceCard key={service.name} service={service} color={kycColors} />
