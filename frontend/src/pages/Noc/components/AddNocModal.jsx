@@ -216,7 +216,14 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className='flex flex-col flex-1 overflow-hidden'>
+        <style>{`
+          .noc-add-form input,
+          .noc-add-form select,
+          .noc-add-form textarea {
+            background-color: #ffffff;
+          }
+        `}</style>
+        <form onSubmit={handleSubmit} className='noc-add-form flex flex-col flex-1 overflow-hidden'>
           <div className='flex-1 overflow-y-auto p-3 md:p-6'>
             {error && (
               <div className='mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2'>
@@ -227,13 +234,14 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
               </div>
             )}
 
-            <div className='bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+
+
+            <div className='bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
-                <svg className='w-5 h-5 md:w-6 md:h-6 text-orange-600' fill='none' stroke='currentColor' viewBox='0 0 24 24' strokeWidth={1.5}>
-                  <path strokeLinecap='round' strokeLinejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5' />
-                </svg>
-                Date of Work
+                <span className='bg-teal-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>1</span>
+                Vehicle Information
               </h3>
+
               <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Date <span className='text-red-500'>*</span></label>
@@ -249,19 +257,9 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
                     }}
                     onKeyDown={handleFieldKeyDown}
                     required
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent'
                   />
                 </div>
-              </div>
-            </div>
-
-            <div className='bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
-              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
-                <span className='bg-teal-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>1</span>
-                Vehicle Information
-              </h3>
-
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Vehicle Number <span className='text-red-500'>*</span></label>
                   <input

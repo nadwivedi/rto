@@ -273,7 +273,14 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className='flex flex-col flex-1 overflow-hidden'>
+        <style>{`
+          .vt-add-form input,
+          .vt-add-form select,
+          .vt-add-form textarea {
+            background-color: #ffffff;
+          }
+        `}</style>
+        <form onSubmit={handleSubmit} className='vt-add-form flex flex-col flex-1 overflow-hidden'>
           <div className='flex-1 overflow-y-auto p-3 md:p-6'>
           {error && (
             <div className='mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2'>
