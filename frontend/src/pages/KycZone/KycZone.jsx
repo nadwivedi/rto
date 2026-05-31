@@ -210,20 +210,20 @@ const KycZone = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         {/* Statistics Cards - Light Mode */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4 mb-4 md:mb-8">
           {[
-            { label: 'Total KYC Records', val: stats.total, color: 'border-slate-200 bg-white hover:border-indigo-300', icon: <Layers className="text-indigo-600" size={16} />, iconBg: 'bg-indigo-50' },
-            { label: 'Aadhar Card', val: stats.aadhar, color: 'border-slate-200 bg-white hover:border-emerald-300', icon: <FileCheck className="text-emerald-600" size={16} />, iconBg: 'bg-emerald-50' },
-            { label: 'PAN Card', val: stats.pan, color: 'border-slate-200 bg-white hover:border-amber-300', icon: <FileText className="text-amber-600" size={16} />, iconBg: 'bg-amber-50' },
-            { label: 'GST Document', val: stats.gst, color: 'border-slate-200 bg-white hover:border-pink-300', icon: <ShieldCheck className="text-pink-600" size={16} />, iconBg: 'bg-pink-50' },
-            { label: 'Other Docs', val: stats.other, color: 'border-slate-200 bg-white hover:border-slate-350', icon: <FileText className="text-slate-600" size={16} />, iconBg: 'bg-slate-100' },
+            { label: 'Total KYC Records', val: stats.total, color: 'border-slate-200 bg-white hover:border-indigo-300', icon: <Layers className="text-indigo-600" size={12} />, iconBg: 'bg-indigo-50' },
+            { label: 'Aadhar Card', val: stats.aadhar, color: 'border-slate-200 bg-white hover:border-emerald-300', icon: <FileCheck className="text-emerald-600" size={12} />, iconBg: 'bg-emerald-50' },
+            { label: 'PAN Card', val: stats.pan, color: 'border-slate-200 bg-white hover:border-amber-300', icon: <FileText className="text-amber-600" size={12} />, iconBg: 'bg-amber-50' },
+            { label: 'GST Document', val: stats.gst, color: 'border-slate-200 bg-white hover:border-pink-300', icon: <ShieldCheck className="text-pink-600" size={12} />, iconBg: 'bg-pink-50' },
+            { label: 'Other Docs', val: stats.other, color: 'border-slate-200 bg-white hover:border-slate-350', icon: <FileText className="text-slate-600" size={12} />, iconBg: 'bg-slate-100' },
           ].map((card, i) => (
-            <div key={i} className={`${i >= 2 ? 'hidden lg:block' : ''} bg-white border ${card.color} rounded-2xl p-3.5 shadow-sm transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]`}>
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="text-slate-400 text-[10px] sm:text-xs font-bold uppercase tracking-wider">{card.label}</span>
-                <div className={`p-1.5 ${card.iconBg} rounded-lg flex items-center justify-center`}>{card.icon}</div>
+            <div key={i} className={`${i >= 2 ? 'hidden lg:block' : ''} bg-white border ${card.color} rounded-2xl p-2.5 md:p-3.5 shadow-sm transition-all duration-300 hover:shadow-md hover:translate-y-[-2px]`}>
+              <div className="flex items-center justify-between mb-1 md:mb-1.5">
+                <span className="text-slate-400 text-[9px] sm:text-xs font-bold uppercase tracking-wider">{card.label}</span>
+                <div className={`p-1 md:p-1.5 ${card.iconBg} rounded-lg flex items-center justify-center`}>{card.icon}</div>
               </div>
-              <span className="text-xl sm:text-2xl font-black text-slate-800 leading-none">{card.val}</span>
+              <span className="text-[15px] sm:text-2xl font-black text-slate-800 leading-none">{card.val}</span>
             </div>
           ))}
         </div>
