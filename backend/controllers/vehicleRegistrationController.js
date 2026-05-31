@@ -336,8 +336,6 @@ exports.createRegistration = async (req, res) => {
     // Images are optional
     const rcImage = req.body.rcImage
     const rcBackImage = req.body.rcBackImage
-    const aadharImage = req.body.aadharImage
-    const panImage = req.body.panImage
     const speedGovernorImage = req.body.speedGovernorImage
 
     // Validate required fields
@@ -407,12 +405,6 @@ exports.createRegistration = async (req, res) => {
     if (rcBackImage) {
       registrationData.rcBackImage = rcBackImage
     }
-    if (aadharImage) {
-      registrationData.aadharImage = aadharImage
-    }
-    if (panImage) {
-      registrationData.panImage = panImage
-    }
     if (speedGovernorImage) {
       registrationData.speedGovernorImage = speedGovernorImage
     }
@@ -471,8 +463,6 @@ exports.updateRegistration = async (req, res) => {
     // Images are optional
     const rcImage = req.body.rcImage
     const rcBackImage = req.body.rcBackImage
-    const aadharImage = req.body.aadharImage
-    const panImage = req.body.panImage
     const speedGovernorImage = req.body.speedGovernorImage
 
     const registration = await VehicleRegistration.findOne({
@@ -545,12 +535,6 @@ exports.updateRegistration = async (req, res) => {
     }
     if (rcBackImage !== undefined) {
       registration.rcBackImage = rcBackImage || undefined
-    }
-    if (aadharImage !== undefined) {
-      registration.aadharImage = aadharImage || undefined
-    }
-    if (panImage !== undefined) {
-      registration.panImage = panImage || undefined
     }
     if (speedGovernorImage !== undefined) {
       registration.speedGovernorImage = speedGovernorImage || undefined

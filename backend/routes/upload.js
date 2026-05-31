@@ -9,12 +9,6 @@ router.post('/rc-back-image', uploadController.uploadRCBackImage)
 // DELETE RC image
 router.delete('/rc-image', uploadController.deleteRCImage)
 
-// POST upload Aadhar image/PDF (base64, max 12MB)
-router.post('/aadhar-image', uploadController.uploadAadharImage)
-
-// POST upload PAN image/PDF (base64, max 12MB)
-router.post('/pan-image', uploadController.uploadPanImage)
-
 // POST upload Speed Governor image/PDF (base64, max 12MB)
 router.post('/speed-governor-image', uploadController.uploadSpeedGovernorImage)
 

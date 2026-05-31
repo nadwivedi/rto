@@ -106,14 +106,6 @@ const vehicleRegistrationSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
-  aadharImage: {
-    type: String,
-    trim: true
-  },
-  panImage: {
-    type: String,
-    trim: true
-  },
   speedGovernorImage: {
     type: String,
     trim: true

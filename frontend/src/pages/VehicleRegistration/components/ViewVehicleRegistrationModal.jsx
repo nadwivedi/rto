@@ -55,8 +55,6 @@ const ViewVehicleRegistrationModal = ({ isOpen, onClose, selectedRegistration, o
 
   const rcImageUrl = getImageUrl(selectedRegistration.rcImage)
   const rcBackImageUrl = getImageUrl(selectedRegistration.rcBackImage)
-  const aadharImageUrl = getImageUrl(selectedRegistration.aadharImage)
-  const panImageUrl = getImageUrl(selectedRegistration.panImage)
   const speedGovernorImageUrl = getImageUrl(selectedRegistration.speedGovernorImage)
   const partyDisplayId = getPartyDisplayId(selectedRegistration)
 
@@ -105,7 +103,7 @@ const ViewVehicleRegistrationModal = ({ isOpen, onClose, selectedRegistration, o
         {/* Content */}
         <div className='overflow-y-auto max-h-[calc(98vh-100px)] md:max-h-[calc(95vh-130px)] p-3 md:p-5'>
           {/* Document Images Section */}
-          {(rcImageUrl || rcBackImageUrl || aadharImageUrl || panImageUrl || speedGovernorImageUrl) && (
+          {(rcImageUrl || rcBackImageUrl || speedGovernorImageUrl) && (
             <div className='mb-4 bg-gradient-to-br from-green-50 to-emerald-50 p-3 md:p-4 rounded-lg md:rounded-xl border-2 border-green-200'>
               <h3 className='text-sm md:text-base font-bold text-green-900 mb-3 flex items-center gap-2'>
                 <svg className='w-4 h-4 text-green-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -175,78 +173,6 @@ const ViewVehicleRegistrationModal = ({ isOpen, onClose, selectedRegistration, o
                         />
                       )}
                       <div className='absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded cursor-pointer' onClick={() => handleImageClick(rcBackImageUrl, isPDF(rcBackImageUrl) ? 'RC Back PDF' : 'RC Back Image')}>
-                        <div className='bg-white text-gray-800 px-2 py-1 rounded text-xs font-bold flex items-center gap-1'>
-                          <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7' />
-                          </svg>
-                          View
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Aadhar Image */}
-                {aadharImageUrl && (
-                  <div className='bg-white rounded-lg p-2 border-2 border-orange-300 group relative'>
-                    <div className='text-[10px] font-bold text-orange-800 mb-2 text-center uppercase tracking-wide'>Aadhar {isPDF(aadharImageUrl) ? 'PDF' : 'Image'}</div>
-                    <div className='relative'>
-                      {isPDF(aadharImageUrl) ? (
-                        <div
-                          onClick={() => handleImageClick(aadharImageUrl, 'Aadhar Document PDF')}
-                          className='w-full h-32 bg-red-50 rounded cursor-pointer hover:bg-red-100 transition-colors flex items-center justify-center border-2 border-red-200'
-                          title='Click to view PDF'
-                        >
-                          <svg className='w-10 h-10 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
-                            <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
-                          </svg>
-                        </div>
-                      ) : (
-                        <img
-                          src={aadharImageUrl}
-                          alt='Aadhar Document'
-                          onClick={() => handleImageClick(aadharImageUrl, 'Aadhar Document Image')}
-                          className='w-full h-32 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity'
-                          title='Click to view full image with zoom'
-                        />
-                      )}
-                      <div className='absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded cursor-pointer' onClick={() => handleImageClick(aadharImageUrl, isPDF(aadharImageUrl) ? 'Aadhar Document PDF' : 'Aadhar Document Image')}>
-                        <div className='bg-white text-gray-800 px-2 py-1 rounded text-xs font-bold flex items-center gap-1'>
-                          <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7' />
-                          </svg>
-                          View
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* PAN Image */}
-                {panImageUrl && (
-                  <div className='bg-white rounded-lg p-2 border-2 border-purple-300 group relative'>
-                    <div className='text-[10px] font-bold text-purple-800 mb-2 text-center uppercase tracking-wide'>PAN {isPDF(panImageUrl) ? 'PDF' : 'Image'}</div>
-                    <div className='relative'>
-                      {isPDF(panImageUrl) ? (
-                        <div
-                          onClick={() => handleImageClick(panImageUrl, 'PAN Card PDF')}
-                          className='w-full h-32 bg-red-50 rounded cursor-pointer hover:bg-red-100 transition-colors flex items-center justify-center border-2 border-red-200'
-                          title='Click to view PDF'
-                        >
-                          <svg className='w-10 h-10 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
-                            <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
-                          </svg>
-                        </div>
-                      ) : (
-                        <img
-                          src={panImageUrl}
-                          alt='PAN Card'
-                          onClick={() => handleImageClick(panImageUrl, 'PAN Card Image')}
-                          className='w-full h-32 object-cover rounded cursor-pointer hover:opacity-80 transition-opacity'
-                          title='Click to view full image with zoom'
-                        />
-                      )}
-                      <div className='absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded cursor-pointer' onClick={() => handleImageClick(panImageUrl, isPDF(panImageUrl) ? 'PAN Card PDF' : 'PAN Card Image')}>
                         <div className='bg-white text-gray-800 px-2 py-1 rounded text-xs font-bold flex items-center gap-1'>
                           <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7' />

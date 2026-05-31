@@ -30,8 +30,6 @@ const CreateVehicleFromJson = () => {
     manufactureYear: 2012,
     vehicleCategory: "Transport",
     rcImage: "<RC_IMAGE_URL>",
-    aadharImage: null,
-    panImage: null,
     numberOfCylinders: 6,
     cubicCapacity: 178,
     fuelType: "Diesel",

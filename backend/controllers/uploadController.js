@@ -6,8 +6,6 @@ const sharp = require('sharp')
 
 // Ensure uploads directories exist
 const uploadsDir = path.join(__dirname, '..', 'uploads', 'rc-images')
-const aadharUploadsDir = path.join(__dirname, '..', 'uploads', 'aadhar-images')
-const panUploadsDir = path.join(__dirname, '..', 'uploads', 'pan-images')
 const insuranceUploadsDir = path.join(__dirname, '..', 'uploads', 'insurance-documents')
 const temporaryPermitUploadsDir = path.join(__dirname, '..', 'uploads', 'temporary-permit-documents')
 const speedGovernorUploadsDir = path.join(__dirname, '..', 'uploads', 'speed-governor-images')
@@ -15,12 +13,6 @@ const kycUploadsDir = path.join(__dirname, '..', 'uploads', 'kyc-documents')
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true })
-}
-if (!fs.existsSync(aadharUploadsDir)) {
-  fs.mkdirSync(aadharUploadsDir, { recursive: true })
-}
-if (!fs.existsSync(panUploadsDir)) {
-  fs.mkdirSync(panUploadsDir, { recursive: true })
 }
 if (!fs.existsSync(insuranceUploadsDir)) {
   fs.mkdirSync(insuranceUploadsDir, { recursive: true })
@@ -333,222 +325,6 @@ exports.deleteRCImage = async (req, res) => {
   }
 }
 
-// Upload Aadhar Image/PDF
-exports.uploadAadharImage = async (req, res) => {
-  try {
-    const { imageData, vehicleRegistrationId, vehicleNumber } = req.body
-
-    if (!imageData) {
-      return res.status(400).json({
-        success: false,
-        message: 'Document data is required'
-      })
-    }
-
-    if (!vehicleNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle registration number is required'
-      })
-    }
-
-    // If vehicleRegistrationId provided, check for existing document and delete it
-    if (vehicleRegistrationId) {
-      const existingVehicle = await VehicleRegistration.findOne({
-        _id: vehicleRegistrationId,
-        userId: req.user.id
-      })
-
-      if (existingVehicle && existingVehicle.aadharImage) {
-        // Delete old Aadhar document
-        try {
-          const filename = path.basename(existingVehicle.aadharImage)
-          const filePath = path.join(aadharUploadsDir, filename)
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath)
-          }
-        } catch (err) {
-          console.error('Error deleting old Aadhar:', err)
-        }
-      }
-    }
-
-    // Validate base64 format
-    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp);base64,/
-    const pdfFormatRegex = /^data:application\/pdf;base64,/
-
-    let fileFormat = null
-    let fileExtension = null
-
-    const imageMatch = imageData.match(imageFormatRegex)
-    const pdfMatch = imageData.match(pdfFormatRegex)
-
-    if (imageMatch) {
-      fileFormat = imageMatch[1]
-      fileExtension = fileFormat === 'jpeg' ? 'jpg' : fileFormat
-    } else if (pdfMatch) {
-      fileFormat = 'pdf'
-      fileExtension = 'pdf'
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: 'Only JPG, JPEG, PNG, WebP, and PDF formats are accepted'
-      })
-    }
-
-    const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
-    const buffer = Buffer.from(base64Data, 'base64')
-
-    const fileSizeInMB = buffer.length / (1024 * 1024)
-    if (fileSizeInMB > 12) {
-      return res.status(400).json({
-        success: false,
-        message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit`
-      })
-    }
-
-    // Generate filename with vehicle number
-    // Format: aadhar-VEHICLENUMBER.extension
-    const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '')
-    const filename = `aadhar-${sanitizedVehicleNumber}.${fileExtension}`
-    const filePath = path.join(aadharUploadsDir, filename)
-
-    fs.writeFileSync(filePath, buffer)
-
-    const relativePath = `/uploads/aadhar-images/${filename}`
-
-    res.status(200).json({
-      success: true,
-      message: 'Aadhar document uploaded successfully',
-      data: {
-        filename,
-        path: relativePath,
-        size: buffer.length,
-        sizeInMB: fileSizeInMB.toFixed(2),
-        format: fileFormat.toUpperCase()
-      }
-    })
-  } catch (error) {
-    logError(error, req)
-    const userError = getUserFriendlyError(error)
-    res.status(500).json({
-      success: false,
-      message: userError.message,
-      errors: userError.details,
-      errorCount: userError.errorCount,
-      timestamp: new Date().toISOString()
-    })
-  }
-}
-
-// Upload PAN Image/PDF
-exports.uploadPanImage = async (req, res) => {
-  try {
-    const { imageData, vehicleRegistrationId, vehicleNumber } = req.body
-
-    if (!imageData) {
-      return res.status(400).json({
-        success: false,
-        message: 'Document data is required'
-      })
-    }
-
-    if (!vehicleNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle registration number is required'
-      })
-    }
-
-    // If vehicleRegistrationId provided, check for existing document and delete it
-    if (vehicleRegistrationId) {
-      const existingVehicle = await VehicleRegistration.findOne({
-        _id: vehicleRegistrationId,
-        userId: req.user.id
-      })
-
-      if (existingVehicle && existingVehicle.panImage) {
-        // Delete old PAN document
-        try {
-          const filename = path.basename(existingVehicle.panImage)
-          const filePath = path.join(panUploadsDir, filename)
-          if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath)
-          }
-        } catch (err) {
-          console.error('Error deleting old PAN:', err)
-        }
-      }
-    }
-
-    // Validate base64 format
-    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp);base64,/
-    const pdfFormatRegex = /^data:application\/pdf;base64,/
-
-    let fileFormat = null
-    let fileExtension = null
-
-    const imageMatch = imageData.match(imageFormatRegex)
-    const pdfMatch = imageData.match(pdfFormatRegex)
-
-    if (imageMatch) {
-      fileFormat = imageMatch[1]
-      fileExtension = fileFormat === 'jpeg' ? 'jpg' : fileFormat
-    } else if (pdfMatch) {
-      fileFormat = 'pdf'
-      fileExtension = 'pdf'
-    } else {
-      return res.status(400).json({
-        success: false,
-        message: 'Only JPG, JPEG, PNG, WebP, and PDF formats are accepted'
-      })
-    }
-
-    const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
-    const buffer = Buffer.from(base64Data, 'base64')
-
-    const fileSizeInMB = buffer.length / (1024 * 1024)
-    if (fileSizeInMB > 12) {
-      return res.status(400).json({
-        success: false,
-        message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit`
-      })
-    }
-
-    // Generate filename with vehicle number
-    // Format: pan-VEHICLENUMBER.extension
-    const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '')
-    const filename = `pan-${sanitizedVehicleNumber}.${fileExtension}`
-    const filePath = path.join(panUploadsDir, filename)
-
-    fs.writeFileSync(filePath, buffer)
-
-    const relativePath = `/uploads/pan-images/${filename}`
-
-    res.status(200).json({
-      success: true,
-      message: 'PAN document uploaded successfully',
-      data: {
-        filename,
-        path: relativePath,
-        size: buffer.length,
-        sizeInMB: fileSizeInMB.toFixed(2),
-        format: fileFormat.toUpperCase()
-      }
-    })
-  } catch (error) {
-    logError(error, req)
-    const userError = getUserFriendlyError(error)
-    res.status(500).json({
-      success: false,
-      message: userError.message,
-      errors: userError.details,
-      errorCount: userError.errorCount,
-      timestamp: new Date().toISOString()
-    })
-  }
-}
-
 exports.uploadSpeedGovernorImage = async (req, res) => {
   try {
     const { imageData, vehicleRegistrationId, vehicleNumber } = req.body
@@ -575,7 +351,7 @@ exports.uploadSpeedGovernorImage = async (req, res) => {
       })
 
       if (existingVehicle && existingVehicle.speedGovernorImage) {
-        // Delete old PAN document
+        // Delete old Speed Governor document
         try {
           const filename = path.basename(existingVehicle.speedGovernorImage)
           const filePath = path.join(speedGovernorUploadsDir, filename)
