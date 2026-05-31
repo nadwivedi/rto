@@ -43,6 +43,17 @@ const KycZone = () => {
     fetchKycRecords()
   }, [searchQuery, selectedDocType])
 
+  useEffect(() => {
+    if (!isModalOpen) return
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setIsModalOpen(false)
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isModalOpen])
+
   const fetchKycRecords = async () => {
     try {
       setLoading(true)
