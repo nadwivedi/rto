@@ -93,6 +93,7 @@ const Home2 = () => {
   const [showBookmarkModal, setShowBookmarkModal] = useState(false)
   const [bmName, setBmName] = useState('')
   const [bmUrl, setBmUrl] = useState('')
+  const [bmToDelete, setBmToDelete] = useState(null)
   const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
   const fetchBookmarks = useCallback(async () => {
@@ -275,12 +276,12 @@ const Home2 = () => {
                   rel="noreferrer"
                   className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-700 rounded-lg text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap"
                 >
-                  <Globe size={12} className="flex-shrink-0" />
+                  <img src={`https://www.google.com/s2/favicons?domain=${new URL(bm.url).hostname}&sz=32`} alt="" className="w-[18px] h-[18px] flex-shrink-0" />
                   {bm.name}
                   <ExternalLink size={10} className="opacity-40 flex-shrink-0" />
                 </a>
                 <button
-                  onClick={() => removeBookmark(bm._id)}
+                  onClick={() => setBmToDelete(bm)}
                   className="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 bg-red-500 text-white rounded-full shadow hover:bg-red-600"
                 >
                   <X size={10} />
@@ -343,6 +344,36 @@ const Home2 = () => {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* ── Delete Confirmation Modal ── */}
+        {bmToDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full overflow-hidden p-6 text-center">
+              <div className="text-red-500 text-4xl mb-3">⚠️</div>
+              <h3 className="text-lg font-bold text-slate-800 mb-1">Delete Bookmark?</h3>
+              <p className="text-sm text-slate-500 mb-5">
+                Are you sure you want to remove <span className="font-semibold text-slate-700">{bmToDelete.name}</span>?
+              </p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setBmToDelete(null)}
+                  className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl font-bold text-sm transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    removeBookmark(bmToDelete._id)
+                    setBmToDelete(null)
+                  }}
+                  className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold text-sm shadow-md transition-all"
+                >
+                  Yes, Delete
+                </button>
+              </div>
             </div>
           </div>
         )}
