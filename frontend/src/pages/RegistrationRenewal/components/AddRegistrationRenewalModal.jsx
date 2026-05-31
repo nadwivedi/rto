@@ -249,7 +249,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
           <div className='flex justify-between items-center'>
             <div>
               <h2 className='text-lg md:text-2xl font-bold'>
-                {editData ? 'Edit Registration Renewal' : 'New Registration Renewal'}
+                {editData ? 'Edit Registration Renewal' : 'Add New RC Renewal'}
               </h2>
               <p className='text-teal-100 text-xs md:text-sm mt-1'>Vehicle registration renewal details</p>
             </div>
@@ -264,7 +264,14 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className='flex flex-col flex-1 overflow-hidden'>
+        <style>{`
+          .rr-add-form input,
+          .rr-add-form select,
+          .rr-add-form textarea {
+            background-color: #ffffff;
+          }
+        `}</style>
+        <form onSubmit={handleSubmit} className='rr-add-form flex flex-col flex-1 overflow-hidden'>
           <div className='flex-1 overflow-y-auto p-3 md:p-6'>
             {error && (
               <div className='mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2'>
@@ -281,27 +288,26 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
                 Vehicle Information
               </h3>
 
-              <div className='mb-3 md:mb-4'>
-                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                  Date of Work <span className='text-red-500'>*</span>
-                </label>
-                <input
-                  type='date'
-                  name='date'
-                  value={formData.date ? formData.date.split('-').reverse().join('-') : ''}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
-                    const [y, m, d] = val.split('-');
-                    setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
-                  }}
-                  required
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent'
-                />
-              </div>
-
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
-                <div>
+              <div className='grid grid-cols-1 md:grid-cols-6 gap-3 md:gap-4'>
+                <div className='md:col-span-2'>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Date of Work <span className='text-red-500'>*</span>
+                  </label>
+                  <input
+                    type='date'
+                    name='date'
+                    value={formData.date ? formData.date.split('-').reverse().join('-') : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
+                      const [y, m, d] = val.split('-');
+                      setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+                    }}
+                    required
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent'
+                  />
+                </div>
+                <div className='md:col-span-2'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Vehicle Number <span className='text-red-500'>*</span>
                   </label>
@@ -338,7 +344,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
                   )}
                 </div>
 
-                <div>
+                <div className='md:col-span-2'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Owner Name <span className='text-red-500'>*</span>
                   </label>
@@ -354,7 +360,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
                   />
                 </div>
 
-                <div>
+                <div className='md:col-span-3'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Mobile Number <span className='text-red-500'>*</span>
                   </label>
@@ -372,7 +378,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
                   />
                 </div>
 
-                <div>
+                <div className='md:col-span-3'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Address <span className='text-red-500'>*</span>
                   </label>
