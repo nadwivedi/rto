@@ -663,10 +663,7 @@ const Fitness = () => {
                       Date
                     </th>
                     <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide">
-                      Vehicle Number
-                    </th>
-                    <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide">
-                      Owner Name
+                      Vehicle / Owner
                     </th>
                     <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide">
                       Valid From
@@ -708,7 +705,7 @@ const Fitness = () => {
                           </div>
                         </td>
 
-                        {/* Vehicle Number */}
+                        {/* Vehicle / Owner / Mobile */}
                         <td className="px-4 2xl:px-6 py-3 2xl:py-4">
                           <div>
                             <div className="flex items-center gap-2 2xl:gap-3">
@@ -750,21 +747,19 @@ const Fitness = () => {
                                 );
                               })()}
                             </div>
+                            {record.ownerName && (
+                              <div className="text-[10px] 2xl:text-xs text-gray-600 mt-0.5">
+                                {record.ownerName}
+                              </div>
+                            )}
                             {record.mobileNumber && (
-                              <div className="flex items-center mt-1.5 text-[10px] 2xl:text-xs text-gray-600">
-                                <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <div className="flex items-center mt-0.5 text-[10px] 2xl:text-xs text-gray-500">
+                                <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
                                 {record.mobileNumber}
                               </div>
                             )}
-                          </div>
-                        </td>
-
-                        {/* Owner Name */}
-                        <td className="px-4 2xl:px-6 py-3 2xl:py-4">
-                          <div className="text-[11px] 2xl:text-sm font-semibold text-gray-800">
-                            {record.ownerName || 'N/A'}
                           </div>
                         </td>
 
@@ -912,7 +907,7 @@ const Fitness = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="10" className="px-4 py-8 text-center">
+                      <td colSpan="9" className="px-4 py-8 text-center">
                         <div className="text-gray-400">
                           <svg
                             className="mx-auto h-8 w-8 mb-3"
