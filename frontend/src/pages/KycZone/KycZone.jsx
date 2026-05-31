@@ -375,12 +375,12 @@ const KycZone = () => {
           </div>
 
           {/* ── Mobile Card View ── */}
-          <div className="lg:hidden grid grid-cols-1 gap-4">
+          <div className="lg:hidden grid grid-cols-1 gap-2">
             {kycRecords.map((record) => (
-              <div key={record._id} className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider ${
+              <div key={record._id} className="bg-white border border-slate-200 rounded-2xl p-2.5 shadow-sm">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className={`px-2 py-0.5 rounded-lg text-[9px] font-black uppercase tracking-wider ${
                       record.documentType === 'Aadhar' ? 'bg-teal-50 text-teal-700 border border-teal-100' :
                       record.documentType === 'PAN' ? 'bg-orange-50 text-orange-700 border border-orange-100' :
                       record.documentType === 'GST' ? 'bg-pink-50 text-pink-700 border border-pink-100' :
@@ -389,49 +389,49 @@ const KycZone = () => {
                       {record.documentType}
                     </span>
                     {record.documentNumber && (
-                      <span className="text-[10px] text-slate-500 font-mono font-bold">{record.documentNumber}</span>
+                      <span className="text-[9px] text-slate-500 font-mono font-bold">{record.documentNumber}</span>
                     )}
                   </div>
-                  <div className="flex items-center gap-1">
-                    <button onClick={() => handleEdit(record)} className="p-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all" title="Edit">
-                      <Edit3 size={13} className="text-slate-600" />
+                  <div className="flex items-center gap-0.5">
+                    <button onClick={() => handleEdit(record)} className="p-1 bg-slate-100 hover:bg-slate-200 rounded-lg transition-all" title="Edit">
+                      <Edit3 size={11} className="text-slate-600" />
                     </button>
-                    <button onClick={() => handleDelete(record._id)} className="p-1.5 bg-rose-50 hover:bg-rose-100 rounded-lg transition-all" title="Delete">
-                      <Trash2 size={13} className="text-rose-600" />
+                    <button onClick={() => handleDelete(record._id)} className="p-1 bg-rose-50 hover:bg-rose-100 rounded-lg transition-all" title="Delete">
+                      <Trash2 size={11} className="text-rose-600" />
                     </button>
                   </div>
                 </div>
 
                 {record.remarks && (
-                  <p className="text-xs text-slate-500 mb-3 bg-slate-50 p-2 rounded-lg border border-slate-100">{record.remarks}</p>
+                  <p className="text-[10px] text-slate-500 mb-1.5 bg-slate-50 p-1.5 rounded-lg border border-slate-100">{record.remarks}</p>
                 )}
 
-                <div className="flex items-center justify-between gap-2 pt-3 border-t border-slate-100">
-                  <h3 className="text-base font-bold text-slate-800 truncate">{record.clientName}</h3>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                  <h3 className="text-sm font-bold text-slate-800 truncate">{record.clientName}</h3>
+                  <div className="flex items-center gap-1 flex-shrink-0">
                     {record.documentType === 'Aadhar' ? (
                       <>
                         {record.aadharFront ? (
-                          <button onClick={() => setPreviewUrl(record.aadharFront)} className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-[10px] font-bold transition-all">
-                            <Eye size={11} /> Front
+                          <button onClick={() => setPreviewUrl(record.aadharFront)} className="flex items-center gap-1 px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-[9px] font-bold transition-all">
+                            <Eye size={10} /> Front
                           </button>
                         ) : (
-                          <span className="text-[10px] text-slate-400 italic">No Front</span>
+                          <span className="text-[9px] text-slate-400 italic">No Front</span>
                         )}
                         {record.aadharBack ? (
-                          <button onClick={() => setPreviewUrl(record.aadharBack)} className="flex items-center gap-1 px-2.5 py-1.5 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-[10px] font-bold transition-all">
-                            <Eye size={11} /> Back
+                          <button onClick={() => setPreviewUrl(record.aadharBack)} className="flex items-center gap-1 px-2 py-1 bg-teal-50 hover:bg-teal-100 text-teal-700 rounded-lg text-[9px] font-bold transition-all">
+                            <Eye size={10} /> Back
                           </button>
                         ) : (
-                          <span className="text-[10px] text-slate-400 italic">No Back</span>
+                          <span className="text-[9px] text-slate-400 italic">No Back</span>
                         )}
                       </>
                     ) : record.documentFile ? (
-                      <button onClick={() => setPreviewUrl(record.documentFile)} className="flex items-center gap-1 px-2.5 py-1.5 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-[10px] font-bold transition-all">
-                        <Eye size={11} /> View File
+                      <button onClick={() => setPreviewUrl(record.documentFile)} className="flex items-center gap-1 px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 rounded-lg text-[9px] font-bold transition-all">
+                        <Eye size={10} /> View File
                       </button>
                     ) : (
-                      <span className="text-[10px] text-slate-400 italic">No file</span>
+                      <span className="text-[9px] text-slate-400 italic">No file</span>
                     )}
                   </div>
                 </div>
