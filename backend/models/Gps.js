@@ -27,6 +27,10 @@ const gpsSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  date: {
+    type: String,
+    trim: true
+  },
   gpsDocument: {
     type: String,
     trim: true

@@ -378,7 +378,7 @@ exports.getGpsById = async (req, res) => {
 // Create new GPS record
 exports.createGps = async (req, res) => {
   try {
-    const { vehicleNumber, ownerName, mobileNumber, validFrom, validTo, totalFee, paid, balance, partyId: reqPartyId, gpsDocumentData } = req.body
+    const { vehicleNumber, ownerName, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, partyId: reqPartyId, gpsDocumentData } = req.body
 
     // Validate required fields
     if (!vehicleNumber ) {
@@ -445,6 +445,7 @@ exports.createGps = async (req, res) => {
       vehicleNumber: normalizedVehicleNumber,
       ownerName,
       mobileNumber,
+      date,
       gpsDocument,
       validFrom,
       validTo,
@@ -476,7 +477,7 @@ exports.createGps = async (req, res) => {
 // Update GPS record
 exports.updateGps = async (req, res) => {
   try {
-    const { vehicleNumber, ownerName, mobileNumber, validFrom, validTo, totalFee, paid, balance, partyId, gpsDocumentData } = req.body
+    const { vehicleNumber, ownerName, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, partyId, gpsDocumentData } = req.body
 
     const gps = await Gps.findOne({ _id: req.params.id, userId: req.user.id })
 
@@ -512,6 +513,7 @@ exports.updateGps = async (req, res) => {
     if (vehicleNumber) gps.vehicleNumber = vehicleNumber
     if (ownerName !== undefined) gps.ownerName = ownerName
     if (mobileNumber !== undefined) gps.mobileNumber = mobileNumber
+    if (date !== undefined) gps.date = date
     if (gpsDocumentData) {
       deleteGpsDocument(gps.gpsDocument)
       gps.gpsDocument = saveGpsDocument(gpsDocumentData, vehicleNumber || gps.vehicleNumber)

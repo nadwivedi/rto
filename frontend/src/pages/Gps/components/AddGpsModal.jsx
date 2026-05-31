@@ -11,6 +11,7 @@ const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
 const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', prefilledOwnerName = '', prefilledMobileNumber = '' }) => {
   const isOcrUpdate = useRef(false)
   const [formData, setFormData] = useState({
+    date: '',
     vehicleNumber: prefilledVehicleNumber,
     ownerName: prefilledOwnerName,
     mobileNumber: prefilledMobileNumber,
@@ -46,6 +47,7 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
   useEffect(() => {
     if (!isOpen) {
       setFormData({
+        date: '',
         vehicleNumber: prefilledVehicleNumber,
         ownerName: prefilledOwnerName,
         mobileNumber: prefilledMobileNumber,
@@ -380,6 +382,7 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
       }
 
       const dataToSubmit = {
+        date: formData.date || undefined,
         vehicleNumber: formData.vehicleNumber,
         ownerName: formData.ownerName,
         mobileNumber: formData.mobileNumber,
@@ -617,7 +620,26 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 Vehicle Details
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4'>
+                {/* Date of Work */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Date of Work
+                  </label>
+                  <input
+                    type='date'
+                    name='date'
+                    value={formData.date}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
+                      const [y, m, d] = val.split('-');
+                      setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+                    }}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent bg-white'
+                  />
+                </div>
+
                 {/* Vehicle Number */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>

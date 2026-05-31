@@ -23,6 +23,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
   const [isExtractingTax, setIsExtractingTax] = useState(false)
 
   const [formData, setFormData] = useState({
+    date: '',
     receiptNo: '',
     vehicleNumber: prefilledVehicleNumber,
     ownerName: prefilledOwnerName,
@@ -53,6 +54,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
   useEffect(() => {
     if (!isOpen) {
       setFormData({
+        date: '',
         receiptNo: '',
         vehicleNumber: prefilledVehicleNumber,
         ownerName: prefilledOwnerName,
@@ -459,8 +461,8 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
       // Get current tabIndex
       const currentTabIndex = parseInt(e.target.getAttribute('tabIndex'))
 
-      // If we're on the last field (taxTo = tabIndex 9), submit the form
-      if (currentTabIndex === 9) {
+      // If we're on the last field (taxAmount = tabIndex 10), submit the form
+      if (currentTabIndex === 10) {
         document.querySelector('form')?.requestSubmit()
         return
       }
@@ -581,6 +583,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
     }
 
     const dataToSubmit = {
+      date: formData.date || undefined,
       receiptNo: formData.receiptNo,
       vehicleNumber: formData.vehicleNumber,
       ownerName: formData.ownerName,
@@ -690,6 +693,26 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
               </h3>
 
               <div className='grid grid-cols-1 lg:grid-cols-12 gap-3 md:gap-4'>
+                {/* Date of Work */}
+                <div className='lg:col-span-2'>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Date of Work
+                  </label>
+                  <input
+                    type='date'
+                    name='date'
+                    value={formData.date}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
+                      const [y, m, d] = val.split('-');
+                      setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+                    }}
+                    tabIndex="1"
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
+                  />
+                </div>
+
                 {/* Vehicle Number */}
                 <div className='lg:col-span-3'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -704,7 +727,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                       onKeyDown={handleInputKeyDown}
                       placeholder='CG04AA1234'
                       maxLength='10'
-                      tabIndex="1"
+                      tabIndex="2"
                       className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent font-mono bg-white ${
                         formData.vehicleNumber && !vehicleValidation.isValid
                           ? 'border-red-500 focus:ring-red-500'
@@ -804,13 +827,13 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     placeholder='RCP001'
-                    tabIndex="2"
+                    tabIndex="3"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono uppercase bg-white'
                   />
                 </div>
 
                 {/* Owner Name */}
-                <div className='lg:col-span-4'>
+                <div className='lg:col-span-3'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Owner Name
                   </label>
@@ -821,13 +844,13 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     placeholder='Enter owner name'
-                    tabIndex="3"
+                    tabIndex="4"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                   />
                 </div>
 
                 {/* Mobile Number */}
-                <div className='lg:col-span-3'>
+                <div className='lg:col-span-2'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Mobile Number
                   </label>
@@ -839,7 +862,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                     onKeyDown={handleInputKeyDown}
                     placeholder='10-digit number'
                     maxLength='10'
-                    tabIndex="4"
+                    tabIndex="5"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                   />
                 </div>
@@ -867,7 +890,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="5"
+                    tabIndex="6"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                     required
                   />
@@ -886,7 +909,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="6"
+                    tabIndex="7"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 font-semibold ${
                       paidExceedsTotal
                         ? 'border-red-500 focus:ring-red-500 bg-red-50'
@@ -1017,7 +1040,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                     onBlur={handleDateBlur}
                     onKeyDown={handleInputKeyDown}
                     placeholder='DD-MM-YYYY'
-                    tabIndex="7"
+                    tabIndex="8"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent ${
                       dateError.taxFrom ? 'border-red-500 bg-red-50' : 'border-gray-300 bg-white'
                     }`}
@@ -1046,7 +1069,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                     onBlur={handleDateBlur}
                     onKeyDown={handleInputKeyDown}
                     placeholder='DD-MM-YYYY'
-                    tabIndex="8"
+                    tabIndex="9"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white ${
                       dateError.taxTo ? 'border-red-500 bg-red-50' : 'border-gray-300'
                     }`}
@@ -1074,7 +1097,7 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="9"
+                    tabIndex="10"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>

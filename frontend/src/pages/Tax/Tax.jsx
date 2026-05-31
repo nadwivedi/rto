@@ -102,6 +102,7 @@ const Tax = () => {
           vehicleNumber: record.vehicleNumber,
           ownerName: record.ownerName,
           mobileNumber: record.mobileNumber,
+          date: record.date,
           totalAmount: record.totalAmount || 0,
           paidAmount: record.paidAmount || 0,
           balanceAmount: record.balanceAmount || 0,
@@ -173,6 +174,7 @@ const Tax = () => {
     setLoading(true);
     try {
       const response = await axios.put(`${API_URL}/api/tax/${selectedTax.id}`, {
+        date: formData.date,
         receiptNo: formData.receiptNo,
         vehicleNumber: formData.vehicleNumber,
         ownerName: formData.ownerName,
@@ -695,10 +697,10 @@ const Tax = () => {
                 <thead className={theme.tableHeader}>
                   <tr>
                     <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide">
-                      Vehicle/Receipt No
+                      Date
                     </th>
                     <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide">
-                      Owner/Mobile No
+                      Vehicle / Owner
                     </th>
                     <th className="px-0.5 2xl:px-1 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide pl-8 2xl:pl-12">
                       Tax From
@@ -733,7 +735,17 @@ const Tax = () => {
                         key={record.id}
                         className="hover:bg-gradient-to-r hover:from-indigo-50/50 hover:via-purple-50/50 hover:to-pink-50/50 transition-all duration-200 group"
                       >
-                        {/* Vehicle Number / Receipt No */}
+                        {/* Date */}
+                        <td className="px-4 2xl:px-6 py-3 2xl:py-4">
+                          <div className="flex items-center gap-1 text-[11px] 2xl:text-sm font-semibold text-gray-800">
+                            <svg className='w-[14px] h-[14px] 2xl:w-4 2xl:h-4 text-gray-800' fill='none' stroke='currentColor' viewBox='0 0 24 24' strokeWidth={1.5}>
+                              <path strokeLinecap='round' strokeLinejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5' />
+                            </svg>
+                            {record.date || '-'}
+                          </div>
+                        </td>
+
+                        {/* Vehicle / Owner / Mobile */}
                         <td className="px-4 2xl:px-6 py-3 2xl:py-4">
                           <div>
                             <div className="flex items-center gap-2 2xl:gap-3">
@@ -743,15 +755,9 @@ const Tax = () => {
                                 );
                                 if (!parts) {
                                   return (
-                                    <>
-                                      <div className="flex-shrink-0 h-8 w-8 2xl:h-10 2xl:w-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs 2xl:text-sm shadow-md">
-                                        {record.vehicleNumber?.substring(0, 2) ||
-                                          "V"}
-                                      </div>
-                                      <div className="text-[11px] 2xl:text-[14px] font-semibold text-gray-900">
-                                        {record.vehicleNumber}
-                                      </div>
-                                    </>
+                                    <div className="text-[11px] 2xl:text-sm font-inter font-bold text-gray-900">
+                                      {record.vehicleNumber}
+                                    </div>
                                   );
                                 }
                                 return (
@@ -781,24 +787,17 @@ const Tax = () => {
                                 );
                               })()}
                             </div>
-                            <div className="flex items-center mt-1.5 text-[10px] 2xl:text-xs text-indigo-600 font-medium">
-                              <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1 text-indigo-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                              </svg>
-                              {record.receiptNo}
-                            </div>
-                          </div>
-                        </td>
-
-                        {/* Owner Name / Mobile No */}
-                        <td className="px-4 2xl:px-6 py-3 2xl:py-4">
-                          <div>
-                            <div className="text-[11px] 2xl:text-sm font-semibold text-gray-900">
-                              {record.ownerName || "-"}
-                            </div>
+                            {record.ownerName && (
+                              <div className="flex items-center mt-0.5 text-[10px] 2xl:text-xs text-gray-600">
+                                <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.5} d='M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z' />
+                                </svg>
+                                {record.ownerName}
+                              </div>
+                            )}
                             {record.mobileNumber && (
-                              <div className="flex items-center mt-1.5 text-[10px] 2xl:text-xs text-gray-600">
-                                <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <div className="flex items-center mt-0.5 text-[10px] 2xl:text-xs text-gray-500">
+                                <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                                 </svg>
                                 {record.mobileNumber}

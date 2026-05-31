@@ -8,6 +8,7 @@ const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
 
 const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
   const [formData, setFormData] = useState({
+    date: '',
     vehicleNumber: '',
     ownerName: '',
     mobileNumber: '',
@@ -30,6 +31,7 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
   useEffect(() => {
     if (gps) {
       setFormData({
+        date: gps.date || '',
         vehicleNumber: gps.vehicleNumber || '',
         ownerName: gps.ownerName || '',
         mobileNumber: gps.mobileNumber || '',
@@ -51,7 +53,9 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
   useEffect(() => {
     if (!isOpen) {
       setFormData({
+        date: '',
         vehicleNumber: '',
+        ownerName: '',
         mobileNumber: '',
         validFrom: '',
         validTo: '',
@@ -345,7 +349,9 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
       onSubmit(formData)
     }
     setFormData({
+      date: '',
       vehicleNumber: '',
+      ownerName: '',
       mobileNumber: '',
       validFrom: '',
       validTo: '',
@@ -395,7 +401,26 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
                 Vehicle Details
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4'>
+                {/* Date of Work */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Date of Work
+                  </label>
+                  <input
+                    type='date'
+                    name='date'
+                    value={formData.date ? formData.date.split('-').reverse().join('-') : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
+                      const [y, m, d] = val.split('-');
+                      setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+                    }}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent'
+                  />
+                </div>
+
                 {/* Vehicle Number */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>

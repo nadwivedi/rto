@@ -27,6 +27,10 @@ const pucSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  date: {
+    type: String,
+    trim: true
+  },
   vehicleModel: {
     type: String,
     trim: true

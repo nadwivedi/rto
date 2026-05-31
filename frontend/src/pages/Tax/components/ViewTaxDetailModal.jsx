@@ -111,7 +111,7 @@ const ViewTaxDetailModal = ({ isOpen, onClose, tax }) => {
               </div>
               Vehicle Information
             </h3>
-            <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
               <div className='bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200'>
                 <p className='text-xs font-bold text-gray-500 uppercase tracking-wide mb-2'>Vehicle Number</p>
                 <p className='text-lg font-mono font-black text-gray-900'>{tax.vehicleNumber}</p>
@@ -119,6 +119,10 @@ const ViewTaxDetailModal = ({ isOpen, onClose, tax }) => {
               <div className='bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border border-purple-200'>
                 <p className='text-xs font-bold text-gray-500 uppercase tracking-wide mb-2'>Owner Name</p>
                 <p className='text-lg font-bold text-gray-900'>{tax.ownerName || '-'}</p>
+              </div>
+              <div className='bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-4 border border-cyan-200'>
+                <p className='text-xs font-bold text-gray-500 uppercase tracking-wide mb-2'>Date of Work</p>
+                <p className='text-lg font-bold text-gray-900'>{tax.date || '-'}</p>
               </div>
             </div>
           </div>
