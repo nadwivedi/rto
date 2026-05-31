@@ -748,7 +748,10 @@ const Fitness = () => {
                               })()}
                             </div>
                             {record.ownerName && (
-                              <div className="text-[10px] 2xl:text-xs text-gray-600 mt-0.5">
+                              <div className="flex items-center mt-0.5 text-[10px] 2xl:text-xs text-gray-600">
+                                <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.5} d='M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z' />
+                                </svg>
                                 {record.ownerName}
                               </div>
                             )}
