@@ -403,6 +403,7 @@ exports.createFitness = async (req, res) => {
       ownerName,
       vehicleNumber,
       mobileNumber,
+      date,
       validFrom,
       validTo,
       totalFee,
@@ -483,6 +484,7 @@ exports.createFitness = async (req, res) => {
       ownerName,
       vehicleNumber,
       mobileNumber,
+      date,
       validFrom,
       validTo,
       totalFee,
@@ -524,6 +526,7 @@ exports.updateFitness = async (req, res) => {
       ownerName,
       vehicleNumber,
       mobileNumber,
+      date,
       validFrom,
       validTo,
       totalFee,
@@ -569,6 +572,7 @@ exports.updateFitness = async (req, res) => {
     if (ownerName) fitness.ownerName = ownerName
     if (vehicleNumber) fitness.vehicleNumber = vehicleNumber
     if (mobileNumber !== undefined) fitness.mobileNumber = mobileNumber
+    if (date !== undefined) fitness.date = date
     if (validFrom) fitness.validFrom = validFrom
     if (validTo) {
         fitness.validTo = validTo

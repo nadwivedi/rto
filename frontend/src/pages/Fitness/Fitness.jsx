@@ -97,6 +97,7 @@ const Fitness = () => {
           vehicleNumber: record.vehicleNumber,
           ownerName: record.ownerName,
           mobileNumber: record.mobileNumber,
+          date: record.date,
           validFrom: record.validFrom,
           validTo: record.validTo,
           totalFee: record.totalFee || 0,
@@ -659,6 +660,9 @@ const Fitness = () => {
                 <thead className={theme.tableHeader}>
                   <tr>
                     <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide">
+                      Date
+                    </th>
+                    <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide">
                       Vehicle Number
                     </th>
                     <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide">
@@ -694,6 +698,16 @@ const Fitness = () => {
                         key={record.id}
                         className="hover:bg-gradient-to-r hover:from-blue-50/50 hover:via-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 group"
                       >
+                        {/* Date */}
+                        <td className="px-4 2xl:px-6 py-3 2xl:py-4">
+                          <div className="flex items-center gap-1 text-[11px] 2xl:text-sm font-semibold text-gray-800">
+                            <svg className='w-[14px] h-[14px] 2xl:w-4 2xl:h-4 text-gray-800' fill='none' stroke='currentColor' viewBox='0 0 24 24' strokeWidth={1.5}>
+                              <path strokeLinecap='round' strokeLinejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5' />
+                            </svg>
+                            {record.date || '-'}
+                          </div>
+                        </td>
+
                         {/* Vehicle Number */}
                         <td className="px-4 2xl:px-6 py-3 2xl:py-4">
                           <div>
@@ -898,7 +912,7 @@ const Fitness = () => {
                     ))
                   ) : (
                     <tr>
-                      <td colSpan="9" className="px-4 py-8 text-center">
+                      <td colSpan="10" className="px-4 py-8 text-center">
                         <div className="text-gray-400">
                           <svg
                             className="mx-auto h-8 w-8 mb-3"

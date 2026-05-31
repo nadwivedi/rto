@@ -195,6 +195,12 @@ const FitnessDetailModal = ({ isOpen, onClose, fitness }) => {
                     <p className='text-sm md:text-base font-bold text-gray-900'>{fitness.mobileNumber}</p>
                   </div>
                 )}
+                {fitness.date && (
+                  <div className='bg-white/70 p-3 rounded-lg'>
+                    <label className='text-xs font-semibold text-gray-600 block mb-1'>Date of Work</label>
+                    <p className='text-sm md:text-base font-bold text-gray-900'>{fitness.date}</p>
+                  </div>
+                )}
                 <div className='bg-white/70 p-3 rounded-lg'>
                   <label className='text-xs font-semibold text-gray-600 block mb-1'>Valid From</label>
                   <p className='text-sm md:text-base font-bold text-gray-900'>{fitness.validFrom}</p>

@@ -15,6 +15,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
     ownerName: prefilledOwnerName,
     mobileNumber: prefilledMobileNumber,
     partyId: '',
+    date: '',
     validFrom: '',
     validTo: '',
     totalFee: '0',
@@ -52,6 +53,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
         ownerName: prefilledOwnerName,
         mobileNumber: prefilledMobileNumber,
         partyId: '',
+        date: '',
         validFrom: '',
         validTo: '',
         totalFee: '0',
@@ -320,7 +322,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
     }
 
     // Handle date fields with smart validation and formatting
-    if (name === 'validFrom' || name === 'validTo') {
+    if (name === 'date' || name === 'validFrom' || name === 'validTo') {
       const formatted = handleSmartDateInput(value, formData[name] || '');
       if (formatted !== null) {
         setFormData(prev => ({
@@ -414,7 +416,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
       const currentTabIndex = parseInt(e.target.getAttribute('tabIndex'));
 
       // Calculate the last fee breakup amount tabIndex (7 + number of fee breakup items - 1)
-      const lastFeeBreakupTabIndex = 7 + formData.feeBreakup.length - 1;
+      const lastFeeBreakupTabIndex = 8 + formData.feeBreakup.length - 1;
 
       // If we're on the last fee breakup amount field, submit the form
       if (currentTabIndex === lastFeeBreakupTabIndex) {
@@ -577,6 +579,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
       vehicleNumber: formData.vehicleNumber,
       ownerName: formData.ownerName,
       mobileNumber: formData.mobileNumber,
+      date: formData.date || undefined,
       partyId: formData.partyId || null,
       validFrom: formData.validFrom,
       validTo: formData.validTo,
@@ -618,6 +621,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
       ownerName: '',
       mobileNumber: '',
       partyId: '',
+      date: '',
       validFrom: '',
       validTo: '',
       totalFee: '0',
@@ -711,7 +715,27 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
               Vehicle Details
             </h3>
 
-            <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4'>
+              {/* Date of Work */}
+              <div>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                  Date of Work
+                </label>
+                <input
+                  type='date'
+                  name='date'
+                  value={formData.date}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
+                    const [y, m, d] = val.split('-');
+                    setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+                  }}
+                  tabIndex="1"
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white'
+                />
+              </div>
+
               {/* Vehicle Number */}
               <div>
                 <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -726,7 +750,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                     onKeyDown={handleInputKeyDown}
                     placeholder='e.g., CG04AA1234'
                     maxLength='10'
-                    tabIndex="1"
+                    tabIndex="2"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent font-mono bg-white ${
                       formData.vehicleNumber && !vehicleValidation.isValid
                         ? 'border-red-500 focus:ring-red-500'
@@ -799,7 +823,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   onKeyDown={handleInputKeyDown}
                   placeholder='10-digit number'
                   maxLength='10'
-                  tabIndex="3"
+                  tabIndex="4"
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                 />
               </div>
@@ -815,7 +839,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   onChange={handleChange}
                   onKeyDown={handleInputKeyDown}
                   placeholder='Owner Name'
-                  tabIndex="2"
+                  tabIndex="3"
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                 />
               </div>
@@ -843,7 +867,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   onBlur={handleDateBlur}
                   onKeyDown={handleInputKeyDown}
                   placeholder='DD-MM-YYYY'
-                  tabIndex="4"
+                  tabIndex="5"
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white'
                   required
                 />
@@ -862,7 +886,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                   onBlur={handleDateBlur}
                   onKeyDown={handleInputKeyDown}
                   placeholder='DD-MM-YYYY'
-                  tabIndex="5"
+                  tabIndex="6"
                   className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-emerald-50 text-gray-700'
                 />
               </div>

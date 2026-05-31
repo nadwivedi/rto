@@ -13,6 +13,7 @@ const EditFitnessModal = ({ isOpen, onClose, onSuccess, fitness }) => {
     ownerName: '',
     mobileNumber: '',
     partyId: '',
+    date: '',
     validFrom: '',
     validTo: '',
     totalFee: '0',
@@ -65,6 +66,7 @@ const EditFitnessModal = ({ isOpen, onClose, onSuccess, fitness }) => {
         mobileNumber: fitness.mobileNumber || '',
         partyId: fitness.partyId?._id || fitness.partyId || '',
         vehicleId: fitness.vehicleId?._id || fitness.vehicleId || '',
+        date: fitness.date || '',
         validFrom: fitness.validFrom || '',
         validTo: fitness.validTo || '',
         totalFee: fitness.totalFee?.toString() || '0',
@@ -297,7 +299,7 @@ const EditFitnessModal = ({ isOpen, onClose, onSuccess, fitness }) => {
     }
 
     // Handle date fields with smart validation and formatting
-    if (name === 'validFrom' || name === 'validTo') {
+    if (name === 'date' || name === 'validFrom' || name === 'validTo') {
       const formatted = handleSmartDateInput(value, formData[name] || '')
       if (formatted !== null) {
         setFormData(prev => ({
@@ -383,6 +385,7 @@ const EditFitnessModal = ({ isOpen, onClose, onSuccess, fitness }) => {
           vehicleNumber: formData.vehicleNumber,
           ownerName: formData.ownerName,
           mobileNumber: formData.mobileNumber,
+          date: formData.date || undefined,
           partyId: formData.partyId || null,
           validFrom: formData.validFrom,
           validTo: formData.validTo,
@@ -460,7 +463,31 @@ const EditFitnessModal = ({ isOpen, onClose, onSuccess, fitness }) => {
                 Vehicle Details
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4'>
+                {/* Date of Work */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Date of Work
+                  </label>
+                  <div className='relative'>
+                    <input
+                      type='date'
+                      name='date'
+                      value={formData.date ? formData.date.split('-').reverse().join('-') : ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
+                        const [y, m, d] = val.split('-');
+                        setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+                      }}
+                      className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
+                    />
+                    <svg className='pointer-events-none absolute right-3 top-2.5 h-5 w-5 text-gray-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' />
+                    </svg>
+                  </div>
+                </div>
+
                 {/* Vehicle Number */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
