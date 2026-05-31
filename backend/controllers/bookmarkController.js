@@ -1,9 +1,23 @@
 const Bookmark = require('../models/Bookmark')
 const { logError, getUserFriendlyError } = require('../utils/errorLogger')
 
+const DEFAULT_BOOKMARKS = [
+  { name: 'BG Remover', url: 'https://www.photoroom.com/tools/background-remover' },
+  { name: 'Image to PDF', url: 'https://www.ilovepdf.com/jpg_to_pdf' },
+  { name: 'ChatGPT', url: 'https://chatgpt.com/' },
+  { name: 'Parivahan', url: 'https://parivahan.gov.in/' },
+  { name: 'WhatsApp', url: 'https://web.whatsapp.com/' }
+]
+
 exports.getAll = async (req, res) => {
   try {
-    const bookmarks = await Bookmark.find({ userId: req.user.id }).sort({ createdAt: -1 })
+    let bookmarks = await Bookmark.find({ userId: req.user.id }).sort({ createdAt: -1 })
+
+    if (bookmarks.length === 0) {
+      const defaultBms = DEFAULT_BOOKMARKS.map(b => ({ userId: req.user.id, name: b.name, url: b.url }))
+      bookmarks = await Bookmark.insertMany(defaultBms)
+      bookmarks.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+    }
 
     res.status(200).json({
       success: true,
