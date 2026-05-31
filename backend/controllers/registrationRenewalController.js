@@ -65,6 +65,7 @@ exports.createRenewal = async (req, res) => {
       vehicleNumber,
       ownerName,
       ownerMobile,
+      date,
       ownerAddress,
       validFrom,
       validTo,
@@ -241,6 +242,7 @@ exports.updateRenewal = async (req, res) => {
     if (vehicleNumber) existingRenewal.vehicleNumber = vehicleNumber
     if (ownerName) existingRenewal.ownerName = ownerName
     if (ownerMobile) existingRenewal.ownerMobile = ownerMobile
+    if (date !== undefined) existingRenewal.date = date
     if (ownerAddress) existingRenewal.ownerAddress = ownerAddress
     if (validFrom) existingRenewal.validFrom = validFrom
     if (validTo) existingRenewal.validTo = validTo

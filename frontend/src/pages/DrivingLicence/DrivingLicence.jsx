@@ -138,7 +138,7 @@ const DrivingLicence = () => {
           id: app._id,
           name: app.name || '-',
           type: app.licenseClass || '-',
-          date: formattedDate,
+          date: app.date || '-',
           licenseNumber: app.LicenseNumber || app.drivingLicenseNumber || '-',
           issueDate: formattedIssueDate,
           expiryDate: formattedExpiryDate,
@@ -927,6 +927,7 @@ const DrivingLicence = () => {
           <table className='w-full'>
             <thead className={theme.tableHeader}>
               <tr>
+                <th className='px-2 py-4 text-center text-xs font-bold text-white uppercase tracking-wide'>Date</th>
                 <th className='px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wide'>Applicant Details</th>
                 <th className='px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wide'>License Class</th>
                 <th className='px-2 py-4 text-center text-xs font-bold text-white uppercase tracking-wide'>Learning Licence No.</th>
@@ -941,7 +942,7 @@ const DrivingLicence = () => {
             <tbody className='divide-y divide-gray-200'>
               {loading ? (
                 <tr>
-                  <td colSpan='9' className='px-4 py-8 text-center'>
+                  <td colSpan='10' className='px-4 py-8 text-center'>
                     <div className='text-gray-400'>
                       <svg className='animate-spin mx-auto h-8 w-8 mb-3 text-indigo-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' />
@@ -953,6 +954,14 @@ const DrivingLicence = () => {
               ) : currentApplications.length > 0 ? (
                 currentApplications.map((app, index) => (
                   <tr key={app.id} className='hover:bg-gradient-to-r hover:from-blue-50/50 hover:via-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 group'>
+                    <td className='px-2 py-4'>
+                      <div className='flex items-center justify-center gap-1 text-[11px] 2xl:text-sm font-semibold text-gray-800'>
+                        <svg className='w-[14px] h-[14px] 2xl:w-4 2xl:h-4 text-gray-800' fill='none' stroke='currentColor' viewBox='0 0 24 24' strokeWidth={1.5}>
+                          <path strokeLinecap='round' strokeLinejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5' />
+                        </svg>
+                        {app.date || '-'}
+                      </div>
+                    </td>
                     <td className='px-4 py-4'>
                       <div className='flex items-center gap-3'>
                         <div className='flex-shrink-0 h-10 w-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md'>
@@ -1143,7 +1152,7 @@ const DrivingLicence = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan='9' className='px-4 py-8 text-center'>
+                  <td colSpan='10' className='px-4 py-8 text-center'>
                     <div className='text-gray-400'>
                       <svg className='mx-auto h-8 w-8 mb-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />

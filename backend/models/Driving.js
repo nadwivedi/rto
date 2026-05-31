@@ -34,6 +34,10 @@ const DrivingSchema = new mongoose.Schema({
     required: true,
     trim: true
   },
+  date: {
+    type: String,
+    trim: true
+  },
   email: {
     type: String,
     lowercase: true,

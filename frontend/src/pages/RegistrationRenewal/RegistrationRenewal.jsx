@@ -257,6 +257,14 @@ const RegistrationRenewal = () => {
                     {
                       render: (record) => (
                         <div className='flex items-center justify-between pb-2 border-b border-gray-100'>
+                          <span className='text-xs text-gray-500 font-semibold uppercase'>Date</span>
+                          <span className='text-xs font-semibold text-gray-700'>{record.date || '-'}</span>
+                        </div>
+                      ),
+                    },
+                    {
+                      render: (record) => (
+                        <div className='flex items-center justify-between pb-2 border-b border-gray-100'>
                           <span className='text-xs text-gray-500 font-semibold uppercase'>Owner</span>
                           <span className='text-xs font-semibold text-gray-700'>{record.ownerName}</span>
                         </div>
@@ -331,6 +339,7 @@ const RegistrationRenewal = () => {
               <table className='w-full'>
                 <thead className={theme.tableHeader}>
                   <tr>
+                    <th className='px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide'>Date</th>
                     <th className='px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide'>Vehicle No</th>
                     <th className='px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide'>Owner Name</th>
                     <th className='px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wide'>Mobile</th>
@@ -347,6 +356,14 @@ const RegistrationRenewal = () => {
                   {!loading && renewals.length > 0 ? (
                     renewals.map((renewal) => (
                       <tr key={renewal._id} className='hover:bg-gradient-to-r hover:from-teal-50/50 hover:via-cyan-50/50 hover:to-blue-50/50 transition-all duration-200 group'>
+                        <td className='px-4 2xl:px-6 py-3 2xl:py-4'>
+                          <div className='flex items-center gap-1 text-[11px] 2xl:text-sm font-semibold text-gray-800'>
+                            <svg className='w-[14px] h-[14px] 2xl:w-4 2xl:h-4 text-gray-800' fill='none' stroke='currentColor' viewBox='0 0 24 24' strokeWidth={1.5}>
+                              <path strokeLinecap='round' strokeLinejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5' />
+                            </svg>
+                            {renewal.date || '-'}
+                          </div>
+                        </td>
                         <td className='px-4 2xl:px-6 py-3 2xl:py-4'>
                           <div className='flex items-center gap-3'>
                             <div>
@@ -506,7 +523,7 @@ const RegistrationRenewal = () => {
                     ))
                   ) : !loading && (
                     <tr>
-                      <td colSpan='10' className='px-4 py-8 text-center'>
+                      <td colSpan='11' className='px-4 py-8 text-center'>
                         <div className='text-gray-400'>
                           <svg className='mx-auto h-8 w-8 mb-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />

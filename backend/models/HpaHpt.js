@@ -27,6 +27,10 @@ const hpaHptSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  date: {
+    type: String,
+    trim: true
+  },
   type: {
     type: String,
     enum: ['hpa', 'hpt'],

@@ -13,6 +13,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
     ownerName: '',
     ownerMobile: '',
     ownerAddress: '',
+    date: '',
     validFrom: '',
     validTo: '',
     byName: '',
@@ -63,6 +64,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
 
       setFormData({
         ...editData,
+        date: editData.date || '',
         feeBreakup
       })
       if (editData.vehicleNumber) {
@@ -75,6 +77,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
         ownerName: '',
         ownerMobile: '',
         ownerAddress: '',
+        date: '',
         validFrom: '',
         validTo: '',
         byName: '',
@@ -169,6 +172,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
 
       const dataToSend = {
         ...formData,
+        date: formData.date || undefined,
         feeBreakup: filteredFeeBreakup
       }
 
@@ -276,6 +280,25 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
                 <span className='bg-teal-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>1</span>
                 Vehicle Information
               </h3>
+
+              <div className='mb-3 md:mb-4'>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                  Date of Work <span className='text-red-500'>*</span>
+                </label>
+                <input
+                  type='date'
+                  name='date'
+                  value={formData.date ? formData.date.split('-').reverse().join('-') : ''}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
+                    const [y, m, d] = val.split('-');
+                    setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+                  }}
+                  required
+                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent'
+                />
+              </div>
 
               <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
                 <div>

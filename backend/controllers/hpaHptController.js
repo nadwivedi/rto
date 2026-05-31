@@ -156,6 +156,7 @@ exports.createHpaHpt = async (req, res) => {
       vehicleNumber,
       ownerName,
       mobileNumber,
+      date,
       type,
       totalFee,
       paid,
@@ -216,6 +217,7 @@ exports.updateHpaHpt = async (req, res) => {
     if (vehicleNumber) record.vehicleNumber = vehicleNumber
     if (ownerName !== undefined) record.ownerName = ownerName
     if (mobileNumber !== undefined) record.mobileNumber = mobileNumber
+    if (date !== undefined) record.date = date
     if (type) record.type = type
     if (totalFee !== undefined) record.totalFee = totalFee
     if (paid !== undefined) record.paid = paid

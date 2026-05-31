@@ -7,6 +7,7 @@ const RegistrationRenewalSchema = new mongoose.Schema({
 
   ownerName: { type: String, required: true },
   ownerMobile: { type: String, required: true },
+  date: { type: String, trim: true },
   ownerAddress: { type: String, required: true },
 
   validFrom: { type: String, required: true },

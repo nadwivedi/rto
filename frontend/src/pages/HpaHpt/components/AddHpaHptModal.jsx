@@ -8,6 +8,7 @@ const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 const AddHpaHptModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', prefilledOwnerName = '', prefilledMobileNumber = '' }) => {
   const [formData, setFormData] = useState({
+    date: '',
     vehicleNumber: prefilledVehicleNumber,
     ownerName: prefilledOwnerName,
     mobileNumber: prefilledMobileNumber,
@@ -33,6 +34,7 @@ const AddHpaHptModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = ''
 
   const resetForm = () => {
     setFormData({
+      date: '',
       vehicleNumber: prefilledVehicleNumber,
       ownerName: prefilledOwnerName,
       mobileNumber: prefilledMobileNumber,
@@ -245,6 +247,7 @@ const AddHpaHptModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = ''
         .map(item => ({ name: item.name.trim(), amount: parseFloat(item.amount) || 0 }));
 
       const payload = {
+        date: formData.date || undefined,
         vehicleNumber: formData.vehicleNumber,
         ownerName: formData.ownerName,
         mobileNumber: formData.mobileNumber,
@@ -289,6 +292,23 @@ const AddHpaHptModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = ''
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {/* Date of Work */}
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">Date of Work</label>
+            <input
+              type='date'
+              name='date'
+              value={formData.date}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
+                const [y, m, d] = val.split('-');
+                setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+              }}
+              className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-100 transition-all"
+            />
+          </div>
+
           {/* Vehicle Info Row */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Vehicle Number */}

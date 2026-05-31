@@ -24,7 +24,7 @@ exports.createApplication = async (req, res) => {
   try {
     const {
       name, dateOfBirth, gender, fatherName,
-      mobileNumber, email, address, licenseClass,
+      mobileNumber, date, email, address, licenseClass,
       licenseNumber, licenseIssueDate, licenseExpiryDate,
       learningLicenseApplicationNumber, learningLicenseNumber, learningLicenseIssueDate, learningLicenseExpiryDate,
       totalAmount, paidAmount, balanceAmount,
@@ -112,6 +112,7 @@ exports.createApplication = async (req, res) => {
       gender,
       fatherName,
       mobileNumber,
+      date,
       email,
       address,
       licenseClass,
@@ -330,7 +331,7 @@ exports.updateApplication = async (req, res) => {
     const { id } = req.params
     const {
       name, dateOfBirth, gender, fatherName,
-      mobileNumber, email, address, licenseClass,
+      mobileNumber, date, email, address, licenseClass,
       licenseNumber, licenseIssueDate, licenseExpiryDate,
       learningLicenseApplicationNumber, learningLicenseNumber, learningLicenseIssueDate, learningLicenseExpiryDate,
       totalAmount, paidAmount, balanceAmount,
@@ -373,6 +374,7 @@ exports.updateApplication = async (req, res) => {
     if (gender !== undefined) application.gender = gender
     if (fatherName !== undefined) application.fatherName = fatherName
     if (mobileNumber !== undefined) application.mobileNumber = mobileNumber
+    if (date !== undefined) application.date = date
     if (email !== undefined) application.email = email
     if (address !== undefined) application.address = address
     if (licenseClass !== undefined) application.licenseClass = licenseClass

@@ -25,6 +25,10 @@ const nocSchema = new mongoose.Schema({
     trim: true,
     match: /^\d{10}$/
   },
+  date: {
+    type: String,
+    trim: true
+  },
   nocFrom: {
     type: String,
     required: true,

@@ -55,6 +55,7 @@ exports.createNoc = async (req, res) => {
       vehicleNumber,
       ownerName,
       mobileNumber,
+      date,
       nocFrom,
       nocTo,
       totalFee,
@@ -86,6 +87,7 @@ exports.createNoc = async (req, res) => {
       vehicleNumber,
       ownerName,
       mobileNumber,
+      date,
       nocFrom,
       nocTo,
       totalFee,
@@ -290,6 +292,7 @@ exports.updateNoc = async (req, res) => {
     if (req.body.vehicleNumber !== undefined) record.vehicleNumber = req.body.vehicleNumber
     if (req.body.ownerName !== undefined) record.ownerName = req.body.ownerName
     if (req.body.mobileNumber !== undefined) record.mobileNumber = req.body.mobileNumber
+    if (req.body.date !== undefined) record.date = req.body.date
     if (req.body.nocFrom !== undefined) record.nocFrom = req.body.nocFrom
     if (req.body.nocTo !== undefined) record.nocTo = req.body.nocTo
     if (req.body.totalFee !== undefined) record.totalFee = req.body.totalFee

@@ -92,6 +92,11 @@ const RegistrationRenewalDetailModal = ({ isOpen, onClose, renewal }) => {
                 </div>
 
                 <div className='flex justify-between items-center py-2 border-b border-gray-200'>
+                  <span className='text-xs md:text-sm text-gray-600 font-semibold'>Date of Work</span>
+                  <span className='text-xs md:text-sm font-bold text-gray-900'>{renewal.date || '-'}</span>
+                </div>
+
+                <div className='flex justify-between items-center py-2 border-b border-gray-200'>
                   <span className='text-xs md:text-sm text-gray-600 font-semibold'>Owner Name</span>
                   <span className='text-xs md:text-sm font-bold text-gray-900'>{renewal.ownerName}</span>
                 </div>

@@ -55,6 +55,11 @@ const NocDetailModal = ({ isOpen, onClose, record }) => {
             </div>
           </div>
 
+          <div className='bg-teal-50 rounded-lg border border-teal-200 p-3 mb-4'>
+            <p className='text-xs text-teal-700 font-semibold uppercase'>Date of Work</p>
+            <p className='text-sm font-bold text-gray-900'>{record.date || '-'}</p>
+          </div>
+
           <div className='bg-purple-50 rounded-lg border border-purple-200 p-4 mb-4'>
             <h4 className='text-sm font-bold text-purple-800 mb-3'>Payment Information</h4>
             <div className='grid grid-cols-3 gap-3'>

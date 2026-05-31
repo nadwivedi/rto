@@ -177,6 +177,11 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                   <p className='text-xs md:text-sm font-bold text-gray-900 mt-0.5'>{application.fullData?.fatherName || 'Ramesh Kumar'}</p>
                 </div>
 
+                {/* Date of Work */}
+                <div className='bg-white/80 p-2 rounded-lg'>
+                  <label className='text-[10px] md:text-xs font-semibold text-gray-600'>Date of Work</label>
+                  <p className='text-xs md:text-sm font-bold text-gray-900 mt-0.5'>{application.date || application.fullData?.date || '-'}</p>
+                </div>
 
                 {/* Phone Number - Always show */}
                 <div className='bg-white/80 p-2 rounded-lg'>

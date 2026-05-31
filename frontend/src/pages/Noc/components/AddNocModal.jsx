@@ -12,6 +12,7 @@ const defaultFeeBreakup = [
 ]
 
 const initialState = {
+  date: '',
   vehicleNumber: '',
   ownerName: '',
   mobileNumber: '',
@@ -52,6 +53,7 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
 
     if (editData) {
       setFormData({
+        date: editData.date || '',
         vehicleNumber: editData.vehicleNumber || '',
         ownerName: editData.ownerName || '',
         mobileNumber: editData.mobileNumber || '',
@@ -166,6 +168,7 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
     try {
       const payload = {
         ...formData,
+        date: formData.date || undefined,
         feeBreakup: formData.feeBreakup.filter((item) => item.name && item.amount && parseFloat(item.amount) > 0)
       }
 
@@ -223,6 +226,34 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
                 {error}
               </div>
             )}
+
+            <div className='bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <svg className='w-5 h-5 md:w-6 md:h-6 text-orange-600' fill='none' stroke='currentColor' viewBox='0 0 24 24' strokeWidth={1.5}>
+                  <path strokeLinecap='round' strokeLinejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5' />
+                </svg>
+                Date of Work
+              </h3>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Date <span className='text-red-500'>*</span></label>
+                  <input
+                    type='date'
+                    name='date'
+                    value={formData.date ? formData.date.split('-').reverse().join('-') : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
+                      const [y, m, d] = val.split('-');
+                      setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+                    }}
+                    onKeyDown={handleFieldKeyDown}
+                    required
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+                  />
+                </div>
+              </div>
+            </div>
 
             <div className='bg-gradient-to-r from-teal-50 to-cyan-50 border-2 border-teal-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>

@@ -36,6 +36,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
 
   const [formData, setFormData] = useState({
     // Personal Information
+    date: '',
     name: '',
     dateOfBirth: '',
     gender: 'Male',
@@ -113,6 +114,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
       const emailAddr = appData.email || ''
 
       setFormData({
+        date: appData.date || '',
         name: appData.name || '',
         dateOfBirth: convertISOToDD_MM_YYYY(appData.dateOfBirth) || '',
         gender: appData.gender || 'Male',
@@ -466,6 +468,24 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
               </h3>
 
               <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+                {/* Date of Work */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Date of Work
+                  </label>
+                  <input
+                    type='date'
+                    name='date'
+                    value={formData.date ? formData.date.split('-').reverse().join('-') : ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
+                      const [y, m, d] = val.split('-');
+                      setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+                    }}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                  />
+                </div>
                 {/* Name Field */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
