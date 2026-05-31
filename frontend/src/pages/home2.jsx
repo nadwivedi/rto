@@ -58,10 +58,11 @@ const HeaderSection = ({ title, subtitle, gradient, icon }) => (
   </div>
 )
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { Plus, X, Globe, ExternalLink } from 'lucide-react'
 
 const Home2 = () => {
   const navigate = useNavigate()
@@ -86,6 +87,46 @@ const Home2 = () => {
       return () => clearInterval(interval)
     }
   }, [user])
+
+  // ── Bookmarks ──
+  const [bookmarks, setBookmarks] = useState([])
+  const [showBookmarkModal, setShowBookmarkModal] = useState(false)
+  const [bmName, setBmName] = useState('')
+  const [bmUrl, setBmUrl] = useState('')
+  const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+
+  const fetchBookmarks = useCallback(async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/bookmarks`, { withCredentials: true })
+      if (res.data.success) setBookmarks(res.data.data)
+    } catch { /* ignore */ }
+  }, [API_URL])
+
+  useEffect(() => { fetchBookmarks() }, [fetchBookmarks])
+
+  const addBookmark = useCallback(async (e) => {
+    e.preventDefault()
+    const name = bmName.trim()
+    let url = bmUrl.trim()
+    if (!name || !url) return
+    if (!/^https?:\/\//i.test(url)) url = 'https://' + url
+    try {
+      const res = await axios.post(`${API_URL}/api/bookmarks`, { name, url }, { withCredentials: true })
+      if (res.data.success) {
+        setBookmarks(prev => [res.data.data, ...prev])
+        setBmName('')
+        setBmUrl('')
+        setShowBookmarkModal(false)
+      }
+    } catch { /* ignore */ }
+  }, [bmName, bmUrl, API_URL])
+
+  const removeBookmark = useCallback(async (id) => {
+    try {
+      await axios.delete(`${API_URL}/api/bookmarks/${id}`, { withCredentials: true })
+      setBookmarks(prev => prev.filter(b => b._id !== id))
+    } catch { /* ignore */ }
+  }, [API_URL])
 
   const vahanColors = {
     bg: 'bg-sky-50',
@@ -115,7 +156,7 @@ const Home2 = () => {
   }
 
   return (
-    <div className='min-h-screen bg-slate-100 px-2 py-6 sm:px-6 lg:px-10'>
+    <div className='min-h-screen bg-slate-100 px-2 py-6 sm:px-6 lg:px-10 pb-16'>
       <div className='mx-auto max-w-[1500px]'>
         {/* Top Navbar Options */}
         <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6 sm:mb-8 w-full bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-slate-200/50 shadow-sm'>
@@ -222,6 +263,89 @@ const Home2 = () => {
             </div>
           </button>
         </div>
+
+        {/* ── Bookmark Strip ── */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+          <div className="max-w-[1500px] mx-auto px-2 sm:px-6 lg:px-10 py-1.5 sm:py-2 flex items-center gap-1.5 overflow-x-auto">
+            {bookmarks.map(bm => (
+              <div key={bm._id} className="group relative flex-shrink-0">
+                <a
+                  href={bm.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-700 rounded-lg text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap"
+                >
+                  <Globe size={12} className="flex-shrink-0" />
+                  {bm.name}
+                  <ExternalLink size={10} className="opacity-40 flex-shrink-0" />
+                </a>
+                <button
+                  onClick={() => removeBookmark(bm._id)}
+                  className="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 bg-red-500 text-white rounded-full shadow hover:bg-red-600"
+                >
+                  <X size={10} />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={() => setShowBookmarkModal(true)}
+              className="flex items-center gap-1 px-2.5 py-1.5 bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg text-[11px] sm:text-xs font-bold transition-all flex-shrink-0 shadow-sm"
+            >
+              <Plus size={13} />
+              Add
+            </button>
+          </div>
+        </div>
+
+        {/* ── Add Bookmark Modal ── */}
+        {showBookmarkModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden">
+              <div className="bg-gradient-to-r from-indigo-600 to-purple-600 p-4 text-white">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-bold">Add Bookmark</h2>
+                  <button onClick={() => { setShowBookmarkModal(false); setBmName(''); setBmUrl('') }} className="text-white hover:bg-white/20 rounded-lg p-1 transition">
+                    <X size={20} />
+                  </button>
+                </div>
+              </div>
+              <form onSubmit={addBookmark} className="p-5 space-y-4">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">Name</label>
+                  <input
+                    type="text" required value={bmName} onChange={e => setBmName(e.target.value)}
+                    placeholder="e.g. Google Drive"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-medium"
+                    autoFocus
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5">URL</label>
+                  <input
+                    type="url" required value={bmUrl} onChange={e => setBmUrl(e.target.value)}
+                    placeholder="e.g. https://drive.google.com"
+                    className="w-full px-3 py-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-medium"
+                  />
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => { setShowBookmarkModal(false); setBmName(''); setBmUrl('') }}
+                    className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl font-bold text-sm transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white rounded-xl font-bold text-sm shadow-md transition-all"
+                  >
+                    Save
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
