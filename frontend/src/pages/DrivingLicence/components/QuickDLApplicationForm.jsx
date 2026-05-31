@@ -434,7 +434,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
 
   return (
     <div className='fixed inset-0 bg-black/60  z-[70] flex items-center justify-center p-2 md:p-4'>
-      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
+      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header */}
         <div className='bg-gradient-to-r from-indigo-600 to-purple-600 p-3 md:p-4 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>
@@ -723,7 +723,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                           value={formData.learningLicenseApplicationNumber}
                           onChange={handleChange}
                           placeholder='Enter LL application number'
-                          className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent'
+                          className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent placeholder:text-xs'
                         />
                       </div>
 
@@ -737,7 +737,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                           value={formData.learningLicenseNumber}
                           onChange={handleChange}
                           placeholder='Enter learning license number'
-                          className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent'
+                          className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent placeholder:text-xs'
                         />
                       </div>
                     </div>
