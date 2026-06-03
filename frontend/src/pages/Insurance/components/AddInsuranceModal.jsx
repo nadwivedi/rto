@@ -28,6 +28,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     insuranceCompany: '',
     insuranceDocument: '',
     renewPremium: '0',
+    commission: '0',
     // RC fields extracted from insurance document
     chassisNumber: '',
     engineNumber: '',
@@ -82,6 +83,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         agentContact: initialData.agentContact || '',
         insuranceDocument: initialData.insuranceDocument || '',
         renewPremium: initialData.renewPremium?.toString() || '0',
+        commission: initialData.commission?.toString() || '0',
         address: ''
       })
 
@@ -114,6 +116,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         insuranceCompany: '',
         insuranceDocument: '',
         renewPremium: '0',
+        commission: '0',
         address: '',
         chassisNumber: '',
         engineNumber: '',
@@ -425,6 +428,25 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     }))
   }
 
+  const INSURANCE_COMPANIES = [
+    'ACKO', 'BAJAJ ALLIANZ', 'BHARTI AXA', 'CHOLAMANDALAM MS',
+    'EDELWEISS', 'FUTURE GENERALI', 'GO DIGIT', 'HDFC ERGO',
+    'ICICI LOMBARD', 'IFFCO TOKIO', 'INDUSIND', 'KOTAK MAHINDRA',
+    'KSHEMA', 'LIBERTY', 'MAGMA HDI', 'NATIONAL INSURANCE',
+    'NAVI', 'NEW INDIA ASSURANCE', 'ORIENTAL INSURANCE', 'RAHEJA QBE',
+    'RELIANCE GENERAL', 'ROYAL SUNDARAM', 'SBI GENERAL', 'SHRIRAM GENERAL',
+    'TATA AIG', 'UNITED INDIA', 'UNIVERSAL SOMPO', 'ZUNO', 'ZURICH KOTAK'
+  ]
+
+  const matchInsuranceCompany = (extractedText) => {
+    if (!extractedText) return ''
+    const upper = extractedText.toUpperCase().replace(/[^A-Z0-9 ]/g, '')
+    for (const company of INSURANCE_COMPANIES) {
+      if (upper.includes(company)) return company
+    }
+    return upper
+  }
+
   const normalizeAIExtractedDate = (dateStr) => {
     if (!dateStr) return '';
     
@@ -496,7 +518,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           }
 
           if (resultData.insuranceCompany) {
-            updated.insuranceCompany = resultData.insuranceCompany.toUpperCase()
+            updated.insuranceCompany = matchInsuranceCompany(resultData.insuranceCompany)
           }
 
           // RC fields extracted from insurance document
@@ -652,6 +674,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       insuranceCompany: formData.insuranceCompany || '',
       insuranceDocument: formData.insuranceDocument || '',
       renewPremium: parseFloat(formData.renewPremium) || 0,
+      commission: parseFloat(formData.commission) || 0,
       status: 'Active',
       // RC details extracted from insurance document (used for auto-creating vehicle record)
       rcDetails: {
@@ -956,16 +979,45 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Insurance Company
                   </label>
-                  <input
-                    type='text'
+                  <select
                     name='insuranceCompany'
                     value={formData.insuranceCompany}
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
-                    placeholder='e.g., HDFC ERGO, ICICI Lombard'
                     tabIndex="7"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
-                  />
+                  >
+                    <option value=''>-- Select Insurance Company --</option>
+                    <option value='ACKO'>Acko</option>
+                    <option value='BAJAJ ALLIANZ'>Bajaj Allianz</option>
+                    <option value='BHARTI AXA'>Bharti AXA</option>
+                    <option value='CHOLAMANDALAM MS'>Cholamandalam MS</option>
+                    <option value='EDELWEISS'>Edelweiss</option>
+                    <option value='FUTURE GENERALI'>Future Generali</option>
+                    <option value='GO DIGIT'>Go Digit</option>
+                    <option value='HDFC ERGO'>HDFC ERGO</option>
+                    <option value='ICICI LOMBARD'>ICICI Lombard</option>
+                    <option value='IFFCO TOKIO'>IFFCO Tokio</option>
+                    <option value='INDUSIND'>IndusInd</option>
+                    <option value='KOTAK MAHINDRA'>Kotak Mahindra</option>
+                    <option value='KSHEMA'>Kshema</option>
+                    <option value='LIBERTY'>Liberty</option>
+                    <option value='MAGMA HDI'>Magma HDI</option>
+                    <option value='NATIONAL INSURANCE'>National Insurance</option>
+                    <option value='NAVI'>Navi</option>
+                    <option value='NEW INDIA ASSURANCE'>New India Assurance</option>
+                    <option value='ORIENTAL INSURANCE'>Oriental Insurance</option>
+                    <option value='RAHEJA QBE'>Raheja QBE</option>
+                    <option value='RELIANCE GENERAL'>Reliance General</option>
+                    <option value='ROYAL SUNDARAM'>Royal Sundaram</option>
+                    <option value='SBI GENERAL'>SBI General</option>
+                    <option value='SHRIRAM GENERAL'>Shriram General</option>
+                    <option value='TATA AIG'>Tata AIG</option>
+                    <option value='UNITED INDIA'>United India</option>
+                    <option value='UNIVERSAL SOMPO'>Universal Sompo</option>
+                    <option value='ZUNO'>Zuno</option>
+                    <option value='ZURICH KOTAK'>Zurich Kotak</option>
+                  </select>
                 </div>
 
                 {/* Owner's Address */}
@@ -1041,11 +1093,11 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 Payment Information
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4'>
                 {/* Total Fee */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Total Fee (₹) <span className='text-red-500'>*</span>
+                    Total Premium (₹) <span className='text-red-500'>*</span>
                   </label>
                   <input
                     type='number'
@@ -1117,6 +1169,24 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onKeyDown={handleInputKeyDown}
                     placeholder='For next year'
                     tabIndex="13"
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
+                  />
+                </div>
+
+                {/* Commission */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Commission (₹)
+                  </label>
+                  <input
+                    type='number'
+                    name='commission'
+                    value={formData.commission}
+                    onChange={handleChange}
+                    onFocus={(e) => e.target.select()}
+                    onKeyDown={handleInputKeyDown}
+                    placeholder='Agent commission'
+                    tabIndex="14"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>
