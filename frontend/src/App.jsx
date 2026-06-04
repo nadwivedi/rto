@@ -38,7 +38,7 @@ import KycZone from './pages/KycZone/KycZone'
 import WhatsApp from './pages/WhatsApp/WhatsApp'
 import Javak from './pages/Javak/Javak'
 import PWAPrompt from './components/PWAPrompt'
-import { Agentation } from 'agentation'
+// import { Agentation } from 'agentation'
 
 function LegacyPartyDetailRedirect() {
   const { partyId } = useParams()
@@ -166,7 +166,7 @@ function App() {
         <ThemeProvider>
           <ToastContainer />
           <PWAPrompt />
-          {process.env.NODE_ENV === "development" && <Agentation />}
+          {/* {process.env.NODE_ENV === "development" && <Agentation />} */}
           <Routes>
             <Route path='/login' element={<Login />} />
             <Route path='/admin-access' element={<AdminAccess />} />
