@@ -998,7 +998,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     <option value='HDFC ERGO'>HDFC ERGO</option>
                     <option value='ICICI LOMBARD'>ICICI Lombard</option>
                     <option value='IFFCO TOKIO'>IFFCO Tokio</option>
-                    <option value='INDUSIND'>IndusInd</option>
+                    <option value='INDUSIND'>IndusInd General Insurance</option>
                     <option value='KOTAK MAHINDRA'>Kotak Mahindra</option>
                     <option value='KSHEMA'>Kshema</option>
                     <option value='LIBERTY'>Liberty</option>

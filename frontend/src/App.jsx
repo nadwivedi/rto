@@ -163,7 +163,7 @@ function App() {
         <ThemeProvider>
           <ToastContainer />
           <PWAPrompt />
-
+          {process.env.NODE_ENV === "development" && <Agentation />}
           <Routes>
             <Route path='/login' element={<Login />} />
             <Route path='/admin-access' element={<AdminAccess />} />

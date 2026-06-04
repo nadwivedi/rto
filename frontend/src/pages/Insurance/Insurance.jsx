@@ -4,6 +4,7 @@ import axios from "axios";
 import { toast } from "react-toastify";
 import Pagination from "../../components/Pagination";
 import AddInsuranceModal from "./components/AddInsuranceModal";
+import InsuranceDetailModal from "./components/InsuranceDetailModal";
 import AddButton from "../../components/AddButton";
 import SearchBar from "../../components/SearchBar";
 import StatisticsCard from "../../components/StatisticsCard";
@@ -1032,6 +1033,18 @@ const Insurance = () => {
                 initialData={selectedInsurance} // Pass selected insurance data for editing
                 isEditMode={true}
               />
+          )}
+
+          {/* Insurance Detail Modal */}
+          {isDetailModalOpen && (
+            <InsuranceDetailModal
+              isOpen={isDetailModalOpen}
+              onClose={() => {
+                setIsDetailModalOpen(false);
+                setSelectedInsurance(null);
+              }}
+              insurance={selectedInsurance}
+            />
           )}
         </div>
       </div>

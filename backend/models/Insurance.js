@@ -119,6 +119,10 @@ const InsuranceSchema = new mongoose.Schema({
   renewPremium: {
     type: Number,
     default: 0
+  },
+  commission: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

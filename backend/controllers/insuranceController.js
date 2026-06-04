@@ -34,7 +34,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, ownerName, insuranceCompany, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, partyId: reqPartyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, ownerName, insuranceCompany, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails } = req.body
 
     // Validate required fields
 
@@ -123,7 +123,8 @@ exports.createInsurance = async (req, res) => {
       remarks,
       userId: req.user.id,
       partyId,
-      renewPremium: Number(renewPremium) || 0
+      renewPremium: Number(renewPremium) || 0,
+      commission: Number(commission) || 0
     }
 
     // Only add insuranceDocument if it's provided (optional field)
@@ -535,7 +536,7 @@ exports.getInsuranceByPolicyNumber = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, ownerName, insuranceCompany, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, partyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, ownerName, insuranceCompany, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -591,6 +592,7 @@ exports.updateInsurance = async (req, res) => {
     }
     if (partyId !== undefined) insurance.partyId = partyId
     if (renewPremium !== undefined) insurance.renewPremium = Number(renewPremium) || 0
+    if (commission !== undefined) insurance.commission = Number(commission) || 0
 
     const updatedInsurance = await insurance.save()
 
