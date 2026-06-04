@@ -68,10 +68,6 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
                 <span className='block font-bold text-gray-800 mt-0.5'>{insurance.policyHolderName || 'N/A'}</span>
               </div>
               <div>
-                <span className='block text-gray-500 font-medium'>Owner Name</span>
-                <span className='block font-bold text-gray-800 mt-0.5'>{insurance.ownerName || 'N/A'}</span>
-              </div>
-              <div>
                 <span className='block text-gray-500 font-medium'>Mobile Number</span>
                 <span className='block font-bold text-gray-800 mt-0.5'>{insurance.mobileNumber || 'N/A'}</span>
               </div>

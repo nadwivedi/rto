@@ -111,7 +111,7 @@ const VahanDashboard = () => {
         records.push({
           ...r,
           docType: 'Insurance',
-          ownerName: r.policyHolderName || r.ownerName
+          ownerName: r.policyHolderName
         })
       })
 

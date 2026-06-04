@@ -255,6 +255,7 @@ exports.insuranceOcr = async (req, res) => {
 - Extract the policy number, policy holder name, insurance company name (e.g. HDFC ERGO, ICICI Lombard).
 - Extract valid from date and valid to date in DD-MM-YYYY format.
 - Extract the policy holder / owner's address if present in the document.
+- Extract the total premium amount after GST (look for "Total Premium", "Gross Premium", "Premium After GST", or "Total Amount" on the document). Return only the numeric value, e.g. "12500" or "12500.50". Do not include currency symbols or commas.
 - Also extract as many of these RC/vehicle details as available in the document: chassis number, engine number, make/manufacturer name, model name, year of manufacture, cubic capacity (CC), seating capacity, body type.
 - If a field is not present, return empty string "".
 - If multiple policy holder names or owners are mentioned, pick the primary one.`;
@@ -265,6 +266,7 @@ exports.insuranceOcr = async (req, res) => {
   "validFrom": "",
   "validTo": "",
   "insuranceCompany": "",
+  "totalPremium": "",
   "address": "",
   "chassisNumber": "",
   "engineNumber": "",

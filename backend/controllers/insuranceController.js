@@ -34,7 +34,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, ownerName, insuranceCompany, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails } = req.body
 
     // Validate required fields
 
@@ -109,7 +109,6 @@ exports.createInsurance = async (req, res) => {
     const insuranceData = {
       policyNumber,
       policyHolderName,
-      ownerName,
       insuranceCompany,
       vehicleNumber,
       mobileNumber,
@@ -242,7 +241,6 @@ exports.getAllInsurance = async (req, res) => {
       query.$or = [
         { policyNumber: { $regex: search, $options: 'i' } },
         { vehicleNumber: { $regex: search, $options: 'i' } },
-        { ownerName: { $regex: search, $options: 'i' } },
         { policyHolderName: { $regex: search, $options: 'i' } },
         { mobileNumber: { $regex: search, $options: 'i' } }
       ]
@@ -325,7 +323,6 @@ exports.getExpiringSoonInsurance = async (req, res) => {
           $or: [
             { policyNumber: { $regex: search, $options: 'i' } },
             { vehicleNumber: { $regex: search, $options: 'i' } },
-            { ownerName: { $regex: search, $options: 'i' } },
             { mobileNumber: { $regex: search, $options: 'i' } }
           ]
         }
@@ -388,7 +385,6 @@ exports.getExpiredInsurance = async (req, res) => {
           $or: [
             { policyNumber: { $regex: search, $options: 'i' } },
             { vehicleNumber: { $regex: search, $options: 'i' } },
-            { ownerName: { $regex: search, $options: 'i' } },
             { mobileNumber: { $regex: search, $options: 'i' } }
           ]
         }
@@ -439,7 +435,6 @@ exports.getPendingInsurance = async (req, res) => {
       query.$or = [
         { policyNumber: { $regex: search, $options: 'i' } },
         { vehicleNumber: { $regex: search, $options: 'i' } },
-        { ownerName: { $regex: search, $options: 'i' } },
         { mobileNumber: { $regex: search, $options: 'i' } }
       ]
     }
@@ -536,7 +531,7 @@ exports.getInsuranceByPolicyNumber = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, ownerName, insuranceCompany, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -571,7 +566,6 @@ exports.updateInsurance = async (req, res) => {
     // Update fields
     if (policyNumber) insurance.policyNumber = policyNumber
     if (policyHolderName) insurance.policyHolderName = policyHolderName
-    if (ownerName !== undefined) insurance.ownerName = ownerName
     if (date !== undefined) insurance.date = date
     if (insuranceCompany !== undefined) insurance.insuranceCompany = insuranceCompany
     if (vehicleNumber) insurance.vehicleNumber = vehicleNumber

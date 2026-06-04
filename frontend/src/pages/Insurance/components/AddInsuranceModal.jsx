@@ -18,7 +18,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     policyNumber: '',
     policyHolderName: prefilledOwnerName,
     mobileNumber: prefilledMobileNumber,
-    ownerName: prefilledOwnerName,
     validFrom: '',
     validTo: '',
     totalFee: '0',
@@ -67,7 +66,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         vehicleNumber: vehicleNum,
         policyNumber: initialData.policyNumber || '',
         policyHolderName: initialData.policyHolderName || '',
-        ownerName: initialData.ownerName || initialData.policyHolderName || '',
         validFrom: initialData.validFrom || '',
         validTo: initialData.validTo || '',
         totalFee: initialData.totalFee?.toString() || '',
@@ -104,7 +102,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         policyNumber: '',
         policyHolderName: prefilledOwnerName,
         mobileNumber: prefilledMobileNumber,
-        ownerName: prefilledOwnerName,
         validFrom: '',
         validTo: '',
         totalFee: '0',
@@ -138,7 +135,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         ...prev,
         vehicleNumber: prefilledVehicleNumber,
         policyHolderName: prefilledOwnerName,
-        ownerName: prefilledOwnerName,
         mobileNumber: prefilledMobileNumber
       }));
       // Mark vehicle as valid if prefilled
@@ -184,8 +180,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
               ...prev,
               vehicleNumber: vehicleData.registrationNumber,
               mobileNumber: vehicleData.mobileNumber || prev.mobileNumber,
-              policyHolderName: vehicleData.ownerName || prev.policyHolderName,
-              ownerName: vehicleData.ownerName || prev.ownerName
+              policyHolderName: vehicleData.ownerName || prev.policyHolderName
             }))
             // Validate the auto-filled vehicle number
             const validation = validateVehicleNumberRealtime(vehicleData.registrationNumber)
@@ -282,8 +277,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       ...prev,
       vehicleNumber: vehicle.registrationNumber,
       mobileNumber: vehicle.mobileNumber || prev.mobileNumber,
-      policyHolderName: vehicle.ownerName || prev.policyHolderName,
-      ownerName: vehicle.ownerName || prev.ownerName
+      policyHolderName: vehicle.ownerName || prev.policyHolderName
     }))
     setShowVehicleDropdown(false)
     setVehicleMatches([])
@@ -528,6 +522,14 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           if (resultData.seatingCapacity) updated.seatingCapacity = resultData.seatingCapacity
           if (resultData.bodyType) updated.bodyType = resultData.bodyType.toUpperCase()
           if (resultData.address) updated.address = resultData.address.toUpperCase()
+
+          if (resultData.totalPremium) {
+            const numericPremium = resultData.totalPremium.replace(/[^0-9.]/g, '')
+            if (numericPremium) {
+              updated.totalFee = numericPremium
+              updated.paid = numericPremium
+            }
+          }
           
           return updated
         })
@@ -659,7 +661,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       vehicleNumber: formData.vehicleNumber,
       policyNumber: formData.policyNumber,
       policyHolderName: formData.policyHolderName,
-      ownerName: formData.ownerName,
       mobileNumber: formData.mobileNumber,
       validFrom: formData.validFrom,
       validTo: formData.validTo,
@@ -911,23 +912,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onKeyDown={handleInputKeyDown}
                     placeholder='Enter policy holder name'
                     tabIndex="3"
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
-                  />
-                </div>
-
-                {/* Owner Name */}
-                <div>
-                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Owner Name
-                  </label>
-                  <input
-                    type='text'
-                    name='ownerName'
-                    value={formData.ownerName}
-                    onChange={handleChange}
-                    onKeyDown={handleInputKeyDown}
-                    placeholder='Enter owner name'
-                    tabIndex="4"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                   />
                 </div>
