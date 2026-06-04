@@ -852,9 +852,16 @@ exports.markAsPaid = async (req, res) => {
 exports.monthlyReport = async (req, res) => {
   try {
     const year = parseInt(req.query.year) || new Date().getFullYear()
+    const company = req.query.company || ''
 
-    const result = await Insurance.aggregate([
-      { $match: { userId: new mongoose.Types.ObjectId(req.user.id) } },
+    const baseMatch = { userId: new mongoose.Types.ObjectId(req.user.id) }
+    if (company) {
+      baseMatch.insuranceCompany = company
+    }
+
+    // Monthly breakdown
+    const monthlyResult = await Insurance.aggregate([
+      { $match: baseMatch },
       {
         $addFields: {
           parsedYear: { $substr: ["$validFrom", 6, 4] },
@@ -884,7 +891,7 @@ exports.monthlyReport = async (req, res) => {
       }
     ])
 
-    const months = result.map(r => ({
+    const months = monthlyResult.map(r => ({
       month: parseInt(r.month),
       label: new Date(year, parseInt(r.month) - 1).toLocaleString('default', { month: 'long' }),
       count: r.count,
@@ -900,9 +907,41 @@ exports.monthlyReport = async (req, res) => {
       paid: acc.paid + m.paid
     }), { count: 0, totalFee: 0, commission: 0, paid: 0 })
 
+    // Company-wise breakdown for the year
+    const companyMatch = { userId: new mongoose.Types.ObjectId(req.user.id) }
+    const companyResult = await Insurance.aggregate([
+      { $match: companyMatch },
+      {
+        $addFields: {
+          parsedYear: { $substr: ["$validFrom", 6, 4] }
+        }
+      },
+      { $match: { parsedYear: String(year) } },
+      {
+        $group: {
+          _id: { company: "$insuranceCompany" },
+          count: { $sum: 1 },
+          totalFee: { $sum: { $ifNull: ["$totalFee", 0] } },
+          commission: { $sum: { $ifNull: ["$commission", 0] } },
+          paid: { $sum: { $ifNull: ["$paid", 0] } }
+        }
+      },
+      { $sort: { count: -1 } },
+      {
+        $project: {
+          _id: 0,
+          company: "$_id.company",
+          count: 1,
+          totalFee: { $round: ["$totalFee", 0] },
+          commission: { $round: ["$commission", 0] },
+          paid: { $round: ["$paid", 0] }
+        }
+      }
+    ])
+
     res.status(200).json({
       success: true,
-      data: { year, months, totals }
+      data: { year, months, totals, companies: companyResult.filter(c => c.company) }
     })
   } catch (error) {
     console.error('Error generating monthly report:', error)

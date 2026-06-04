@@ -5,27 +5,39 @@ import { toast } from 'react-toastify'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
-const MONTHS = [
-  'January', 'February', 'March', 'April', 'May', 'June',
-  'July', 'August', 'September', 'October', 'November', 'December'
-]
-
 const InsuranceReports = () => {
   const navigate = useNavigate()
   const currentYear = new Date().getFullYear()
   const [year, setYear] = useState(currentYear)
+  const [companyFilter, setCompanyFilter] = useState('')
+  const [companies, setCompanies] = useState([])
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    fetchCompanies()
+  }, [])
+
+  useEffect(() => {
     fetchReport()
-  }, [year])
+  }, [year, companyFilter])
+
+  const fetchCompanies = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/insurance/companies`, { withCredentials: true })
+      if (res.data.success) setCompanies(res.data.data)
+    } catch (e) {
+      console.error('Error fetching companies:', e)
+    }
+  }
 
   const fetchReport = async () => {
     setLoading(true)
     try {
+      const params = { year }
+      if (companyFilter) params.company = companyFilter
       const response = await axios.get(`${API_URL}/api/insurance/monthly-report`, {
-        params: { year },
+        params,
         withCredentials: true
       })
       if (response.data.success) {
@@ -44,6 +56,7 @@ const InsuranceReports = () => {
 
   const monthData = data?.months || []
   const totals = data?.totals || { count: 0, totalFee: 0, commission: 0, paid: 0 }
+  const companyData = data?.companies || []
 
   return (
     <>
@@ -63,26 +76,39 @@ const InsuranceReports = () => {
             </button>
           </div>
 
-          {/* Year Selector */}
+          {/* Year Selector + Company Filter */}
           <div className='bg-white rounded-xl shadow-md border border-gray-200 p-4 mb-5'>
-            <div className='flex items-center justify-center gap-4'>
-              <button
-                onClick={prevYear}
-                className='p-2 hover:bg-gray-100 rounded-lg transition cursor-pointer'
+            <div className='flex flex-col sm:flex-row items-center justify-center gap-4'>
+              <div className='flex items-center gap-4'>
+                <button
+                  onClick={prevYear}
+                  className='p-2 hover:bg-gray-100 rounded-lg transition cursor-pointer'
+                >
+                  <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
+                  </svg>
+                </button>
+                <span className='text-2xl font-black text-gray-800 min-w-[100px] text-center'>{year}</span>
+                <button
+                  onClick={nextYear}
+                  className='p-2 hover:bg-gray-100 rounded-lg transition cursor-pointer'
+                >
+                  <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
+                  </svg>
+                </button>
+              </div>
+              <div className='w-px h-8 bg-gray-200 hidden sm:block' />
+              <select
+                value={companyFilter}
+                onChange={(e) => setCompanyFilter(e.target.value)}
+                className='px-3 py-2 border border-gray-300 rounded-lg text-sm font-semibold bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
               >
-                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
-                </svg>
-              </button>
-              <span className='text-2xl font-black text-gray-800 min-w-[100px] text-center'>{year}</span>
-              <button
-                onClick={nextYear}
-                className='p-2 hover:bg-gray-100 rounded-lg transition cursor-pointer'
-              >
-                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5l7 7-7 7' />
-                </svg>
-              </button>
+                <option value=''>All Companies</option>
+                {companies.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -107,7 +133,7 @@ const InsuranceReports = () => {
           </div>
 
           {/* Monthly Table */}
-          <div className='bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden'>
+          <div className='bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden mb-5'>
             <div className='px-4 py-3 border-b border-gray-200 bg-gray-50'>
               <h2 className='text-sm font-bold text-gray-700'>Monthly Breakdown</h2>
             </div>
@@ -182,6 +208,80 @@ const InsuranceReports = () => {
               </div>
             )}
           </div>
+
+          {/* Company-wise Breakdown */}
+          {companyData.length > 0 && (
+            <div className='bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden'>
+              <div className='px-4 py-3 border-b border-gray-200 bg-gray-50'>
+                <h2 className='text-sm font-bold text-gray-700'>Company-wise Breakdown — {year}</h2>
+              </div>
+              <div className='overflow-x-auto'>
+                <table className='w-full'>
+                  <thead>
+                    <tr className='bg-gray-50 border-b border-gray-200'>
+                      <th className='px-4 py-3 text-left text-[10px] font-bold text-gray-600 uppercase tracking-wider'>Insurance Company</th>
+                      <th className='px-4 py-3 text-right text-[10px] font-bold text-gray-600 uppercase tracking-wider'>Policies</th>
+                      <th className='px-4 py-3 text-right text-[10px] font-bold text-gray-600 uppercase tracking-wider'>Total Premium</th>
+                      <th className='px-4 py-3 text-right text-[10px] font-bold text-purple-700 uppercase tracking-wider'>Commission</th>
+                      <th className='px-4 py-3 text-right text-[10px] font-bold text-gray-600 uppercase tracking-wider'>Collected</th>
+                    </tr>
+                  </thead>
+                  <tbody className='divide-y divide-gray-100'>
+                    {companyData.map((c) => (
+                      <tr
+                        key={c.company}
+                        className='hover:bg-gray-50 transition cursor-pointer'
+                        onClick={() => setCompanyFilter(c.company === companyFilter ? '' : c.company)}
+                        title={c.company === companyFilter ? 'Click to clear filter' : `Filter by ${c.company}`}
+                      >
+                        <td className='px-4 py-3.5'>
+                          <div className='flex items-center gap-2'>
+                            {c.company === companyFilter && (
+                              <svg className='w-3.5 h-3.5 text-indigo-600' fill='currentColor' viewBox='0 0 20 20'>
+                                <path fillRule='evenodd' d='M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z' clipRule='evenodd' />
+                              </svg>
+                            )}
+                            <span className='text-sm font-bold text-gray-800'>{c.company || 'Unknown'}</span>
+                          </div>
+                        </td>
+                        <td className='px-4 py-3.5 text-right'>
+                          <span className='text-sm font-bold text-gray-900'>{c.count}</span>
+                        </td>
+                        <td className='px-4 py-3.5 text-right'>
+                          <span className='text-sm font-semibold text-gray-800'>₹{c.totalFee.toLocaleString('en-IN')}</span>
+                        </td>
+                        <td className='px-4 py-3.5 text-right'>
+                          <span className='text-sm font-bold text-purple-600'>₹{c.commission.toLocaleString('en-IN')}</span>
+                        </td>
+                        <td className='px-4 py-3.5 text-right'>
+                          <span className='text-sm font-semibold text-emerald-600'>₹{c.paid.toLocaleString('en-IN')}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className='bg-gradient-to-r from-blue-50 to-purple-50 border-t-2 border-blue-200'>
+                      <td className='px-4 py-4'>
+                        <span className='text-sm font-black text-gray-800'>Total</span>
+                      </td>
+                      <td className='px-4 py-4 text-right'>
+                        <span className='text-sm font-black text-gray-900'>{totals.count}</span>
+                      </td>
+                      <td className='px-4 py-4 text-right'>
+                        <span className='text-sm font-black text-gray-800'>₹{totals.totalFee.toLocaleString('en-IN')}</span>
+                      </td>
+                      <td className='px-4 py-4 text-right'>
+                        <span className='text-sm font-black text-purple-700'>₹{totals.commission.toLocaleString('en-IN')}</span>
+                      </td>
+                      <td className='px-4 py-4 text-right'>
+                        <span className='text-sm font-black text-emerald-700'>₹{totals.paid.toLocaleString('en-IN')}</span>
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </>
