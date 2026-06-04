@@ -17,6 +17,7 @@ import TemporaryPermitOtherState from './pages/TemporaryPermitOtherState/Tempora
 import VehicleRegistration from './pages/VehicleRegistration/VehicleRegistration'
 import VehicleLedgerPage from './pages/VehicleRegistration/VehicleLedgerPage'
 import Insurance from './pages/Insurance/Insurance'
+import InsuranceReports from './pages/Insurance/InsuranceReports'
 import Fitness from './pages/Fitness/Fitness'
 import HpaHpt from './pages/HpaHpt/HpaHpt'
 import VehicleTransfer from './pages/VehicleTransfer/VehicleTransfer'
@@ -86,6 +87,7 @@ function ProtectedLayout() {
           '/temporary-permit',
           '/temporary-permit-other-state',
           '/insurance',
+          '/insurance/reports',
           '/fitness',
           '/tax',
           '/puc',
@@ -130,6 +132,7 @@ function ProtectedLayout() {
               <Route path='/vehicle-registration' element={<VehicleRegistration />} />
               <Route path='/vehicle-ledger/:registrationNumber' element={<VehicleLedgerPage />} />
               <Route path='/insurance' element={<Insurance />} />
+              <Route path='/insurance/reports' element={<InsuranceReports />} />
               <Route path='/fitness' element={<Fitness />} />
               <Route path='/hpa-hpt' element={<HpaHpt />} />
               <Route path='/tax' element={<Tax />} />

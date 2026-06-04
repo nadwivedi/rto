@@ -96,6 +96,12 @@ const Navbar = () => {
       path: "/insurance",
       description: "Vehicle Insurance",
     },
+    {
+      name: "Insurance Reports",
+      icon: "📊",
+      path: "/insurance/reports",
+      description: "Monthly Business Report",
+    },
 
      {
       name: "Bill",

@@ -19,7 +19,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     policyHolderName: prefilledOwnerName,
     mobileNumber: prefilledMobileNumber,
     ownerName: prefilledOwnerName,
-    date: '',
     validFrom: '',
     validTo: '',
     totalFee: '0',
@@ -69,7 +68,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         policyNumber: initialData.policyNumber || '',
         policyHolderName: initialData.policyHolderName || '',
         ownerName: initialData.ownerName || initialData.policyHolderName || '',
-        date: initialData.date || '',
         validFrom: initialData.validFrom || '',
         validTo: initialData.validTo || '',
         totalFee: initialData.totalFee?.toString() || '',
@@ -107,7 +105,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         policyHolderName: prefilledOwnerName,
         mobileNumber: prefilledMobileNumber,
         ownerName: prefilledOwnerName,
-        date: '',
         validFrom: '',
         validTo: '',
         totalFee: '0',
@@ -632,8 +629,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       // Get current tabIndex
       const currentTabIndex = parseInt(e.target.getAttribute('tabIndex'))
 
-      // If we're on the last field (paid = tabIndex 10), submit the form
-      if (currentTabIndex === 10) {
+      // If we're on the last field (commission = tabIndex 13), submit the form
+      if (currentTabIndex === 13) {
         document.querySelector('form')?.requestSubmit()
         return
       }
@@ -664,7 +661,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       policyHolderName: formData.policyHolderName,
       ownerName: formData.ownerName,
       mobileNumber: formData.mobileNumber,
-      date: formData.date,
       validFrom: formData.validFrom,
       validTo: formData.validTo,
       issueDate: formData.validFrom,
@@ -799,26 +795,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
               </h3>
 
               <div className='grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4'>
-                {/* Date of Work */}
-                <div>
-                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Date of Work
-                  </label>
-                  <input
-                    type='date'
-                    name='date'
-                    value={formData.date}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
-                      const [y, m, d] = val.split('-');
-                      setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
-                    }}
-                    tabIndex="1"
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white'
-                  />
-                </div>
-
                 {/* Vehicle Number */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -833,7 +809,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                       onKeyDown={handleInputKeyDown}
                       placeholder='CG04AA1234 or 4793'
                       maxLength='10'
-                      tabIndex="2"
+                      tabIndex="1"
                       className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:border-transparent font-mono bg-white ${
                         formData.vehicleNumber && !vehicleValidation.isValid
                           ? 'border-red-500 focus:ring-red-500'
@@ -917,7 +893,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     placeholder='INS001234567'
-                    tabIndex="3"
+                    tabIndex="2"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono bg-white'
                   />
                 </div>
@@ -934,7 +910,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     placeholder='Enter policy holder name'
-                    tabIndex="4"
+                    tabIndex="3"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                   />
                 </div>
@@ -951,7 +927,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     placeholder='Enter owner name'
-                    tabIndex="5"
+                    tabIndex="4"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                   />
                 </div>
@@ -969,7 +945,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onKeyDown={handleInputKeyDown}
                     placeholder='10-digit number'
                     maxLength='10'
-                    tabIndex="6"
+                    tabIndex="5"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                   />
                 </div>
@@ -984,7 +960,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     value={formData.insuranceCompany}
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
-                    tabIndex="7"
+                    tabIndex="6"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
                   >
                     <option value=''>-- Select Insurance Company --</option>
@@ -1032,7 +1008,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     placeholder="Enter owner's address (extracted automatically from PDF)"
-                    tabIndex="8"
+                    tabIndex="7"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white uppercase'
                   />
                 </div>
@@ -1059,7 +1035,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     placeholder='DD-MM-YYYY'
-                    tabIndex="9"
+                    tabIndex="8"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white'
                     required
                   />
@@ -1078,7 +1054,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onChange={handleChange}
                     onKeyDown={handleInputKeyDown}
                     placeholder='DD-MM-YYYY'
-                    tabIndex="10"
+                    tabIndex="9"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white'
                   />
                   <p className='text-xs text-gray-500 mt-1'>Auto-calculated: 1 year from Valid From date minus 1 day</p>
@@ -1107,7 +1083,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="11"
+                    tabIndex="10"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                     required
                   />
@@ -1126,7 +1102,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="12"
+                    tabIndex="11"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 font-semibold ${
                       paidExceedsTotal
                         ? 'border-red-500 focus:ring-red-500 bg-red-50'
@@ -1168,7 +1144,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder='For next year'
-                    tabIndex="13"
+                    tabIndex="12"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>
@@ -1186,7 +1162,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder='Agent commission'
-                    tabIndex="14"
+                    tabIndex="13"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>

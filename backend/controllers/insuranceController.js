@@ -848,6 +848,72 @@ exports.markAsPaid = async (req, res) => {
   }
 };
 
+// Monthly business report
+exports.monthlyReport = async (req, res) => {
+  try {
+    const year = parseInt(req.query.year) || new Date().getFullYear()
+
+    const result = await Insurance.aggregate([
+      { $match: { userId: new mongoose.Types.ObjectId(req.user.id) } },
+      {
+        $addFields: {
+          parsedYear: { $substr: ["$validFrom", 6, 4] },
+          parsedMonth: { $substr: ["$validFrom", 3, 2] }
+        }
+      },
+      { $match: { parsedYear: String(year) } },
+      {
+        $group: {
+          _id: { month: "$parsedMonth" },
+          count: { $sum: 1 },
+          totalFee: { $sum: { $ifNull: ["$totalFee", 0] } },
+          commission: { $sum: { $ifNull: ["$commission", 0] } },
+          paid: { $sum: { $ifNull: ["$paid", 0] } }
+        }
+      },
+      { $sort: { "_id.month": 1 } },
+      {
+        $project: {
+          _id: 0,
+          month: "$_id.month",
+          count: 1,
+          totalFee: { $round: ["$totalFee", 0] },
+          commission: { $round: ["$commission", 0] },
+          paid: { $round: ["$paid", 0] }
+        }
+      }
+    ])
+
+    const months = result.map(r => ({
+      month: parseInt(r.month),
+      label: new Date(year, parseInt(r.month) - 1).toLocaleString('default', { month: 'long' }),
+      count: r.count,
+      totalFee: r.totalFee,
+      commission: r.commission,
+      paid: r.paid
+    }))
+
+    const totals = months.reduce((acc, m) => ({
+      count: acc.count + m.count,
+      totalFee: acc.totalFee + m.totalFee,
+      commission: acc.commission + m.commission,
+      paid: acc.paid + m.paid
+    }), { count: 0, totalFee: 0, commission: 0, paid: 0 })
+
+    res.status(200).json({
+      success: true,
+      data: { year, months, totals }
+    })
+  } catch (error) {
+    console.error('Error generating monthly report:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate monthly report',
+      error: error.message
+    })
+  }
+}
+
 // Increment WhatsApp message count
 exports.incrementWhatsAppCount = async (req, res) => {
   try {

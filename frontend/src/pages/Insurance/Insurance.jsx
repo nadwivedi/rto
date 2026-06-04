@@ -29,7 +29,6 @@ const Insurance = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedInsurance, setSelectedInsurance] = useState(null);
   const [loading, setLoading] = useState(false);
-  const [dateFilter, setDateFilter] = useState("All");
   const [statusFilter, setStatusFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("");
   const [companies, setCompanies] = useState([]);
@@ -373,12 +372,6 @@ const Insurance = () => {
     return insurance.insuranceDocument && insurance.insuranceDocument.trim() !== '';
   };
 
-  const handleFilterChange = (filterType, value) => {
-    if (filterType === "date") {
-      setDateFilter(value);
-    }
-  };
-
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50">
@@ -525,36 +518,16 @@ const Insurance = () => {
                       toUpperCase={true}
                     />
 
-                    {/* Filters Group */}
-                    <div className="flex flex-wrap gap-2">
-                      {/* Date Filter */}
-                      <select
-                        value={dateFilter}
-                        onChange={(e) =>
-                          handleFilterChange("date", e.target.value)
-                        }
-                        className="px-4 py-3 text-sm border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 font-semibold bg-white hover:border-indigo-300 transition-all shadow-sm"
-                      >
-                        <option value="All">All Insurance</option>
-                        <option value="Expiring30Days">
-                          Expiring in 30 Days
-                        </option>
-                        <option value="Expiring60Days">
-                          Expiring in 60 Days
-                        </option>
-                        <option value="Expired">Expired</option>
-                      </select>
-
-                      {/* Clear Filters */}
-                      {dateFilter !== "All" && (
-                        <button
-                          onClick={() => handleFilterChange("date", "All")}
-                          className="px-4 py-3 text-sm bg-gradient-to-r from-red-500 to-rose-500 text-white rounded-xl hover:from-red-600 hover:to-rose-600 transition-all font-bold shadow-md hover:shadow-lg"
-                        >
-                          Clear
-                        </button>
-                      )}
-                    </div>
+                    {/* Report Button */}
+                    <button
+                      onClick={() => navigate('/insurance/reports')}
+                      className='flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-600 text-white rounded-xl hover:shadow-lg font-bold text-xs transition-all hover:scale-105 cursor-pointer'
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' />
+                      </svg>
+                      Report
+                    </button>
 
                     {/* New Insurance Button */}
                     <AddButton

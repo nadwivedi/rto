@@ -13,6 +13,9 @@ router.get('/statistics', insuranceController.getStatistics)
 // Get distinct insurance companies for filter dropdown
 router.get('/companies', insuranceController.getInsuranceCompanies)
 
+// Monthly business report (must be before /:id)
+router.get('/monthly-report', insuranceController.monthlyReport)
+
 // Get expiring insurance records (must be before /:id)
 router.get('/expiring', insuranceController.getExpiringInsurance)
 
