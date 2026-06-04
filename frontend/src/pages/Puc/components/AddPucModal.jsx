@@ -356,7 +356,7 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
     }
 
     const dataToSubmit = {
-      date: formData.date || undefined,
+      date: formData.date ? formData.date.split('-').reverse().join('-') : undefined,
       vehicleNumber: formData.vehicleNumber,
       ownerName: formData.ownerName,
       mobileNumber: formData.mobileNumber,
@@ -578,20 +578,16 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 {/* Date of Work */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Date of Work <span className='text-red-500'>*</span>
+                    Date of Work
                   </label>
                   <input
                     type='date'
                     name='date'
                     value={formData.date}
                     onChange={(e) => {
-                      const val = e.target.value;
-                      if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
-                      const [y, m, d] = val.split('-');
-                      setFormData(p => ({ ...p, date: `${d}-${m}-${y}` }));
+                      setFormData(p => ({ ...p, date: e.target.value }));
                     }}
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white'
-                    required
                   />
                 </div>
                 {/* Vehicle Number */}
