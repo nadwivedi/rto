@@ -724,7 +724,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                 <input
                   type='date'
                   name='date'
-                  value={formData.date}
+                  value={formData.date ? formData.date.split('-').reverse().join('-') : ''}
                   onChange={(e) => {
                     const val = e.target.value;
                     if (!val) { setFormData(p => ({ ...p, date: '' })); return; }
