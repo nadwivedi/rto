@@ -33,6 +33,7 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
   const [vehicleMatches, setVehicleMatches] = useState([])
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false)
   const [selectedDropdownIndex, setSelectedDropdownIndex] = useState(0)
+  const [manuallyEditedValidTo, setManuallyEditedValidTo] = useState(false)
   const dropdownItemRefs = useRef([])
 
   // Pre-fill form when permitData is provided (for editing)
@@ -52,6 +53,9 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
         paid: permitData.paid?.toString() || '0',
         balance: permitData.balance?.toString() || '1000'
       })
+
+      // Prevent auto-calculation from overwriting original validTo on edit load
+      setManuallyEditedValidTo(true)
 
       // Validate the pre-filled vehicle number
       if (vehicleNum) {
@@ -79,6 +83,7 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
       setVehicleMatches([])
       setShowVehicleDropdown(false)
       setSelectedDropdownIndex(0)
+      setManuallyEditedValidTo(false)
     }
   }, [permitData, isOpen])
 
@@ -163,8 +168,8 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
 
   // Calculate valid to date based on vehicle type (CV=3 months, PV=4 months)
   useEffect(() => {
-    // Only calculate if both validFrom and vehicleType are present
-    if (!formData.validFrom || !formData.vehicleType) {
+    // Only calculate if both validFrom and vehicleType are present and user hasn't manually edited
+    if (!formData.validFrom || !formData.vehicleType || manuallyEditedValidTo) {
       return
     }
 
@@ -245,7 +250,7 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
         validTo: formattedValidTo
       }))
     }
-  }, [formData.validFrom, formData.vehicleType, formData.validTo])
+  }, [formData.validFrom, formData.vehicleType, formData.validTo, manuallyEditedValidTo])
 
   // Auto-scroll to selected dropdown item
   useEffect(() => {
@@ -388,8 +393,22 @@ const EditTemporaryPermitModal = ({ isOpen, onClose, onSubmit, permitData = null
           ...prev,
           [name]: formatted
         }))
+
+        // If user manually edits validTo, mark it as manually edited
+        if (name === 'validTo') {
+          setManuallyEditedValidTo(true)
+        }
+        // If user edits validFrom, allow auto-calculation again
+        if (name === 'validFrom') {
+          setManuallyEditedValidTo(false)
+        }
       }
       return
+    }
+
+    // If vehicle type changes, allow auto-calculation again
+    if (name === 'vehicleType') {
+      setManuallyEditedValidTo(false)
     }
 
     setFormData(prev => ({
