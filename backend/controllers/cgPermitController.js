@@ -45,7 +45,8 @@ exports.createPermit = async (req, res) => {
       balance,
       mobileNumber,
       notes,
-      partyId
+      partyId,
+      permitDocument
     } = req.body
 
     // Validate required fields
@@ -180,6 +181,7 @@ exports.createPermit = async (req, res) => {
       mobileNumber: mobileNumber ? mobileNumber.trim() : undefined,
       notes: notes ? notes.trim() : undefined,
       partyId: finalPartyId || undefined,
+      documents: permitDocument ? { permitDocument } : undefined,
       status,
       userId: req.user.id
     }
@@ -547,7 +549,8 @@ exports.updatePermit = async (req, res) => {
       balance,
       mobileNumber,
       notes,
-      partyId
+      partyId,
+      permitDocument
     } = req.body
 
     // Validate required fields if provided
@@ -642,6 +645,7 @@ exports.updatePermit = async (req, res) => {
     if (mobileNumber !== undefined) updateData.mobileNumber = mobileNumber ? mobileNumber.trim() : ''
     if (notes !== undefined) updateData.notes = notes ? notes.trim() : ''
     if (partyId !== undefined) updateData.partyId = partyId || null
+    if (permitDocument !== undefined) updateData['documents.permitDocument'] = permitDocument || undefined
 
     const updatedPermit = await CgPermit.findOneAndUpdate(
       { _id: id, userId: req.user.id },

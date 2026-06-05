@@ -10,9 +10,13 @@ const insuranceUploadsDir = path.join(__dirname, '..', 'uploads', 'insurance-doc
 const temporaryPermitUploadsDir = path.join(__dirname, '..', 'uploads', 'temporary-permit-documents')
 const speedGovernorUploadsDir = path.join(__dirname, '..', 'uploads', 'speed-governor-images')
 const kycUploadsDir = path.join(__dirname, '..', 'uploads', 'kyc-documents')
+const cgPermitUploadsDir = path.join(__dirname, '..', 'uploads', 'cg-permit-documents')
 
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true })
+if (!fs.existsSync(kycUploadsDir)) {
+  fs.mkdirSync(kycUploadsDir, { recursive: true })
+}
+if (!fs.existsSync(cgPermitUploadsDir)) {
+  fs.mkdirSync(cgPermitUploadsDir, { recursive: true })
 }
 if (!fs.existsSync(insuranceUploadsDir)) {
   fs.mkdirSync(insuranceUploadsDir, { recursive: true })
@@ -627,6 +631,113 @@ exports.uploadTemporaryPermitDocument = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Temporary permit document uploaded successfully',
+      data: {
+        filename,
+        path: relativePath,
+        size: buffer.length,
+        sizeInMB: fileSizeInMB.toFixed(2),
+        format: fileFormat.toUpperCase()
+      }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: new Date().toISOString()
+    })
+  }
+}
+
+// Upload CG Permit Document (accepts base64 image/PDF)
+exports.uploadCgPermitDocument = async (req, res) => {
+  try {
+    const { imageData, permitId, vehicleNumber } = req.body
+
+    if (!imageData) {
+      return res.status(400).json({
+        success: false,
+        message: 'Document data is required'
+      })
+    }
+
+    if (!vehicleNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vehicle registration number is required'
+      })
+    }
+
+    // If permitId provided, check for existing document and delete it
+    if (permitId) {
+      const CgPermit = require('../models/CgPermit')
+      const existingPermit = await CgPermit.findOne({
+        _id: permitId,
+        userId: req.user.id
+      })
+
+      if (existingPermit && existingPermit.documents?.permitDocument) {
+        try {
+          const filename = path.basename(existingPermit.documents.permitDocument)
+          const filePath = path.join(cgPermitUploadsDir, filename)
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath)
+          }
+        } catch (err) {
+          console.error('Error deleting old CG permit document:', err)
+        }
+      }
+    }
+
+    // Validate base64 format
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp|avif);base64,/
+    const pdfFormatRegex = /^data:application\/pdf;base64,/
+
+    let fileFormat = null
+    let fileExtension = null
+
+    const imageMatch = imageData.match(imageFormatRegex)
+    const pdfMatch = imageData.match(pdfFormatRegex)
+
+    if (imageMatch) {
+      fileFormat = imageMatch[1] === 'jpeg' ? 'jpg' : imageMatch[1]
+      fileExtension = fileFormat
+    } else if (pdfMatch) {
+      fileFormat = 'pdf'
+      fileExtension = 'pdf'
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Only JPG, JPEG, PNG, WebP, AVIF and PDF formats are accepted'
+      })
+    }
+
+    const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
+    const buffer = Buffer.from(base64Data, 'base64')
+
+    const fileSizeInMB = buffer.length / (1024 * 1024)
+    if (fileSizeInMB > 12) {
+      return res.status(400).json({
+        success: false,
+        message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit`
+      })
+    }
+
+    // Generate filename with vehicle number
+    const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '')
+    const filename = `cg-permit-${sanitizedVehicleNumber}-${Date.now()}.${fileExtension}`
+    const filePath = path.join(cgPermitUploadsDir, filename)
+
+    fs.writeFileSync(filePath, buffer)
+
+    const relativePath = `/uploads/cg-permit-documents/${filename}`
+
+    res.status(200).json({
+      success: true,
+      message: 'CG permit document uploaded successfully',
       data: {
         filename,
         path: relativePath,

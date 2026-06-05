@@ -21,4 +21,7 @@ router.post('/temporary-permit-document', uploadController.uploadTemporaryPermit
 // POST upload KYC Document image/PDF (base64, max 12MB)
 router.post('/kyc-document', uploadController.uploadKycDocument)
 
+// POST upload CG Permit Document image/PDF (base64, max 12MB)
+router.post('/cg-permit-document', uploadController.uploadCgPermitDocument)
+
 module.exports = router

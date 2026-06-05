@@ -36,6 +36,41 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
   const dropdownItemRefs = useRef([])
   const [isSubmitting, setIsSubmitting] = useState(false)
 
+  // File upload state
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [permitDocumentBase64, setPermitDocumentBase64] = useState('')
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const isImage = file.type.startsWith('image/')
+    const isPDF = file.type === 'application/pdf'
+    if (!isImage && !isPDF) {
+      toast.error('Please upload an image or PDF file')
+      e.target.value = ''
+      return
+    }
+
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error('File size must be less than 12MB')
+      e.target.value = ''
+      return
+    }
+
+    setSelectedFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setPermitDocumentBase64(reader.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null)
+    setPermitDocumentBase64('')
+  }
+
   // Pre-fill form when initialData is provided (for renewal)
   useEffect(() => {
     if (initialData && isOpen) {
@@ -64,6 +99,8 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
       setVehicleMatches([])
       setShowVehicleDropdown(false)
       setSelectedDropdownIndex(0)
+      setSelectedFile(null)
+      setPermitDocumentBase64('')
     }
   }, [initialData, isOpen, prefilledVehicleNumber, prefilledOwnerName, prefilledMobileNumber])
 
@@ -434,6 +471,26 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
       return
     }
 
+    setIsSubmitting(true)
+
+    // Upload document first if selected
+    let documentPath = ''
+    if (permitDocumentBase64) {
+      try {
+        const uploadRes = await axios.post(`${API_URL}/api/upload/cg-permit-document`, {
+          imageData: permitDocumentBase64,
+          vehicleNumber: formData.vehicleNumber
+        }, { withCredentials: true })
+        if (uploadRes.data.success) {
+          documentPath = uploadRes.data.data.path
+        }
+      } catch {
+        toast.error('Failed to upload document')
+        setIsSubmitting(false)
+        return
+      }
+    }
+
     const dataToSubmit = {
       permitNumber: formData.permitNumber,
       permitHolder: formData.permitHolderName,
@@ -444,10 +501,10 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
       partyId: formData.partyId || null,
       totalFee: parseFloat(formData.totalFee) || 0,
       paid: parseFloat(formData.paid) || 0,
-      balance: parseFloat(formData.balance) || 0
+      balance: parseFloat(formData.balance) || 0,
+      permitDocument: documentPath || undefined
     }
 
-    setIsSubmitting(true)
     try {
       const response = await axios.post(`${API_URL}/api/cg-permits`, dataToSubmit, {
         withCredentials: true
@@ -699,6 +756,72 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
                     readOnly
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Document Upload Section */}
+            <div className='bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <span className='bg-amber-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>
+                  <svg className='w-3 h-3 md:w-4 md:h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
+                  </svg>
+                </span>
+                CG Permit Document
+              </h3>
+
+              <div className='space-y-3'>
+                {selectedFile ? (
+                  <div className='flex items-center justify-between bg-white rounded-lg border border-amber-300 p-3'>
+                    <div className='flex items-center gap-3'>
+                      {selectedFile.type === 'application/pdf' ? (
+                        <svg className='w-8 h-8 text-red-500' fill='currentColor' viewBox='0 0 24 24'>
+                          <path d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z' />
+                          <path d='M14 2v6h6M16 13H8m0 4h8m-8-8h2' fill='none' stroke='currentColor' />
+                        </svg>
+                      ) : (
+                        <svg className='w-8 h-8 text-green-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' />
+                        </svg>
+                      )}
+                      <div>
+                        <p className='text-sm font-semibold text-gray-800'>{selectedFile.name}</p>
+                        <p className='text-xs text-gray-500'>
+                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type='button'
+                      onClick={handleRemoveFile}
+                      className='p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer'
+                    >
+                      <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <label className='flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-amber-300 rounded-lg cursor-pointer bg-amber-50/50 hover:bg-amber-100/50 transition'>
+                    <div className='flex flex-col items-center justify-center pt-5 pb-6'>
+                      <svg className='w-8 h-8 md:w-10 md:h-10 text-amber-500 mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
+                      </svg>
+                      <p className='text-xs md:text-sm text-amber-700 font-semibold'>
+                        Click to upload CG Permit document
+                      </p>
+                      <p className='text-xs text-amber-500 mt-1'>
+                        Image or PDF (max 12MB)
+                      </p>
+                    </div>
+                    <input
+                      type='file'
+                      accept='image/*,application/pdf'
+                      onChange={handleFileSelect}
+                      className='hidden'
+                    />
+                  </label>
+                )}
               </div>
             </div>
 
