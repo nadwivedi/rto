@@ -540,11 +540,16 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         toast.dismiss(updateToast)
         toast.success('Insurance Details Extracted Successfully!', { position: 'top-right', autoClose: 3000 })
       } else {
+        console.error('OCR extraction failed - response:', response.data)
         toast.dismiss(updateToast)
         toast.error('Failed to extract data from document.', { position: 'top-right', autoClose: 3000 })
       }
     } catch (err) {
-      console.error('OCR Error:', err)
+      console.error('OCR extraction error:', {
+        message: err.message,
+        response: err.response?.data,
+        status: err.response?.status
+      })
       toast.dismiss(updateToast)
       toast.error('Error during OCR processing. Please fill details manually.', { position: 'top-right', autoClose: 3000 })
     } finally {

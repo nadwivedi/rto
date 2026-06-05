@@ -509,10 +509,15 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
         setTimeout(() => { isOcrUpdate.current = false }, 200)
         toast.success('Permit Details Extracted Successfully!')
       } else {
+        console.error('OCR extraction failed - response:', response.data)
         toast.error('Failed to extract details from document')
       }
     } catch (error) {
-      console.error('OCR extraction error:', error)
+      console.error('OCR extraction error:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      })
       toast.error(`Extraction failed: ${error.response?.data?.message || error.message}`)
     } finally {
       setIsExtracting(false)
