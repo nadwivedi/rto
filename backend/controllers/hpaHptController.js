@@ -111,6 +111,7 @@ exports.createHpaHpt = async (req, res) => {
       vehicleNumber,
       ownerName,
       mobileNumber,
+      date,
       type,
       totalFee,
       paid,
