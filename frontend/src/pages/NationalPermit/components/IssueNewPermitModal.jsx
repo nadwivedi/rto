@@ -8,9 +8,6 @@ import { handleSmartDateInput } from '../../../utils/dateFormatter'
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
 const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', prefilledOwnerName = '', prefilledMobileNumber = '' }) => {
-  const [showOptionalFields, setShowOptionalFields] = useState(false)
-  const [partAImage, setPartAImage] = useState(null)
-  const [partBImage, setPartBImage] = useState(null)
   const [fetchingVehicle, setFetchingVehicle] = useState(false)
   const [vehicleError, setVehicleError] = useState('')
   const [vehicleValidation, setVehicleValidation] = useState({ isValid: false, message: '' })
@@ -22,6 +19,18 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
   const [existingPermitStatus, setExistingPermitStatus] = useState(null)
   const [permitCheckError, setPermitCheckError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Part A document upload state
+  const [partASelectedFile, setPartASelectedFile] = useState(null)
+  const [partADocumentBase64, setPartADocumentBase64] = useState('')
+  const [uploadedPartAPath, setUploadedPartAPath] = useState('')
+  const [uploadingPartA, setUploadingPartA] = useState(false)
+
+  // Part B document upload state
+  const [partBSelectedFile, setPartBSelectedFile] = useState(null)
+  const [partBDocumentBase64, setPartBDocumentBase64] = useState('')
+  const [uploadedPartBPath, setUploadedPartBPath] = useState('')
+  const [uploadingPartB, setUploadingPartB] = useState(false)
 
   // Helper function to format date as DD-MM-YYYY
   const formatDate = (date) => {
@@ -491,14 +500,141 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
     }))
   }
 
-  const handleFileChange = (e, type) => {
+  const handlePartASelect = (e) => {
     const file = e.target.files[0]
-    if (file) {
-      if (type === 'partA') {
-        setPartAImage(file)
-      } else {
-        setPartBImage(file)
+    if (!file) return
+    const isImage = file.type.startsWith('image/')
+    const isPDF = file.type === 'application/pdf'
+    if (!isImage && !isPDF) {
+      toast.error('Please upload an image or PDF file')
+      e.target.value = ''
+      return
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error('File size must be less than 12MB')
+      e.target.value = ''
+      return
+    }
+    setPartASelectedFile(file)
+    setUploadedPartAPath('')
+    const reader = new FileReader()
+    reader.onloadend = () => setPartADocumentBase64(reader.result)
+    reader.readAsDataURL(file)
+  }
+
+  const handlePartBSelect = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const isImage = file.type.startsWith('image/')
+    const isPDF = file.type === 'application/pdf'
+    if (!isImage && !isPDF) {
+      toast.error('Please upload an image or PDF file')
+      e.target.value = ''
+      return
+    }
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error('File size must be less than 12MB')
+      e.target.value = ''
+      return
+    }
+    setPartBSelectedFile(file)
+    setUploadedPartBPath('')
+    const reader = new FileReader()
+    reader.onloadend = () => setPartBDocumentBase64(reader.result)
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemovePartA = () => {
+    setPartASelectedFile(null)
+    setPartADocumentBase64('')
+    setUploadedPartAPath('')
+  }
+
+  const handleRemovePartB = () => {
+    setPartBSelectedFile(null)
+    setPartBDocumentBase64('')
+    setUploadedPartBPath('')
+  }
+
+  const handleQuickUploadPartA = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      toast.error('Please upload an image or PDF file')
+      e.target.value = ''
+      return
+    }
+    if (!formData.vehicleNumber) {
+      toast.error('Please enter vehicle number first')
+      e.target.value = ''
+      return
+    }
+    setUploadingPartA(true)
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        try {
+          const base64 = reader.result
+          const res = await axios.post(`${API_URL}/api/upload/np-part-a-document`, {
+            imageData: base64,
+            vehicleNumber: formData.vehicleNumber
+          }, { withCredentials: true })
+          if (res.data.success) {
+            setPartASelectedFile(file)
+            setPartADocumentBase64('')
+            setUploadedPartAPath(res.data.data.path)
+            toast.success('Part A document uploaded successfully!')
+          }
+        } catch {
+          toast.error('Failed to upload Part A document')
+        } finally {
+          setUploadingPartA(false)
+        }
       }
+      reader.readAsDataURL(file)
+    } catch {
+      setUploadingPartA(false)
+    }
+  }
+
+  const handleQuickUploadPartB = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      toast.error('Please upload an image or PDF file')
+      e.target.value = ''
+      return
+    }
+    if (!formData.vehicleNumber) {
+      toast.error('Please enter vehicle number first')
+      e.target.value = ''
+      return
+    }
+    setUploadingPartB(true)
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        try {
+          const base64 = reader.result
+          const res = await axios.post(`${API_URL}/api/upload/np-part-b-document`, {
+            imageData: base64,
+            vehicleNumber: formData.vehicleNumber
+          }, { withCredentials: true })
+          if (res.data.success) {
+            setPartBSelectedFile(file)
+            setPartBDocumentBase64('')
+            setUploadedPartBPath(res.data.data.path)
+            toast.success('Part B document uploaded successfully!')
+          }
+        } catch {
+          toast.error('Failed to upload Part B document')
+        } finally {
+          setUploadingPartB(false)
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch {
+      setUploadingPartB(false)
     }
   }
 
@@ -571,8 +707,8 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
       paid: parseFloat(formData.paid) || 0,
       balance: parseFloat(formData.balance) || 0,
       notes: formData.notes,
-      partAImage: partAImage,
-      partBImage: partBImage
+      partADocument: uploadedPartAPath || partADocumentBase64 || '',
+      partBDocument: uploadedPartBPath || partBDocumentBase64 || ''
     }
 
     setIsSubmitting(true)
@@ -591,6 +727,13 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
 
         // Close modal
         onClose()
+        // Reset document state
+        setPartASelectedFile(null)
+        setPartADocumentBase64('')
+        setUploadedPartAPath('')
+        setPartBSelectedFile(null)
+        setPartBDocumentBase64('')
+        setUploadedPartBPath('')
       }
     } catch (error) {
       console.error('Error adding National Permit:', error)
@@ -604,21 +747,89 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
 
   return (
     <div className='fixed inset-0 bg-black/60  z-[70] flex items-center justify-center p-2 md:p-4'>
-      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
+      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header */}
         <div className='bg-gradient-to-r from-blue-600 to-indigo-600 p-3 md:p-4 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>
             <div>
               <h2 className='text-lg md:text-2xl font-bold'>Add New National Permit</h2>
             </div>
-            <button
-              onClick={onClose}
-              className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
-            >
-              <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-              </svg>
-            </button>
+            <div className='flex items-center gap-2 shrink-0'>
+              {/* Part A Upload Button */}
+              <div className='relative overflow-hidden rounded-lg'>
+                <button
+                  type='button'
+                  disabled={uploadingPartA}
+                  className='flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/25 disabled:opacity-60 md:px-4 md:py-2 md:text-sm cursor-pointer'
+                  title='Upload Part A'
+                >
+                  {uploadingPartA ? (
+                    <>
+                      <svg className='h-4 w-4 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
+                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                      </svg>
+                      <span className='hidden md:inline'>Part A</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/>
+                      </svg>
+                      <span className='hidden md:inline'>Part A</span>
+                    </>
+                  )}
+                </button>
+                <input
+                  type='file'
+                  accept='image/*,application/pdf'
+                  disabled={uploadingPartA}
+                  onChange={handleQuickUploadPartA}
+                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
+                />
+              </div>
+              {/* Part B Upload Button */}
+              <div className='relative overflow-hidden rounded-lg'>
+                <button
+                  type='button'
+                  disabled={uploadingPartB}
+                  className='flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/25 disabled:opacity-60 md:px-4 md:py-2 md:text-sm cursor-pointer'
+                  title='Upload Part B'
+                >
+                  {uploadingPartB ? (
+                    <>
+                      <svg className='h-4 w-4 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
+                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                      </svg>
+                      <span className='hidden md:inline'>Part B</span>
+                    </>
+                  ) : (
+                    <>
+                      <svg className='h-4 w-4 text-purple-300' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/>
+                      </svg>
+                      <span className='hidden md:inline'>Part B</span>
+                    </>
+                  )}
+                </button>
+                <input
+                  type='file'
+                  accept='image/*,application/pdf'
+                  disabled={uploadingPartB}
+                  onChange={handleQuickUploadPartB}
+                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
+                />
+              </div>
+              <button
+                onClick={onClose}
+                className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
+              >
+                <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1078,79 +1289,135 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
               </div>
             </div>
 
-            {/* Expandable Optional Fields */}
-            <div className='border-2 border-gray-200 rounded-xl p-3 md:p-6'>
-              <button
-                type='button'
-                onClick={() => setShowOptionalFields(!showOptionalFields)}
-                className='flex items-center justify-between w-full text-left cursor-pointer'
-              >
-                <h3 className='text-base md:text-lg font-bold text-gray-800'>
-                  Additional Details (Optional)
-                </h3>
-                <svg
-                  className={`w-5 h-5 md:w-6 md:h-6 transition-transform ${showOptionalFields ? 'rotate-180' : ''}`}
-                  fill='none'
-                  stroke='currentColor'
-                  viewBox='0 0 24 24'
-                >
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
-                </svg>
-              </button>
-
-              {showOptionalFields && (
-                <div className='mt-4 md:mt-6'>
-                  {/* Document Uploads */}
-                  <div>
-                    <h4 className='text-xs md:text-sm font-bold mb-3 uppercase text-blue-600'>Document Uploads</h4>
-                    <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-                      {/* Part A Image Upload */}
-                      <div className='border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-blue-500 transition cursor-pointer'>
-                        <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-2 cursor-pointer'>
-                          <div className='flex items-center gap-2'>
-                            <svg className='w-5 h-5 text-blue-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
-                            </svg>
-                            <span>Upload Part A Document</span>
-                          </div>
-                        </label>
-                        <input
-                          type='file'
-                          accept='image/*,application/pdf'
-                          onChange={(e) => handleFileChange(e, 'partA')}
-                          className='w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer'
-                        />
-                        <p className='text-xs text-gray-500 mt-2'>JPG, PNG, PDF (Max 5MB)</p>
-                        {partAImage && (
-                          <p className='text-xs text-green-600 mt-1 font-semibold'>✓ {partAImage.name}</p>
-                        )}
-                      </div>
-
-                      {/* Part B Image Upload */}
-                      <div className='border-2 border-dashed border-gray-300 rounded-lg p-4 hover:border-purple-500 transition cursor-pointer'>
-                        <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-2 cursor-pointer'>
-                          <div className='flex items-center gap-2'>
-                            <svg className='w-5 h-5 text-purple-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
-                            </svg>
-                            <span>Upload Part B Document</span>
-                          </div>
-                        </label>
-                        <input
-                          type='file'
-                          accept='image/*,application/pdf'
-                          onChange={(e) => handleFileChange(e, 'partB')}
-                          className='w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100 cursor-pointer'
-                        />
-                        <p className='text-xs text-gray-500 mt-2'>JPG, PNG, PDF (Max 5MB)</p>
-                        {partBImage && (
-                          <p className='text-xs text-green-600 mt-1 font-semibold'>✓ {partBImage.name}</p>
-                        )}
-                      </div>
+            {/* Document Uploads */}
+            <div className='bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <span className='bg-amber-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>
+                  <svg className='w-3 h-3 md:w-4 md:h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
+                  </svg>
+                </span>
+                Document Uploads
+              </h3>
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+                {/* Part A Document Upload */}
+                <div>
+                  <h4 className='text-xs font-bold mb-2 uppercase text-blue-700'>Part A Document</h4>
+                  {(partASelectedFile || uploadedPartAPath) ? (
+                    <div className='bg-white rounded-lg border border-amber-300 p-3'>
+                      {(uploadedPartAPath || partADocumentBase64) && !partASelectedFile?.type?.startsWith('image/') && partASelectedFile?.type !== 'application/pdf' ? null : (
+                        <>
+                          {(partADocumentBase64 || (uploadedPartAPath && partASelectedFile?.type?.startsWith('image/'))) && (
+                            <div className='mb-2'>
+                              <img
+                                src={uploadedPartAPath ? `${API_URL}${uploadedPartAPath}` : partADocumentBase64}
+                                alt='Part A preview'
+                                className='w-full h-32 object-contain rounded border border-blue-200 bg-blue-50'
+                              />
+                            </div>
+                          )}
+                          {partASelectedFile?.type === 'application/pdf' && (
+                            <div className='flex items-center gap-3 mb-2'>
+                              <svg className='w-8 h-8 text-red-500' fill='currentColor' viewBox='0 0 24 24'>
+                                <path d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z' />
+                                <path d='M14 2v6h6M16 13H8m0 4h8m-8-8h2' fill='none' stroke='currentColor' />
+                              </svg>
+                              <span className='text-sm font-semibold text-gray-700 truncate'>{partASelectedFile?.name || 'Part A Document'}</span>
+                            </div>
+                          )}
+                          {uploadedPartAPath && !partASelectedFile && (
+                            <p className='text-xs text-green-600 font-semibold mb-2'>✓ Document uploaded</p>
+                          )}
+                        </>
+                      )}
+                      <button
+                        type='button'
+                        onClick={handleRemovePartA}
+                        className='text-xs text-red-500 hover:text-red-700 font-semibold cursor-pointer'
+                      >
+                        Remove
+                      </button>
                     </div>
-                  </div>
+                  ) : (
+                    <div className='relative'>
+                      <label className='flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-amber-300 rounded-lg cursor-pointer bg-amber-50/50 hover:bg-amber-100/50 transition'>
+                        <div className='flex flex-col items-center justify-center py-3'>
+                          <svg className='w-6 h-6 md:w-8 md:h-8 text-amber-500 mb-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
+                          </svg>
+                          <p className='text-xs text-amber-700 font-semibold'>Click to upload</p>
+                          <p className='text-xs text-amber-500 mt-0.5'>Image or PDF (max 12MB)</p>
+                        </div>
+                        <input
+                          type='file'
+                          accept='image/*,application/pdf'
+                          onChange={handlePartASelect}
+                          className='hidden'
+                        />
+                      </label>
+                    </div>
+                  )}
                 </div>
-              )}
+
+                {/* Part B Document Upload */}
+                <div>
+                  <h4 className='text-xs font-bold mb-2 uppercase text-purple-700'>Part B Document</h4>
+                  {(partBSelectedFile || uploadedPartBPath) ? (
+                    <div className='bg-white rounded-lg border border-amber-300 p-3'>
+                      {(uploadedPartBPath || partBDocumentBase64) && !partBSelectedFile?.type?.startsWith('image/') && partBSelectedFile?.type !== 'application/pdf' ? null : (
+                        <>
+                          {(partBDocumentBase64 || (uploadedPartBPath && partBSelectedFile?.type?.startsWith('image/'))) && (
+                            <div className='mb-2'>
+                              <img
+                                src={uploadedPartBPath ? `${API_URL}${uploadedPartBPath}` : partBDocumentBase64}
+                                alt='Part B preview'
+                                className='w-full h-32 object-contain rounded border border-purple-200 bg-purple-50'
+                              />
+                            </div>
+                          )}
+                          {partBSelectedFile?.type === 'application/pdf' && (
+                            <div className='flex items-center gap-3 mb-2'>
+                              <svg className='w-8 h-8 text-red-500' fill='currentColor' viewBox='0 0 24 24'>
+                                <path d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z' />
+                                <path d='M14 2v6h6M16 13H8m0 4h8m-8-8h2' fill='none' stroke='currentColor' />
+                              </svg>
+                              <span className='text-sm font-semibold text-gray-700 truncate'>{partBSelectedFile?.name || 'Part B Document'}</span>
+                            </div>
+                          )}
+                          {uploadedPartBPath && !partBSelectedFile && (
+                            <p className='text-xs text-green-600 font-semibold mb-2'>✓ Document uploaded</p>
+                          )}
+                        </>
+                      )}
+                      <button
+                        type='button'
+                        onClick={handleRemovePartB}
+                        className='text-xs text-red-500 hover:text-red-700 font-semibold cursor-pointer'
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : (
+                    <div className='relative'>
+                      <label className='flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-amber-300 rounded-lg cursor-pointer bg-amber-50/50 hover:bg-amber-100/50 transition'>
+                        <div className='flex flex-col items-center justify-center py-3'>
+                          <svg className='w-6 h-6 md:w-8 md:h-8 text-amber-500 mb-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
+                          </svg>
+                          <p className='text-xs text-amber-700 font-semibold'>Click to upload</p>
+                          <p className='text-xs text-amber-500 mt-0.5'>Image or PDF (max 12MB)</p>
+                        </div>
+                        <input
+                          type='file'
+                          accept='image/*,application/pdf'
+                          onChange={handlePartBSelect}
+                          className='hidden'
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
 

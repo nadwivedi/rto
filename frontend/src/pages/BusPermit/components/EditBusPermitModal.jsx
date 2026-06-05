@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import { toast } from 'react-toastify'
 import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck'
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 import { handleSmartDateInput } from '../../../utils/dateFormatter'
@@ -15,6 +16,92 @@ const EditBusPermitModal = ({ isOpen, onClose, onSubmit, permit }) => {
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false)
   const [selectedDropdownIndex, setSelectedDropdownIndex] = useState(0)
   const dropdownItemRefs = useRef([])
+
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadingDocument, setUploadingDocument] = useState(false)
+  const [selectedFile, setSelectedFile] = useState(null)
+  const [permitDocumentBase64, setPermitDocumentBase64] = useState('')
+  const [uploadedDocumentPath, setUploadedDocumentPath] = useState('')
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    const isImage = file.type.startsWith('image/')
+    const isPDF = file.type === 'application/pdf'
+    if (!isImage && !isPDF) {
+      toast.error('Please upload an image or PDF file')
+      e.target.value = ''
+      return
+    }
+
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error('File size must be less than 12MB')
+      e.target.value = ''
+      return
+    }
+
+    setSelectedFile(file)
+    setUploadedDocumentPath('')
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setPermitDocumentBase64(reader.result)
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveFile = () => {
+    setSelectedFile(null)
+    setPermitDocumentBase64('')
+    setUploadedDocumentPath('')
+  }
+
+  const handleQuickUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      toast.error('Please upload an image or PDF file')
+      e.target.value = ''
+      return
+    }
+
+    if (!formData.vehicleNumber) {
+      toast.error('Please enter vehicle number first')
+      e.target.value = ''
+      return
+    }
+
+    setUploadingDocument(true)
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        try {
+          const base64 = reader.result
+          const res = await axios.post(`${API_URL}/api/upload/bus-permit-document`, {
+            imageData: base64,
+            vehicleNumber: formData.vehicleNumber,
+            permitId: permit?._id || permit?.id
+          }, { withCredentials: true })
+          if (res.data.success) {
+            setSelectedFile(file)
+            setPermitDocumentBase64('')
+            setUploadedDocumentPath(res.data.data.path)
+            toast.success('Document uploaded successfully!')
+          }
+        } catch {
+          toast.error('Failed to upload document')
+        } finally {
+          setUploadingDocument(false)
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch {
+      setUploadingDocument(false)
+      toast.error('Failed to read file')
+    }
+    e.target.value = ''
+  }
 
   const [formData, setFormData] = useState({
     // Required fields
@@ -366,7 +453,7 @@ const EditBusPermitModal = ({ isOpen, onClose, onSubmit, permit }) => {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     // Ensure vehicle number is 7-10 characters for submission
@@ -381,9 +468,31 @@ const EditBusPermitModal = ({ isOpen, onClose, onSubmit, permit }) => {
       return
     }
 
-    if (onSubmit) {
-      onSubmit(formData)
+    setIsSubmitting(true)
+
+    // Use quick-uploaded path if available, otherwise upload from form
+    let documentPath = uploadedDocumentPath
+    if (!documentPath && permitDocumentBase64) {
+      try {
+        const uploadRes = await axios.post(`${API_URL}/api/upload/bus-permit-document`, {
+          imageData: permitDocumentBase64,
+          vehicleNumber: formData.vehicleNumber,
+          permitId: permit?._id || permit?.id
+        }, { withCredentials: true })
+        if (uploadRes.data.success) {
+          documentPath = uploadRes.data.data.path
+        }
+      } catch {
+        toast.error('Failed to upload document')
+        setIsSubmitting(false)
+        return
+      }
     }
+
+    if (onSubmit) {
+      await onSubmit({ ...formData, permitDocument: documentPath || undefined })
+    }
+    setIsSubmitting(false)
     onClose()
   }
 
@@ -391,21 +500,54 @@ const EditBusPermitModal = ({ isOpen, onClose, onSubmit, permit }) => {
 
   return (
     <div className='fixed inset-0 bg-black/60  z-[70] flex items-center justify-center p-2 md:p-4'>
-      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-7xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
+      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header */}
         <div className='bg-gradient-to-r from-blue-600 to-indigo-600 p-3 md:p-4 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>
             <div>
               <h2 className='text-lg md:text-2xl font-bold'>Edit Bus Permit</h2>
             </div>
-            <button
-              onClick={onClose}
-              className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
-            >
-              <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-              </svg>
-            </button>
+            <div className='flex items-center gap-2 shrink-0'>
+              <div className='relative overflow-hidden rounded-lg'>
+                <button
+                  type='button'
+                  disabled={uploadingDocument}
+                  className='flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/25 disabled:opacity-60 md:px-4 md:py-2 md:text-sm cursor-pointer'
+                >
+                  {uploadingDocument ? (
+                    <>
+                      <svg className='h-4 w-4 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
+                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                      </svg>
+                      Uploading
+                    </>
+                  ) : (
+                    <>
+                      <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/>
+                      </svg>
+                      Upload
+                    </>
+                  )}
+                </button>
+                <input
+                  type='file'
+                  accept='image/*,application/pdf'
+                  disabled={uploadingDocument}
+                  onChange={handleQuickUpload}
+                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
+                />
+              </div>
+              <button
+                onClick={onClose}
+                className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
+              >
+                <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -657,6 +799,72 @@ const EditBusPermitModal = ({ isOpen, onClose, onSubmit, permit }) => {
               </div>
             </div>
 
+            {/* Document Upload Section */}
+            <div className='bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <span className='bg-amber-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>
+                  <svg className='w-3 h-3 md:w-4 md:h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
+                  </svg>
+                </span>
+                Bus Permit Document
+              </h3>
+
+              <div className='space-y-3'>
+                {selectedFile ? (
+                  <div className='flex items-center justify-between bg-white rounded-lg border border-amber-300 p-3'>
+                    <div className='flex items-center gap-3'>
+                      {selectedFile.type === 'application/pdf' ? (
+                        <svg className='w-8 h-8 text-red-500' fill='currentColor' viewBox='0 0 24 24'>
+                          <path d='M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z' />
+                          <path d='M14 2v6h6M16 13H8m0 4h8m-8-8h2' fill='none' stroke='currentColor' />
+                        </svg>
+                      ) : (
+                        <svg className='w-8 h-8 text-green-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' />
+                        </svg>
+                      )}
+                      <div>
+                        <p className='text-sm font-semibold text-gray-800'>{selectedFile.name}</p>
+                        <p className='text-xs text-gray-500'>
+                          {(selectedFile.size / (1024 * 1024)).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type='button'
+                      onClick={handleRemoveFile}
+                      className='p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition cursor-pointer'
+                    >
+                      <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <label className='flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-amber-300 rounded-lg cursor-pointer bg-amber-50/50 hover:bg-amber-100/50 transition'>
+                    <div className='flex flex-col items-center justify-center pt-5 pb-6'>
+                      <svg className='w-8 h-8 md:w-10 md:h-10 text-amber-500 mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
+                      </svg>
+                      <p className='text-xs md:text-sm text-amber-700 font-semibold'>
+                        Click to upload Bus Permit document
+                      </p>
+                      <p className='text-xs text-amber-500 mt-1'>
+                        Image or PDF (max 12MB)
+                      </p>
+                    </div>
+                    <input
+                      type='file'
+                      accept='image/*,application/pdf'
+                      onChange={handleFileSelect}
+                      className='hidden'
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+
             {/* Fees Section */}
             <div className='bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
@@ -738,12 +946,25 @@ const EditBusPermitModal = ({ isOpen, onClose, onSubmit, permit }) => {
 
               <button
                 type='submit'
-                className='flex-1 md:flex-none px-4 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 cursor-pointer text-sm md:text-base'
+                disabled={isSubmitting}
+                className='flex-1 md:flex-none px-4 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 cursor-pointer text-sm md:text-base disabled:opacity-60'
               >
-                <svg className='w-4 h-4 md:w-5 md:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
-                </svg>
-                Save Changes
+                {isSubmitting ? (
+                  <>
+                    <svg className='animate-spin h-4 w-4 md:h-5 md:w-5 text-white' fill='none' viewBox='0 0 24 24'>
+                      <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                      <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                    </svg>
+                    Saving...
+                  </>
+                ) : (
+                  <>
+                    <svg className='w-4 h-4 md:w-5 md:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
+                    </svg>
+                    Save Changes
+                  </>
+                )}
               </button>
             </div>
           </div>

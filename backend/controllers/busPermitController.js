@@ -48,7 +48,8 @@ exports.createPermit = async (req, res) => {
       balance,
       mobileNumber,
       notes,
-      partyId
+      partyId,
+      permitDocument
     } = req.body
 
     // Validate required fields
@@ -218,7 +219,8 @@ exports.createPermit = async (req, res) => {
       notes: notes ? notes.trim() : undefined,
       partyId: finalPartyId || undefined,
       status,
-      userId: req.user.id
+      userId: req.user.id,
+      documents: permitDocument ? { permitDocument } : undefined
     }
 
     // Mark any existing non-renewed Bus permits for this vehicle as expired and renewed
@@ -587,7 +589,8 @@ exports.updatePermit = async (req, res) => {
       balance,
       mobileNumber,
       notes,
-      partyId
+      partyId,
+      permitDocument
     } = req.body
 
     // Validate required fields if provided
@@ -716,6 +719,7 @@ exports.updatePermit = async (req, res) => {
     if (mobileNumber !== undefined) updateData.mobileNumber = mobileNumber ? mobileNumber.trim() : ''
     if (notes !== undefined) updateData.notes = notes ? notes.trim() : ''
     if (partyId !== undefined) updateData.partyId = partyId || null
+    if (permitDocument !== undefined) updateData['documents.permitDocument'] = permitDocument || undefined
 
     const updatedPermit = await BusPermit.findOneAndUpdate(
       { _id: id, userId: req.user.id },

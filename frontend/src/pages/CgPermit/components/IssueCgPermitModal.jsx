@@ -39,6 +39,8 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
   // File upload state
   const [selectedFile, setSelectedFile] = useState(null)
   const [permitDocumentBase64, setPermitDocumentBase64] = useState('')
+  const [uploadingDocument, setUploadingDocument] = useState(false)
+  const [uploadedDocumentPath, setUploadedDocumentPath] = useState('')
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0]
@@ -59,6 +61,7 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
     }
 
     setSelectedFile(file)
+    setUploadedDocumentPath('')
     const reader = new FileReader()
     reader.onloadend = () => {
       setPermitDocumentBase64(reader.result)
@@ -69,6 +72,53 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
   const handleRemoveFile = () => {
     setSelectedFile(null)
     setPermitDocumentBase64('')
+    setUploadedDocumentPath('')
+  }
+
+  const handleQuickUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      toast.error('Please upload an image or PDF file')
+      e.target.value = ''
+      return
+    }
+
+    if (!formData.vehicleNumber) {
+      toast.error('Please enter vehicle number first')
+      e.target.value = ''
+      return
+    }
+
+    setUploadingDocument(true)
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        try {
+          const base64 = reader.result
+          const res = await axios.post(`${API_URL}/api/upload/cg-permit-document`, {
+            imageData: base64,
+            vehicleNumber: formData.vehicleNumber
+          }, { withCredentials: true })
+          if (res.data.success) {
+            setSelectedFile(file)
+            setPermitDocumentBase64('')
+            setUploadedDocumentPath(res.data.data.path)
+            toast.success('Document uploaded successfully!')
+          }
+        } catch {
+          toast.error('Failed to upload document')
+        } finally {
+          setUploadingDocument(false)
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch {
+      setUploadingDocument(false)
+      toast.error('Failed to read file')
+    }
+    e.target.value = ''
   }
 
   // Pre-fill form when initialData is provided (for renewal)
@@ -473,9 +523,9 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
 
     setIsSubmitting(true)
 
-    // Upload document first if selected
-    let documentPath = ''
-    if (permitDocumentBase64) {
+    // Use quick-uploaded path if available, otherwise upload from form
+    let documentPath = uploadedDocumentPath
+    if (!documentPath && permitDocumentBase64) {
       try {
         const uploadRes = await axios.post(`${API_URL}/api/upload/cg-permit-document`, {
           imageData: permitDocumentBase64,
@@ -540,14 +590,47 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
             <div>
               <h2 className='text-lg md:text-2xl font-bold'>Add New CG Permit</h2>
             </div>
-            <button
-              onClick={onClose}
-              className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
-            >
-              <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-              </svg>
-            </button>
+            <div className='flex items-center gap-2 shrink-0'>
+              <div className='relative overflow-hidden rounded-lg'>
+                <button
+                  type='button'
+                  disabled={uploadingDocument}
+                  className='flex items-center gap-1.5 rounded-lg bg-white/15 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/25 disabled:opacity-60 md:px-4 md:py-2 md:text-sm cursor-pointer'
+                >
+                  {uploadingDocument ? (
+                    <>
+                      <svg className='h-4 w-4 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
+                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                      </svg>
+                      Uploading
+                    </>
+                  ) : (
+                    <>
+                      <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/>
+                      </svg>
+                      Upload
+                    </>
+                  )}
+                </button>
+                <input
+                  type='file'
+                  accept='image/*,application/pdf'
+                  disabled={uploadingDocument}
+                  onChange={handleQuickUpload}
+                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
+                />
+              </div>
+              <button
+                onClick={onClose}
+                className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
+              >
+                <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 

@@ -472,7 +472,9 @@ const NationalPermit = () => {
         totalFee: Number(formData.totalFee) || 0,
         paid: Number(formData.paid) || 0,
         balance: Number(formData.balance) || 0,
-        notes: formData.notes || ''
+        notes: formData.notes || '',
+        partADocument: formData.partADocument || '',
+        partBDocument: formData.partBDocument || ''
       }
 
       // Make PUT request to backend
@@ -990,6 +992,13 @@ const NationalPermit = () => {
                     </td>
                     <td className='px-4 2xl:px-6 py-3 2xl:py-4'>
                       <div className='flex items-center justify-end gap-0.5 2xl:gap-0.5 pr-1'>
+                        {(permit.partA?.partADocument || permit.partB?.partBDocument) && (
+                          <span className='p-1.5 2xl:p-2 text-green-600' title='Documents available'>
+                            <svg className='w-4 h-4 2xl:w-5 2xl:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                            </svg>
+                          </span>
+                        )}
                         <button
                           onClick={() => handleViewDetails(permit)}
 

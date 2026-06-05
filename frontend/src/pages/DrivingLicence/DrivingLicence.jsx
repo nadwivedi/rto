@@ -383,6 +383,7 @@ const DrivingLicence = () => {
         city: formData.city,
         state: formData.state,
         pincode: formData.pincode,
+        date: formData.date,
         licenseClass: formData.licenseClass,
         licenseNumber: formData.licenseNumber,
         licenseIssueDate: formData.licenseIssueDate,
@@ -435,6 +436,7 @@ const DrivingLicence = () => {
         city: formData.city,
         state: formData.state,
         pincode: formData.pincode,
+        date: formData.date,
         licenseClass: formData.licenseClass,
         licenseNumber: formData.licenseNumber,
         licenseIssueDate: formData.licenseIssueDate,
@@ -740,6 +742,10 @@ const DrivingLicence = () => {
                   render: (record) => (
                     <div className='flex items-center justify-between pb-2 border-b border-gray-100'>
                       <div>
+                        <p className='text-[10px] text-gray-500 font-semibold uppercase'>Date of Work</p>
+                        <p className='text-xs font-bold text-gray-800 mt-1'>{record.date || '-'}</p>
+                      </div>
+                      <div className='text-right'>
                         <p className='text-[10px] text-gray-500 font-semibold uppercase'>License Class</p>
                         <span className='inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-200 mt-1'>
                           <svg className='w-3 h-3 mr-1' fill='currentColor' viewBox='0 0 20 20'>
@@ -749,7 +755,13 @@ const DrivingLicence = () => {
                           {record.type}
                         </span>
                       </div>
-                      <div className='text-right'>
+                    </div>
+                  ),
+                },
+                {
+                  render: (record) => (
+                    <div className='flex items-center justify-between pb-2 border-b border-gray-100'>
+                      <div>
                         <p className='text-[10px] text-gray-500 font-semibold uppercase'>LL Number</p>
                         <div className='text-xs font-mono font-semibold text-gray-900 bg-gray-100 px-2 py-1 rounded-lg border border-gray-200 mt-1'>
                           {record.fullData?.learningLicenseNumber || '-'}
@@ -964,12 +976,12 @@ const DrivingLicence = () => {
                     </td>
                     <td className='px-4 py-4'>
                       <div className='flex items-center gap-3'>
-                        <div className='flex-shrink-0 h-10 w-10 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md'>
+                        <div className='flex-shrink-0 h-8 w-8 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-md'>
                           {app.name?.charAt(0) || 'A'}
                         </div>
                         <div>
-                          <div className='text-sm font-bold text-gray-900'>{app.name}</div>
-                          <div className='text-xs text-gray-500 flex items-center mt-1'>
+                          <div className='text-xs font-bold text-gray-900'>{app.name}</div>
+                          <div className='text-[11px] text-gray-500 flex items-center mt-0.5'>
                             <svg className='w-3 h-3 mr-1' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z' />
                             </svg>

@@ -144,14 +144,14 @@ exports.createPermit = async (req, res) => {
       partAValidFrom,
       partAValidTo,
       partAStatus,
-      partADocument: req.files?.partAImage?.[0]?.path || '',
+      partADocument: req.body.partADocument || req.files?.partAImage?.[0]?.path || '',
 
       // Part B fields
       authNumber: partBNumber,
       partBValidFrom,
       partBValidTo,
       partBStatus,
-      partBDocument: req.files?.partBImage?.[0]?.path || '',
+      partBDocument: req.body.partBDocument || req.files?.partBImage?.[0]?.path || '',
 
       // Payment
       totalFee: parseFloat(totalFee) || 0,
@@ -393,6 +393,10 @@ exports.updatePermit = async (req, res) => {
 
     // Update partyId
     if (updateData.partyId !== undefined) permit.partyId = updateData.partyId || null
+
+    // Update documents
+    if (updateData.partADocument !== undefined) permit.partADocument = updateData.partADocument
+    if (updateData.partBDocument !== undefined) permit.partBDocument = updateData.partBDocument
 
     await permit.save()
 

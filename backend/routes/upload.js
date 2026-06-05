@@ -24,4 +24,13 @@ router.post('/kyc-document', uploadController.uploadKycDocument)
 // POST upload CG Permit Document image/PDF (base64, max 12MB)
 router.post('/cg-permit-document', uploadController.uploadCgPermitDocument)
 
+// POST upload Bus Permit Document image/PDF (base64, max 12MB)
+router.post('/bus-permit-document', uploadController.uploadBusPermitDocument)
+
+// POST upload National Permit Part A Document image/PDF (base64, max 12MB)
+router.post('/np-part-a-document', uploadController.uploadNationalPermitPartADocument)
+
+// POST upload National Permit Part B Document image/PDF (base64, max 12MB)
+router.post('/np-part-b-document', uploadController.uploadNationalPermitPartBDocument)
+
 module.exports = router

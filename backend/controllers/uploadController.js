@@ -11,12 +11,24 @@ const temporaryPermitUploadsDir = path.join(__dirname, '..', 'uploads', 'tempora
 const speedGovernorUploadsDir = path.join(__dirname, '..', 'uploads', 'speed-governor-images')
 const kycUploadsDir = path.join(__dirname, '..', 'uploads', 'kyc-documents')
 const cgPermitUploadsDir = path.join(__dirname, '..', 'uploads', 'cg-permit-documents')
+const busPermitUploadsDir = path.join(__dirname, '..', 'uploads', 'bus-permit-documents')
+const npPartAUploadsDir = path.join(__dirname, '..', 'uploads', 'np-part-a-documents')
+const npPartBUploadsDir = path.join(__dirname, '..', 'uploads', 'np-part-b-documents')
 
 if (!fs.existsSync(kycUploadsDir)) {
   fs.mkdirSync(kycUploadsDir, { recursive: true })
 }
+if (!fs.existsSync(npPartAUploadsDir)) {
+  fs.mkdirSync(npPartAUploadsDir, { recursive: true })
+}
+if (!fs.existsSync(npPartBUploadsDir)) {
+  fs.mkdirSync(npPartBUploadsDir, { recursive: true })
+}
 if (!fs.existsSync(cgPermitUploadsDir)) {
   fs.mkdirSync(cgPermitUploadsDir, { recursive: true })
+}
+if (!fs.existsSync(busPermitUploadsDir)) {
+  fs.mkdirSync(busPermitUploadsDir, { recursive: true })
 }
 if (!fs.existsSync(insuranceUploadsDir)) {
   fs.mkdirSync(insuranceUploadsDir, { recursive: true })
@@ -757,6 +769,237 @@ exports.uploadCgPermitDocument = async (req, res) => {
       timestamp: new Date().toISOString()
     })
   }
+}
+
+// Upload Bus Permit Document (accepts base64 image/PDF)
+exports.uploadBusPermitDocument = async (req, res) => {
+  try {
+    const { imageData, permitId, vehicleNumber } = req.body
+
+    if (!imageData) {
+      return res.status(400).json({
+        success: false,
+        message: 'Document data is required'
+      })
+    }
+
+    if (!vehicleNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vehicle registration number is required'
+      })
+    }
+
+    // If permitId provided, check for existing document and delete it
+    if (permitId) {
+      const BusPermit = require('../models/BusPermit')
+      const existingPermit = await BusPermit.findOne({
+        _id: permitId,
+        userId: req.user.id
+      })
+
+      if (existingPermit && existingPermit.documents?.permitDocument) {
+        try {
+          const filename = path.basename(existingPermit.documents.permitDocument)
+          const filePath = path.join(busPermitUploadsDir, filename)
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath)
+          }
+        } catch (err) {
+          console.error('Error deleting old Bus permit document:', err)
+        }
+      }
+    }
+
+    // Validate base64 format
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp|avif);base64,/
+    const pdfFormatRegex = /^data:application\/pdf;base64,/
+
+    let fileFormat = null
+    let fileExtension = null
+
+    const imageMatch = imageData.match(imageFormatRegex)
+    const pdfMatch = imageData.match(pdfFormatRegex)
+
+    if (imageMatch) {
+      fileFormat = imageMatch[1] === 'jpeg' ? 'jpg' : imageMatch[1]
+      fileExtension = fileFormat
+    } else if (pdfMatch) {
+      fileFormat = 'pdf'
+      fileExtension = 'pdf'
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Only JPG, JPEG, PNG, WebP, AVIF and PDF formats are accepted'
+      })
+    }
+
+    const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
+    const buffer = Buffer.from(base64Data, 'base64')
+
+    const fileSizeInMB = buffer.length / (1024 * 1024)
+    if (fileSizeInMB > 12) {
+      return res.status(400).json({
+        success: false,
+        message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit`
+      })
+    }
+
+    // Generate filename with vehicle number
+    const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '')
+    const filename = `bus-permit-${sanitizedVehicleNumber}-${Date.now()}.${fileExtension}`
+    const filePath = path.join(busPermitUploadsDir, filename)
+
+    fs.writeFileSync(filePath, buffer)
+
+    const relativePath = `/uploads/bus-permit-documents/${filename}`
+
+    res.status(200).json({
+      success: true,
+      message: 'Bus permit document uploaded successfully',
+      data: {
+        filename,
+        path: relativePath,
+        size: buffer.length,
+        sizeInMB: fileSizeInMB.toFixed(2),
+        format: fileFormat.toUpperCase()
+      }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: new Date().toISOString()
+    })
+  }
+}
+
+// ========== NATIONAL PERMIT DOCUMENT UPLOADS ==========
+
+// Helper for NP document upload (Part A or Part B)
+const uploadNpDocument = async (req, res, docType) => {
+  try {
+    const { imageData, permitId, vehicleNumber } = req.body
+
+    if (!imageData) {
+      return res.status(400).json({
+        success: false,
+        message: 'Document data is required'
+      })
+    }
+
+    if (!vehicleNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vehicle number is required'
+      })
+    }
+
+    const targetDir = docType === 'partA' ? npPartAUploadsDir : npPartBUploadsDir
+    const docLabel = docType === 'partA' ? 'Part A' : 'Part B'
+
+    // If permitId provided, check for existing document and delete it
+    if (permitId) {
+      const NationalPermit = require('../models/NationalPermit')
+      const existingPermit = await NationalPermit.findOne({
+        _id: permitId,
+        userId: req.user.id
+      })
+
+      const existingDocField = docType === 'partA' ? 'partADocument' : 'partBDocument'
+      if (existingPermit && existingPermit[existingDocField]) {
+        try {
+          const filename = path.basename(existingPermit[existingDocField])
+          const filePath = path.join(targetDir, filename)
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath)
+          }
+        } catch (err) {
+          console.error(`Error deleting old NP ${docLabel} document:`, err)
+        }
+      }
+    }
+
+    // Validate base64 format
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp|avif);base64,/
+    const pdfFormatRegex = /^data:application\/pdf;base64,/
+
+    let fileFormat = null
+    let fileExtension = null
+
+    const imageMatch = imageData.match(imageFormatRegex)
+    const pdfMatch = imageData.match(pdfFormatRegex)
+
+    if (imageMatch) {
+      fileFormat = imageMatch[1] === 'jpeg' ? 'jpg' : imageMatch[1]
+      fileExtension = fileFormat
+    } else if (pdfMatch) {
+      fileFormat = 'pdf'
+      fileExtension = 'pdf'
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Only JPG, JPEG, PNG, WebP, AVIF and PDF formats are accepted'
+      })
+    }
+
+    const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
+    const buffer = Buffer.from(base64Data, 'base64')
+
+    const fileSizeInMB = buffer.length / (1024 * 1024)
+    if (fileSizeInMB > 12) {
+      return res.status(400).json({
+        success: false,
+        message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit`
+      })
+    }
+
+    // Generate filename
+    const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '')
+    const prefix = docType === 'partA' ? 'np-part-a' : 'np-part-b'
+    const filename = `${prefix}-${sanitizedVehicleNumber}-${Date.now()}.${fileExtension}`
+    const filePath = path.join(targetDir, filename)
+
+    fs.writeFileSync(filePath, buffer)
+
+    const relativePath = `/uploads/${docType === 'partA' ? 'np-part-a-documents' : 'np-part-b-documents'}/${filename}`
+
+    res.status(200).json({
+      success: true,
+      message: `NP ${docLabel} document uploaded successfully`,
+      data: {
+        filename,
+        path: relativePath,
+        size: buffer.length,
+        sizeInMB: fileSizeInMB.toFixed(2),
+        format: fileFormat.toUpperCase()
+      }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: new Date().toISOString()
+    })
+  }
+}
+
+// Upload NP Part A Document
+exports.uploadNationalPermitPartADocument = async (req, res) => {
+  return uploadNpDocument(req, res, 'partA')
+}
+
+// Upload NP Part B Document
+exports.uploadNationalPermitPartBDocument = async (req, res) => {
+  return uploadNpDocument(req, res, 'partB')
 }
 
 // Upload KYC Document (accepts base64 image/PDF)
