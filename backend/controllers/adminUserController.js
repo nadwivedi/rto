@@ -473,13 +473,6 @@ exports.generateUserAccessToken = async (req, res) => {
       })
     }
 
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: 'Cannot access an inactive user account'
-      })
-    }
-
     const token = jwt.sign(
       {
         id: user._id,

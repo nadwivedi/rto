@@ -95,6 +95,7 @@ const Users = () => {
   const [success, setSuccess] = useState('')
   const [copiedId, setCopiedId] = useState(null)
   const [accessingId, setAccessingId] = useState(null)
+  const [togglingId, setTogglingId] = useState(null)
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -261,6 +262,37 @@ const Users = () => {
       }
     } catch (error) {
       setError('Failed to delete user')
+    }
+  }
+
+  const handleToggleActive = async (user) => {
+    const newStatus = !user.isActive
+    const action = newStatus ? 'activate' : 'deactivate'
+    if (!confirm(`Are you sure you want to ${action} this user?\n\nUser: ${user.name}\nMobile: ${user.mobile1}`)) return
+
+    try {
+      setTogglingId(user._id)
+      setError('')
+      setSuccess('')
+
+      const response = await fetch(`${BACKEND_URL}/api/admin/users/${user._id}`, {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: newStatus })
+      })
+      const data = await response.json()
+      if (data.success) {
+        setSuccess(`User ${action}d successfully!`)
+        fetchUsers()
+        fetchStats()
+      } else {
+        setError(data.message || `Failed to ${action} user`)
+      }
+    } catch (error) {
+      setError(`Failed to ${action} user`)
+    } finally {
+      setTogglingId(null)
     }
   }
 
@@ -498,6 +530,20 @@ const Users = () => {
                         <td className='px-5 py-3.5'>
                           <div className='flex items-center justify-end gap-1.5'>
                             <button
+                              onClick={() => handleToggleActive(user)}
+                              disabled={togglingId === user._id}
+                              className={`p-2 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer ${
+                                user.isActive
+                                  ? 'text-red-500 hover:bg-red-50'
+                                  : 'text-emerald-600 hover:bg-emerald-50'
+                              }`}
+                              title={user.isActive ? 'Deactivate user' : 'Activate user'}
+                            >
+                              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' />
+                              </svg>
+                            </button>
+                            <button
                               onClick={() => handleAccess(user)}
                               disabled={accessingId === user._id}
                               className='p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer'
@@ -588,6 +634,20 @@ const Users = () => {
                         | Activity: {formatDateTime(user.lastActivity)}
                       </div>
                       <div className='flex gap-1'>
+                        <button
+                          onClick={() => handleToggleActive(user)}
+                          disabled={togglingId === user._id}
+                          className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 cursor-pointer ${
+                            user.isActive
+                              ? 'text-red-500 hover:bg-red-50'
+                              : 'text-emerald-600 hover:bg-emerald-50'
+                          }`}
+                          title={user.isActive ? 'Deactivate user' : 'Activate user'}
+                        >
+                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' />
+                          </svg>
+                        </button>
                         <button
                           onClick={() => handleAccess(user)}
                           disabled={accessingId === user._id}

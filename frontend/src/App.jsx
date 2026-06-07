@@ -48,7 +48,9 @@ function LegacyPartyDetailRedirect() {
 function ProtectedLayout() {
   const navigate = useNavigate()
   const location = useLocation()
-  const { user } = useAuth()
+  const { user, logout } = useAuth()
+
+  const isDeactivated = user && !user.isActive
 
   useEffect(() => {
     if (user?.type === 'staff') {
@@ -114,46 +116,73 @@ function ProtectedLayout() {
 
   return (
     <ProtectedRoute>
-      <div className='min-h-screen bg-gray-50'>
-        <div className='min-h-screen w-full'>
-          <main>
-            <Routes>
-              <Route path='/' element={<Home2 />} />
-              <Route path='/vahan' element={<Vahan />} />
-              <Route path='/sarthi' element={<Sarthi />} />
-              <Route path='/driving' element={<DrivingLicence />} />
-              <Route path='/setting' element={<Setting />} />
-              <Route path='/national-permit' element={<NationalPermit />} />
-              <Route path='/cg-permit' element={<CgPermit />} />
-              <Route path='/bus-permit' element={<BusPermit />} />
-              <Route path='/temporary-permit' element={<TemporaryPermit />} />
-              <Route path='/temporary-permit-other-state' element={<TemporaryPermitOtherState />} />
-              <Route path='/vehicle-registartion' element={<VehicleRegistration />} />
-              <Route path='/vehicle-registration' element={<VehicleRegistration />} />
-              <Route path='/vehicle-ledger/:registrationNumber' element={<VehicleLedgerPage />} />
-              <Route path='/insurance' element={<Insurance />} />
-              <Route path='/insurance/reports' element={<InsuranceReports />} />
-              <Route path='/fitness' element={<Fitness />} />
-              <Route path='/hpa-hpt' element={<HpaHpt />} />
-              <Route path='/tax' element={<Tax />} />
-              <Route path='/vehicle-transfer' element={<VehicleTransfer />} />
-              <Route path='/noc' element={<Noc />} />
-              <Route path='/registration-renewal' element={<RegistrationRenewal />} />
-              <Route path='/forms' element={<Forms />} />
-              <Route path='/forms/form-20' element={<Form20 />} />
-              <Route path='/puc' element={<Puc />} />
-              <Route path='/gps' element={<Gps />} />
-              <Route path='/dealer-bill' element={<DealerBill />} />
-              <Route path='/party' element={<Party />} />
-              <Route path='/party/:partyId' element={<PartyDetail />} />
-              <Route path='/kyc' element={<KycZone />} />
-              <Route path='/parties' element={<Navigate to='/party' replace />} />
-              <Route path='/parties/:partyId' element={<LegacyPartyDetailRedirect />} />
-              <Route path='/whatsapp' element={<WhatsApp />} />
-              <Route path='/javak' element={<Javak />} />
-            </Routes>
-          </main>
+      <div className={`min-h-screen bg-gray-50 ${isDeactivated ? 'relative' : ''}`}>
+        <div className={`min-h-screen w-full ${isDeactivated ? 'pointer-events-none select-none' : ''}`}>
+          <div className={isDeactivated ? 'blur-sm' : ''}>
+            <main>
+              <Routes>
+                <Route path='/' element={<Home2 />} />
+                <Route path='/vahan' element={<Vahan />} />
+                <Route path='/sarthi' element={<Sarthi />} />
+                <Route path='/driving' element={<DrivingLicence />} />
+                <Route path='/setting' element={<Setting />} />
+                <Route path='/national-permit' element={<NationalPermit />} />
+                <Route path='/cg-permit' element={<CgPermit />} />
+                <Route path='/bus-permit' element={<BusPermit />} />
+                <Route path='/temporary-permit' element={<TemporaryPermit />} />
+                <Route path='/temporary-permit-other-state' element={<TemporaryPermitOtherState />} />
+                <Route path='/vehicle-registartion' element={<VehicleRegistration />} />
+                <Route path='/vehicle-registration' element={<VehicleRegistration />} />
+                <Route path='/vehicle-ledger/:registrationNumber' element={<VehicleLedgerPage />} />
+                <Route path='/insurance' element={<Insurance />} />
+                <Route path='/insurance/reports' element={<InsuranceReports />} />
+                <Route path='/fitness' element={<Fitness />} />
+                <Route path='/hpa-hpt' element={<HpaHpt />} />
+                <Route path='/tax' element={<Tax />} />
+                <Route path='/vehicle-transfer' element={<VehicleTransfer />} />
+                <Route path='/noc' element={<Noc />} />
+                <Route path='/registration-renewal' element={<RegistrationRenewal />} />
+                <Route path='/forms' element={<Forms />} />
+                <Route path='/forms/form-20' element={<Form20 />} />
+                <Route path='/puc' element={<Puc />} />
+                <Route path='/gps' element={<Gps />} />
+                <Route path='/dealer-bill' element={<DealerBill />} />
+                <Route path='/party' element={<Party />} />
+                <Route path='/party/:partyId' element={<PartyDetail />} />
+                <Route path='/kyc' element={<KycZone />} />
+                <Route path='/parties' element={<Navigate to='/party' replace />} />
+                <Route path='/parties/:partyId' element={<LegacyPartyDetailRedirect />} />
+                <Route path='/whatsapp' element={<WhatsApp />} />
+                <Route path='/javak' element={<Javak />} />
+              </Routes>
+            </main>
+          </div>
         </div>
+
+        {isDeactivated && (
+          <div className='fixed inset-0 z-[200] flex items-center justify-center bg-black/40'>
+            <div className='bg-white rounded-2xl shadow-2xl max-w-md w-full mx-4 p-8 text-center'>
+              <div className='w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4'>
+                <svg className='w-8 h-8 text-red-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 15v2m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z' />
+                </svg>
+              </div>
+              <h2 className='text-xl font-bold text-gray-900 mb-2'>Account Deactivated</h2>
+              <p className='text-gray-600 mb-6'>
+                Your account has been deactivated. Please pay to continue using our services.
+              </p>
+              <button
+                onClick={() => { logout(); navigate('/login') }}
+                className='w-full py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-colors cursor-pointer'
+              >
+                Go to Login
+              </button>
+              <p className='text-xs text-gray-400 mt-3'>
+                Contact support: <span className='font-bold text-indigo-600'>rtosarthi@gmail.com</span> | <span className='font-bold text-indigo-600'>+91-6264682508</span>
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </ProtectedRoute>
   )

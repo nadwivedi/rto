@@ -67,14 +67,6 @@ exports.login = async (req, res) => {
       })
     }
 
-    // Check if user is active
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: 'Your account has been deactivated. Please contact support.'
-      })
-    }
-
     // Verify password
     let isPasswordValid = await user.comparePassword(password)
 
@@ -109,7 +101,8 @@ exports.login = async (req, res) => {
         mobile2: user.mobile2,
         email: user.email,
         name: user.name,
-        type: 'user'
+        type: 'user',
+        isActive: user.isActive
       },
       process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
       { expiresIn: '30d' }
@@ -136,6 +129,7 @@ exports.login = async (req, res) => {
           address: user.address,
           state: user.state,
           rto: user.rto,
+          isActive: user.isActive,
           lastLogin: user.lastLogin,
           lastActivity: user.lastActivity
         }
@@ -287,13 +281,6 @@ exports.adminAccessLogin = async (req, res) => {
       })
     }
 
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: 'This user account is inactive'
-      })
-    }
-
     const loginAt = new Date()
     await User.updateOne({ _id: user._id }, { lastLogin: loginAt, lastActivity: loginAt })
     user.lastLogin = loginAt
@@ -307,6 +294,7 @@ exports.adminAccessLogin = async (req, res) => {
         email: user.email,
         name: user.name,
         type: 'user',
+        isActive: user.isActive,
         accessedByAdmin: decoded.adminId
       },
       process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
@@ -336,6 +324,7 @@ exports.adminAccessLogin = async (req, res) => {
           billName: user.billName,
           billDescription: user.billDescription,
           type: 'user',
+          isActive: user.isActive,
           lastLogin: user.lastLogin,
           lastActivity: user.lastActivity
         }
@@ -399,13 +388,6 @@ exports.getProfile = async (req, res) => {
       })
     }
 
-    if (!user.isActive) {
-      return res.status(403).json({
-        success: false,
-        message: 'Your account has been deactivated'
-      })
-    }
-
     const activityAt = new Date()
     await User.updateOne({ _id: user._id }, { lastActivity: activityAt })
     user.lastActivity = activityAt
@@ -427,6 +409,7 @@ exports.getProfile = async (req, res) => {
           subscriptionExpiresAt: user.subscriptionExpiresAt,
           monthlyPrice: user.monthlyPrice,
           type: 'user',
+          isActive: user.isActive,
           lastLogin: user.lastLogin,
           lastActivity: user.lastActivity
         }
