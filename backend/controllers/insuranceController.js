@@ -279,10 +279,34 @@ exports.getAllInsurance = async (req, res) => {
   }
 }
 
-// Export all insurance records without pagination
+// Export all insurance records without pagination (with optional filters)
 exports.exportAllInsurance = async (req, res) => {
   try {
-    const insuranceRecords = await Insurance.find({ userId: req.user.id })
+    const { status, company, search } = req.query
+    const query = { userId: req.user.id }
+
+    if (status && status !== 'all') {
+      if (status === 'pending') {
+        query.balance = { $gt: 0 }
+      } else {
+        query.status = status
+      }
+    }
+
+    if (company) {
+      query.insuranceCompany = { $regex: company, $options: 'i' }
+    }
+
+    if (search) {
+      query.$or = [
+        { policyNumber: { $regex: search, $options: 'i' } },
+        { vehicleNumber: { $regex: search, $options: 'i' } },
+        { policyHolderName: { $regex: search, $options: 'i' } },
+        { mobileNumber: { $regex: search, $options: 'i' } }
+      ]
+    }
+
+    const insuranceRecords = await Insurance.find(query)
       .sort({ createdAt: -1 })
 
     res.status(200).json({
