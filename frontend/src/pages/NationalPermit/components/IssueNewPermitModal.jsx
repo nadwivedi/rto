@@ -692,6 +692,17 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
       return
     }
 
+    // Check that at least one of Part A or Part B is filled
+    const hasPartA = formData.permitNumber.trim() || formData.permitHolderName.trim() || formData.validFrom.trim()
+    const hasPartB = formData.authorizationNumber.trim() || formData.typeBValidFrom.trim()
+    if (!hasPartA && !hasPartB) {
+      toast.error('Either Part A or Part B must be filled!', {
+        position: 'top-right',
+        autoClose: 3000
+      })
+      return
+    }
+
     const dataToSubmit = {
       permitNumber: formData.permitNumber,
       permitHolder: formData.permitHolderName,
@@ -1029,7 +1040,7 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
             <div className='bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-indigo-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
                 <span className='bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>2</span>
-                Part A - Permit Details (5 Years Validity)
+                Part A - Permit Details (5 Years Validity) <span className='text-xs font-normal text-gray-500'>(Optional if Part B filled)</span>
               </h3>
 
               {/* Show old Part A details if not active */}
@@ -1096,7 +1107,7 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
                 {/* Permit Holder Name */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Name of Permit Holder <span className='text-red-500'>*</span>
+                    Name of Permit Holder
                   </label>
                   <input
                     type='text'
@@ -1107,14 +1118,13 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
                     placeholder='Rajesh Transport Services'
                     tabIndex="4"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                    required
                   />
                 </div>
 
                 {/* Valid From */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Valid From <span className='text-red-500'>*</span>
+                    Valid From
                   </label>
                   <input
                     type='text'
@@ -1125,14 +1135,13 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
                     placeholder='Type: 240125 or 24012025'
                     tabIndex="5"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                    required
                   />
                 </div>
 
                 {/* Valid To (Auto-calculated) */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Valid To (Auto-calculated - 5 Years) <span className='text-red-500'>*</span>
+                    Valid To (Auto-calculated - 5 Years)
                   </label>
                   <input
                     type='text'
@@ -1143,7 +1152,6 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
                     placeholder='Will be calculated automatically'
                     tabIndex="6"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-indigo-50'
-                    required
                   />
                 </div>
               </div>
@@ -1153,7 +1161,7 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
             <div className='bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
                 <span className='bg-purple-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>3</span>
-                <span className='text-sm md:text-base'>Part B - Authorization (1 Year Validity)</span>
+                <span className='text-sm md:text-base'>Part B - Authorization (1 Year Validity)</span> <span className='text-xs font-normal text-gray-500'>(Optional if Part A filled)</span>
               </h3>
 
               {/* Show old Part B details if not active */}
@@ -1171,7 +1179,7 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
               <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Authorization Number <span className='text-xs text-gray-500 font-normal'>(Optional)</span>
+                    Authorization Number
                   </label>
                   <input
                     type='text'
@@ -1187,7 +1195,7 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
 
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Valid From <span className='text-red-500'>*</span>
+                    Valid From
                   </label>
                   <input
                     type='text'
@@ -1198,13 +1206,12 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
                     placeholder='Type: 240125 or 24012025'
                     tabIndex="8"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent'
-                    required
                   />
                 </div>
 
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Valid To <span className='text-red-500'>*</span>
+                    Valid To
                     <span className='ml-2 text-xs font-normal text-green-600'>(Auto: 1 Year from Valid From)</span>
                   </label>
                   <input
@@ -1216,7 +1223,6 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
                     placeholder='Will be calculated automatically'
                     tabIndex="9"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-purple-50'
-                    required
                   />
                 </div>
               </div>

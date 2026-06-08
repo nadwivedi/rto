@@ -88,10 +88,20 @@ exports.createPermit = async (req, res) => {
     } = req.body
 
     // Validate required fields
-    if (!vehicleNumber || !permitHolder) {
+    if (!vehicleNumber) {
       return res.status(400).json({
         success: false,
-        message: 'Vehicle number and permit holder are required'
+        message: 'Vehicle number is required'
+      })
+    }
+
+    // Ensure at least one of Part A or Part B is provided
+    const hasPartA = permitNumber || permitHolder || partAValidFrom
+    const hasPartB = partBNumber || partBValidFrom
+    if (!hasPartA && !hasPartB) {
+      return res.status(400).json({
+        success: false,
+        message: 'At least one of Part A or Part B must be provided'
       })
     }
 
@@ -115,9 +125,9 @@ exports.createPermit = async (req, res) => {
       }
     }
 
-    // Calculate statuses
-    const partAStatus = getPartAStatus(partAValidTo)
-    const partBStatus = getPartBStatus(partBValidTo)
+    // Calculate statuses (only if the respective part has data)
+    const partAStatus = hasPartA ? getPartAStatus(partAValidTo) : 'inactive'
+    const partBStatus = hasPartB ? getPartBStatus(partBValidTo) : 'inactive'
 
     // Get partyId - use provided or fetch from VehicleRegistration
     let finalPartyId = partyId

@@ -36,21 +36,18 @@ const NationalPermitSchema = new mongoose.Schema({
   },
   permitHolder: {
     type: String,
-    required: true,
     trim: true
   },
   partAValidFrom: {
-    type: String,
-    required: true
+    type: String
   },
   partAValidTo: {
-    type: String,
-    required: true
+    type: String
   },
   partAStatus: {
     type: String,
-    enum: ['active', 'expiring_soon', 'expired'],
-    default: 'active',
+    enum: ['active', 'expiring_soon', 'expired', 'inactive'],
+    default: 'inactive',
     index: true
   },
   partADocument: String,
@@ -63,17 +60,15 @@ const NationalPermitSchema = new mongoose.Schema({
     index: true
   },
   partBValidFrom: {
-    type: String,
-    required: true
+    type: String
   },
   partBValidTo: {
-    type: String,
-    required: true
+    type: String
   },
   partBStatus: {
     type: String,
-    enum: ['active', 'expiring_soon', 'expired'],
-    default: 'active',
+    enum: ['active', 'expiring_soon', 'expired', 'inactive'],
+    default: 'inactive',
     index: true
   },
   partBDocument: String,
