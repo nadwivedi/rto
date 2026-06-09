@@ -56,6 +56,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
   const [selectedDropdownIndex, setSelectedDropdownIndex] = useState(0)
   const dropdownItemRefs = useRef([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [activeInsuranceCheck, setActiveInsuranceCheck] = useState(null) // { loading, exists, policyNumber, validTo } | null
   const isOcrUpdate = useRef(false)
 
   // Pre-fill form when initialData is provided (for edit/renewal) or reset on open
@@ -125,6 +126,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       setVehicleValidation({ isValid: false, message: '' })
       setInsuranceDocPreview(null)
       setIsManualValidTo(false)
+      setActiveInsuranceCheck(null)
     }
   }, [initialData, isOpen, prefilledVehicleNumber, prefilledOwnerName, prefilledMobileNumber])
 
@@ -327,6 +329,39 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       return () => document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isOpen, onClose, showVehicleDropdown, vehicleMatches, selectedDropdownIndex])
+
+  // Check if vehicle already has active insurance
+  useEffect(() => {
+    if (isEditMode) return
+
+    const vehicleNum = formData.vehicleNumber.trim()
+    if (vehicleNum.length < 4) {
+      setActiveInsuranceCheck(null)
+      return
+    }
+
+    setActiveInsuranceCheck({ loading: true })
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/insurance/check-vehicle/${encodeURIComponent(vehicleNum)}`, {
+          withCredentials: true
+        })
+        if (res.data.success) {
+          setActiveInsuranceCheck(res.data.data.hasActiveInsurance
+            ? { loading: false, exists: true, policyNumber: res.data.data.policyNumber, validTo: res.data.data.validTo, insuranceCompany: res.data.data.insuranceCompany }
+            : { loading: false, exists: false }
+          )
+        } else {
+          setActiveInsuranceCheck(null)
+        }
+      } catch {
+        setActiveInsuranceCheck(null)
+      }
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [formData.vehicleNumber, isEditMode])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -884,6 +919,33 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     <p className={`text-xs mt-1 ${vehicleValidation.isValid ? 'text-green-600' : 'text-red-600'}`}>
                       {vehicleValidation.message}
                     </p>
+                  )}
+
+                  {/* Active insurance warning */}
+                  {activeInsuranceCheck?.loading && formData.vehicleNumber.trim().length >= 4 && (
+                    <div className='mt-2 flex items-center gap-1.5 text-amber-700 bg-amber-50 border border-amber-300 rounded-md px-2.5 py-1.5'>
+                      <svg className='w-3.5 h-3.5 animate-spin' fill='none' viewBox='0 0 24 24'>
+                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' />
+                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' />
+                      </svg>
+                      <span className='text-xs font-medium'>Checking active insurance...</span>
+                    </div>
+                  )}
+                  {activeInsuranceCheck?.exists && (
+                    <div className='mt-2 flex items-start gap-1.5 bg-red-50 border border-red-300 rounded-md px-2.5 py-2'>
+                      <svg className='w-4 h-4 mt-0.5 shrink-0 text-red-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
+                      </svg>
+                      <div className='text-xs'>
+                        <span className='font-semibold text-red-700'>Insurance is Active Already</span>
+                        <br />
+                        <span className='text-red-600'>
+                          Policy: {activeInsuranceCheck.policyNumber || 'N/A'}
+                          {activeInsuranceCheck.insuranceCompany ? ` · ${activeInsuranceCheck.insuranceCompany}` : ''}
+                          {activeInsuranceCheck.validTo ? ` · Valid till ${activeInsuranceCheck.validTo}` : ''}
+                        </span>
+                      </div>
+                    </div>
                   )}
                 </div>
 

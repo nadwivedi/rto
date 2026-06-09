@@ -28,6 +28,9 @@ router.get('/expired', insuranceController.getExpiredInsurance)
 // Get pending payment insurance records
 router.get('/pending', insuranceController.getPendingInsurance)
 
+// Check if vehicle has active insurance (must be before general /:id)
+router.get('/check-vehicle/:vehicleNumber', insuranceController.checkVehicleActiveInsurance)
+
 // Get insurance by policy number (must be before general /:id)
 router.get('/policy/:policyNumber', insuranceController.getInsuranceByPolicyNumber)
 

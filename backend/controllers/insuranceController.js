@@ -75,6 +75,20 @@ exports.createInsurance = async (req, res) => {
       })
     }
 
+    // Check if vehicle already has an active insurance policy
+    const existingActiveInsurance = await Insurance.findOne({
+      vehicleNumber: vehicleNumber.toUpperCase().trim(),
+      userId: req.user.id,
+      status: 'active'
+    })
+
+    if (existingActiveInsurance) {
+      return res.status(400).json({
+        success: false,
+        message: `Vehicle ${vehicleNumber.toUpperCase().trim()} already has an active insurance policy (Policy #${existingActiveInsurance.policyNumber || 'N/A'}). You can add new insurance only when the current policy status is expiring soon or expired.`
+      })
+    }
+
     // Calculate status
     const status = getInsuranceStatus(validTo);
 
@@ -546,6 +560,43 @@ exports.getInsuranceByPolicyNumber = async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to fetch insurance record',
+      error: error.message
+    })
+  }
+}
+
+// Check if vehicle has active insurance
+exports.checkVehicleActiveInsurance = async (req, res) => {
+  try {
+    const { vehicleNumber } = req.params
+
+    const existingActive = await Insurance.findOne({
+      vehicleNumber: vehicleNumber.toUpperCase().trim(),
+      userId: req.user.id,
+      status: 'active'
+    }).select('policyNumber validTo insuranceCompany')
+
+    if (existingActive) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          hasActiveInsurance: true,
+          policyNumber: existingActive.policyNumber,
+          validTo: existingActive.validTo,
+          insuranceCompany: existingActive.insuranceCompany
+        }
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { hasActiveInsurance: false }
+    })
+  } catch (error) {
+    console.error('Error checking vehicle active insurance:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check insurance status',
       error: error.message
     })
   }
