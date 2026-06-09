@@ -32,8 +32,8 @@ const escapeRegExp = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\
 
 const alertSources = [
   { key: 'fitness', name: 'Fitness', documentType: 'Fitness', model: Fitness, dateField: 'validTo', ownerField: 'ownerName' },
-  { key: 'tax', name: 'Tax', documentType: 'Tax', model: Tax, dateField: 'taxTo', ownerField: 'ownerName' },
-  { key: 'puc', name: 'PUC', documentType: 'Puc', model: Puc, dateField: 'validTo', ownerField: 'ownerName' },
+  { key: 'tax', name: 'Tax', documentType: 'Tax', model: Tax, dateField: 'taxTo', ownerField: 'ownerName', query: { isRenewed: { $ne: true } } },
+  { key: 'puc', name: 'PUC', documentType: 'Puc', model: Puc, dateField: 'validTo', ownerField: 'ownerName', query: { isRenewed: { $ne: true } } },
   { key: 'gps', name: 'GPS', documentType: 'Gps', model: Gps, dateField: 'validTo', ownerField: 'ownerName' },
   { key: 'insurance', name: 'Insurance', documentType: 'Insurance', model: Insurance, dateField: 'validTo', ownerField: 'policyHolderName', query: { isRenewed: { $ne: true } } },
   { key: 'statePermit', name: 'State Permit', documentType: 'CgPermit', model: CgPermit, dateField: 'validTo', ownerField: 'permitHolder', query: { isRenewed: false } },
@@ -188,8 +188,33 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
       const docs = await source.model.find(query).lean()
       console.log(`[WHATSAPP-CRON] ${source.name}: checking ${docs.length} docs with mobile numbers`)
 
+      // For services with active-status tracking, exclude vehicles that already have an active record
+      const activeCheckModels = {
+        insurance: Insurance,
+        tax: Tax,
+        puc: Puc
+      }
+      let vehiclesWithActiveService = null
+      if (activeCheckModels[source.key]) {
+        const Model = activeCheckModels[source.key]
+        const activeQuery = { status: 'active' }
+        if (specificUserId) activeQuery.userId = specificUserId
+        const activeRecords = await Model.find(activeQuery).select('vehicleNumber userId').lean()
+        vehiclesWithActiveService = new Set(
+          activeRecords.map(r => `${r.userId.toString()}:${r.vehicleNumber}`)
+        )
+      }
+
       for (const doc of docs) {
         if (!doc.userId) continue
+
+        // Skip records for vehicles that have an active record of the same service
+        if (activeCheckModels[source.key] && vehiclesWithActiveService) {
+          const key = `${doc.userId.toString()}:${doc.vehicleNumber}`
+          if (vehiclesWithActiveService.has(key)) {
+            continue
+          }
+        }
 
         const docUserId = doc.userId.toString()
         const setting = await getSettingForUser(docUserId)
