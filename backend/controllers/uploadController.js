@@ -414,10 +414,10 @@ exports.uploadSpeedGovernorImage = async (req, res) => {
       })
     }
 
-    // Generate filename with vehicle number
-    // Format: speed-governor-VEHICLENUMBER.extension
+    // Generate unique filename with vehicle number and timestamp
+    // Format: speed-governor-VEHICLENUMBER-TIMESTAMP.extension
     const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '')
-    const filename = `speed-governor-${sanitizedVehicleNumber}.${fileExtension}`
+    const filename = `speed-governor-${sanitizedVehicleNumber}-${Date.now()}.${fileExtension}`
     const filePath = path.join(speedGovernorUploadsDir, filename)
 
     fs.writeFileSync(filePath, buffer)
@@ -523,10 +523,10 @@ exports.uploadInsuranceDocument = async (req, res) => {
       })
     }
 
-    // Generate filename with vehicle number
-    // Format: insurance-VEHICLENUMBER.extension
+    // Generate unique filename with vehicle number and timestamp
+    // Format: insurance-VEHICLENUMBER-TIMESTAMP.extension
     const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '')
-    const filename = `insurance-${sanitizedVehicleNumber}.${fileExtension}`
+    const filename = `insurance-${sanitizedVehicleNumber}-${Date.now()}.${fileExtension}`
     const filePath = path.join(insuranceUploadsDir, filename)
 
     fs.writeFileSync(filePath, buffer)
