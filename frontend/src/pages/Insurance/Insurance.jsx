@@ -573,6 +573,18 @@ const Insurance = () => {
                       toUpperCase={true}
                     />
 
+                    {/* Insurance Company Filter */}
+                    <select
+                      value={companyFilter}
+                      onChange={(e) => setCompanyFilter(e.target.value)}
+                      className='px-3 py-2.5 border border-gray-300 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+                    >
+                      <option value=''>All Companies</option>
+                      {companies.map((company) => (
+                        <option key={company} value={company}>{company}</option>
+                      ))}
+                    </select>
+
                     {/* Export Excel Button */}
                     <button
                       onClick={handleExportExcel}
