@@ -455,7 +455,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
   }
 
   const INSURANCE_COMPANIES = [
-    'ACKO', 'BAJAJ ALLIANZ', 'BHARTI AXA', 'CHOLAMANDALAM MS',
+    'ACKO', 'BAJAJ GENERAL INSURANCE', 'BHARTI AXA', 'CHOLAMANDALAM MS',
     'EDELWEISS', 'FUTURE GENERALI', 'GO DIGIT', 'HDFC ERGO',
     'ICICI LOMBARD', 'IFFCO TOKIO', 'INDUSIND', 'KOTAK MAHINDRA',
     'KSHEMA', 'LIBERTY', 'MAGMA HDI', 'NATIONAL INSURANCE',
@@ -1016,7 +1016,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                   >
                     <option value=''>-- Select Insurance Company --</option>
                     <option value='ACKO'>Acko</option>
-                    <option value='BAJAJ ALLIANZ'>Bajaj Allianz</option>
+                    <option value='BAJAJ GENERAL INSURANCE'>Bajaj General Insurance</option>
                     <option value='BHARTI AXA'>Bharti AXA</option>
                     <option value='CHOLAMANDALAM MS'>Cholamandalam MS</option>
                     <option value='EDELWEISS'>Edelweiss</option>
