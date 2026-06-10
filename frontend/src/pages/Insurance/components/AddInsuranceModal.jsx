@@ -458,7 +458,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     'ACKO', 'BAJAJ GENERAL INSURANCE', 'BHARTI AXA', 'CHOLAMANDALAM MS',
     'EDELWEISS', 'FUTURE GENERALI', 'GO DIGIT', 'HDFC ERGO',
     'ICICI LOMBARD', 'IFFCO TOKIO', 'INDUSIND', 'KOTAK MAHINDRA',
-    'KSHEMA', 'LIBERTY', 'MAGMA HDI', 'NATIONAL INSURANCE',
+    'KSHEMA', 'LIBERTY GENERAL INSURANCE', 'MAGMA GENERAL INSURANCE', 'NATIONAL INSURANCE',
     'NAVI', 'NEW INDIA ASSURANCE', 'ORIENTAL INSURANCE', 'RAHEJA QBE',
     'RELIANCE GENERAL', 'ROYAL SUNDARAM', 'SBI GENERAL', 'SHRIRAM GENERAL',
     'TATA AIG', 'UNITED INDIA', 'UNIVERSAL SOMPO', 'ZUNO', 'ZURICH KOTAK'
@@ -1028,8 +1028,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     <option value='INDUSIND'>IndusInd General Insurance</option>
                     <option value='KOTAK MAHINDRA'>Kotak Mahindra</option>
                     <option value='KSHEMA'>Kshema</option>
-                    <option value='LIBERTY'>Liberty</option>
-                    <option value='MAGMA HDI'>Magma HDI</option>
+                    <option value='LIBERTY GENERAL INSURANCE'>Liberty General Insurance</option>
+                    <option value='MAGMA GENERAL INSURANCE'>Magma General Insurance</option>
                     <option value='NATIONAL INSURANCE'>National Insurance</option>
                     <option value='NAVI'>Navi</option>
                     <option value='NEW INDIA ASSURANCE'>New India Assurance</option>
