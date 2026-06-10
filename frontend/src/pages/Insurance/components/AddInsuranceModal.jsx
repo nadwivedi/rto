@@ -460,8 +460,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     'ICICI LOMBARD', 'IFFCO TOKIO', 'INDUSIND', 'KOTAK MAHINDRA',
     'KSHEMA', 'LIBERTY GENERAL INSURANCE', 'MAGMA GENERAL INSURANCE', 'NATIONAL INSURANCE',
     'NAVI INSURANCE', 'NEW INDIA ASSURANCE', 'ORIENTAL INSURANCE', 'RAHEJA QBE',
-    'RELIANCE GENERAL INSURANCE', 'ROYAL SUNDARAM', 'SBI GENERAL', 'SHRIRAM GENERAL',
-    'TATA AIG', 'UNITED INDIA INSURANCE', 'UNIVERSAL SOMPO', 'ZUNO', 'ZURICH KOTAK'
+    'RELIANCE GENERAL INSURANCE', 'ROYAL SUNDARAM', 'SBI GENERAL', 'SHRIRAM GENERAL INSURANCE',
+    'TATA AIG GENERAL INSURANCE', 'UNITED INDIA INSURANCE', 'UNIVERSAL SOMPO', 'ZUNO', 'ZURICH KOTAK'
   ]
 
   const matchInsuranceCompany = (extractedText) => {
@@ -1038,8 +1038,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     <option value='RELIANCE GENERAL INSURANCE'>Reliance General Insurance</option>
                     <option value='ROYAL SUNDARAM'>Royal Sundaram</option>
                     <option value='SBI GENERAL'>SBI General</option>
-                    <option value='SHRIRAM GENERAL'>Shriram General</option>
-                    <option value='TATA AIG'>Tata AIG</option>
+                    <option value='SHRIRAM GENERAL INSURANCE'>Shriram General Insurance</option>
+                    <option value='TATA AIG GENERAL INSURANCE'>Tata AIG General Insurance</option>
                     <option value='UNITED INDIA INSURANCE'>United India Insurance</option>
                     <option value='UNIVERSAL SOMPO'>Universal Sompo</option>
                     <option value='ZUNO'>Zuno</option>
