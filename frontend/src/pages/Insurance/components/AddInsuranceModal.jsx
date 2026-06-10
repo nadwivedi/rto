@@ -460,7 +460,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     'ICICI LOMBARD', 'IFFCO TOKIO', 'INDUSIND', 'KOTAK MAHINDRA',
     'KSHEMA', 'LIBERTY GENERAL INSURANCE', 'MAGMA GENERAL INSURANCE', 'NATIONAL INSURANCE',
     'NAVI INSURANCE', 'NEW INDIA ASSURANCE', 'ORIENTAL INSURANCE', 'RAHEJA QBE',
-    'RELIANCE GENERAL INSURANCE', 'ROYAL SUNDARAM', 'SBI GENERAL', 'SHRIRAM GENERAL INSURANCE',
+    'RELIANCE GENERAL INSURANCE', 'ROYAL SUNDARAM', 'SBI GENERAL INSURANCE', 'SHRIRAM GENERAL INSURANCE',
     'TATA AIG GENERAL INSURANCE', 'UNITED INDIA INSURANCE', 'UNIVERSAL SOMPO', 'ZUNO', 'ZURICH KOTAK'
   ]
 
@@ -1037,7 +1037,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     <option value='RAHEJA QBE'>Raheja QBE</option>
                     <option value='RELIANCE GENERAL INSURANCE'>Reliance General Insurance</option>
                     <option value='ROYAL SUNDARAM'>Royal Sundaram</option>
-                    <option value='SBI GENERAL'>SBI General</option>
+                    <option value='SBI GENERAL INSURANCE'>SBI General Insurance</option>
                     <option value='SHRIRAM GENERAL INSURANCE'>Shriram General Insurance</option>
                     <option value='TATA AIG GENERAL INSURANCE'>Tata AIG General Insurance</option>
                     <option value='UNITED INDIA INSURANCE'>United India Insurance</option>
