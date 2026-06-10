@@ -459,9 +459,9 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     'EDELWEISS', 'FUTURE GENERALI', 'GO DIGIT', 'HDFC ERGO',
     'ICICI LOMBARD', 'IFFCO TOKIO', 'INDUSIND', 'KOTAK MAHINDRA',
     'KSHEMA', 'LIBERTY GENERAL INSURANCE', 'MAGMA GENERAL INSURANCE', 'NATIONAL INSURANCE',
-    'NAVI', 'NEW INDIA ASSURANCE', 'ORIENTAL INSURANCE', 'RAHEJA QBE',
-    'RELIANCE GENERAL', 'ROYAL SUNDARAM', 'SBI GENERAL', 'SHRIRAM GENERAL',
-    'TATA AIG', 'UNITED INDIA', 'UNIVERSAL SOMPO', 'ZUNO', 'ZURICH KOTAK'
+    'NAVI INSURANCE', 'NEW INDIA ASSURANCE', 'ORIENTAL INSURANCE', 'RAHEJA QBE',
+    'RELIANCE GENERAL INSURANCE', 'ROYAL SUNDARAM', 'SBI GENERAL', 'SHRIRAM GENERAL',
+    'TATA AIG', 'UNITED INDIA INSURANCE', 'UNIVERSAL SOMPO', 'ZUNO', 'ZURICH KOTAK'
   ]
 
   const matchInsuranceCompany = (extractedText) => {
@@ -1031,16 +1031,16 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     <option value='LIBERTY GENERAL INSURANCE'>Liberty General Insurance</option>
                     <option value='MAGMA GENERAL INSURANCE'>Magma General Insurance</option>
                     <option value='NATIONAL INSURANCE'>National Insurance</option>
-                    <option value='NAVI'>Navi</option>
+                    <option value='NAVI INSURANCE'>Navi Insurance</option>
                     <option value='NEW INDIA ASSURANCE'>New India Assurance</option>
                     <option value='ORIENTAL INSURANCE'>Oriental Insurance</option>
                     <option value='RAHEJA QBE'>Raheja QBE</option>
-                    <option value='RELIANCE GENERAL'>Reliance General</option>
+                    <option value='RELIANCE GENERAL INSURANCE'>Reliance General Insurance</option>
                     <option value='ROYAL SUNDARAM'>Royal Sundaram</option>
                     <option value='SBI GENERAL'>SBI General</option>
                     <option value='SHRIRAM GENERAL'>Shriram General</option>
                     <option value='TATA AIG'>Tata AIG</option>
-                    <option value='UNITED INDIA'>United India</option>
+                    <option value='UNITED INDIA INSURANCE'>United India Insurance</option>
                     <option value='UNIVERSAL SOMPO'>Universal Sompo</option>
                     <option value='ZUNO'>Zuno</option>
                     <option value='ZURICH KOTAK'>Zurich Kotak</option>
