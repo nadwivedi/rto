@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+import * as XLSX from "xlsx";
 import Pagination from "../../components/Pagination";
 import IssueTemporaryPermitModal from "./components/IssueTemporaryPermitModal";
 import EditTemporaryPermitModal from "./components/EditTemporaryPermitModal";
@@ -64,6 +65,57 @@ const TemporaryPermit = () => {
       }
     } catch (error) {
       console.error("Error fetching temporary permit statistics:", error);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const params = {
+        ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+        ...(searchQuery ? { search: searchQuery } : {}),
+      };
+
+      const response = await axios.get(`${API_URL}/api/temporary-permits/export`, {
+        params,
+        withCredentials: true,
+      });
+
+      if (!response.data.success) {
+        toast.error("Failed to export temporary permits", { position: "top-right", autoClose: 3000 });
+        return;
+      }
+
+      const data = response.data.data;
+
+      if (!data || data.length === 0) {
+        toast.info("No temporary permits to export", { position: "top-right", autoClose: 3000 });
+        return;
+      }
+
+      const mappedData = data.map((item) => ({
+        "Permit Number": item.permitNumber,
+        "Permit Holder": item.permitHolder,
+        "Vehicle Number": item.vehicleNumber,
+        "Vehicle Type": item.vehicleType === "CV" ? "Commercial Vehicle" : "Passenger Vehicle",
+        "Mobile Number": item.mobileNumber,
+        "Valid From": item.validFrom,
+        "Valid To": item.validTo,
+        "Total Fee": item.totalFee || 0,
+        "Paid": item.paid || 0,
+        "Balance": item.balance || 0,
+        "Status": item.status,
+        "Notes": item.notes || "",
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(mappedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "TemporaryPermit");
+      XLSX.writeFile(workbook, `TemporaryPermit_${new Date().toISOString().split("T")[0]}.xlsx`);
+
+      toast.success(`Exported ${data.length} temporary permits`, { position: "top-right", autoClose: 3000 });
+    } catch (error) {
+      console.error("Error exporting temporary permits:", error);
+      toast.error("Failed to export temporary permits", { position: "top-right", autoClose: 3000 });
     }
   };
 
@@ -671,6 +723,17 @@ const TemporaryPermit = () => {
 
                   title="New Temporary Permit"
                 />
+
+                {/* Export Excel Button */}
+                <button
+                  onClick={handleExportExcel}
+                  className='flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg font-bold text-xs transition-all hover:scale-105 cursor-pointer'
+                >
+                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' />
+                  </svg>
+                  Export Excel
+                </button>
               </div>
             </div>
 

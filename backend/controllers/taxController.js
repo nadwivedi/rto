@@ -83,7 +83,21 @@ exports.getAllTax = async (req, res) => {
 // Export all tax records without pagination
 exports.exportAllTax = async (req, res) => {
   try {
-    const taxRecords = await Tax.find({ userId: req.user.id })
+    const { status, search } = req.query
+    const query = { userId: req.user.id }
+
+    if (status && status !== 'all') {
+      query.status = status
+    }
+
+    if (search) {
+      query.$or = [
+        { vehicleNumber: { $regex: search, $options: 'i' } },
+        { ownerName: { $regex: search, $options: 'i' } }
+      ]
+    }
+
+    const taxRecords = await Tax.find(query)
       .sort({ createdAt: -1 })
 
     res.json({

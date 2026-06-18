@@ -304,8 +304,23 @@ exports.getAllPermits = async (req, res) => {
 // Export all temporary permits without pagination
 exports.exportAllPermits = async (req, res) => {
   try {
+    const { status, search } = req.query
+    const query = { userId: req.user.id }
+
+    if (status && status !== 'all') {
+      query.status = status
+    }
+
+    if (search) {
+      query.$or = [
+        { vehicleNumber: { $regex: search, $options: 'i' } },
+        { permitHolder: { $regex: search, $options: 'i' } },
+        { permitNumber: { $regex: search, $options: 'i' } }
+      ]
+    }
+
     // Get all permits without pagination
-    const permits = await TemporaryPermit.find({ userId: req.user.id })
+    const permits = await TemporaryPermit.find(query)
       .sort({ createdAt: -1 })
 
     res.status(200).json({

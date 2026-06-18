@@ -76,7 +76,22 @@ exports.getAllPuc = async (req, res) => {
 // Export all PUC records without pagination
 exports.exportAllPuc = async (req, res) => {
   try {
-    const pucRecords = await Puc.find({ userId: req.user.id })
+    const { status, search } = req.query
+    const query = { userId: req.user.id }
+
+    if (status && status !== 'all') {
+      query.status = status
+    }
+
+    if (search) {
+      query.$or = [
+        { vehicleNumber: { $regex: search, $options: 'i' } },
+        { ownerName: { $regex: search, $options: 'i' } },
+        { mobileNumber: { $regex: search, $options: 'i' } }
+      ]
+    }
+
+    const pucRecords = await Puc.find(query)
       .sort({ createdAt: -1 })
 
     res.json({

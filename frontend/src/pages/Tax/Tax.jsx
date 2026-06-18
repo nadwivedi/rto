@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "react-toastify";
+import * as XLSX from "xlsx";
 import AddButton from "../../components/AddButton";
 import AddTaxModal from "./components/AddTaxModal";
 import EditTaxModal from "./components/EditTaxModal";
@@ -68,6 +69,57 @@ const Tax = () => {
       }
     } catch (error) {
       console.error("Error fetching statistics:", error);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const params = {
+        ...(statusFilter !== "all" ? { status: statusFilter } : {}),
+        ...(searchQuery ? { search: searchQuery } : {}),
+      };
+
+      const response = await axios.get(`${API_URL}/api/tax/export`, {
+        params,
+        withCredentials: true,
+      });
+
+      if (!response.data.success) {
+        toast.error("Failed to export tax data", { position: "top-right", autoClose: 3000 });
+        return;
+      }
+
+      const data = response.data.data;
+
+      if (!data || data.length === 0) {
+        toast.info("No tax records to export", { position: "top-right", autoClose: 3000 });
+        return;
+      }
+
+      const mappedData = data.map((item) => ({
+        "Receipt No": item.receiptNo,
+        "Vehicle Number": item.vehicleNumber,
+        "Owner Name": item.ownerName,
+        "Mobile Number": item.mobileNumber,
+        "Date": item.date,
+        "Tax From": item.taxFrom,
+        "Tax To": item.taxTo,
+        "Total Amount": item.totalAmount || 0,
+        "Paid Amount": item.paidAmount || 0,
+        "Balance Amount": item.balanceAmount || 0,
+        "Tax Amount": item.taxAmount || 0,
+        "Status": item.status,
+      }));
+
+      const worksheet = XLSX.utils.json_to_sheet(mappedData);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Tax");
+      XLSX.writeFile(workbook, `Tax_${new Date().toISOString().split("T")[0]}.xlsx`);
+
+      toast.success(`Exported ${data.length} tax records`, { position: "top-right", autoClose: 3000 });
+    } catch (error) {
+      console.error("Error exporting tax:", error);
+      toast.error("Failed to export tax data", { position: "top-right", autoClose: 3000 });
     }
   };
 
@@ -481,6 +533,17 @@ const Tax = () => {
 
                   title="Add New Tax Record"
                 />
+
+                {/* Export Excel Button */}
+                <button
+                  onClick={handleExportExcel}
+                  className='flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl hover:shadow-lg font-bold text-xs transition-all hover:scale-105 cursor-pointer'
+                >
+                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' />
+                  </svg>
+                  Export Excel
+                </button>
               </div>
 
               {/* Results count and filter status */}
