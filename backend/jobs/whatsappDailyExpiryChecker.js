@@ -95,24 +95,19 @@ const formatMessageFooter = (signature, address) => {
   return footer
 }
 
-const buildMessage = ({ alert, serviceName, vehicleNo, expiryDate, signature = 'RTO Services', address = '', renewPremium = 0 }) => {
-  let premiumText = ''
-  if (serviceName === 'Insurance' && renewPremium > 0) {
-    premiumText = `\n\n💰 *Your new premium will be ₹${renewPremium.toLocaleString('en-IN')}*`
-  }
-
+const buildMessage = ({ alert, serviceName, vehicleNo, expiryDate, signature = 'RTO Services', address = '' }) => {
   const footer = formatMessageFooter(signature, address)
   const docLine = `📄 *${serviceName}* · 🚗 *${vehicleNo}*`
 
   if (alert.type === 'upcoming') {
-    return `Dear Customer,\n\n${docLine}\n📅 Expires on *${expiryDate}* _(${alert.label})_${premiumText}\n\n⚠️ Please visit for renewal to avoid penalties.${footer}`
+    return `Dear Customer,\n\n${docLine}\n📅 Expires on *${expiryDate}* _(${alert.label})_\n\n⚠️ Please visit for renewal to avoid penalties.${footer}`
   }
 
   if (alert.type === 'today') {
-    return `Dear Customer,\n\n${docLine}\n🔴 *Expires TODAY* · *${expiryDate}*${premiumText}\n\n⚠️ Please renew urgently to avoid fines.${footer}`
+    return `Dear Customer,\n\n${docLine}\n🔴 *Expires TODAY* · *${expiryDate}*\n\n⚠️ Please renew urgently to avoid fines.${footer}`
   }
 
-  return `Dear Customer,\n\n${docLine}\n❌ Expired on *${expiryDate}* _(${alert.label})_${premiumText}\n\n⚠️ Please renew immediately to avoid heavy fines.${footer}`
+  return `Dear Customer,\n\n${docLine}\n❌ Expired on *${expiryDate}* _(${alert.label})_\n\n⚠️ Please renew immediately to avoid heavy fines.${footer}`
 }
 
 const getNationalPermitPartLine = ({ partLabel, alert, expiryText }) => {
@@ -262,8 +257,7 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
           vehicleNo,
           expiryDate: doc[source.dateField],
           signature: userInfo.signature,
-          address: userInfo.address,
-          renewPremium: doc.renewPremium || 0
+          address: userInfo.address
         })
 
         await MessageLog.create({
