@@ -61,7 +61,7 @@ const deleteOldRCImage = (imagePath) => {
   }
 }
 
-// Upload RC Image (accepts base64 JPG, JPEG, PNG, WebP)
+// Upload RC Image (accepts base64 JPG, JPEG, PNG, WebP, PDF)
 // Only 1 image per vehicle registration - replaces old image if exists
 exports.uploadRCImage = async (req, res) => {
   try {
@@ -95,7 +95,7 @@ exports.uploadRCImage = async (req, res) => {
     }
 
     // Validate base64 format - accept multiple image formats and PDF
-    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp|avif);base64,/
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp);base64,/
     const pdfFormatRegex = /^data:application\/pdf;base64,/
 
     let fileFormat = null
@@ -105,15 +105,15 @@ exports.uploadRCImage = async (req, res) => {
     const pdfMatch = imageData.match(pdfFormatRegex)
 
     if (imageMatch) {
-      fileFormat = 'avif' // we'll convert all images to avif
-      fileExtension = 'avif'
+      fileFormat = imageMatch[1]
+      fileExtension = fileFormat === 'jpeg' ? 'jpg' : fileFormat
     } else if (pdfMatch) {
       fileFormat = 'pdf'
       fileExtension = 'pdf'
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Only JPG, JPEG, PNG, WebP, AVIF and PDF formats are accepted'
+        message: 'Only JPG, JPEG, PNG, WebP and PDF formats are accepted'
       })
     }
 
@@ -122,27 +122,12 @@ exports.uploadRCImage = async (req, res) => {
     const buffer = Buffer.from(base64Data, 'base64')
 
     // Check file size (12MB limit)
-    let finalBuffer = buffer;
-    const fileSizeInMB = finalBuffer.length / (1024 * 1024)
+    const fileSizeInMB = buffer.length / (1024 * 1024)
     if (fileSizeInMB > 12) {
       return res.status(400).json({
         success: false,
         message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit`
       })
-    }
-
-    // Convert to AVIF if it's an image
-    if (imageMatch) {
-      try {
-        finalBuffer = await sharp(buffer)
-          .avif({ quality: 60 })
-          .toBuffer();
-      } catch (sharpErr) {
-        console.error('Sharp AVIF conversion error:', sharpErr);
-        // Fallback to saving original format if conversion fails
-        fileFormat = imageMatch[1] === 'jpeg' ? 'jpg' : imageMatch[1];
-        fileExtension = fileFormat;
-      }
     }
 
     // Generate filename with vehicle number
@@ -152,7 +137,7 @@ exports.uploadRCImage = async (req, res) => {
     const filePath = path.join(uploadsDir, filename)
 
     // Save file to disk
-    fs.writeFileSync(filePath, finalBuffer)
+    fs.writeFileSync(filePath, buffer)
 
     // Return the relative path
     const relativePath = `/uploads/rc-images/${filename}`
@@ -163,8 +148,8 @@ exports.uploadRCImage = async (req, res) => {
       data: {
         filename,
         path: relativePath,
-        size: finalBuffer.length,
-        sizeInMB: (finalBuffer.length / (1024 * 1024)).toFixed(2),
+        size: buffer.length,
+        sizeInMB: (buffer.length / (1024 * 1024)).toFixed(2),
         format: fileFormat.toUpperCase()
       }
     })
@@ -211,7 +196,7 @@ exports.uploadRCBackImage = async (req, res) => {
       }
     }
 
-    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp|avif);base64,/
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp);base64,/
     const pdfFormatRegex = /^data:application\/pdf;base64,/
 
     let fileFormat = null
@@ -221,23 +206,22 @@ exports.uploadRCBackImage = async (req, res) => {
     const pdfMatch = imageData.match(pdfFormatRegex)
 
     if (imageMatch) {
-      fileFormat = 'avif'
-      fileExtension = 'avif'
+      fileFormat = imageMatch[1]
+      fileExtension = fileFormat === 'jpeg' ? 'jpg' : fileFormat
     } else if (pdfMatch) {
       fileFormat = 'pdf'
       fileExtension = 'pdf'
     } else {
       return res.status(400).json({
         success: false,
-        message: 'Only JPG, JPEG, PNG, WebP, AVIF and PDF formats are accepted'
+        message: 'Only JPG, JPEG, PNG, WebP and PDF formats are accepted'
       })
     }
 
     const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
     const buffer = Buffer.from(base64Data, 'base64')
 
-    let finalBuffer = buffer;
-    const fileSizeInMB = finalBuffer.length / (1024 * 1024)
+    const fileSizeInMB = buffer.length / (1024 * 1024)
     if (fileSizeInMB > 12) {
       return res.status(400).json({
         success: false,
@@ -245,23 +229,11 @@ exports.uploadRCBackImage = async (req, res) => {
       })
     }
 
-    if (imageMatch) {
-      try {
-        finalBuffer = await sharp(buffer)
-          .avif({ quality: 60 })
-          .toBuffer();
-      } catch (sharpErr) {
-        console.error('Sharp AVIF conversion error:', sharpErr);
-        fileFormat = imageMatch[1] === 'jpeg' ? 'jpg' : imageMatch[1];
-        fileExtension = fileFormat;
-      }
-    }
-
     const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '')
     const filename = `rc-back-${sanitizedVehicleNumber}-${Date.now()}.${fileExtension}`
     const filePath = path.join(uploadsDir, filename)
 
-    fs.writeFileSync(filePath, finalBuffer)
+    fs.writeFileSync(filePath, buffer)
 
     const relativePath = `/uploads/rc-images/${filename}`
 
@@ -271,8 +243,8 @@ exports.uploadRCBackImage = async (req, res) => {
       data: {
         filename,
         path: relativePath,
-        size: finalBuffer.length,
-        sizeInMB: (finalBuffer.length / (1024 * 1024)).toFixed(2),
+        size: buffer.length,
+        sizeInMB: (buffer.length / (1024 * 1024)).toFixed(2),
         format: fileFormat.toUpperCase()
       }
     })
