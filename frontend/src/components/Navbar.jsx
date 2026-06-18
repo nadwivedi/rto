@@ -266,8 +266,16 @@ const Navbar = () => {
             <h1 className="text-sm font-bold text-white">RTO Sarthi</h1>
           </div>
 
-          {/* Placeholder for alignment */}
-          <div className="w-10"></div>
+          {/* Home Button */}
+          <Link
+            to="/"
+            className="w-10 h-10 flex items-center justify-center rounded-lg hover:bg-white/10 transition-colors"
+            aria-label="Home"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </Link>
         </div>
       </div>
 
@@ -362,6 +370,25 @@ const Navbar = () => {
         <div className="px-3 2xl:px-4 py-2 2xl:py-3">
           {/* Menu Items - Horizontal with responsive sizing */}
           <div className="flex items-center gap-1.5 2xl:gap-2.5 overflow-x-auto scrollbar-hide">
+            {/* Home Button */}
+            <Link
+              to="/"
+              className={`flex items-center gap-1.5 2xl:gap-2 px-1.5 2xl:px-2.5 py-1.5 2xl:py-2 rounded-lg transition-all duration-200 group flex-shrink-0 ${
+                location.pathname === "/"
+                  ? "bg-gradient-to-r from-purple-600/30 to-pink-600/30 border border-purple-400/40 shadow-lg"
+                  : "hover:bg-white/10 hover:border border-transparent hover:border-purple-400/20"
+              }`}
+              title="Home"
+            >
+              <span className={`text-base 2xl:text-lg ${
+                location.pathname === "/" ? "text-orange-300" : "text-purple-200 group-hover:text-orange-300"
+              }`}>
+                <svg className="w-4 h-4 2xl:w-5 2xl:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+              </span>
+            </Link>
+
             {desktopMenuItems.map((item) => (
               <Link
                 key={item.path}

@@ -206,8 +206,18 @@ const DealerBill = () => {
           />
         )}
 
-        {/* Total Bills Card */}
-        <div className='mt-3 mb-4 w-full md:max-w-xs'>
+        {/* Back Button + Total Bills Card */}
+        <div className='flex items-center gap-3 mt-3 mb-4'>
+          <button
+            onClick={() => navigate('/')}
+            className='flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer flex-shrink-0'
+            title='Back to Home'
+          >
+            <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
+            </svg>
+          </button>
+        <div className='w-full md:max-w-xs'>
           <div className='bg-white rounded-lg shadow-md border border-transparent p-3 hover:shadow-lg transition-all duration-300'>
             <div className='flex items-center justify-between'>
               <div>
@@ -221,6 +231,7 @@ const DealerBill = () => {
               </div>
             </div>
           </div>
+        </div>
         </div>
 
         {/* Search and Filter Section */}

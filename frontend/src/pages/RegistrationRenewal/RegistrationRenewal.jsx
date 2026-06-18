@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import Pagination from '../../components/Pagination'
 import AddRegistrationRenewalModal from './components/AddRegistrationRenewalModal'
@@ -13,6 +14,7 @@ import { getVehicleNumberParts } from '../../utils/vehicleNoCheck'
 const RegistrationRenewal = () => {
   const theme = getTheme()
   const vehicleDesign = getVehicleNumberDesign()
+  const navigate = useNavigate()
   const [renewals, setRenewals] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [showDetailModal, setShowDetailModal] = useState(false)
@@ -170,7 +172,17 @@ const RegistrationRenewal = () => {
       <div className='min-h-screen bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50'>
         <div className='w-full px-3 md:px-4 lg:px-6 pt-4 lg:pt-6 pb-8'>
           <div className='mb-2 mt-3'>
-            <div className='grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 mb-5'>
+            <div className='flex items-center gap-3 mb-5'>
+              <button
+                onClick={() => navigate('/')}
+                className='flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer flex-shrink-0'
+                title='Back to Home'
+              >
+                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
+                </svg>
+              </button>
+              <div className='grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 flex-1'>
               <StatisticsCard
                 title='Total Renewals'
                 value={statistics.totalRenewals}
@@ -197,6 +209,7 @@ const RegistrationRenewal = () => {
                 }
               />
             </div>
+          </div>
           </div>
 
           <div className='bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden'>

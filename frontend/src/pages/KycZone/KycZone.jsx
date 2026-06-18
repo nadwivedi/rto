@@ -210,7 +210,17 @@ const KycZone = () => {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
         {/* Statistics Cards - Light Mode */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4 mb-4 md:mb-8">
+        <div className="flex items-center gap-3 mb-4 md:mb-8">
+          <button
+            onClick={() => navigate('/')}
+            className='flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-slate-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer flex-shrink-0'
+            title='Back to Home'
+          >
+            <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
+            </svg>
+          </button>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-2 md:gap-4 flex-1">
           {[
             { label: 'Total KYC Records', val: stats.total, color: 'border-slate-200 bg-white hover:border-indigo-300', icon: <Layers className="text-indigo-600" size={12} />, iconBg: 'bg-indigo-50' },
             { label: 'Aadhar Card', val: stats.aadhar, color: 'border-slate-200 bg-white hover:border-emerald-300', icon: <FileCheck className="text-emerald-600" size={12} />, iconBg: 'bg-emerald-50' },
@@ -226,6 +236,7 @@ const KycZone = () => {
               <span className="text-[15px] sm:text-2xl font-black text-slate-800 leading-none">{card.val}</span>
             </div>
           ))}
+        </div>
         </div>
 
         {/* Search & Filtering Area - Light Mode */}

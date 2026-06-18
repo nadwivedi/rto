@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import Pagination from '../../components/Pagination'
@@ -15,6 +16,7 @@ const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
 const DrivingLicence = () => {
   const theme = getTheme()
+  const navigate = useNavigate()
   const [applications, setApplications] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
@@ -480,7 +482,17 @@ const DrivingLicence = () => {
 
           {/* Statistics Cards */}
           <div className='mb-2 mt-3'>
-            <div className='grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 mb-5'>
+            <div className='flex items-center gap-3 mb-5'>
+              <button
+                onClick={() => navigate('/')}
+                className='flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer flex-shrink-0'
+                title='Back to Home'
+              >
+                <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
+                </svg>
+              </button>
+              <div className='grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 flex-1'>
               <StatisticsCard
                 title='Total Applications'
                 value={stats.total}
@@ -567,6 +579,7 @@ const DrivingLicence = () => {
                 }
               />
             </div>
+          </div>
           </div>
 
           {/* Quick DL Application Form */}
