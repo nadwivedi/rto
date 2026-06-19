@@ -33,6 +33,8 @@ const Insurance = () => {
   const [statusFilter, setStatusFilter] = useState("all");
   const [companyFilter, setCompanyFilter] = useState("");
   const [companies, setCompanies] = useState([]);
+  const [productFilter, setProductFilter] = useState("");
+  const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -88,6 +90,7 @@ const Insurance = () => {
       const params = {
         ...(statusFilter !== "all" ? { status: statusFilter } : {}),
         ...(companyFilter ? { company: companyFilter } : {}),
+        ...(productFilter ? { product: productFilter } : {}),
         ...(debouncedSearchQuery ? { search: debouncedSearchQuery } : {}),
       };
 
@@ -111,6 +114,7 @@ const Insurance = () => {
       const mappedData = data.map((item) => ({
         "Policy Number": item.policyNumber,
         "Insurance Company": item.insuranceCompany,
+        "Product Type": item.productType,
         "Policy Holder": item.policyHolderName,
         "Vehicle Number": item.vehicleNumber,
         "Mobile Number": item.mobileNumber,
@@ -147,6 +151,7 @@ const Insurance = () => {
         limit: pagination.limit,
         search: debouncedSearchQuery,
         ...(companyFilter ? { company: companyFilter } : {}),
+        ...(productFilter ? { product: productFilter } : {}),
       };
 
       if (statusFilter !== "all") {
@@ -199,9 +204,18 @@ const Insurance = () => {
       fetchInsurances(1);
       fetchStatistics();
     }
-  }, [debouncedSearchQuery, statusFilter, companyFilter]);
+  }, [debouncedSearchQuery, statusFilter, companyFilter, productFilter]);
 
-  useEffect(() => { fetchCompanies(); }, []);
+  const fetchProducts = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/insurance/products`, { withCredentials: true });
+      if (res.data.success) setProducts(res.data.data);
+    } catch (e) {
+      console.error('Error fetching products:', e);
+    }
+  };
+
+  useEffect(() => { fetchCompanies(); fetchProducts(); }, []);
 
   // Page change handler
   const handlePageChange = (newPage) => {
@@ -596,6 +610,18 @@ const Insurance = () => {
                       ))}
                     </select>
 
+                    {/* Product Type Filter */}
+                    <select
+                      value={productFilter}
+                      onChange={(e) => setProductFilter(e.target.value)}
+                      className='px-3 py-2.5 border border-gray-300 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+                    >
+                      <option value=''>All Products</option>
+                      {products.map((product) => (
+                        <option key={product} value={product}>{product}</option>
+                      ))}
+                    </select>
+
                     {/* Export Excel Button */}
                     <button
                       onClick={handleExportExcel}
@@ -680,6 +706,15 @@ const Insurance = () => {
                               </div>
                             </div>
                           ),
+                        },
+                        {
+                          render: (record) => record.productType ? (
+                            <div className='flex items-center gap-2 pt-2'>
+                              <span className='inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200'>
+                                {record.productType}
+                              </span>
+                            </div>
+                          ) : null,
                         },
                       ],
                     },
@@ -833,6 +868,9 @@ const Insurance = () => {
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
                           Valid To
                         </th>
+                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
+                          Product
+                        </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-right text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider bg-white/10 pl-12 2xl:pl-16">
                           Total Fee
                         </th>
@@ -866,13 +904,13 @@ const Insurance = () => {
                                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' />
                                     </svg>
                                   </div>
-                                  <span className='text-[11px] 2xl:text-[13px] font-bold text-gray-900 truncate max-w-[150px]'>
+                                  <span className='text-[11px] 2xl:text-[13px] font-bold text-gray-900 truncate max-w-[110px]'>
                                     {insurance.insuranceCompany || 'N/A'}
                                   </span>
                                 </div>
                                 <div className='flex items-center gap-1.5 ml-1'>
                                   <div className='w-1 h-1 rounded-full bg-gray-400'></div>
-                                  <span className='text-[10px] 2xl:text-[12px] font-medium text-gray-600 truncate max-w-[150px]'>
+                                  <span className='text-[10px] 2xl:text-[12px] font-medium text-gray-600 truncate max-w-[110px]'>
                                     {insurance.policyHolderName || 'N/A'}
                                   </span>
                                 </div>
@@ -906,9 +944,9 @@ const Insurance = () => {
                             </td>
 
                             {/* Valid From */}
-                            <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 pl-4 2xl:pl-6">
+                            <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 pl-4 2xl:pl-6 whitespace-nowrap">
                               <div className="flex items-center text-[11px] 2xl:text-[13.8px]">
-                                <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-green-100 text-green-700 font-semibold border border-green-200">
+                                <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-green-100 text-green-700 font-semibold border border-green-200 whitespace-nowrap">
                                   <svg className="w-3 h-3 2xl:w-4 2xl:h-4 mr-1 2xl:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                   </svg>
@@ -918,15 +956,21 @@ const Insurance = () => {
                             </td>
 
                             {/* Valid To */}
-                            <td className="px-0.5 2xl:px-1 py-3 2xl:py-5">
+                            <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 whitespace-nowrap">
                               <div className="flex items-center text-[11px] 2xl:text-[13.8px]">
-                                <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-red-100 text-red-700 font-semibold border border-red-200">
+                                <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-red-100 text-red-700 font-semibold border border-red-200 whitespace-nowrap">
                                   <svg className="w-3 h-3 2xl:w-4 2xl:h-4 mr-1 2xl:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                   </svg>
                                   {insurance.validTo}
                                 </span>
                               </div>
+                            </td>
+                            {/* Product Type */}
+                            <td className="px-4 2xl:px-6 py-3 2xl:py-5">
+                              <span className='inline-flex items-center px-2.5 py-1 rounded-full text-[10px] 2xl:text-xs font-bold bg-indigo-100 text-indigo-700 border border-indigo-200'>
+                                {insurance.productType || 'N/A'}
+                              </span>
                             </td>
                             {/* Total Fee */}
                             <td className="px-4 py-4 bg-gray-50/50 group-hover:bg-purple-50/30 pl-12 2xl:pl-16">

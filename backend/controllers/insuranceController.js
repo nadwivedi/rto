@@ -34,7 +34,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, insuranceCompany, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails } = req.body
 
     // Validate required fields
 
@@ -124,6 +124,7 @@ exports.createInsurance = async (req, res) => {
       policyNumber,
       policyHolderName,
       insuranceCompany,
+      productType,
       vehicleNumber,
       mobileNumber,
       date,
@@ -230,6 +231,19 @@ exports.getInsuranceCompanies = async (req, res) => {
   }
 }
 
+// Get distinct insurance products for filter dropdown
+exports.getInsuranceProducts = async (req, res) => {
+  try {
+    const products = await Insurance.distinct('productType', {
+      userId: req.user.id,
+      productType: { $exists: true, $nin: [null, ''] }
+    })
+    res.status(200).json({ success: true, data: products.filter(Boolean).sort() })
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch products' })
+  }
+}
+
 // Get all insurance records with pagination and filters
 exports.getAllInsurance = async (req, res) => {
   try {
@@ -238,6 +252,7 @@ exports.getAllInsurance = async (req, res) => {
       limit = 20,
       search,
       company,
+      product,
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query
@@ -248,6 +263,11 @@ exports.getAllInsurance = async (req, res) => {
     // Filter by insurance company
     if (company) {
       query.insuranceCompany = { $regex: company, $options: 'i' }
+    }
+
+    // Filter by product type
+    if (product) {
+      query.productType = product
     }
 
     // Search by policy number, vehicle number, owner name
@@ -296,7 +316,7 @@ exports.getAllInsurance = async (req, res) => {
 // Export all insurance records without pagination (with optional filters)
 exports.exportAllInsurance = async (req, res) => {
   try {
-    const { status, company, search } = req.query
+    const { status, company, product, search } = req.query
     const query = { userId: req.user.id }
 
     if (status && status !== 'all') {
@@ -309,6 +329,10 @@ exports.exportAllInsurance = async (req, res) => {
 
     if (company) {
       query.insuranceCompany = { $regex: company, $options: 'i' }
+    }
+
+    if (product) {
+      query.productType = product
     }
 
     if (search) {
@@ -341,7 +365,7 @@ exports.exportAllInsurance = async (req, res) => {
 // Get expiring soon insurance records
 exports.getExpiringSoonInsurance = async (req, res) => {
   try {
-    const { search, page = 1, limit = 20, sortBy = 'validTo', sortOrder = 'asc' } = req.query
+    const { search, page = 1, limit = 20, sortBy = 'validTo', sortOrder = 'asc', product } = req.query
 
     // Find all vehicle numbers that have active insurance
     // These vehicles have been renewed and should be excluded
@@ -352,6 +376,10 @@ exports.getExpiringSoonInsurance = async (req, res) => {
       status: 'expiring_soon',
       vehicleNumber: { $nin: vehiclesWithActiveInsurance },
       userId: req.user.id
+    }
+
+    if (product) {
+      query.productType = product
     }
 
     if (search) {
@@ -403,7 +431,7 @@ exports.getExpiringSoonInsurance = async (req, res) => {
 // Get expired insurance records
 exports.getExpiredInsurance = async (req, res) => {
   try {
-    const { search, page = 1, limit = 20, sortBy = 'validTo', sortOrder = 'desc' } = req.query
+    const { search, page = 1, limit = 20, sortBy = 'validTo', sortOrder = 'desc', product } = req.query
 
     // Find all vehicle numbers that have active insurance
     // These vehicles have been renewed and should be excluded
@@ -414,6 +442,10 @@ exports.getExpiredInsurance = async (req, res) => {
       status: 'expired',
       vehicleNumber: { $nin: vehiclesWithActiveInsurance },
       userId: req.user.id
+    }
+
+    if (product) {
+      query.productType = product
     }
 
     if (search) {
@@ -465,9 +497,13 @@ exports.getExpiredInsurance = async (req, res) => {
 // Get pending payment insurance records
 exports.getPendingInsurance = async (req, res) => {
   try {
-    const { search, page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = req.query
+    const { search, page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc', product } = req.query
 
     const query = { balance: { $gt: 0 }, userId: req.user.id }
+
+    if (product) {
+      query.productType = product
+    }
 
     if (search) {
       query.$or = [
@@ -606,7 +642,7 @@ exports.checkVehicleActiveInsurance = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, insuranceCompany, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -643,6 +679,7 @@ exports.updateInsurance = async (req, res) => {
     if (policyHolderName) insurance.policyHolderName = policyHolderName
     if (date !== undefined) insurance.date = date
     if (insuranceCompany !== undefined) insurance.insuranceCompany = insuranceCompany
+    if (productType !== undefined) insurance.productType = productType
     if (vehicleNumber) insurance.vehicleNumber = vehicleNumber
     if (mobileNumber !== undefined) insurance.mobileNumber = mobileNumber
     if (validFrom) insurance.validFrom = validFrom

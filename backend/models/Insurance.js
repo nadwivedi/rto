@@ -29,6 +29,11 @@ const InsuranceSchema = new mongoose.Schema({
     trim: true
   },
 
+  productType: {
+    type: String,
+    trim: true
+  },
+
   // Date of Work
   date: {
     type: String,

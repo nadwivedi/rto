@@ -76,6 +76,10 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
                 <span className='block font-bold text-gray-800 mt-0.5'>{insurance.insuranceCompany || 'N/A'}</span>
               </div>
               <div>
+                <span className='block text-gray-500 font-medium'>Product Type</span>
+                <span className='block font-bold text-gray-800 mt-0.5'>{insurance.productType || 'N/A'}</span>
+              </div>
+              <div>
                 <span className='block text-gray-500 font-medium'>Date of Work</span>
                 <span className='block font-bold text-gray-800 mt-0.5'>{insurance.date || 'N/A'}</span>
               </div>
