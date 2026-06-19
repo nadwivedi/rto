@@ -317,7 +317,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                 </svg>
                 Payment Details
               </h3>
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-3'>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3'>
                 {/* Total Amount */}
                 <div className='bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-2.5 md:p-3 border-2 border-blue-200'>
                   <label className='text-[10px] md:text-xs font-semibold text-blue-700'>Total Amount</label>
@@ -339,6 +339,14 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                   <label className={`text-[10px] md:text-xs font-semibold ${(application.fullData?.balanceAmount || application.balanceAmount || 0) > 0 ? 'text-orange-700' : 'text-green-700'}`}>Balance</label>
                   <p className={`text-base md:text-xl lg:text-2xl font-black mt-1 ${(application.fullData?.balanceAmount || application.balanceAmount || 0) > 0 ? 'text-orange-800' : 'text-green-800'}`}>
                     ₹{application.fullData?.balanceAmount?.toLocaleString() || application.balanceAmount?.toLocaleString() || '0'}
+                  </p>
+                </div>
+
+                {/* Profit Amount */}
+                <div className='bg-gradient-to-br from-amber-50 to-yellow-50 rounded-lg p-2.5 md:p-3 border-2 border-amber-200'>
+                  <label className='text-[10px] md:text-xs font-semibold text-amber-700'>Profit</label>
+                  <p className='text-base md:text-xl lg:text-2xl font-black text-amber-800 mt-1'>
+                    ₹{(application.fullData?.profit || application.profit || 0).toLocaleString()}
                   </p>
                 </div>
               </div>

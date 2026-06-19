@@ -148,6 +148,7 @@ const DrivingLicence = () => {
           totalAmount: app.totalAmount || 0,
           paidAmount: app.paidAmount || 0,
           balanceAmount: app.balanceAmount || 0,
+          profit: app.profit || 0,
           mobile: app.mobileNumber || '-',
           email: app.email || '-',
           fullData: app
@@ -400,6 +401,7 @@ const DrivingLicence = () => {
         totalAmount: parseFloat(formData.totalAmount) || 0,
         paidAmount: parseFloat(formData.paidAmount) || 0,
         balanceAmount: parseFloat(formData.balanceAmount) || 0,
+        profit: parseFloat(formData.profit) || 0,
         applicationStatus: 'pending',
         documents: formData.documents
       }
@@ -456,6 +458,7 @@ const DrivingLicence = () => {
         totalAmount: parseFloat(formData.totalAmount) || 0,
         paidAmount: parseFloat(formData.paidAmount) || 0,
         balanceAmount: parseFloat(formData.balanceAmount) || 0,
+        profit: parseFloat(formData.profit) || 0,
         applicationStatus: formData.applicationStatus,
         notes: formData.notes,
         documents: formData.documents
@@ -807,7 +810,7 @@ const DrivingLicence = () => {
                 },
                 {
                   render: (record) => (
-                    <div className='grid grid-cols-3 gap-2 pt-2 border-t border-gray-100'>
+                    <div className='grid grid-cols-4 gap-2 pt-2 border-t border-gray-100'>
                       <div>
                         <p className='text-[10px] text-gray-500 font-semibold uppercase'>Total Amount</p>
                         <p className='text-sm font-bold text-gray-800'>₹{record.totalAmount.toLocaleString('en-IN')}</p>
@@ -821,6 +824,10 @@ const DrivingLicence = () => {
                         <p className={`text-sm font-bold ${record.balanceAmount > 0 ? 'text-orange-600' : 'text-gray-500'}`}>
                           ₹{record.balanceAmount.toLocaleString('en-IN')}
                         </p>
+                      </div>
+                      <div>
+                        <p className='text-[10px] text-gray-500 font-semibold uppercase'>Profit</p>
+                        <p className='text-sm font-bold text-amber-600'>₹{record.profit.toLocaleString('en-IN')}</p>
                       </div>
                     </div>
                   ),
@@ -961,13 +968,14 @@ const DrivingLicence = () => {
                 <th className='px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wide bg-white/10 pl-6 2xl:pl-8'>Total Amount</th>
                 <th className='px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wide bg-white/10'>Paid</th>
                 <th className='px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wide bg-white/10'>Balance</th>
+                <th className='px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wide bg-white/10'>Profit</th>
                 <th className='px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wide'>Actions</th>
               </tr>
             </thead>
             <tbody className='divide-y divide-gray-200'>
               {loading ? (
                 <tr>
-                  <td colSpan='10' className='px-4 py-8 text-center'>
+                  <td colSpan='11' className='px-4 py-8 text-center'>
                     <div className='text-gray-400'>
                       <svg className='animate-spin mx-auto h-8 w-8 mb-3 text-indigo-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' />
@@ -1128,6 +1136,14 @@ const DrivingLicence = () => {
                       </div>
                     </td>
 
+                    {/* Profit */}
+                    <td className='px-4 py-4 bg-gray-50/50 group-hover:bg-amber-50/30'>
+                      <div className='text-right'>
+                        <div className='text-[11px] 2xl:text-sm font-bold text-amber-600'>₹{app.profit.toLocaleString('en-IN')}</div>
+                        <div className='text-[10px] 2xl:text-xs text-amber-600 mt-0.5'>Profit</div>
+                      </div>
+                    </td>
+
                     {/* Actions */}
                     <td className='px-4 py-4'>
                       <div className='flex items-center justify-center gap-2'>
@@ -1177,7 +1193,7 @@ const DrivingLicence = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan='10' className='px-4 py-8 text-center'>
+                  <td colSpan='11' className='px-4 py-8 text-center'>
                     <div className='text-gray-400'>
                       <svg className='mx-auto h-8 w-8 mb-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />

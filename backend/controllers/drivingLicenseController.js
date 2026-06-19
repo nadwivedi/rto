@@ -27,7 +27,7 @@ exports.createApplication = async (req, res) => {
       mobileNumber, date, email, address, licenseClass,
       licenseNumber, licenseIssueDate, licenseExpiryDate,
       learningLicenseApplicationNumber, learningLicenseNumber, learningLicenseIssueDate, learningLicenseExpiryDate,
-      totalAmount, paidAmount, balanceAmount,
+      totalAmount, paidAmount, balanceAmount, profit,
       documents
     } = req.body
 
@@ -119,6 +119,7 @@ exports.createApplication = async (req, res) => {
       totalAmount,
       paidAmount,
       balanceAmount,
+      profit,
       documents
     }
 
@@ -334,7 +335,7 @@ exports.updateApplication = async (req, res) => {
       mobileNumber, date, email, address, licenseClass,
       licenseNumber, licenseIssueDate, licenseExpiryDate,
       learningLicenseApplicationNumber, learningLicenseNumber, learningLicenseIssueDate, learningLicenseExpiryDate,
-      totalAmount, paidAmount, balanceAmount,
+      totalAmount, paidAmount, balanceAmount, profit,
       documents
     } = req.body
 
@@ -381,6 +382,7 @@ exports.updateApplication = async (req, res) => {
     if (totalAmount !== undefined) application.totalAmount = totalAmount
     if (paidAmount !== undefined) application.paidAmount = paidAmount
     if (balanceAmount !== undefined) application.balanceAmount = balanceAmount
+    if (profit !== undefined) application.profit = profit
     if (documents !== undefined) application.documents = documents
 
     // Map lowercase field names to uppercase (model field names)

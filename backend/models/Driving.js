@@ -104,6 +104,10 @@ const DrivingSchema = new mongoose.Schema({
     required: true,
     default: 0
   },
+  profit: {
+    type: Number,
+    default: 0
+  },
 
 
 
