@@ -21,6 +21,13 @@ const FIELDS_MAP = {
   validFrom: 'Policy Effective Date'
 }
 
+const BUSINESS_TYPE_MAP = {
+  'CommercialVehicle': 'GCV',
+  'TwoWheeler': 'Two Wheeler',
+  'PrivateCar': 'Pvt. Car',
+  'MiscellaneousVehicle': 'Mis-D'
+}
+
 const isDryRun = process.argv.includes('--dry-run')
 const uriArg = process.argv.find((arg) => arg.startsWith('--uri='))
 
@@ -103,6 +110,9 @@ const buildRecords = (rows) => {
       continue
     }
 
+    const businessType = get('Business Type')
+    const productType = BUSINESS_TYPE_MAP[businessType] || businessType
+
     records.push({
       userId: TARGET_USER_ID,
       policyHolderName: get('Name Of Insured'),
@@ -110,6 +120,7 @@ const buildRecords = (rows) => {
       vehicleNumber,
       policyNumber: get('Policy Number'),
       insuranceCompany: 'UNITED INDIA INSURANCE',
+      productType,
       date: validFrom,
       validFrom,
       validTo,
@@ -120,7 +131,7 @@ const buildRecords = (rows) => {
       isRenewed: false,
       renewPremium: 0,
       commission: 0,
-      remarks: `Imported from Excel (${get('Business Type')})`
+      remarks: businessType ? `Imported from Excel` : ''
     })
   }
 

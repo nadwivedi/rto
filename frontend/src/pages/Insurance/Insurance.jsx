@@ -598,6 +598,12 @@ const Insurance = () => {
                       toUpperCase={true}
                     />
 
+                    {/* New Insurance Button */}
+                    <AddButton
+                      onClick={() => setIsAddModalOpen(true)}
+                      title="New Insurance Record"
+                    />
+
                     {/* Insurance Company Filter */}
                     <select
                       value={companyFilter}
@@ -644,12 +650,6 @@ const Insurance = () => {
                       Report
                     </button>
 
-                    {/* New Insurance Button */}
-                    <AddButton
-                      onClick={() => setIsAddModalOpen(true)}
-
-                      title="New Insurance Record"
-                    />
                   </div>
                 </div>
 
@@ -956,7 +956,7 @@ const Insurance = () => {
                             </td>
 
                             {/* Valid To */}
-                            <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 whitespace-nowrap">
+                            <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 whitespace-nowrap pr-4 2xl:pr-6">
                               <div className="flex items-center text-[11px] 2xl:text-[13.8px]">
                                 <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-red-100 text-red-700 font-semibold border border-red-200 whitespace-nowrap">
                                   <svg className="w-3 h-3 2xl:w-4 2xl:h-4 mr-1 2xl:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
