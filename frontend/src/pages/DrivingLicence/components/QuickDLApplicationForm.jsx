@@ -56,7 +56,6 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     balanceAmount: 2000,
     profit: '',
     expenseBreakup: [],
-    paymentMode: 'Cash',
     documents: {
       learningLicense: '',
       learningLicenseType: ''
@@ -435,6 +434,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
             await replacePaymentsForWork('DL', recordId, validPayments)
           } catch (paymentErr) {
             console.error('Failed to save payment received entries:', paymentErr)
+            toast.warn('Payment records saved, but payment breakdown could not be saved.')
           }
         }
 
@@ -993,20 +993,6 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                       </div>
                     </div>
 
-                    {/* Payment Mode */}
-                    <div>
-                      <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Payment Mode</label>
-                      <select
-                        name='paymentMode'
-                        value={formData.paymentMode || 'Cash'}
-                        onChange={handleChange}
-                        className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-semibold bg-white text-base md:text-lg'
-                      >
-                        <option value='Cash'>Cash</option>
-                        <option value='Bank'>Bank</option>
-                        <option value='UPI'>UPI</option>
-                      </select>
-                    </div>
                   </div>
                 </div>
               </div>

@@ -26,7 +26,6 @@ const getDefaultFormData = () => ({
   balance: '0',
   profit: '',
   expenseBreakup: [],
-  paymentMode: 'Cash',
   feeBreakup: [
     { name: 'Transfer', amount: '' },
     { name: 'PUC', amount: '' },
@@ -81,7 +80,6 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
         balance: editData.balance?.toString() ?? `${(parseFloat(editData.totalFee) || 0) - (parseFloat(editData.paid) || 0)}`,
         profit: editData.profit?.toString() || '',
         expenseBreakup: (editData.expenseBreakup || []).map(item => ({ ...item })),
-        paymentMode: editData.paymentMode || 'Cash',
         feeBreakup
       })
       // Validate vehicle number if editing
@@ -221,9 +219,10 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
         if (validPayments.length > 0 && recordId) {
           try {
             await replacePaymentsForWork('VT', recordId, validPayments)
-          } catch (paymentErr) {
-            console.error('Failed to save payment received entries:', paymentErr)
-          }
+    } catch (paymentErr) {
+      console.error('Failed to save payment received entries:', paymentErr)
+      toast.warn('Payment records saved, but payment breakdown could not be saved.')
+    }
         }
         toast.success(editData ? 'Vehicle transfer updated successfully' : 'Vehicle transfer added successfully', {
           autoClose: 1200
@@ -647,7 +646,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
               Payment Information
             </h3>
 
-            <div className='grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4'>
+            <div className='grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4'>
               {/* Total Fee */}
               <div>
                 <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -723,21 +722,6 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                     className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold'
                   />
                 </div>
-              </div>
-
-              {/* Payment Mode */}
-              <div>
-                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Payment Mode</label>
-                <select
-                  name='paymentMode'
-                  value={formData.paymentMode || 'Cash'}
-                  onChange={handleChange}
-                  className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold bg-white'
-                >
-                  <option value='Cash'>Cash</option>
-                  <option value='Bank'>Bank</option>
-                  <option value='UPI'>UPI</option>
-                </select>
               </div>
             </div>
 

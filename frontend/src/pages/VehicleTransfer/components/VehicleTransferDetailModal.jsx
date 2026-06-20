@@ -204,7 +204,7 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                 </svg>
                 Payment Information
               </h3>
-              <div className='grid grid-cols-4 gap-3'>
+              <div className='grid grid-cols-3 gap-3'>
                 <div className='bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg p-3 border border-blue-300'>
                   <label className='text-xs font-semibold text-blue-700 block mb-1'>Total Fee</label>
                   <p className='text-lg md:text-xl font-black text-blue-900'>
@@ -229,12 +229,6 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                     transfer.balance > 0 ? 'text-orange-900' : 'text-green-900'
                   }`}>
                     ₹{(transfer.balance || 0).toLocaleString('en-IN')}
-                  </p>
-                </div>
-                <div className='bg-gradient-to-br from-cyan-100 to-teal-100 rounded-lg p-3 border border-cyan-300'>
-                  <label className='text-xs font-semibold text-cyan-700 block mb-1'>Payment Mode</label>
-                  <p className='text-lg md:text-xl font-black text-cyan-900'>
-                    {transfer.paymentMode || 'Cash'}
                   </p>
                 </div>
               </div>

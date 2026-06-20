@@ -17,8 +17,6 @@ const RegistrationRenewalSchema = new mongoose.Schema({
   paid: { type: Number, required: true },
   balance: { type: Number, required: true },
 
-  paymentMode: { type: String, enum: ['Cash', 'Bank', 'UPI'], default: 'Cash' },
-
   profit: { type: Number, default: 0 },
 
   expenseBreakup: [{

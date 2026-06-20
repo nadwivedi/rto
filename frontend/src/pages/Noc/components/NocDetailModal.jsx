@@ -75,7 +75,7 @@ const NocDetailModal = ({ isOpen, onClose, record }) => {
 
           <div className='bg-purple-50 rounded-lg border border-purple-200 p-4 mb-4'>
             <h4 className='text-sm font-bold text-purple-800 mb-3'>Payment Information</h4>
-            <div className='grid grid-cols-4 gap-3'>
+            <div className='grid grid-cols-3 gap-3'>
               <div>
                 <p className='text-xs text-gray-500 font-semibold'>Total Fee</p>
                 <p className='text-sm font-bold text-gray-900'>Rs {(record.totalFee || 0).toLocaleString('en-IN')}</p>
@@ -89,10 +89,6 @@ const NocDetailModal = ({ isOpen, onClose, record }) => {
                 <p className={`text-sm font-bold ${record.balance > 0 ? 'text-orange-600' : 'text-gray-600'}`}>
                   Rs {(record.balance || 0).toLocaleString('en-IN')}
                 </p>
-              </div>
-              <div>
-                <p className='text-xs text-gray-500 font-semibold'>Payment Mode</p>
-                <p className='text-sm font-bold text-cyan-700'>{record.paymentMode || 'Cash'}</p>
               </div>
             </div>
           </div>

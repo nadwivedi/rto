@@ -17,7 +17,6 @@ exports.createRenewal = async (req, res) => {
       feeBreakup,
       profit,
       expenseBreakup,
-      paymentMode,
       byName,
       byMobile,
       remarks
@@ -79,7 +78,6 @@ exports.createRenewal = async (req, res) => {
       feeBreakup: filteredFeeBreakup,
       profit,
       expenseBreakup,
-      paymentMode,
       byName,
       byMobile,
       remarks
@@ -244,7 +242,6 @@ exports.updateRenewal = async (req, res) => {
       feeBreakup,
       profit,
       expenseBreakup,
-      paymentMode,
       byName,
       byMobile,
       remarks
@@ -277,7 +274,6 @@ exports.updateRenewal = async (req, res) => {
 
     if (profit !== undefined) existingRenewal.profit = profit
     if (expenseBreakup !== undefined) existingRenewal.expenseBreakup = expenseBreakup
-    if (paymentMode !== undefined) existingRenewal.paymentMode = paymentMode
 
     if (existingRenewal.paid > existingRenewal.totalFee) {
       existingRenewal.paid = existingRenewal.totalFee

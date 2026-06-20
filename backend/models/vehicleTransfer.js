@@ -80,12 +80,6 @@ const VehicleTransferSchema = new mongoose.Schema({
     required: true,
   },
 
-  paymentMode: {
-    type: String,
-    enum: ['Cash', 'Bank', 'UPI'],
-    default: 'Cash'
-  },
-
   // Profit (Commission)
   profit: {
     type: Number,

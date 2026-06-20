@@ -186,11 +186,6 @@ const RegistrationRenewalDetailModal = ({ isOpen, onClose, renewal }) => {
                   </span>
                 </div>
 
-                <div className='flex justify-between items-center py-2 border-b border-gray-200'>
-                  <span className='text-xs md:text-sm text-gray-600 font-semibold'>Payment Mode</span>
-                  <span className='text-xs md:text-sm font-bold text-cyan-700'>{renewal.paymentMode || 'Cash'}</span>
-                </div>
-
                 <div className='flex justify-between items-center py-2'>
                   <span className='text-xs md:text-sm text-gray-600 font-semibold'>Payment Status</span>
                   <span className={`px-2 py-1 rounded-full text-[10px] md:text-xs font-bold ${

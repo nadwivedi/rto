@@ -329,7 +329,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                 </svg>
                 Payment Details
               </h3>
-              <div className='grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3'>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3'>
                 {/* Total Amount */}
                 <div className='bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-2.5 md:p-3 border-2 border-blue-200'>
                   <label className='text-[10px] md:text-xs font-semibold text-blue-700'>Total Amount</label>
@@ -359,14 +359,6 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                   <label className='text-[10px] md:text-xs font-semibold text-amber-700'>Profit</label>
                   <p className='text-base md:text-xl lg:text-2xl font-black text-amber-800 mt-1'>
                     ₹{(application.fullData?.profit || application.profit || 0).toLocaleString()}
-                  </p>
-                </div>
-
-                {/* Payment Mode */}
-                <div className='bg-gradient-to-br from-cyan-50 to-teal-50 rounded-lg p-2.5 md:p-3 border-2 border-cyan-200'>
-                  <label className='text-[10px] md:text-xs font-semibold text-cyan-700'>Payment Mode</label>
-                  <p className='text-base md:text-xl lg:text-2xl font-black text-cyan-800 mt-1'>
-                    {application.fullData?.paymentMode || application.paymentMode || 'Cash'}
                   </p>
                 </div>
               </div>

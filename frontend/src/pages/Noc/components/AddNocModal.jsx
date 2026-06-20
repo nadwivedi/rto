@@ -24,7 +24,6 @@ const initialState = {
   balance: '',
   profit: '',
   expenseBreakup: [],
-  paymentMode: 'Cash',
   feeBreakup: defaultFeeBreakup,
   remarks: ''
 }
@@ -70,7 +69,6 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
         balance: editData.balance || '',
         profit: editData.profit?.toString() || '',
         expenseBreakup: (editData.expenseBreakup || []).map(item => ({ ...item })),
-        paymentMode: editData.paymentMode || 'Cash',
         feeBreakup: editData.feeBreakup?.length ? editData.feeBreakup : defaultFeeBreakup,
         remarks: editData.remarks || ''
       })
@@ -203,7 +201,8 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
             await replacePaymentsForWork('NOC', recordId, validPayments)
           } catch (paymentErr) {
             console.error('Failed to save payment received entries:', paymentErr)
-          }
+            toast.warn('Payment records saved, but payment breakdown could not be saved.')
+            }
         }
         toast.success(editData ? 'NOC updated successfully' : 'NOC added successfully', {
           autoClose: 1200
@@ -420,7 +419,7 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
                 Payment Information
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-5 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4'>
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Total Fee (₹) <span className='text-red-500'>*</span></label>
                   <input
@@ -477,21 +476,6 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
                       className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold'
                     />
                   </div>
-                </div>
-
-                <div>
-                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Payment Mode</label>
-                  <select
-                    name='paymentMode'
-                    value={formData.paymentMode || 'Cash'}
-                    onChange={handleChange}
-                    onKeyDown={handleFieldKeyDown}
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold bg-white'
-                  >
-                    <option value='Cash'>Cash</option>
-                    <option value='Bank'>Bank</option>
-                    <option value='UPI'>UPI</option>
-                  </select>
                 </div>
               </div>
 

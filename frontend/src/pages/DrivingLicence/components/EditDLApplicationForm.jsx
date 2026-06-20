@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 import { handleSmartDateInput } from '../../../utils/dateFormatter'
 import { validateMobileNumberRealtime, enforceMobileNumberFormat, validateEmailRealtime } from '../../../utils/contactValidation'
+import { toast } from 'react-toastify'
 import { replacePaymentsForWork, getPaymentsByWork } from '../../../utils/paymentReceivedApi'
 
 const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
@@ -79,7 +80,6 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     balanceAmount: 2000,
     profit: '',
     expenseBreakup: [],
-    paymentMode: 'Cash',
 
     // Application Status
     applicationStatus: 'pending',
@@ -149,7 +149,6 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
         paidAmount: appData.paidAmount?.toString() || '2000',
         balanceAmount: calculatedBalance >= 0 ? calculatedBalance : 0,
         profit: appData.profit?.toString() || '',
-        paymentMode: appData.paymentMode || 'Cash',
         expenseBreakup: (appData.expenseBreakup || []).map(item => ({
           name: item.name || '',
           amount: item.amount ? item.amount.toString() : ''
@@ -487,6 +486,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
           await replacePaymentsForWork('DL', recordId, validPayments)
         } catch (paymentErr) {
           console.error('Failed to save payment received entries:', paymentErr)
+          toast.warn('Application updated, but payment breakdown could not be saved.')
         }
       }
     }
@@ -985,20 +985,6 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                       </div>
                     </div>
 
-                    {/* Payment Mode */}
-                    <div>
-                      <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Payment Mode</label>
-                      <select
-                        name='paymentMode'
-                        value={formData.paymentMode || 'Cash'}
-                        onChange={handleChange}
-                        className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-semibold bg-white text-base md:text-lg'
-                      >
-                        <option value='Cash'>Cash</option>
-                        <option value='Bank'>Bank</option>
-                        <option value='UPI'>UPI</option>
-                      </select>
-                    </div>
                   </div>
                 </div>
               </div>

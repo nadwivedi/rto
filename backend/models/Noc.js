@@ -56,11 +56,6 @@ const nocSchema = new mongoose.Schema({
     required: true,
     min: 0
   },
-  paymentMode: {
-    type: String,
-    enum: ['Cash', 'Bank', 'UPI'],
-    default: 'Cash'
-  },
   profit: {
     type: Number,
     default: 0
