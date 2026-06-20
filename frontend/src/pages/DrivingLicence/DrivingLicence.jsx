@@ -819,7 +819,7 @@ const DrivingLicence = () => {
                           </svg>
                           LL Issue Date
                         </p>
-                        <p className='text-xs font-semibold text-gray-700'>
+                        <p className='text-[10px] font-semibold text-gray-700'>
                           {(() => {
                             const llIssueDate = record.fullData?.learningLicenseIssueDate;
                             if (!llIssueDate) return '-';
@@ -842,7 +842,7 @@ const DrivingLicence = () => {
                           </svg>
                           LL Expiry Date
                         </p>
-                        <p className='text-xs font-semibold text-gray-700'>
+                        <p className='text-[10px] font-semibold text-gray-700'>
                           {(() => {
                             const llExpiryDate = record.fullData?.learningLicenseExpiryDate;
                             if (!llExpiryDate) return '-';
@@ -951,7 +951,7 @@ const DrivingLicence = () => {
                 currentApplications.map((app, index) => (
                   <tr key={app.id} className='hover:bg-gradient-to-r hover:from-blue-50/50 hover:via-indigo-50/50 hover:to-purple-50/50 transition-all duration-200 group'>
                     <td className='px-2 py-4'>
-                      <div className='flex items-center justify-center gap-1 text-[11px] 2xl:text-sm font-semibold text-gray-800'>
+                      <div className='flex items-center justify-start gap-1 text-[10px] 2xl:text-xs font-semibold text-gray-800'>
                         <svg className='w-[14px] h-[14px] 2xl:w-4 2xl:h-4 text-gray-800' fill='none' stroke='currentColor' viewBox='0 0 24 24' strokeWidth={1.5}>
                           <path strokeLinecap='round' strokeLinejoin='round' d='M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5' />
                         </svg>
@@ -977,8 +977,8 @@ const DrivingLicence = () => {
                     {/* License Class */}
                     <td className='px-4 py-4'>
                       <div className='flex items-center justify-center'>
-                        <span className='inline-flex items-center px-3 py-1.5 rounded-full text-xs font-bold border bg-blue-100 text-blue-800 border-blue-200'>
-                          <svg className='w-3 h-3 mr-1.5' fill='currentColor' viewBox='0 0 20 20'>
+                        <span className='inline-flex items-center px-2 py-1 rounded-full text-[10px] font-bold border bg-blue-100 text-blue-800 border-blue-200'>
+                          <svg className='w-2.5 h-2.5 mr-1' fill='currentColor' viewBox='0 0 20 20'>
                             <path d='M8 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM15 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z' />
                             <path d='M3 4a1 1 0 00-1 1v10a1 1 0 001 1h1.05a2.5 2.5 0 014.9 0H10a1 1 0 001-1V5a1 1 0 00-1-1H3zM14 7a1 1 0 00-1 1v6.05A2.5 2.5 0 0115.95 16H17a1 1 0 001-1v-5a1 1 0 00-.293-.707l-2-2A1 1 0 0015 7h-1z' />
                           </svg>
@@ -995,7 +995,7 @@ const DrivingLicence = () => {
 
                     {/* LL Dates - Issue Date (top/green) + Expiry Date (bottom/red) */}
                     <td className='px-0.5 2xl:px-1 py-3 2xl:py-5'>
-                      <div className='flex flex-col items-center gap-1 text-[11px] 2xl:text-[13.8px]'>
+                      <div className='flex flex-col items-center gap-1 text-[10px] 2xl:text-xs'>
                         {(() => {
                           const llIssueDate = app.fullData?.learningLicenseIssueDate;
                           if (!llIssueDate) {

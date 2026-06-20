@@ -175,7 +175,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                 {/* Date of Birth - Always show */}
                 <div className='bg-white/80 p-2 rounded-lg'>
                   <label className='text-[10px] md:text-xs font-semibold text-gray-600'>Date of Birth</label>
-                  <p className='text-xs md:text-sm font-bold text-gray-900 mt-0.5'>{formatDate(application.fullData?.dateOfBirth) || '15-08-1995'}</p>
+                  <p className='text-[10px] md:text-xs font-bold text-gray-900 mt-0.5'>{formatDate(application.fullData?.dateOfBirth) || '15-08-1995'}</p>
                 </div>
 
                 {/* Gender - Always show */}
@@ -193,7 +193,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                 {/* Date of Work */}
                 <div className='bg-white/80 p-2 rounded-lg'>
                   <label className='text-[10px] md:text-xs font-semibold text-gray-600'>Date of Work</label>
-                  <p className='text-xs md:text-sm font-bold text-gray-900 mt-0.5'>{application.date || application.fullData?.date || '-'}</p>
+                  <p className='text-[10px] md:text-xs font-bold text-gray-900 mt-0.5'>{application.date || application.fullData?.date || '-'}</p>
                 </div>
 
                 {/* Phone Number - Always show */}
@@ -260,7 +260,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                   {/* LL Issue Date */}
                   <div className='bg-white/80 p-2 rounded-lg'>
                     <label className='text-[10px] md:text-xs font-semibold text-gray-600'>Issue Date</label>
-                    <p className='text-xs md:text-sm font-bold text-green-700 mt-0.5'>
+                    <p className='text-[10px] md:text-xs font-bold text-green-700 mt-0.5'>
                       {application.fullData?.learningLicenseIssueDate ? formatDate(application.fullData.learningLicenseIssueDate) : 'N/A'}
                     </p>
                   </div>
@@ -268,7 +268,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                   {/* LL Expiry Date */}
                   <div className='bg-white/80 p-2 rounded-lg'>
                     <label className='text-[10px] md:text-xs font-semibold text-gray-600'>Expiry Date</label>
-                    <p className='text-xs md:text-sm font-bold text-red-700 mt-0.5'>
+                    <p className='text-[10px] md:text-xs font-bold text-red-700 mt-0.5'>
                       {application.fullData?.learningLicenseExpiryDate ? formatDate(application.fullData.learningLicenseExpiryDate) : 'N/A'}
                     </p>
                   </div>
@@ -293,7 +293,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                   {/* License Issue Date */}
                   <div className='bg-white/80 p-2 rounded-lg'>
                     <label className='text-[10px] md:text-xs font-semibold text-gray-600'>Issue Date</label>
-                    <p className='text-xs md:text-sm font-bold text-green-700 mt-0.5'>
+                    <p className='text-[10px] md:text-xs font-bold text-green-700 mt-0.5'>
                       {application.issueDate ||
                        (application.fullData?.LicenseIssueDate && formatDate(application.fullData?.LicenseIssueDate)) ||
                        application.fullData?.licenseIssueDate || 'N/A'}
@@ -303,7 +303,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                   {/* License Expiry Date */}
                   <div className='bg-white/80 p-2 rounded-lg'>
                     <label className='text-[10px] md:text-xs font-semibold text-gray-600'>Expiry Date</label>
-                    <p className='text-xs md:text-sm font-bold text-red-700 mt-0.5'>
+                    <p className='text-[10px] md:text-xs font-bold text-red-700 mt-0.5'>
                       {application.expiryDate ||
                        (application.fullData?.LicenseExpiryDate && formatDate(application.fullData?.LicenseExpiryDate)) ||
                        application.fullData?.licenseExpiryDate || 'N/A'}
