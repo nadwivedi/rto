@@ -90,6 +90,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
 
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
   const [paymentReceived, setPaymentReceived] = useState([])
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
 
   // Validation states
   const [mobileValidation, setMobileValidation] = useState({ isValid: false, message: '' })
@@ -1003,153 +1004,173 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
               </div>
             </div>
 
-            {/* Expense Breakup Section */}
-            <div className='bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
-              <div className='flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4'>
-                <h3 className='text-base md:text-lg font-bold text-gray-800 flex items-center gap-2'>
-                  <span className='bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>5</span>
-                  Expense Breakdown
-                </h3>
-                <button
-                  type='button'
-                  onClick={addExpenseItem}
-                  className='inline-flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold'
-                >
-                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
-                  </svg>
-                  Add Expense
-                </button>
-              </div>
-
-              {formData.expenseBreakup.length === 0 ? (
-                <p className='text-sm text-gray-500 italic'>No expenses added. Click "Add Expense" to record expenses.</p>
-              ) : (
-                <div className='space-y-3'>
-                  {formData.expenseBreakup.map((item, index) => (
-                    <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-3 items-center'>
-                      <div className='md:col-span-5'>
-                        <input
-                          type='text'
-                          placeholder='Expense name (e.g. Fitness, Commission)'
-                          value={item.name}
-                          onChange={(e) => handleExpenseBreakupChange(index, 'name', e.target.value)}
-                          className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
-                        />
-                      </div>
-                      <div className='md:col-span-6'>
-                        <div className='relative'>
-                          <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
-                          <input
-                            type='number'
-                            placeholder='Amount'
-                            value={item.amount}
-                            onChange={(e) => handleExpenseBreakupChange(index, 'amount', e.target.value)}
-                            min='0'
-                            step='1'
-                            className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
-                          />
-                        </div>
-                      </div>
-                      <div className='md:col-span-1 flex items-center justify-end'>
-                        <button
-                          type='button'
-                          onClick={() => removeExpenseItem(index)}
-                          className='p-2 text-orange-500 hover:bg-orange-100 rounded-full transition'
-                          title='Remove expense'
-                        >
-                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  <div className='flex justify-between items-center bg-orange-100 rounded-lg px-4 py-2.5 border border-orange-300'>
-                    <span className='text-sm font-bold text-orange-900'>Total Expense</span>
-                    <span className='text-lg font-black text-orange-800'>
-                      ₹{formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Payment Received Breakdown Section */}
+            {/* Additional Details (Collapsible) */}
             <div className='mt-4 pt-4 border-t border-indigo-200'>
-              <div className='flex justify-between items-center mb-3'>
-                <h4 className='text-sm md:text-base font-bold text-gray-800'>Payment Received Breakdown (Optional)</h4>
-                <button
-                  type='button'
-                  onClick={addPaymentReceivedItem}
-                  className='px-3 py-1.5 text-xs md:text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold flex items-center gap-1'
-                >
-                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
-                  </svg>
-                  Add Payment
-                </button>
-              </div>
+              <button
+                type='button'
+                onClick={() => setShowAdditionalDetails(!showAdditionalDetails)}
+                className='w-full flex items-center justify-between p-3 bg-indigo-50 hover:bg-indigo-100 rounded-lg transition group'
+              >
+                <span className='text-sm md:text-base font-bold text-gray-800 group-hover:text-indigo-700 transition-colors'>
+                  Additional Details
+                </span>
+                <svg className={`w-5 h-5 text-indigo-500 transition-transform duration-200 ${showAdditionalDetails ? 'rotate-180' : ''}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+                </svg>
+              </button>
 
-              {paymentReceived.length === 0 ? (
-                <div className='bg-indigo-50 border-2 border-dashed border-indigo-300 rounded-lg p-4 text-center'>
-                  <p className='text-sm text-indigo-600 font-semibold'>No payments recorded yet. Click "Add Payment" to add payment received details.</p>
-                </div>
-              ) : (
-                <div className='space-y-2'>
-                  {paymentReceived.map((item, index) => (
-                    <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-2 bg-indigo-50 p-2 rounded-lg border border-indigo-200'>
-                      <div className='md:col-span-4'>
-                        <input
-                          type='date'
-                          value={item.date}
-                          onChange={(e) => handlePaymentReceivedChange(index, 'date', e.target.value)}
-                          className='w-full px-3 py-2 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-semibold'
-                        />
-                      </div>
-                      <div className='md:col-span-3'>
-                        <div className='relative'>
-                          <span className='absolute left-3 top-2.5 text-gray-500 font-semibold'>₹</span>
-                          <input
-                            type='number'
-                            placeholder='Amount'
-                            value={item.amount}
-                            onChange={(e) => handlePaymentReceivedChange(index, 'amount', e.target.value)}
-                            min='0'
-                            className='w-full pl-8 pr-3 py-2 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-semibold'
-                          />
+              {showAdditionalDetails && (
+                <div className='mt-4 space-y-4'>
+                  {/* Expense Breakup Section */}
+                  <div className='bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl p-3 md:p-6'>
+                    <div className='flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4'>
+                      <h3 className='text-base md:text-lg font-bold text-gray-800 flex items-center gap-2'>
+                        <span className='bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>5</span>
+                        Expense Breakdown
+                      </h3>
+                      <button
+                        type='button'
+                        onClick={addExpenseItem}
+                        className='inline-flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold'
+                      >
+                        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+                        </svg>
+                        Add Expense
+                      </button>
+                    </div>
+
+                    {formData.expenseBreakup.length === 0 ? (
+                      <p className='text-sm text-gray-500 italic'>No expenses added. Click "Add Expense" to record expenses.</p>
+                    ) : (
+                      <div className='space-y-3'>
+                        {formData.expenseBreakup.map((item, index) => (
+                          <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-3 items-center'>
+                            <div className='md:col-span-5'>
+                              <input
+                                type='text'
+                                placeholder='Expense name (e.g. Fitness, Commission)'
+                                value={item.name}
+                                onChange={(e) => handleExpenseBreakupChange(index, 'name', e.target.value)}
+                                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
+                              />
+                            </div>
+                            <div className='md:col-span-6'>
+                              <div className='relative'>
+                                <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
+                                <input
+                                  type='number'
+                                  placeholder='Amount'
+                                  value={item.amount}
+                                  onChange={(e) => handleExpenseBreakupChange(index, 'amount', e.target.value)}
+                                  min='0'
+                                  step='1'
+                                  className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
+                                />
+                              </div>
+                            </div>
+                            <div className='md:col-span-1 flex items-center justify-end'>
+                              <button
+                                type='button'
+                                onClick={() => removeExpenseItem(index)}
+                                className='p-2 text-orange-500 hover:bg-orange-100 rounded-full transition'
+                                title='Remove expense'
+                              >
+                                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        <div className='flex justify-between items-center bg-orange-100 rounded-lg px-4 py-2.5 border border-orange-300'>
+                          <span className='text-sm font-bold text-orange-900'>Total Expense</span>
+                          <span className='text-lg font-black text-orange-800'>
+                            ₹{formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                          </span>
                         </div>
                       </div>
-                      <div className='md:col-span-3'>
-                        <select
-                          value={item.paymentMode}
-                          onChange={(e) => handlePaymentReceivedChange(index, 'paymentMode', e.target.value)}
-                          className='w-full px-3 py-2 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-semibold bg-white'
-                        >
-                          <option value='Cash'>Cash</option>
-                          <option value='Bank'>Bank</option>
-                          <option value='UPI'>UPI</option>
-                        </select>
-                      </div>
-                      <div className='md:col-span-2 flex items-center justify-center'>
-                        <button
-                          type='button'
-                          onClick={() => removePaymentReceivedItem(index)}
-                          className='p-2 text-red-600 hover:bg-red-100 rounded-lg transition'
-                          title='Remove this payment'
-                        >
-                          <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
-                          </svg>
-                        </button>
-                      </div>
+                    )}
+                  </div>
+
+                  {/* Payment Received Breakdown Section */}
+                  <div className='bg-gradient-to-r from-cyan-50 to-teal-50 border border-cyan-200 rounded-lg p-3 md:p-4'>
+                    <div className='flex justify-between items-center mb-3'>
+                      <h4 className='text-sm md:text-base font-bold text-gray-800'>Payment Received Breakdown (Optional)</h4>
+                      <button
+                        type='button'
+                        onClick={addPaymentReceivedItem}
+                        className='px-3 py-1.5 text-xs md:text-sm bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold flex items-center gap-1'
+                      >
+                        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+                        </svg>
+                        Add Payment
+                      </button>
                     </div>
-                  ))}
-                  <div className='flex justify-end items-center bg-indigo-100 p-2 rounded-lg border border-indigo-300'>
-                    <span className='text-sm font-bold text-gray-800'>Total Received: </span>
-                    <span className='text-sm font-bold text-indigo-700 ml-2'>
-                      ₹{paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
-                    </span>
+
+                    {paymentReceived.length === 0 ? (
+                      <div className='bg-cyan-50 border-2 border-dashed border-cyan-300 rounded-lg p-4 text-center'>
+                        <p className='text-sm text-cyan-700 font-semibold'>No payments recorded yet. Click "Add Payment" to add payment received details.</p>
+                      </div>
+                    ) : (
+                      <div className='space-y-2'>
+                        {paymentReceived.map((item, index) => (
+                          <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-2 bg-white p-2 rounded-lg border border-cyan-200'>
+                            <div className='md:col-span-4'>
+                              <input
+                                type='date'
+                                value={item.date}
+                                onChange={(e) => handlePaymentReceivedChange(index, 'date', e.target.value)}
+                                className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-semibold'
+                              />
+                            </div>
+                            <div className='md:col-span-3'>
+                              <div className='relative'>
+                                <span className='absolute left-3 top-2.5 text-gray-500 font-semibold'>₹</span>
+                                <input
+                                  type='number'
+                                  placeholder='Amount'
+                                  value={item.amount}
+                                  onChange={(e) => handlePaymentReceivedChange(index, 'amount', e.target.value)}
+                                  min='0'
+                                  className='w-full pl-8 pr-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-semibold'
+                                />
+                              </div>
+                            </div>
+                            <div className='md:col-span-3'>
+                              <select
+                                value={item.paymentMode}
+                                onChange={(e) => handlePaymentReceivedChange(index, 'paymentMode', e.target.value)}
+                                className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-semibold bg-white'
+                              >
+                                <option value='Cash'>Cash</option>
+                                <option value='Bank'>Bank</option>
+                                <option value='UPI'>UPI</option>
+                              </select>
+                            </div>
+                            <div className='md:col-span-2 flex items-center justify-center'>
+                              <button
+                                type='button'
+                                onClick={() => removePaymentReceivedItem(index)}
+                                className='p-2 text-red-600 hover:bg-red-100 rounded-lg transition'
+                                title='Remove this payment'
+                              >
+                                <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        <div className='flex justify-end items-center bg-cyan-100 p-2 rounded-lg border border-cyan-300'>
+                          <span className='text-sm font-bold text-gray-800'>Total Received: </span>
+                          <span className='text-sm font-bold text-teal-700 ml-2'>
+                            ₹{paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
