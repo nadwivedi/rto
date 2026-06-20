@@ -77,6 +77,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     paidAmount: '2000',
     balanceAmount: 2000,
     profit: '',
+    expenseBreakup: [],
 
     // Application Status
     applicationStatus: 'pending',
@@ -144,6 +145,10 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
         paidAmount: appData.paidAmount?.toString() || '2000',
         balanceAmount: calculatedBalance >= 0 ? calculatedBalance : 0,
         profit: appData.profit?.toString() || '',
+        expenseBreakup: (appData.expenseBreakup || []).map(item => ({
+          name: item.name || '',
+          amount: item.amount ? item.amount.toString() : ''
+        })),
         applicationStatus: appData.applicationStatus || 'pending',
         notes: appData.notes || ''
       })
@@ -372,6 +377,30 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     }
   }
 
+  // Expense Breakup handlers
+  const addExpenseItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      expenseBreakup: [...prev.expenseBreakup, { name: '', amount: '' }]
+    }))
+  }
+
+  const removeExpenseItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      expenseBreakup: prev.expenseBreakup.filter((_, i) => i !== index)
+    }))
+  }
+
+  const handleExpenseBreakupChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      expenseBreakup: prev.expenseBreakup.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      )
+    }))
+  }
+
   // Handle Enter key to move to next field instead of submitting
   const handleKeyDown = (e) => {
     if (e.key === 'Enter' && e.target.type !== 'submit') {
@@ -422,14 +451,20 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
 
     if (onSubmit) {
       // Filter out empty optional fields to avoid backend validation errors
+      const filteredExpenseBreakup = formData.expenseBreakup.filter(item =>
+        item.name && item.amount && parseFloat(item.amount) > 0
+      )
       const filteredData = Object.keys(formData).reduce((acc, key) => {
         const value = formData[key]
         // Only include fields that have non-empty values
-        if (value !== '' && value !== null && value !== undefined) {
+        if (value !== '' && value !== null && value !== undefined && key !== 'expenseBreakup') {
           acc[key] = value
         }
         return acc
       }, {})
+      if (filteredExpenseBreakup.length > 0) {
+        filteredData.expenseBreakup = filteredExpenseBreakup
+      }
 
       onSubmit(filteredData)
     }
@@ -918,6 +953,77 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
               </div>
             </div>
 
+            {/* Expense Breakup Section */}
+            <div className='bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+              <div className='flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4'>
+                <h3 className='text-base md:text-lg font-bold text-gray-800 flex items-center gap-2'>
+                  <span className='bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>5</span>
+                  Expense Breakdown
+                </h3>
+                <button
+                  type='button'
+                  onClick={addExpenseItem}
+                  className='inline-flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold'
+                >
+                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+                  </svg>
+                  Add Expense
+                </button>
+              </div>
+
+              {formData.expenseBreakup.length === 0 ? (
+                <p className='text-sm text-gray-500 italic'>No expenses added. Click "Add Expense" to record expenses.</p>
+              ) : (
+                <div className='space-y-3'>
+                  {formData.expenseBreakup.map((item, index) => (
+                    <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-3 items-center'>
+                      <div className='md:col-span-5'>
+                        <input
+                          type='text'
+                          placeholder='Expense name (e.g. Fitness, Commission)'
+                          value={item.name}
+                          onChange={(e) => handleExpenseBreakupChange(index, 'name', e.target.value)}
+                          className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
+                        />
+                      </div>
+                      <div className='md:col-span-6'>
+                        <div className='relative'>
+                          <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
+                          <input
+                            type='number'
+                            placeholder='Amount'
+                            value={item.amount}
+                            onChange={(e) => handleExpenseBreakupChange(index, 'amount', e.target.value)}
+                            min='0'
+                            step='1'
+                            className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
+                          />
+                        </div>
+                      </div>
+                      <div className='md:col-span-1 flex items-center justify-end'>
+                        <button
+                          type='button'
+                          onClick={() => removeExpenseItem(index)}
+                          className='p-2 text-orange-500 hover:bg-orange-100 rounded-full transition'
+                          title='Remove expense'
+                        >
+                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <div className='flex justify-between items-center bg-orange-100 rounded-lg px-4 py-2.5 border border-orange-300'>
+                    <span className='text-sm font-bold text-orange-900'>Total Expense</span>
+                    <span className='text-lg font-black text-orange-800'>
+                      ₹{formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Footer Actions - Fixed at Bottom */}

@@ -402,6 +402,7 @@ const DrivingLicence = () => {
         paidAmount: parseFloat(formData.paidAmount) || 0,
         balanceAmount: parseFloat(formData.balanceAmount) || 0,
         profit: parseFloat(formData.profit) || 0,
+        expenseBreakup: formData.expenseBreakup || [],
         applicationStatus: 'pending',
         documents: formData.documents
       }
@@ -459,6 +460,7 @@ const DrivingLicence = () => {
         paidAmount: parseFloat(formData.paidAmount) || 0,
         balanceAmount: parseFloat(formData.balanceAmount) || 0,
         profit: parseFloat(formData.profit) || 0,
+        expenseBreakup: formData.expenseBreakup || [],
         applicationStatus: formData.applicationStatus,
         notes: formData.notes,
         documents: formData.documents
