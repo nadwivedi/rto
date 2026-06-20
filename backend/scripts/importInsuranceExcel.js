@@ -173,7 +173,7 @@ const importInsurance = async () => {
   await mongoose.connect(mongoUri)
 
   let inserted = 0
-  let duplicate = 0
+  let updated = 0
 
   for (const record of records) {
     const existing = await Insurance.findOne({
@@ -181,7 +181,9 @@ const importInsurance = async () => {
     })
 
     if (existing) {
-      duplicate++
+      Object.assign(existing, record)
+      await existing.save()
+      updated++
       continue
     }
 
@@ -189,7 +191,7 @@ const importInsurance = async () => {
     inserted++
   }
 
-  console.log(`\nDone. Inserted: ${inserted}, Skipped (duplicate): ${duplicate}`)
+  console.log(`\nDone. Inserted: ${inserted}, Updated (duplicate overwritten): ${updated}`)
 }
 
 importInsurance()

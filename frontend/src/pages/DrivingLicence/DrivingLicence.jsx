@@ -963,8 +963,7 @@ const DrivingLicence = () => {
                 <th className='px-4 py-4 text-left text-xs font-bold text-white uppercase tracking-wide'>Applicant Details</th>
                 <th className='px-4 py-4 text-center text-xs font-bold text-white uppercase tracking-wide'>License Class</th>
                 <th className='px-2 py-4 text-center text-xs font-bold text-white uppercase tracking-wide'>Learning Licence No.</th>
-                <th className='px-0.5 2xl:px-1 py-4 text-center text-xs font-bold text-white uppercase tracking-wide pl-8 2xl:pl-12'>LL Issue Date</th>
-                <th className='px-0.5 2xl:px-1 py-4 text-center text-xs font-bold text-white uppercase tracking-wide'>LL Expiry Date</th>
+                <th className='px-0.5 2xl:px-1 py-4 text-center text-xs font-bold text-white uppercase tracking-wide'>LL Dates</th>
                 <th className='px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wide bg-white/10 pl-6 2xl:pl-8'>Total Amount</th>
                 <th className='px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wide bg-white/10'>Paid</th>
                 <th className='px-4 py-4 text-right text-xs font-bold text-white uppercase tracking-wide bg-white/10'>Balance</th>
@@ -1025,14 +1024,14 @@ const DrivingLicence = () => {
                     </td>
                     {/* Learning Licence Number */}
                     <td className='px-2 py-4'>
-                      <div className='text-[11px] 2xl:text-sm font-mono font-semibold text-gray-900 text-center'>
+                      <div className='text-[10px] 2xl:text-xs font-mono font-semibold text-gray-900 text-center'>
                         {app.fullData?.learningLicenseNumber || '-'}
                       </div>
                     </td>
 
-                    {/* LL Issue Date */}
-                    <td className='px-0.5 2xl:px-1 py-3 2xl:py-5 pl-8 2xl:pl-12'>
-                      <div className='flex items-center justify-center text-[11px] 2xl:text-[13.8px]'>
+                    {/* LL Dates - Issue Date (top/green) + Expiry Date (bottom/red) */}
+                    <td className='px-0.5 2xl:px-1 py-3 2xl:py-5'>
+                      <div className='flex flex-col items-center gap-1 text-[11px] 2xl:text-[13.8px]'>
                         {(() => {
                           const llIssueDate = app.fullData?.learningLicenseIssueDate;
                           if (!llIssueDate) {
@@ -1046,19 +1045,6 @@ const DrivingLicence = () => {
                             const formattedDate = `${day}-${month}-${year}`;
                             return (
                               <span className='inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-green-100 text-green-700 font-semibold border border-green-200 whitespace-nowrap'>
-                                <svg
-                                  className='w-3 h-3 2xl:w-4 2xl:h-4 mr-1 2xl:mr-2'
-                                  fill='none'
-                                  stroke='currentColor'
-                                  viewBox='0 0 24 24'
-                                >
-                                  <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
-                                  />
-                                </svg>
                                 {formattedDate}
                               </span>
                             );
@@ -1066,17 +1052,9 @@ const DrivingLicence = () => {
                             return <span className='text-gray-900 font-semibold'>-</span>;
                           }
                         })()}
-                      </div>
-                    </td>
-
-                    {/* LL Expiry Date */}
-                    <td className='px-0.5 2xl:px-1 py-3 2xl:py-5'>
-                      <div className='flex items-center justify-center text-[11px] 2xl:text-[13.8px]'>
                         {(() => {
                           const llExpiryDate = app.fullData?.learningLicenseExpiryDate;
-                          if (!llExpiryDate) {
-                            return <span className='text-gray-900 font-semibold'>-</span>;
-                          }
+                          if (!llExpiryDate) return null;
                           try {
                             const d = new Date(llExpiryDate);
                             const day = String(d.getDate()).padStart(2, '0');
@@ -1085,24 +1063,11 @@ const DrivingLicence = () => {
                             const formattedDate = `${day}-${month}-${year}`;
                             return (
                               <span className='inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-red-100 text-red-700 font-semibold border border-red-200 whitespace-nowrap'>
-                                <svg
-                                  className='w-3 h-3 2xl:w-4 2xl:h-4 mr-1 2xl:mr-2'
-                                  fill='none'
-                                  stroke='currentColor'
-                                  viewBox='0 0 24 24'
-                                >
-                                  <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z'
-                                  />
-                                </svg>
                                 {formattedDate}
                               </span>
                             );
                           } catch (e) {
-                            return <span className='text-gray-900 font-semibold'>-</span>;
+                            return null;
                           }
                         })()}
                       </div>
