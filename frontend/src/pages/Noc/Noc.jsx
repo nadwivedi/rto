@@ -137,35 +137,6 @@ const Noc = () => {
     }
   }
 
-  const handleMarkAsPaid = async (record) => {
-    const confirmPaid = window.confirm(
-      `Are you sure you want to mark this payment as PAID?\n\n` +
-      `Vehicle Number: ${record.vehicleNumber}\n` +
-      `Owner Name: ${record.ownerName}\n` +
-      `Total Fee: Rs ${(record.totalFee || 0).toLocaleString('en-IN')}\n` +
-      `Current Balance: Rs ${(record.balance || 0).toLocaleString('en-IN')}\n\n` +
-      `This will set Paid = Rs ${(record.totalFee || 0).toLocaleString('en-IN')} and Balance = Rs 0`
-    )
-
-    if (!confirmPaid) return
-
-    try {
-      const response = await axios.patch(`${API_URL}/api/noc/${record._id}/mark-as-paid`, {}, {
-        withCredentials: true
-      })
-
-      if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to mark payment as paid')
-      }
-
-      fetchRecords()
-      fetchStatistics()
-    } catch (error) {
-      console.error('Error marking NOC payment as paid:', error)
-      alert(`Failed to mark payment as paid: ${error.message}`)
-    }
-  }
-
   return (
     <>
       <div className='min-h-screen bg-gradient-to-br from-gray-50 via-teal-50 to-cyan-50'>
@@ -279,19 +250,6 @@ const Noc = () => {
                 },
               }}
               actions={[
-                {
-                  title: 'Mark as Paid',
-                  condition: (record) => (record.balance || 0) > 0,
-                  onClick: handleMarkAsPaid,
-                  bgColor: 'bg-green-100',
-                  textColor: 'text-green-600',
-                  hoverBgColor: 'bg-green-200',
-                  icon: (
-                    <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
-                    </svg>
-                  ),
-                },
                 {
                   title: 'View Details',
                   onClick: handleViewDetail,
@@ -433,17 +391,6 @@ const Noc = () => {
 
                         <td className='px-4 2xl:px-6 py-3 2xl:py-4'>
                           <div className='flex items-center justify-end gap-0.5 pr-1'>
-                            {(record.balance || 0) > 0 && (
-                              <button
-                                onClick={() => handleMarkAsPaid(record)}
-                                className='p-1.5 2xl:p-2 text-green-600 hover:bg-green-100 rounded-lg transition-all group-hover:scale-110 duration-200'
-                                title='Mark as Paid'
-                              >
-                                <svg className='w-4 h-4 2xl:w-5 2xl:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
-                                </svg>
-                              </button>
-                            )}
                             <button
                               onClick={() => handleViewDetail(record)}
                               className='p-1.5 2xl:p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all group-hover:scale-110 duration-200'

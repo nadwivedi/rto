@@ -276,31 +276,6 @@ const DrivingLicence = () => {
   }
 
   // Mark driving license as paid
-  const handleMarkAsPaid = async (app) => {
-    const confirmPaid = window.confirm(
-      `Are you sure you want to mark this payment as PAID?\n\n` +
-      `Name: ${app.name}\n` +
-      `License Number: ${app.licenseNumber || 'N/A'}\n` +
-      `Total Amount: ₹${(app.totalAmount || 0).toLocaleString('en-IN')}\n` +
-      `Current Balance: ₹${(app.balanceAmount || 0).toLocaleString('en-IN')}\n\n` +
-      `This will set Paid = ₹${(app.totalAmount || 0).toLocaleString('en-IN')} and Balance = ₹0`
-    );
-
-    if (!confirmPaid) return;
-
-    try {
-      const response = await axios.patch(`${API_URL}/api/driving-licenses/${app.id}/mark-as-paid`, {}, { withCredentials: true });
-      if (!response.data.success) throw new Error(response.data.message || 'Failed to mark payment as paid');
-
-      toast.success('Payment marked as paid successfully!', { autoClose: 700 });
-      fetchApplications();
-      fetchStatistics(); // Refresh the statistics
-    } catch (error) {
-      console.error('Error marking payment as paid:', error);
-      toast.error(`Failed to mark payment as paid: ${error.message}`, { autoClose: 700 });
-    }
-  };
-
   // Helper function to open WhatsApp with custom message (expiring only)
   const handleWhatsAppClick = (app) => {
     if (!app.mobileNumber || app.mobileNumber === 'N/A') {
@@ -904,19 +879,6 @@ const DrivingLicence = () => {
               ),
             },
             {
-              title: 'Mark as Paid',
-              condition: (app) => (app.balanceAmount || 0) > 0,
-              onClick: handleMarkAsPaid,
-              bgColor: 'bg-green-100',
-              textColor: 'text-green-600',
-              hoverBgColor: 'bg-green-200',
-              icon: (
-                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
-                </svg>
-              ),
-            },
-            {
               title: 'View Details',
               onClick: handleViewDetails,
               bgColor: 'bg-indigo-100',
@@ -1114,18 +1076,6 @@ const DrivingLicence = () => {
                     {/* Actions */}
                     <td className='px-4 py-4'>
                       <div className='flex items-center justify-center gap-2'>
-                        {/* Mark as Paid Button */}
-                        {(app.balanceAmount || 0) > 0 && (
-                          <button
-                            onClick={() => handleMarkAsPaid(app)}
-                            className='p-2 text-green-600 hover:bg-green-100 rounded-lg transition-all group-hover:scale-110 duration-200'
-                            title='Mark as Paid'
-                          >
-                            <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
-                            </svg>
-                          </button>
-                        )}
                         <button
                           onClick={() => handleViewDetails(app)}
                           className='p-2 text-indigo-600 hover:bg-indigo-100 rounded-lg transition-all group-hover:scale-110 duration-200'
