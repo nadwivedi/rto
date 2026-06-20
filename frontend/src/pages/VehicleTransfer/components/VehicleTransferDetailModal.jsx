@@ -220,6 +220,63 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                 </div>
               </div>
 
+              {/* Profit - Show only if exists */}
+              {transfer.profit > 0 && (
+                <div className='mt-4 pt-4 border-t border-purple-300'>
+                  <h4 className='text-xs md:text-sm font-bold text-purple-900 mb-3 flex items-center gap-2'>
+                    <svg className='w-4 h-4 text-purple-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
+                    </svg>
+                    Profit
+                  </h4>
+                  <div className='bg-green-50 p-3 rounded-lg border border-green-300'>
+                    <p className='text-lg md:text-xl font-black text-green-900'>
+                      ₹{(transfer.profit || 0).toLocaleString('en-IN')}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Expense Breakup - Show only if exists */}
+              {(() => {
+                const validExpenseItems = transfer.expenseBreakup?.filter(item => item.name && parseFloat(item.amount) > 0) || []
+                return validExpenseItems.length > 0 && (
+                  <div className='mt-4 pt-4 border-t border-purple-300'>
+                    <h4 className='text-xs md:text-sm font-bold text-purple-900 mb-3 flex items-center gap-2'>
+                      <svg className='w-4 h-4 text-purple-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' />
+                      </svg>
+                      Expense Breakdown
+                    </h4>
+                    <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
+                      {validExpenseItems.map((item, index) => (
+                        <div key={index} className='bg-white p-3 md:p-4 rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-200'>
+                          <div className='flex items-center gap-2 mb-2'>
+                            <div className='bg-orange-500 rounded-full p-1'>
+                              <svg className='w-3 h-3 md:w-4 md:h-4 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
+                              </svg>
+                            </div>
+                            <label className='text-xs font-bold text-orange-700 uppercase tracking-wide'>{item.name}</label>
+                          </div>
+                          <p className='text-base md:text-lg font-black text-gray-800 pl-1'>
+                            ₹{(item.amount || 0).toLocaleString('en-IN')}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                    <div className='flex justify-end mt-3 pt-2 border-t border-purple-200'>
+                      <div className='bg-purple-100 p-3 rounded-lg'>
+                        <span className='text-sm font-bold text-gray-800'>Total Expense: </span>
+                        <span className='text-sm font-bold text-purple-700'>
+                          ₹{validExpenseItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })()}
+
               {/* Fee Breakup - Show only if exists and has values */}
               {(() => {
                 const validFeeItems = transfer.feeBreakup?.filter(item => item.amount && parseFloat(item.amount) > 0) || []

@@ -20,6 +20,8 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
     byMobile: '',
     totalFee: '',
     paid: '',
+    profit: '',
+    expenseBreakup: [],
     feeBreakup: [
       { name: 'Insurance', amount: '' },
       { name: 'PUC', amount: '' },
@@ -65,6 +67,8 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
       setFormData({
         ...editData,
         date: editData.date || '',
+        profit: editData.profit?.toString() || '',
+        expenseBreakup: (editData.expenseBreakup || []).map(item => ({ ...item })),
         feeBreakup
       })
       if (editData.vehicleNumber) {
@@ -84,6 +88,8 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
         byMobile: '',
         totalFee: '',
         paid: '',
+        profit: '',
+        expenseBreakup: [],
         feeBreakup: [
           { name: 'Insurance', amount: '' },
           { name: 'PUC', amount: '' },
@@ -170,10 +176,15 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
         item.name && item.amount && parseFloat(item.amount) > 0
       )
 
+      const filteredExpenseBreakup = formData.expenseBreakup.filter(item =>
+        item.name && item.amount && parseFloat(item.amount) > 0
+      )
+
       const dataToSend = {
         ...formData,
         date: formData.date || undefined,
-        feeBreakup: filteredFeeBreakup
+        feeBreakup: filteredFeeBreakup,
+        expenseBreakup: filteredExpenseBreakup
       }
 
       const url = editData
@@ -235,6 +246,30 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
     setFormData(prev => ({
       ...prev,
       feeBreakup: prev.feeBreakup.map((item, i) =>
+        i === index ? { ...item, [field]: value } : item
+      )
+    }))
+  }
+
+  // Expense Breakup Handlers
+  const addExpenseBreakupItem = () => {
+    setFormData(prev => ({
+      ...prev,
+      expenseBreakup: [...prev.expenseBreakup, { name: '', amount: '' }]
+    }))
+  }
+
+  const removeExpenseBreakupItem = (index) => {
+    setFormData(prev => ({
+      ...prev,
+      expenseBreakup: prev.expenseBreakup.filter((_, i) => i !== index)
+    }))
+  }
+
+  const handleExpenseBreakupChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      expenseBreakup: prev.expenseBreakup.map((item, i) =>
         i === index ? { ...item, [field]: value } : item
       )
     }))
@@ -493,7 +528,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
                 Payment Information
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4'>
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                     Total Fee (₹) <span className='text-red-500'>*</span>
@@ -548,6 +583,23 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
                     readOnly
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-purple-50 font-semibold text-gray-700'
                   />
+                </div>
+
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Profit (₹)</label>
+                  <div className='relative'>
+                    <span className='absolute left-3 top-2.5 text-gray-500 font-semibold'>₹</span>
+                    <input
+                      type='number'
+                      name='profit'
+                      value={formData.profit}
+                      onChange={handleChange}
+                      onKeyDown={handleFieldKeyDown}
+                      placeholder='0'
+                      min='0'
+                      className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold'
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -608,6 +660,77 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className='mt-4 pt-4 border-t border-purple-200'>
+                <div className='flex justify-between items-center mb-3'>
+                  <h4 className='text-sm md:text-base font-bold text-gray-800'>Expense Breakdown (Optional)</h4>
+                  <button
+                    type='button'
+                    onClick={addExpenseBreakupItem}
+                    className='px-3 py-1.5 text-xs md:text-sm bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition font-semibold flex items-center gap-1'
+                  >
+                    <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+                    </svg>
+                    Add Expense
+                  </button>
+                </div>
+
+                {formData.expenseBreakup.length === 0 ? (
+                  <div className='bg-purple-50 border-2 border-dashed border-purple-300 rounded-lg p-4 text-center'>
+                    <p className='text-sm text-purple-600 font-semibold'>No expenses added yet. Click "Add Expense" to add expense details.</p>
+                  </div>
+                ) : (
+                  <div className='space-y-2'>
+                    {formData.expenseBreakup.map((item, index) => (
+                      <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-2 bg-purple-50 p-2 rounded-lg border border-purple-200'>
+                        <div className='md:col-span-5'>
+                          <input
+                            type='text'
+                            placeholder='Expense name'
+                            value={item.name}
+                            onChange={(e) => handleExpenseBreakupChange(index, 'name', e.target.value)}
+                            onKeyDown={handleFieldKeyDown}
+                            className='w-full px-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm font-semibold'
+                          />
+                        </div>
+                        <div className='md:col-span-6'>
+                          <div className='relative'>
+                            <span className='absolute left-3 top-2.5 text-gray-500 font-semibold'>₹</span>
+                            <input
+                              type='number'
+                              placeholder='Amount'
+                              value={item.amount}
+                              onChange={(e) => handleExpenseBreakupChange(index, 'amount', e.target.value)}
+                              onKeyDown={handleFieldKeyDown}
+                              min='0'
+                              className='w-full pl-8 pr-3 py-2 border border-purple-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent text-sm font-semibold'
+                            />
+                          </div>
+                        </div>
+                        <div className='md:col-span-1 flex items-center justify-center'>
+                          <button
+                            type='button'
+                            onClick={() => removeExpenseBreakupItem(index)}
+                            className='p-2 text-red-600 hover:bg-red-100 rounded-lg transition'
+                            title='Remove this expense'
+                          >
+                            <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                    <div className='flex justify-end items-center bg-purple-100 p-2 rounded-lg border border-purple-300'>
+                      <span className='text-sm font-bold text-gray-800'>Total Expense: </span>
+                      <span className='text-sm font-bold text-purple-700 ml-2'>
+                        ₹{formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {parseFloat(formData.balance) > 0 && parseFloat(formData.paid) > 0 && (

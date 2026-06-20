@@ -15,6 +15,8 @@ exports.createRenewal = async (req, res) => {
       totalFee,
       paid,
       feeBreakup,
+      profit,
+      expenseBreakup,
       byName,
       byMobile,
       remarks
@@ -74,6 +76,8 @@ exports.createRenewal = async (req, res) => {
       paid: paidNum,
       balance,
       feeBreakup: filteredFeeBreakup,
+      profit,
+      expenseBreakup,
       byName,
       byMobile,
       remarks
@@ -236,6 +240,8 @@ exports.updateRenewal = async (req, res) => {
       totalFee,
       paid,
       feeBreakup,
+      profit,
+      expenseBreakup,
       byName,
       byMobile,
       remarks
@@ -265,6 +271,9 @@ exports.updateRenewal = async (req, res) => {
           .map(item => ({ name: item.name, amount: parseFloat(item.amount) }))
         : []
     }
+
+    if (profit !== undefined) existingRenewal.profit = profit
+    if (expenseBreakup !== undefined) existingRenewal.expenseBreakup = expenseBreakup
 
     if (existingRenewal.paid > existingRenewal.totalFee) {
       existingRenewal.paid = existingRenewal.totalFee

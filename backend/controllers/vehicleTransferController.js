@@ -21,7 +21,9 @@ exports.createTransfer = async (req, res) => {
       byName,
       byMobile,
       remarks,
-      feeBreakup
+      feeBreakup,
+      profit,
+      expenseBreakup
     } = req.body
 
     // Validate required fields
@@ -140,6 +142,8 @@ exports.createTransfer = async (req, res) => {
       byMobile,
       remarks,
       feeBreakup,
+      profit,
+      expenseBreakup,
       userId: req.user.id
     })
     await newTransfer.save()
@@ -360,7 +364,9 @@ exports.updateTransfer = async (req, res) => {
       byName,
       byMobile,
       remarks,
-      feeBreakup
+      feeBreakup,
+      profit,
+      expenseBreakup
     } = req.body
 
     const transfer = await VehicleTransfer.findOne({ _id: req.params.id, userId: req.user.id })
@@ -411,6 +417,8 @@ exports.updateTransfer = async (req, res) => {
     if (byMobile !== undefined) transfer.byMobile = byMobile
     if (remarks !== undefined) transfer.remarks = remarks
     if (feeBreakup !== undefined) transfer.feeBreakup = feeBreakup
+    if (profit !== undefined) transfer.profit = profit
+    if (expenseBreakup !== undefined) transfer.expenseBreakup = expenseBreakup
 
     await transfer.save()
 

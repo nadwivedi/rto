@@ -80,6 +80,27 @@ const VehicleTransferSchema = new mongoose.Schema({
     required: true,
   },
 
+  // Profit (Commission)
+  profit: {
+    type: Number,
+    default: 0
+  },
+
+  // Expense Breakup
+  expenseBreakup: [{
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    amount: {
+      type: Number,
+      required: true,
+      default: 0
+    },
+    _id: false
+  }],
+
   // Fee Breakup (Optional)
   feeBreakup: [{
     name: {

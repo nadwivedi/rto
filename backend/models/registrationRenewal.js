@@ -17,6 +17,14 @@ const RegistrationRenewalSchema = new mongoose.Schema({
   paid: { type: Number, required: true },
   balance: { type: Number, required: true },
 
+  profit: { type: Number, default: 0 },
+
+  expenseBreakup: [{
+    name: { type: String, required: true, trim: true },
+    amount: { type: Number, required: true, default: 0 },
+    _id: false
+  }],
+
   feeBreakup: [{
     name: { type: String, required: true },
     amount: { type: Number, default: 0 },

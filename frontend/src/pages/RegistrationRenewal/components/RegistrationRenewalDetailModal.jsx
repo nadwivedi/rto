@@ -187,6 +187,44 @@ const RegistrationRenewalDetailModal = ({ isOpen, onClose, renewal }) => {
               </div>
             </div>
 
+            {renewal.profit > 0 && (
+              <div className='bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 md:p-6 border border-green-200'>
+                <h3 className='text-sm md:text-base font-bold text-green-800 mb-3 flex items-center gap-2'>
+                  <svg className='w-5 h-5 text-green-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
+                  </svg>
+                  Profit
+                </h3>
+                <p className='text-lg font-bold text-green-900'>₹{(renewal.profit || 0).toLocaleString('en-IN')}</p>
+              </div>
+            )}
+
+            {(() => {
+              const validExpenseItems = renewal.expenseBreakup?.filter(item => item.name && parseFloat(item.amount) > 0) || []
+              return validExpenseItems.length > 0 && (
+                <div className='bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 md:p-6 border border-orange-200'>
+                  <h3 className='text-sm md:text-base font-bold text-orange-800 mb-3 flex items-center gap-2'>
+                    <svg className='w-5 h-5 text-orange-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01' />
+                    </svg>
+                    Expense Breakdown
+                  </h3>
+                  <div className='space-y-2'>
+                    {validExpenseItems.map((item, index) => (
+                      <div key={index} className='flex justify-between items-center py-2 bg-white px-3 rounded-lg border border-orange-100'>
+                        <span className='text-xs md:text-sm font-semibold text-gray-700'>{item.name}</span>
+                        <span className='text-xs md:text-sm font-bold text-orange-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</span>
+                      </div>
+                    ))}
+                    <div className='flex justify-between items-center py-2 bg-orange-100 px-3 rounded-lg border border-orange-300 font-bold'>
+                      <span className='text-xs md:text-sm text-gray-800'>Total Expense</span>
+                      <span className='text-xs md:text-sm text-orange-800'>₹{validExpenseItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}</span>
+                    </div>
+                  </div>
+                </div>
+              )
+            })()}
+
             {renewal.feeBreakup && renewal.feeBreakup.length > 0 && (
               <div className='bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 md:p-6 border border-gray-200'>
                 <h3 className='text-sm md:text-base font-bold text-gray-800 mb-4 flex items-center gap-2'>

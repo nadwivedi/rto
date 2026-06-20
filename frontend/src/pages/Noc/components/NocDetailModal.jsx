@@ -80,6 +80,34 @@ const NocDetailModal = ({ isOpen, onClose, record }) => {
             </div>
           </div>
 
+          {record.profit > 0 && (
+            <div className='bg-green-50 rounded-lg border border-green-200 p-4 mb-4'>
+              <h4 className='text-sm font-bold text-green-800 mb-2'>Profit</h4>
+              <p className='text-lg font-bold text-green-900'>₹{(record.profit || 0).toLocaleString('en-IN')}</p>
+            </div>
+          )}
+
+          {(() => {
+            const validExpenseItems = record.expenseBreakup?.filter(item => item.name && Number(item.amount) > 0) || []
+            return validExpenseItems.length > 0 && (
+              <div className='bg-orange-50 rounded-lg border border-orange-200 p-4 mb-4'>
+                <h4 className='text-sm font-bold text-orange-800 mb-3'>Expense Breakdown</h4>
+                <div className='space-y-2'>
+                  {validExpenseItems.map((item, index) => (
+                    <div key={index} className='flex items-center justify-between text-sm bg-white border border-orange-200 rounded-md px-3 py-2'>
+                      <span className='font-semibold text-gray-700'>{item.name}</span>
+                      <span className='font-bold text-gray-900'>₹{Number(item.amount).toLocaleString('en-IN')}</span>
+                    </div>
+                  ))}
+                  <div className='flex items-center justify-between text-sm bg-orange-100 border border-orange-300 rounded-md px-3 py-2 font-bold'>
+                    <span className='text-gray-800'>Total Expense</span>
+                    <span className='text-orange-700'>₹{validExpenseItems.reduce((sum, item) => sum + Number(item.amount), 0).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+              </div>
+            )
+          })()}
+
           {validFeeItems.length > 0 && (
             <div className='bg-gray-50 rounded-lg border border-gray-200 p-4 mb-4'>
               <h4 className='text-sm font-bold text-gray-800 mb-3'>Fee Breakdown</h4>
