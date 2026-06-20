@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 import { handleSmartDateInput } from '../../../utils/dateFormatter'
 import { validateMobileNumberRealtime, enforceMobileNumberFormat, validateEmailRealtime } from '../../../utils/contactValidation'
+import { replacePaymentsForWork, getPaymentsByWork } from '../../../utils/paymentReceivedApi'
 
 const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   // Get current date in DD-MM-YYYY format
@@ -78,6 +79,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     balanceAmount: 2000,
     profit: '',
     expenseBreakup: [],
+    paymentMode: 'Cash',
 
     // Application Status
     applicationStatus: 'pending',
@@ -87,6 +89,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   })
 
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
+  const [paymentReceived, setPaymentReceived] = useState([])
 
   // Validation states
   const [mobileValidation, setMobileValidation] = useState({ isValid: false, message: '' })
@@ -145,6 +148,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
         paidAmount: appData.paidAmount?.toString() || '2000',
         balanceAmount: calculatedBalance >= 0 ? calculatedBalance : 0,
         profit: appData.profit?.toString() || '',
+        paymentMode: appData.paymentMode || 'Cash',
         expenseBreakup: (appData.expenseBreakup || []).map(item => ({
           name: item.name || '',
           amount: item.amount ? item.amount.toString() : ''
@@ -161,6 +165,14 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
       if (emailAddr) {
         const validation = validateEmailRealtime(emailAddr)
         setEmailValidation(validation)
+      }
+
+      if (appData?._id) {
+        getPaymentsByWork('DL', appData._id).then(res => {
+          setPaymentReceived(res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode })))
+        }).catch(() => setPaymentReceived([]))
+      } else {
+        setPaymentReceived([])
       }
     }
   }, [application])
@@ -421,7 +433,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     }
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     // Validate mobile number before submitting
@@ -466,9 +478,32 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
         filteredData.expenseBreakup = filteredExpenseBreakup
       }
 
-      onSubmit(filteredData)
+      const response = await onSubmit(filteredData)
+      const recordId = response?.data?._id || response?._id || application?.fullData?._id || application?._id
+      const validPayments = paymentReceived.filter(p => p.date && p.amount && parseFloat(p.amount) > 0)
+      if (validPayments.length > 0 && recordId) {
+        try {
+          await replacePaymentsForWork('DL', recordId, validPayments)
+        } catch (paymentErr) {
+          console.error('Failed to save payment received entries:', paymentErr)
+        }
+      }
     }
     onClose()
+  }
+
+  const addPaymentReceivedItem = () => {
+    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash' }])
+  }
+
+  const removePaymentReceivedItem = (index) => {
+    setPaymentReceived(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handlePaymentReceivedChange = (index, field, value) => {
+    setPaymentReceived(prev => prev.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ))
   }
 
   if (!isOpen) return null
@@ -948,6 +983,21 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                         />
                       </div>
                     </div>
+
+                    {/* Payment Mode */}
+                    <div>
+                      <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Payment Mode</label>
+                      <select
+                        name='paymentMode'
+                        value={formData.paymentMode || 'Cash'}
+                        onChange={handleChange}
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-semibold bg-white text-base md:text-lg'
+                      >
+                        <option value='Cash'>Cash</option>
+                        <option value='Bank'>Bank</option>
+                        <option value='UPI'>UPI</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1019,6 +1069,86 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                     <span className='text-sm font-bold text-orange-900'>Total Expense</span>
                     <span className='text-lg font-black text-orange-800'>
                       ₹{formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Payment Received Breakdown Section */}
+            <div className='mt-4 pt-4 border-t border-indigo-200'>
+              <div className='flex justify-between items-center mb-3'>
+                <h4 className='text-sm md:text-base font-bold text-gray-800'>Payment Received Breakdown (Optional)</h4>
+                <button
+                  type='button'
+                  onClick={addPaymentReceivedItem}
+                  className='px-3 py-1.5 text-xs md:text-sm bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-semibold flex items-center gap-1'
+                >
+                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+                  </svg>
+                  Add Payment
+                </button>
+              </div>
+
+              {paymentReceived.length === 0 ? (
+                <div className='bg-indigo-50 border-2 border-dashed border-indigo-300 rounded-lg p-4 text-center'>
+                  <p className='text-sm text-indigo-600 font-semibold'>No payments recorded yet. Click "Add Payment" to add payment received details.</p>
+                </div>
+              ) : (
+                <div className='space-y-2'>
+                  {paymentReceived.map((item, index) => (
+                    <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-2 bg-indigo-50 p-2 rounded-lg border border-indigo-200'>
+                      <div className='md:col-span-4'>
+                        <input
+                          type='date'
+                          value={item.date}
+                          onChange={(e) => handlePaymentReceivedChange(index, 'date', e.target.value)}
+                          className='w-full px-3 py-2 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-semibold'
+                        />
+                      </div>
+                      <div className='md:col-span-3'>
+                        <div className='relative'>
+                          <span className='absolute left-3 top-2.5 text-gray-500 font-semibold'>₹</span>
+                          <input
+                            type='number'
+                            placeholder='Amount'
+                            value={item.amount}
+                            onChange={(e) => handlePaymentReceivedChange(index, 'amount', e.target.value)}
+                            min='0'
+                            className='w-full pl-8 pr-3 py-2 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-semibold'
+                          />
+                        </div>
+                      </div>
+                      <div className='md:col-span-3'>
+                        <select
+                          value={item.paymentMode}
+                          onChange={(e) => handlePaymentReceivedChange(index, 'paymentMode', e.target.value)}
+                          className='w-full px-3 py-2 border border-indigo-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-sm font-semibold bg-white'
+                        >
+                          <option value='Cash'>Cash</option>
+                          <option value='Bank'>Bank</option>
+                          <option value='UPI'>UPI</option>
+                        </select>
+                      </div>
+                      <div className='md:col-span-2 flex items-center justify-center'>
+                        <button
+                          type='button'
+                          onClick={() => removePaymentReceivedItem(index)}
+                          className='p-2 text-red-600 hover:bg-red-100 rounded-lg transition'
+                          title='Remove this payment'
+                        >
+                          <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                  <div className='flex justify-end items-center bg-indigo-100 p-2 rounded-lg border border-indigo-300'>
+                    <span className='text-sm font-bold text-gray-800'>Total Received: </span>
+                    <span className='text-sm font-bold text-indigo-700 ml-2'>
+                      ₹{paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
                     </span>
                   </div>
                 </div>

@@ -1,4 +1,5 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
+import { getPaymentsByWork } from '../../../utils/paymentReceivedApi'
 
 const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
   useEffect(() => {
@@ -13,6 +14,18 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
+
+  const [paymentReceived, setPaymentReceived] = useState([])
+
+  useEffect(() => {
+    if (transfer?._id) {
+      getPaymentsByWork('VT', transfer._id).then(res => {
+        setPaymentReceived(res.data)
+      }).catch(() => setPaymentReceived([]))
+    } else {
+      setPaymentReceived([])
+    }
+  }, [transfer?._id])
 
   if (!isOpen || !transfer) return null
 
@@ -191,7 +204,7 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                 </svg>
                 Payment Information
               </h3>
-              <div className='grid grid-cols-3 gap-3'>
+              <div className='grid grid-cols-4 gap-3'>
                 <div className='bg-gradient-to-br from-blue-100 to-indigo-100 rounded-lg p-3 border border-blue-300'>
                   <label className='text-xs font-semibold text-blue-700 block mb-1'>Total Fee</label>
                   <p className='text-lg md:text-xl font-black text-blue-900'>
@@ -216,6 +229,12 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                     transfer.balance > 0 ? 'text-orange-900' : 'text-green-900'
                   }`}>
                     ₹{(transfer.balance || 0).toLocaleString('en-IN')}
+                  </p>
+                </div>
+                <div className='bg-gradient-to-br from-cyan-100 to-teal-100 rounded-lg p-3 border border-cyan-300'>
+                  <label className='text-xs font-semibold text-cyan-700 block mb-1'>Payment Mode</label>
+                  <p className='text-lg md:text-xl font-black text-cyan-900'>
+                    {transfer.paymentMode || 'Cash'}
                   </p>
                 </div>
               </div>
@@ -324,6 +343,53 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                 </div>
               </div>
             )}
+
+              {/* Payment Received Breakdown */}
+              {paymentReceived.length > 0 && (
+                <div className='bg-gradient-to-br from-cyan-50 to-teal-50 rounded-xl p-4 md:p-6 border border-cyan-200'>
+                  <h3 className='text-sm md:text-base font-bold text-cyan-800 mb-3 flex items-center gap-2'>
+                    <svg className='w-5 h-5 text-cyan-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' />
+                    </svg>
+                    Payment Received Breakdown
+                  </h3>
+                  <div className='overflow-x-auto'>
+                    <table className='w-full text-sm'>
+                      <thead>
+                        <tr className='border-b-2 border-cyan-200'>
+                          <th className='text-left py-2 px-3 text-cyan-700 font-bold'>Date</th>
+                          <th className='text-right py-2 px-3 text-cyan-700 font-bold'>Amount</th>
+                          <th className='text-center py-2 px-3 text-cyan-700 font-bold'>Method</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paymentReceived.map((p, i) => (
+                          <tr key={i} className='border-b border-cyan-100'>
+                            <td className='py-2 px-3 text-gray-700 font-semibold'>{p.date}</td>
+                            <td className='py-2 px-3 text-right font-bold text-gray-900'>₹{(p.amount || 0).toLocaleString('en-IN')}</td>
+                            <td className='py-2 px-3 text-center'>
+                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
+                                p.paymentMode === 'Cash' ? 'bg-green-100 text-green-700' :
+                                p.paymentMode === 'Bank' ? 'bg-blue-100 text-blue-700' :
+                                'bg-purple-100 text-purple-700'
+                              }`}>
+                                {p.paymentMode}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className='bg-cyan-100 font-bold'>
+                          <td className='py-2 px-3 text-cyan-800'>Total</td>
+                          <td className='py-2 px-3 text-right text-cyan-900'>₹{paymentReceived.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString('en-IN')}</td>
+                          <td className='py-2 px-3'></td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                </div>
+              )}
           </div>
         </div>
 

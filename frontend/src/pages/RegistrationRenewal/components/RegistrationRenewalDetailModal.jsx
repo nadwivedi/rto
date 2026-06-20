@@ -1,9 +1,21 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { getVehicleNumberParts } from '../../../utils/vehicleNoCheck'
 import { getVehicleNumberDesign } from '../../../context/ThemeContext'
+import { getPaymentsByWork } from '../../../utils/paymentReceivedApi'
 
 const RegistrationRenewalDetailModal = ({ isOpen, onClose, renewal }) => {
   const vehicleDesign = getVehicleNumberDesign()
+  const [paymentReceived, setPaymentReceived] = useState([])
+
+  useEffect(() => {
+    if (renewal?._id) {
+      getPaymentsByWork('RR', renewal._id).then(res => {
+        setPaymentReceived(res.data)
+      }).catch(() => setPaymentReceived([]))
+    } else {
+      setPaymentReceived([])
+    }
+  }, [renewal?._id])
 
   useEffect(() => {
     if (!isOpen) return
@@ -174,6 +186,11 @@ const RegistrationRenewalDetailModal = ({ isOpen, onClose, renewal }) => {
                   </span>
                 </div>
 
+                <div className='flex justify-between items-center py-2 border-b border-gray-200'>
+                  <span className='text-xs md:text-sm text-gray-600 font-semibold'>Payment Mode</span>
+                  <span className='text-xs md:text-sm font-bold text-cyan-700'>{renewal.paymentMode || 'Cash'}</span>
+                </div>
+
                 <div className='flex justify-between items-center py-2'>
                   <span className='text-xs md:text-sm text-gray-600 font-semibold'>Payment Status</span>
                   <span className={`px-2 py-1 rounded-full text-[10px] md:text-xs font-bold ${
@@ -224,6 +241,52 @@ const RegistrationRenewalDetailModal = ({ isOpen, onClose, renewal }) => {
                 </div>
               )
             })()}
+
+            {paymentReceived.length > 0 && (
+              <div className='bg-gradient-to-br from-cyan-50 to-teal-50 rounded-xl p-4 md:p-6 border border-cyan-200'>
+                <h3 className='text-sm md:text-base font-bold text-cyan-800 mb-3 flex items-center gap-2'>
+                  <svg className='w-5 h-5 text-cyan-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' />
+                  </svg>
+                  Payment Received Breakdown
+                </h3>
+                <div className='overflow-x-auto'>
+                  <table className='w-full text-sm'>
+                    <thead>
+                      <tr className='border-b-2 border-cyan-200'>
+                        <th className='text-left py-2 px-3 text-cyan-700 font-bold'>Date</th>
+                        <th className='text-right py-2 px-3 text-cyan-700 font-bold'>Amount</th>
+                        <th className='text-center py-2 px-3 text-cyan-700 font-bold'>Method</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {paymentReceived.map((p, i) => (
+                        <tr key={i} className='border-b border-cyan-100'>
+                          <td className='py-2 px-3 text-gray-700 font-semibold'>{p.date}</td>
+                          <td className='py-2 px-3 text-right font-bold text-gray-900'>₹{(p.amount || 0).toLocaleString('en-IN')}</td>
+                          <td className='py-2 px-3 text-center'>
+                            <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
+                              p.paymentMode === 'Cash' ? 'bg-green-100 text-green-700' :
+                              p.paymentMode === 'Bank' ? 'bg-blue-100 text-blue-700' :
+                              'bg-purple-100 text-purple-700'
+                            }`}>
+                              {p.paymentMode}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className='bg-cyan-100 font-bold'>
+                        <td className='py-2 px-3 text-cyan-800'>Total</td>
+                        <td className='py-2 px-3 text-right text-cyan-900'>₹{paymentReceived.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString('en-IN')}</td>
+                        <td className='py-2 px-3'></td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            )}
 
             {renewal.feeBreakup && renewal.feeBreakup.length > 0 && (
               <div className='bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-4 md:p-6 border border-gray-200'>
