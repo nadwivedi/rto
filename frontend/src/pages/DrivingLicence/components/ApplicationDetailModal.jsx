@@ -21,14 +21,15 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
   }, [isOpen, onClose])
 
   useEffect(() => {
-    if (application?._id) {
-      getPaymentsByWork('DL', application._id).then(res => {
+    const recordId = application?.fullData?._id || application?._id || application?.id
+    if (recordId) {
+      getPaymentsByWork('DL', recordId).then(res => {
         setPaymentReceived(res.data)
       }).catch(() => setPaymentReceived([]))
     } else {
       setPaymentReceived([])
     }
-  }, [application?._id])
+  }, [application?.fullData?._id, application?._id, application?.id])
 
   if (!isOpen || !application) return null
 
@@ -413,7 +414,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                     <tbody>
                       {paymentReceived.map((p, i) => (
                         <tr key={i} className='border-b border-cyan-100'>
-                          <td className='py-2 px-3 text-gray-700 font-semibold'>{p.date}</td>
+                          <td className='py-2 px-3 text-gray-700 font-semibold'>{p.date?.split('-').reverse().join('-')}</td>
                           <td className='py-2 px-3 text-right font-bold text-gray-900'>₹{(p.amount || 0).toLocaleString('en-IN')}</td>
                           <td className='py-2 px-3 text-center'>
                             <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
