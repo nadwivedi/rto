@@ -4,8 +4,9 @@ import { toast } from 'react-toastify'
 import { handleSmartDateInput, normalizeAIExtractedDate } from '../../../utils/dateFormatter'
 import { validateMobileNumberRealtime, enforceMobileNumberFormat } from '../../../utils/contactValidation'
 import { replacePaymentsForWork } from '../../../utils/paymentReceivedApi'
+import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
+import { getDefaultExpensesApi } from '../../../utils/defaultExpenseSettingsApi'
 
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
   // Get current date in DD-MM-YYYY format
   const getCurrentDate = () => {
@@ -61,6 +62,8 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
       learningLicenseType: ''
     }
   })
+
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // Validation states
   const [mobileValidation, setMobileValidation] = useState({ isValid: false, message: '' })
@@ -145,6 +148,34 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
       return () => document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isOpen, onClose])
+
+  // Populate default expenses when modal is opened
+  useEffect(() => {
+    if (isOpen) {
+      getDefaultExpensesApi('DL')
+        .then(res => {
+          const fetched = res.data?.expenses
+          if (Array.isArray(fetched) && fetched.length > 0) {
+            setFormData(prev => ({
+              ...prev,
+              expenseBreakup: fetched.map(item => ({ name: item.name || '', amount: item.amount || '', remark: '' }))
+            }))
+          } else {
+            setFormData(prev => ({
+              ...prev,
+              expenseBreakup: [{ name: '', amount: '', remark: '' }]
+            }))
+          }
+        })
+        .catch(err => {
+          console.error(err)
+          setFormData(prev => ({
+            ...prev,
+            expenseBreakup: [{ name: '', amount: '', remark: '' }]
+          }))
+        })
+    }
+  }, [isOpen])
 
   // Auto-calculate balance amount
   useEffect(() => {
@@ -505,7 +536,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
       paidAmount: '2000',
       balanceAmount: 2000,
       profit: '',
-      expenseBreakup: [{ name: '', amount: '', remark: '' }],
+      expenseBreakup: getDefaultExpenses(),
       documents: {
         learningLicense: '',
         learningLicenseType: ''
@@ -1052,6 +1083,16 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                       <h3 className='text-base md:text-lg font-bold text-gray-800 flex items-center gap-2'>
                         <span className='bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>5</span>
                         Expense Breakdown
+                        <button
+                          type='button'
+                          onClick={() => setIsSettingsOpen(true)}
+                          className='p-1 text-orange-600 hover:bg-orange-100 rounded-lg transition ml-1'
+                          title='Set Default Expenses'
+                        >
+                          <svg className='w-4.5 h-4.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z' />
+                          </svg>
+                        </button>
                       </h3>
                       <button
                         type='button'
@@ -1272,6 +1313,17 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
           </div>
         </form>
       </div>
+      <DefaultExpenseSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        type="DL"
+        onSave={(newDefaults) => {
+          setFormData(prev => ({
+            ...prev,
+            expenseBreakup: newDefaults.map(item => ({ name: item.name || '', amount: item.amount || '', remark: '' }))
+          }))
+        }}
+      />
     </div>
   )
 }

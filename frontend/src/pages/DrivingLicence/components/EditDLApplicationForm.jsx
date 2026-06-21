@@ -4,6 +4,7 @@ import { handleSmartDateInput } from '../../../utils/dateFormatter'
 import { validateMobileNumberRealtime, enforceMobileNumberFormat, validateEmailRealtime } from '../../../utils/contactValidation'
 import { toast } from 'react-toastify'
 import { replacePaymentsForWork, getPaymentsByWork } from '../../../utils/paymentReceivedApi'
+import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
 
 const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   // Get current date in DD-MM-YYYY format
@@ -91,6 +92,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   // Validation states
   const [mobileValidation, setMobileValidation] = useState({ isValid: false, message: '' })
@@ -1054,6 +1056,16 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                       <h3 className='text-base md:text-lg font-bold text-gray-800 flex items-center gap-2'>
                         <span className='bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>5</span>
                         Expense Breakdown
+                        <button
+                          type='button'
+                          onClick={() => setIsSettingsOpen(true)}
+                          className='p-1 text-orange-600 hover:bg-orange-100 rounded-lg transition ml-1'
+                          title='Set Default Expenses'
+                        >
+                          <svg className='w-4.5 h-4.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z' />
+                          </svg>
+                        </button>
                       </h3>
                       <button
                         type='button'
@@ -1257,6 +1269,17 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
           </div>
         </form>
       </div>
+      <DefaultExpenseSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        type="DL"
+        onSave={(newDefaults) => {
+          setFormData(prev => ({
+            ...prev,
+            expenseBreakup: newDefaults.map(item => ({ name: item.name || '', amount: item.amount || '', remark: '' }))
+          }))
+        }}
+      />
     </div>
   )
 }

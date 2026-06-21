@@ -123,6 +123,7 @@ const hpaHptRoutes = require('./routes/hpaHpt')
 const blogRoutes = require('./routes/blogRoutes')
 const publicBlogRoutes = require('./routes/publicBlogRoutes')
 const paymentReceivedRoutes = require('./routes/paymentReceivedRoutes')
+const defaultExpenseSettingsRoutes = require('./routes/defaultExpenseSettings')
 
 // Use Routes
 
@@ -164,6 +165,7 @@ app.use('/api/whatsapp-settings', userAuth, whatsappSettingsRoutes)
 app.use('/api/javak', userAuth, javakRoutes)
 app.use('/api/hpa-hpt', userAuth, hpaHptRoutes)
 app.use('/api/payment-received', userAuth, paymentReceivedRoutes)
+app.use('/api/default-expense-settings', userAuth, defaultExpenseSettingsRoutes)
 
 // Public routes (no auth)
 app.use('/api/blogs', publicBlogRoutes)

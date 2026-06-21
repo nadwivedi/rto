@@ -5,6 +5,8 @@ import { validateVehicleNumberRealtime, enforceVehicleNumberFormat } from '../..
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 import { handleSmartDateInput } from '../../../utils/dateFormatter'
 import { replacePaymentsForWork, getPaymentsByWork } from '../../../utils/paymentReceivedApi'
+import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
+import { getDefaultExpensesApi } from '../../../utils/defaultExpenseSettingsApi'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
 
@@ -37,6 +39,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
   useEffect(() => {
     if (!isOpen) return undefined
@@ -103,6 +106,19 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
         ]
       })
       setVehicleValidation({ isValid: false, message: '' })
+
+      // Fetch default expenses from DB for RR
+      getDefaultExpensesApi('RR')
+        .then(res => {
+          const fetched = res.data?.expenses
+          if (Array.isArray(fetched) && fetched.length > 0) {
+            setFormData(prev => ({
+              ...prev,
+              expenseBreakup: fetched.map(item => ({ name: item.name || '', amount: item.amount || '', remark: '' }))
+            }))
+          }
+        })
+        .catch(err => console.error(err))
     }
     setError('')
     if (editData?._id) {
@@ -763,7 +779,19 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
                   {/* Expense Breakdown Section */}
                   <div className='bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-lg p-3 md:p-4'>
                     <div className='flex justify-between items-center mb-3'>
-                      <h4 className='text-sm md:text-base font-bold text-gray-800'>Expense Breakdown (Optional)</h4>
+                      <h4 className='text-sm md:text-base font-bold text-gray-800 flex items-center gap-2'>
+                        Expense Breakdown (Optional)
+                        <button
+                          type='button'
+                          onClick={() => setIsSettingsOpen(true)}
+                          className='p-1 text-orange-600 hover:bg-orange-100 rounded-lg transition ml-1'
+                          title='Set Default Expenses'
+                        >
+                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z' />
+                          </svg>
+                        </button>
+                      </h4>
                       <button
                         type='button'
                         onClick={addExpenseBreakupItem}
@@ -997,6 +1025,17 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
           </div>
         </form>
       </div>
+      <DefaultExpenseSettingsModal
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        type="RR"
+        onSave={(newDefaults) => {
+          setFormData(prev => ({
+            ...prev,
+            expenseBreakup: newDefaults.map(item => ({ name: item.name || '', amount: item.amount || '', remark: '' }))
+          }))
+        }}
+      />
     </div>
   )
 }
