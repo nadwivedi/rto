@@ -316,6 +316,17 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     }
   }, [formData.learningLicenseIssueDate])
 
+  // Auto-calculate profit from totalAmount - totalExpenses
+  useEffect(() => {
+    const totalExpenses = formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const totalFee = parseFloat(formData.totalAmount) || 0
+    const calculatedProfit = totalFee - totalExpenses
+    setFormData(prev => {
+      if (prev.profit === calculatedProfit.toString()) return prev
+      return { ...prev, profit: calculatedProfit.toString() }
+    })
+  }, [formData.expenseBreakup, formData.totalAmount])
+
   const handleChange = (e) => {
     const { name, value } = e.target
 
@@ -442,27 +453,27 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
 
     // Validate mobile number before submitting
     if (!mobileValidation.isValid && formData.mobileNumber) {
-      alert('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9')
+      toast.error('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9')
       return
     }
 
     // Validate email before submitting
     if (!emailValidation.isValid && formData.email) {
-      alert('Please enter a valid email address (e.g., user@example.com)')
+      toast.error('Please enter a valid email address (e.g., user@example.com)')
       return
     }
 
     // Validate payment amount
     if (paidExceedsTotal) {
-      alert('Paid amount cannot be more than the total fee!')
+      toast.error('Paid amount cannot be more than the total fee!')
       return
     }
 
-    // Show confirmation popup
-    const confirmed = window.confirm('Are you sure you want to update this application?')
-
-    if (!confirmed) {
-      return // Exit if user cancels
+    const totalReceived = paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const totalFee = parseFloat(formData.totalAmount) || 0
+    if (totalReceived > totalFee) {
+      toast.error('Total received amount in payment breakdown cannot be greater than the total amount!')
+      return
     }
 
     if (onSubmit) {
@@ -1178,11 +1189,18 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                             </div>
                           </div>
                         ))}
-                        <div className='flex justify-end items-center bg-cyan-100 p-2 rounded-lg border border-cyan-300'>
-                          <span className='text-sm font-bold text-gray-800'>Total Received: </span>
-                          <span className='text-sm font-bold text-teal-700 ml-2'>
-                            ₹{paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
-                          </span>
+                        <div className='flex flex-col items-end w-full'>
+                          <div className='flex justify-end items-center bg-cyan-100 p-2 rounded-lg border border-cyan-300 w-full md:w-auto'>
+                            <span className='text-sm font-bold text-gray-800'>Total Received: </span>
+                            <span className='text-sm font-bold text-teal-700 ml-2'>
+                              ₹{paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          {paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) > (parseFloat(formData.totalAmount) || 0) && (
+                            <p className='text-xs text-red-600 font-semibold mt-1'>
+                              Total received cannot exceed total amount (₹{formData.totalAmount || 0})
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}

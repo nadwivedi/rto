@@ -105,6 +105,17 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
     }
   }, [editData, isOpen])
 
+  // Auto-calculate profit from totalFee - totalExpenses
+  useEffect(() => {
+    const totalExpenses = formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const totalFee = parseFloat(formData.totalFee) || 0
+    const calculatedProfit = totalFee - totalExpenses
+    setFormData(prev => {
+      if (prev.profit === calculatedProfit.toString()) return prev
+      return { ...prev, profit: calculatedProfit.toString() }
+    })
+  }, [formData.expenseBreakup, formData.totalFee])
+
   const handleChange = (e) => {
     const { name, value } = e.target
 
@@ -182,6 +193,13 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
     // Validate paid amount doesn't exceed total fee
     if (paidExceedsTotal) {
       setError('Paid amount cannot be more than the total fee!')
+      return
+    }
+
+    const totalReceived = paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const totalFee = parseFloat(formData.totalFee) || 0
+    if (totalReceived > totalFee) {
+      setError('Total received amount in payment breakdown cannot be greater than the total fee!')
       return
     }
 
@@ -973,11 +991,18 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                             </div>
                           </div>
                         ))}
-                        <div className='flex justify-end items-center bg-cyan-100 p-2 rounded-lg border border-cyan-300'>
-                          <span className='text-sm font-bold text-gray-800'>Total Received: </span>
-                          <span className='text-sm font-bold text-teal-700 ml-2'>
-                            ₹{paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
-                          </span>
+                        <div className='flex flex-col items-end w-full'>
+                          <div className='flex justify-end items-center bg-cyan-100 p-2 rounded-lg border border-cyan-300 w-full md:w-auto'>
+                            <span className='text-sm font-bold text-gray-800'>Total Received: </span>
+                            <span className='text-sm font-bold text-teal-700 ml-2'>
+                              ₹{paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          {paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) > (parseFloat(formData.totalFee) || 0) && (
+                            <p className='text-xs text-red-600 font-semibold mt-1'>
+                              Total received cannot exceed total fee (₹{formData.totalFee || 0})
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}

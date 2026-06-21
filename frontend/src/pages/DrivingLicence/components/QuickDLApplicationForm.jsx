@@ -184,6 +184,17 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     }
   }, [dobMonth, dobYear])
 
+  // Auto-calculate profit from totalAmount - totalExpenses
+  useEffect(() => {
+    const totalExpenses = formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const totalFee = parseFloat(formData.totalAmount) || 0
+    const calculatedProfit = totalFee - totalExpenses
+    setFormData(prev => {
+      if (prev.profit === calculatedProfit.toString()) return prev
+      return { ...prev, profit: calculatedProfit.toString() }
+    })
+  }, [formData.expenseBreakup, formData.totalAmount])
+
 
   const handleLlExtractionUpload = async (e) => {
     const file = e.target.files?.[0];
@@ -396,15 +407,15 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
 
     // Validate mobile number before submitting
     if (!mobileValidation.isValid && formData.mobileNumber) {
-      alert('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9')
+      toast.error('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9')
       return
     }
 
-    // Show confirmation popup
-    const confirmed = window.confirm('Are you sure you want to save this application?')
-
-    if (!confirmed) {
-      return // Exit if user cancels
+    const totalReceived = paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const totalFee = parseFloat(formData.totalAmount) || 0
+    if (totalReceived > totalFee) {
+      toast.error('Total received amount in payment breakdown cannot be greater than the total amount!')
+      return
     }
 
     // Filter out empty optional fields to avoid backend validation errors
@@ -440,12 +451,12 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
 
         toast.success('Application submitted successfully!', { autoClose: 1200 })
       } else {
-        alert(response.data.message || 'Failed to save application')
+        toast.error(response.data.message || 'Failed to save application')
         return
       }
     } catch (error) {
       console.error('Error submitting application:', error)
-      alert('Failed to save application. Please try again.')
+      toast.error('Failed to save application. Please try again.')
       return
     }
 
@@ -1178,11 +1189,18 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                             </div>
                           </div>
                         ))}
-                        <div className='flex justify-end items-center bg-cyan-100 p-2 rounded-lg border border-cyan-300'>
-                          <span className='text-sm font-bold text-gray-800'>Total Received: </span>
-                          <span className='text-sm font-bold text-teal-700 ml-2'>
-                            ₹{paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
-                          </span>
+                        <div className='flex flex-col items-end w-full'>
+                          <div className='flex justify-end items-center bg-cyan-100 p-2 rounded-lg border border-cyan-300 w-full md:w-auto'>
+                            <span className='text-sm font-bold text-gray-800'>Total Received: </span>
+                            <span className='text-sm font-bold text-teal-700 ml-2'>
+                              ₹{paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                          {paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0) > (parseFloat(formData.totalAmount) || 0) && (
+                            <p className='text-xs text-red-600 font-semibold mt-1'>
+                              Total received cannot exceed total amount (₹{formData.totalAmount || 0})
+                            </p>
+                          )}
                         </div>
                       </div>
                     )}
