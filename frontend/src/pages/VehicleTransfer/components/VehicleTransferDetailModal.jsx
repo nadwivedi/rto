@@ -354,6 +354,7 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                           <th className='text-left py-2 px-3 text-cyan-700 font-bold'>Date</th>
                           <th className='text-right py-2 px-3 text-cyan-700 font-bold'>Amount</th>
                           <th className='text-center py-2 px-3 text-cyan-700 font-bold'>Method</th>
+                          <th className='text-left py-2 px-3 text-cyan-700 font-bold'>Notes</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -370,6 +371,7 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                                 {p.paymentMode}
                               </span>
                             </td>
+                            <td className='py-2 px-3 text-gray-600 text-xs max-w-[150px] truncate' title={p.remark || ''}>{p.remark || '-'}</td>
                           </tr>
                         ))}
                       </tbody>
@@ -377,6 +379,7 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                         <tr className='bg-cyan-100 font-bold'>
                           <td className='py-2 px-3 text-cyan-800'>Total</td>
                           <td className='py-2 px-3 text-right text-cyan-900'>₹{paymentReceived.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString('en-IN')}</td>
+                          <td className='py-2 px-3'></td>
                           <td className='py-2 px-3'></td>
                         </tr>
                       </tfoot>

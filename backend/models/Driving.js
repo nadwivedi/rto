@@ -119,6 +119,11 @@ const DrivingSchema = new mongoose.Schema({
       required: true,
       default: 0
     },
+    remark: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     _id: false
   }],
 

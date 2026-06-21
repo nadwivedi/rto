@@ -151,7 +151,8 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
         profit: appData.profit?.toString() || '',
         expenseBreakup: (appData.expenseBreakup || []).map(item => ({
           name: item.name || '',
-          amount: item.amount ? item.amount.toString() : ''
+          amount: item.amount ? item.amount.toString() : '',
+          remark: item.remark || ''
         })),
         applicationStatus: appData.applicationStatus || 'pending',
         notes: appData.notes || ''
@@ -169,7 +170,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
 
       if (appData?._id) {
         getPaymentsByWork('DL', appData._id).then(res => {
-          setPaymentReceived(res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode })))
+          setPaymentReceived(res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode, remark: p.remark || '' })))
         }).catch(() => setPaymentReceived([]))
       } else {
         setPaymentReceived([])
@@ -393,7 +394,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   const addExpenseItem = () => {
     setFormData(prev => ({
       ...prev,
-      expenseBreakup: [...prev.expenseBreakup, { name: '', amount: '' }]
+      expenseBreakup: [...prev.expenseBreakup, { name: '', amount: '', remark: '' }]
     }))
   }
 
@@ -494,7 +495,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   }
 
   const addPaymentReceivedItem = () => {
-    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash' }])
+    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash', remark: '' }])
   }
 
   const removePaymentReceivedItem = (index) => {
@@ -1039,7 +1040,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                       <div className='space-y-3'>
                         {formData.expenseBreakup.map((item, index) => (
                           <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-3 items-center'>
-                            <div className='md:col-span-5'>
+                            <div className='md:col-span-4'>
                               <input
                                 type='text'
                                 placeholder='Expense name (e.g. Fitness, Commission)'
@@ -1048,7 +1049,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
                               />
                             </div>
-                            <div className='md:col-span-6'>
+                            <div className='md:col-span-3'>
                               <div className='relative'>
                                 <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
                                 <input
@@ -1062,7 +1063,16 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                                 />
                               </div>
                             </div>
-                            <div className='md:col-span-1 flex items-center justify-end'>
+                            <div className='md:col-span-3'>
+                              <input
+                                type='text'
+                                placeholder='Notes (optional)'
+                                value={item.remark || ''}
+                                onChange={(e) => handleExpenseBreakupChange(index, 'remark', e.target.value)}
+                                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm'
+                              />
+                            </div>
+                            <div className='md:col-span-2 flex items-center justify-end'>
                               <button
                                 type='button'
                                 onClick={() => removeExpenseItem(index)}
@@ -1110,7 +1120,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                       <div className='space-y-2'>
                         {paymentReceived.map((item, index) => (
                           <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-2 bg-white p-2 rounded-lg border border-cyan-200'>
-                            <div className='md:col-span-4'>
+                            <div className='md:col-span-2'>
                               <input
                                 type='date'
                                 value={item.date}
@@ -1118,7 +1128,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                                 className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-semibold'
                               />
                             </div>
-                            <div className='md:col-span-3'>
+                            <div className='md:col-span-2'>
                               <div className='relative'>
                                 <span className='absolute left-3 top-2.5 text-gray-500 font-semibold'>₹</span>
                                 <input
@@ -1131,7 +1141,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                                 />
                               </div>
                             </div>
-                            <div className='md:col-span-3'>
+                            <div className='md:col-span-2'>
                               <select
                                 value={item.paymentMode}
                                 onChange={(e) => handlePaymentReceivedChange(index, 'paymentMode', e.target.value)}
@@ -1141,6 +1151,15 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                                 <option value='Bank'>Bank</option>
                                 <option value='UPI'>UPI</option>
                               </select>
+                            </div>
+                            <div className='md:col-span-4'>
+                              <input
+                                type='text'
+                                placeholder='Notes (optional)'
+                                value={item.remark || ''}
+                                onChange={(e) => handlePaymentReceivedChange(index, 'remark', e.target.value)}
+                                className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm'
+                              />
                             </div>
                             <div className='md:col-span-2 flex items-center justify-center'>
                               <button

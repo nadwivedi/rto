@@ -95,7 +95,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
     // Fetch existing payment received entries for edit
     if (editData?._id) {
       getPaymentsByWork('VT', editData._id).then(res => {
-        setPaymentReceived(res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode })))
+        setPaymentReceived(res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode, remark: p.remark || '' })))
       }).catch(() => setPaymentReceived([]))
     } else {
       setPaymentReceived([])
@@ -281,7 +281,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
   const addExpenseBreakupItem = () => {
     setFormData(prev => ({
       ...prev,
-      expenseBreakup: [...prev.expenseBreakup, { name: '', amount: '' }]
+      expenseBreakup: [...prev.expenseBreakup, { name: '', amount: '', remark: '' }]
     }))
   }
 
@@ -303,7 +303,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
 
   // Payment Received Handlers
   const addPaymentReceivedItem = () => {
-    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash' }])
+    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash', remark: '' }])
   }
 
   const removePaymentReceivedItem = (index) => {
@@ -833,7 +833,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                       <div className='space-y-2'>
                         {formData.expenseBreakup.map((item, index) => (
                           <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-2 bg-white p-2 rounded-lg border border-orange-200'>
-                            <div className='md:col-span-5'>
+                            <div className='md:col-span-4'>
                               <input
                                 type='text'
                                 placeholder='Expense name'
@@ -843,7 +843,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                 className='w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
                               />
                             </div>
-                            <div className='md:col-span-6'>
+                            <div className='md:col-span-3'>
                               <div className='relative'>
                                 <span className='absolute left-3 top-2.5 text-gray-500 font-semibold'>₹</span>
                                 <input
@@ -857,7 +857,17 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                 />
                               </div>
                             </div>
-                            <div className='md:col-span-1 flex items-center justify-center'>
+                            <div className='md:col-span-3'>
+                              <input
+                                type='text'
+                                placeholder='Notes (optional)'
+                                value={item.remark || ''}
+                                onChange={(e) => handleExpenseBreakupChange(index, 'remark', e.target.value)}
+                                onKeyDown={handleFieldKeyDown}
+                                className='w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm'
+                              />
+                            </div>
+                            <div className='md:col-span-2 flex items-center justify-center'>
                               <button
                                 type='button'
                                 onClick={() => removeExpenseBreakupItem(index)}
@@ -905,7 +915,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                       <div className='space-y-2'>
                         {paymentReceived.map((item, index) => (
                           <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-2 bg-white p-2 rounded-lg border border-cyan-200'>
-                            <div className='md:col-span-4'>
+                            <div className='md:col-span-2'>
                               <input
                                 type='date'
                                 value={item.date}
@@ -913,7 +923,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                 className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-semibold'
                               />
                             </div>
-                            <div className='md:col-span-3'>
+                            <div className='md:col-span-2'>
                               <div className='relative'>
                                 <span className='absolute left-3 top-2.5 text-gray-500 font-semibold'>₹</span>
                                 <input
@@ -926,7 +936,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                 />
                               </div>
                             </div>
-                            <div className='md:col-span-3'>
+                            <div className='md:col-span-2'>
                               <select
                                 value={item.paymentMode}
                                 onChange={(e) => handlePaymentReceivedChange(index, 'paymentMode', e.target.value)}
@@ -936,6 +946,15 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                 <option value='Bank'>Bank</option>
                                 <option value='UPI'>UPI</option>
                               </select>
+                            </div>
+                            <div className='md:col-span-4'>
+                              <input
+                                type='text'
+                                placeholder='Notes (optional)'
+                                value={item.remark || ''}
+                                onChange={(e) => handlePaymentReceivedChange(index, 'remark', e.target.value)}
+                                className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm'
+                              />
                             </div>
                             <div className='md:col-span-2 flex items-center justify-center'>
                               <button

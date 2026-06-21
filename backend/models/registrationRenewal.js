@@ -22,6 +22,7 @@ const RegistrationRenewalSchema = new mongoose.Schema({
   expenseBreakup: [{
     name: { type: String, required: true, trim: true },
     amount: { type: Number, required: true, default: 0 },
+    remark: { type: String, trim: true, default: '' },
     _id: false
   }],
 

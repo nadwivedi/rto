@@ -73,6 +73,11 @@ const nocSchema = new mongoose.Schema({
       min: 0,
       default: 0
     },
+    remark: {
+      type: String,
+      trim: true,
+      default: ''
+    },
     _id: false
   }],
 
