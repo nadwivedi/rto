@@ -566,8 +566,11 @@ const DrivingLicence = () => {
       {isFormOpen && (
         <QuickDLApplicationForm
           isOpen={isFormOpen}
-          onClose={() => setIsFormOpen(false)}
-          onSubmit={handleFormSubmit}
+          onClose={() => {
+            setIsFormOpen(false)
+            fetchApplications()
+            fetchStatistics()
+          }}
         />
       )}
 

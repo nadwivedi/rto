@@ -439,10 +439,6 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
         }
 
         toast.success('Application submitted successfully!', { autoClose: 1200 })
-
-        if (onSubmit) {
-          onSubmit(filteredData)
-        }
       } else {
         alert(response.data.message || 'Failed to save application')
         return
