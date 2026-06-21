@@ -1024,7 +1024,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                 <div className='mt-4 space-y-4'>
                   {/* Expense Breakup Section */}
                   <div className='bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl p-3 md:p-6'>
-                    <div className='flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-4'>
+                    <div className='flex flex-col items-start md:flex-row md:justify-between md:items-center gap-3 mb-4'>
                       <h3 className='text-base md:text-lg font-bold text-gray-800 flex items-center gap-2'>
                         <span className='bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>5</span>
                         Expense Breakdown
@@ -1032,7 +1032,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                       <button
                         type='button'
                         onClick={addExpenseItem}
-                        className='inline-flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold'
+                        className='self-end md:self-auto inline-flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition font-semibold'
                       >
                         <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
