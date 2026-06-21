@@ -67,7 +67,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
   const [isExtractingLl, setIsExtractingLl] = useState(false)
   const [scanningFile, setScanningFile] = useState(null)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
-  const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
 
   // Date of Birth state
   const [dobDay, setDobDay] = useState('')

@@ -35,7 +35,7 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
   const [vehicleValidation, setVehicleValidation] = useState({ isValid: false, message: '' })
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
-  const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
 
   useEffect(() => {
     if (!isOpen) return undefined

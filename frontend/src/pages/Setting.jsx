@@ -223,6 +223,40 @@ const Setting = () => {
           </div>
         </div>
 
+        {/* Default Form Settings */}
+        <div className='bg-white rounded-xl p-6 shadow-lg border border-gray-200'>
+          <div className='flex items-center gap-3 mb-4'>
+            <div className='w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-600 rounded-lg flex items-center justify-center text-white text-xl'>
+              ⚙️
+            </div>
+            <div>
+              <h2 className='text-lg font-bold text-gray-800'>Default Form Settings</h2>
+              <p className='text-xs text-gray-500'>Configure default behavior for add forms</p>
+            </div>
+          </div>
+
+          <div className='space-y-3'>
+            <div className='flex items-center justify-between p-4 bg-gray-50 rounded-lg'>
+              <div>
+                <p className='text-sm font-semibold text-gray-800'>Expand Additional Details</p>
+                <p className='text-xs text-gray-500'>Auto-expand expense & payment sections when opening add forms</p>
+              </div>
+              <label className='relative inline-flex items-center cursor-pointer'>
+                <input
+                  type='checkbox'
+                  className='sr-only peer'
+                  checked={localStorage.getItem('expandAdditionalDetails') === 'yes'}
+                  onChange={(e) => {
+                    localStorage.setItem('expandAdditionalDetails', e.target.checked ? 'yes' : 'no')
+                    window.location.reload()
+                  }}
+                />
+                <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
+              </label>
+            </div>
+          </div>
+        </div>
+
         {/* Two-Column Row: Employee Management & Change Password */}
         <div className={`grid grid-cols-1 ${user?.type !== 'staff' ? 'lg:grid-cols-2' : ''} gap-4`}>
           {/* Employee Management Section */}

@@ -90,7 +90,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
 
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
-  const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
 
   // Validation states
   const [mobileValidation, setMobileValidation] = useState({ isValid: false, message: '' })
