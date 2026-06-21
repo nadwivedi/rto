@@ -107,6 +107,25 @@ const AddNocModal = ({ isOpen, onClose, onSuccess, editData }) => {
     })
   }, [formData.expenseBreakup, formData.totalFee])
 
+  // Auto-fill paid from paymentReceived total
+  useEffect(() => {
+    const totalReceived = paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const hasEnteredAmount = paymentReceived.some(p => p.amount !== '' && parseFloat(p.amount) > 0)
+    if (hasEnteredAmount) {
+      setFormData(prev => {
+        const totalFee = parseFloat(prev.totalFee) || 0
+        const newPaid = totalReceived > totalFee ? totalFee : totalReceived
+        const newBalance = totalFee - newPaid
+        if (prev.paid === newPaid.toString() && prev.balance === newBalance.toString()) return prev
+        return {
+          ...prev,
+          paid: newPaid.toString(),
+          balance: newBalance.toString()
+        }
+      })
+    }
+  }, [paymentReceived])
+
   const handleChange = (e) => {
     const { name, value } = e.target
 

@@ -158,6 +158,23 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     }))
   }, [formData.totalAmount, formData.paidAmount])
 
+  // Auto-fill paidAmount from paymentReceived total
+  useEffect(() => {
+    const totalReceived = paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const hasEnteredAmount = paymentReceived.some(p => p.amount !== '' && parseFloat(p.amount) > 0)
+    if (hasEnteredAmount) {
+      setFormData(prev => {
+        const totalAmount = parseFloat(prev.totalAmount) || 0
+        const newPaid = totalReceived > totalAmount ? totalAmount : totalReceived
+        if (prev.paidAmount === newPaid.toString()) return prev
+        return {
+          ...prev,
+          paidAmount: newPaid.toString()
+        }
+      })
+    }
+  }, [paymentReceived])
+
   // Update dateOfBirth when day, month, or year changes
   useEffect(() => {
     if (dobDay && dobMonth && dobYear) {

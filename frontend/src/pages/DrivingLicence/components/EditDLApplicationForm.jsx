@@ -280,6 +280,25 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     }
   }, [dobMonth, dobYear])
 
+  // Auto-fill paidAmount from paymentReceived total
+  useEffect(() => {
+    const totalReceived = paymentReceived.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const hasEnteredAmount = paymentReceived.some(p => p.amount !== '' && parseFloat(p.amount) > 0)
+    if (hasEnteredAmount) {
+      setFormData(prev => {
+        const totalAmount = parseFloat(prev.totalAmount) || 0
+        const newPaid = totalReceived > totalAmount ? totalAmount : totalReceived
+        const newBalance = totalAmount - newPaid
+        if (prev.paidAmount === newPaid.toString() && prev.balanceAmount === newBalance) return prev
+        return {
+          ...prev,
+          paidAmount: newPaid.toString(),
+          balanceAmount: newBalance
+        }
+      })
+    }
+  }, [paymentReceived])
+
   // Auto-calculate Learning License Expiry Date (6 months from issue date, minus 1 day)
   useEffect(() => {
     if (formData.learningLicenseIssueDate) {
