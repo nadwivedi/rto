@@ -79,7 +79,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     paidAmount: '2000',
     balanceAmount: 2000,
     profit: '',
-    expenseBreakup: [],
+    expenseBreakup: [{ name: '', amount: '', remark: '' }],
 
     // Application Status
     applicationStatus: 'pending',
@@ -89,7 +89,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   })
 
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
-  const [paymentReceived, setPaymentReceived] = useState([])
+  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
 
   // Validation states
@@ -149,11 +149,13 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
         paidAmount: appData.paidAmount?.toString() || '2000',
         balanceAmount: calculatedBalance >= 0 ? calculatedBalance : 0,
         profit: appData.profit?.toString() || '',
-        expenseBreakup: (appData.expenseBreakup || []).map(item => ({
-          name: item.name || '',
-          amount: item.amount ? item.amount.toString() : '',
-          remark: item.remark || ''
-        })),
+        expenseBreakup: (appData.expenseBreakup || []).length > 0
+          ? (appData.expenseBreakup || []).map(item => ({
+              name: item.name || '',
+              amount: item.amount ? item.amount.toString() : '',
+              remark: item.remark || ''
+            }))
+          : [{ name: '', amount: '', remark: '' }],
         applicationStatus: appData.applicationStatus || 'pending',
         notes: appData.notes || ''
       })
@@ -170,10 +172,11 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
 
       if (appData?._id) {
         getPaymentsByWork('DL', appData._id).then(res => {
-          setPaymentReceived(res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode, remark: p.remark || '' })))
-        }).catch(() => setPaymentReceived([]))
+          const payments = res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode, remark: p.remark || '' }))
+          setPaymentReceived(payments.length > 0 ? payments : [{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+        }).catch(() => setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }]))
       } else {
-        setPaymentReceived([])
+        setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
       }
     }
   }, [application])

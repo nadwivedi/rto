@@ -55,7 +55,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     paidAmount: '2000',
     balanceAmount: 2000,
     profit: '',
-    expenseBreakup: [],
+    expenseBreakup: [{ name: '', amount: '', remark: '' }],
     documents: {
       learningLicense: '',
       learningLicenseType: ''
@@ -66,7 +66,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
   const [mobileValidation, setMobileValidation] = useState({ isValid: false, message: '' })
   const [isExtractingLl, setIsExtractingLl] = useState(false)
   const [scanningFile, setScanningFile] = useState(null)
-  const [paymentReceived, setPaymentReceived] = useState([])
+  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
 
   // Date of Birth state
@@ -477,7 +477,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
       paidAmount: '2000',
       balanceAmount: 2000,
       profit: '',
-      expenseBreakup: [],
+      expenseBreakup: [{ name: '', amount: '', remark: '' }],
       documents: {
         learningLicense: '',
         learningLicenseType: ''
@@ -487,7 +487,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     setDobDay('')
     setDobMonth('')
     setDobYear('2000')
-    setPaymentReceived([])
+    setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
     onClose()
   }
 
@@ -509,7 +509,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
 
   return (
     <div className='fixed inset-0 bg-black/60  z-[70] flex items-center justify-center p-2 md:p-4'>
-      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
+      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-[67rem] w-full max-h-[95vh] overflow-hidden flex flex-col'>
         {/* Header */}
         <div className='bg-gradient-to-r from-indigo-600 to-purple-600 p-3 md:p-4 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>

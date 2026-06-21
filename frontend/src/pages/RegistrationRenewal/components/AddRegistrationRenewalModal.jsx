@@ -22,7 +22,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
     totalFee: '',
     paid: '',
     profit: '',
-    expenseBreakup: [],
+        expenseBreakup: [{ name: '', amount: '', remark: '' }],
     feeBreakup: [
       { name: 'Insurance', amount: '' },
       { name: 'PUC', amount: '' },
@@ -35,7 +35,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
   const [error, setError] = useState('')
   const [vehicleValidation, setVehicleValidation] = useState({ isValid: false, message: '' })
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
-  const [paymentReceived, setPaymentReceived] = useState([])
+  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
 
   useEffect(() => {
@@ -71,7 +71,9 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
         ...editData,
         date: editData.date || '',
         profit: editData.profit?.toString() || '',
-        expenseBreakup: (editData.expenseBreakup || []).map(item => ({ ...item })),
+        expenseBreakup: (editData.expenseBreakup || []).length > 0
+          ? (editData.expenseBreakup || []).map(item => ({ ...item }))
+          : [{ name: '', amount: '', remark: '' }],
         feeBreakup
       })
       if (editData.vehicleNumber) {
@@ -92,7 +94,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
         totalFee: '',
         paid: '',
         profit: '',
-        expenseBreakup: [],
+    expenseBreakup: [{ name: '', amount: '', remark: '' }],
         feeBreakup: [
           { name: 'Insurance', amount: '' },
           { name: 'PUC', amount: '' },
@@ -105,10 +107,11 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
     setError('')
     if (editData?._id) {
       getPaymentsByWork('RR', editData._id).then(res => {
-        setPaymentReceived(res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode, remark: p.remark || '' })))
-      }).catch(() => setPaymentReceived([]))
+        const payments = res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode, remark: p.remark || '' }))
+        setPaymentReceived(payments.length > 0 ? payments : [{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+      }).catch(() => setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }]))
     } else {
-      setPaymentReceived([])
+      setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
     }
   }, [editData, isOpen])
 
@@ -313,7 +316,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
 
   return (
     <div className='fixed inset-0 bg-black/60  z-[70] flex items-center justify-center p-2 md:p-4'>
-      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-4xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
+      <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-[59rem] w-full max-h-[95vh] overflow-hidden flex flex-col'>
         <div className='bg-gradient-to-r from-teal-600 to-cyan-600 p-2 md:p-3 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>
             <div>
