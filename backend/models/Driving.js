@@ -151,7 +151,9 @@ const DrivingSchema = new mongoose.Schema({
     signature: String,
     aadharCard: String,
     learningLicense: String, 
-    learningLicenseType: String // e.g. application/pdf, image/jpeg
+    learningLicenseType: String, // e.g. application/pdf, image/jpeg
+    drivingLicense: String,
+    drivingLicenseType: String
   },
   
 }, {

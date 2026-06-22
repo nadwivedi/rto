@@ -21,7 +21,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
 
   const [formData, setFormData] = useState({
     // Personal Information
-    applicationType: 'New Application',
+    applicationType: 'New DL',
     date: '',
     name: '',
     dateOfBirth: '',
@@ -64,7 +64,9 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     expenseBreakup: [{ name: '', amount: '', remark: '' }],
     documents: {
       learningLicense: '',
-      learningLicenseType: ''
+      learningLicenseType: '',
+      drivingLicense: '',
+      drivingLicenseType: ''
     }
   })
 
@@ -343,6 +345,33 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     }
   }
 
+  const handleDlUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      toast.error('Please upload an image or PDF file.', { position: 'top-right', autoClose: 3000 });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFormData(prev => {
+        const updated = { ...prev };
+        if (!updated.documents) updated.documents = {};
+        updated.documents.drivingLicense = reader.result;
+        updated.documents.drivingLicenseType = file.type;
+        return updated;
+      });
+      toast.success('Driving License uploaded successfully!', { position: 'top-right', autoClose: 3000 });
+    };
+    reader.onerror = () => {
+      toast.error('Error reading the file.', { position: 'top-right', autoClose: 3000 });
+    };
+    reader.readAsDataURL(file);
+    e.target.value = ''; // reset file input
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target
 
@@ -612,6 +641,26 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                   className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
                 />
               </div>
+
+              {/* DL Upload Button */}
+              <div className='relative overflow-hidden rounded-lg'>
+                <button
+                  type='button'
+                  className='flex max-w-full items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/30 md:px-4 md:py-2 md:text-sm cursor-pointer'
+                >
+                  <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/>
+                  </svg>
+                  DL Upload
+                </button>
+                <input
+                  type='file'
+                  accept='image/*,application/pdf'
+                  onChange={handleDlUpload}
+                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0'
+                />
+              </div>
+
               <button
                 onClick={onClose}
                 className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer hover:rotate-90 duration-200'
@@ -654,7 +703,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
                     required
                   >
-                    <option value='New Application'>New Application</option>
+                    <option value='New DL'>New DL</option>
                     <option value='DL Renewal'>DL Renewal</option>
                   </select>
                 </div>
@@ -1331,6 +1380,21 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                      <iframe src={formData.documents.learningLicense} className='w-full h-96' title='PDF Preview'></iframe>
                   ) : (
                      <img src={formData.documents.learningLicense} alt='Preview' className='max-h-96 object-contain' />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {formData.documents?.drivingLicense && (
+              <div className='bg-gray-100 border border-gray-300 rounded-xl p-3 md:p-6 mb-4 md:mb-6 mt-4'>
+                <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4'>
+                  Driving License Preview
+                </h3>
+                <div className='w-full rounded-lg overflow-hidden flex justify-center bg-white border border-gray-200'>
+                  {formData.documents.drivingLicenseType === 'application/pdf' ? (
+                     <iframe src={formData.documents.drivingLicense} className='w-full h-96' title='DL PDF Preview'></iframe>
+                  ) : (
+                     <img src={formData.documents.drivingLicense} alt='DL Preview' className='max-h-96 object-contain' />
                   )}
                 </div>
               </div>
