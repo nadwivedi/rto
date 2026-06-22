@@ -1077,78 +1077,79 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                   <span className='bg-green-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>6</span>
                   Payment Details
                 </h3>
-                <div className='space-y-3'>
-                  {/* Total Amount and Paid Now in one line */}
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                    <div>
-                      <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                        Total Amount
-                      </label>
-                      <div className='relative'>
-                        <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
-                        <input
-                          type='number'
-                          name='totalAmount'
-                          value={formData.totalAmount}
-                          onChange={handleChange}
-                          className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-semibold text-base md:text-lg'
-                          required
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                        Paid Now
-                      </label>
-                      <div className='relative'>
-                        <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
-                        <input
-                          type='number'
-                          name='paidAmount'
-                          value={formData.paidAmount}
-                          onChange={handleChange}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault()
-                              e.target.form.requestSubmit()
-                            }
-                          }}
-                          max={formData.totalAmount}
-                          className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-semibold text-base md:text-lg'
-                          required
-                        />
-                      </div>
+                <div className='grid grid-cols-1 md:grid-cols-4 gap-3'>
+                  {/* Total Amount */}
+                  <div>
+                    <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                      Total Amount
+                    </label>
+                    <div className='relative'>
+                      <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
+                      <input
+                        type='number'
+                        name='totalAmount'
+                        value={formData.totalAmount}
+                        onChange={handleChange}
+                        className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-semibold text-base md:text-lg'
+                        required
+                      />
                     </div>
                   </div>
 
-                  <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
-                    {/* Balance */}
-                    <div className='bg-white rounded-lg p-3 border-2 border-green-300 flex items-center h-[42px] mt-[22px]'>
-                      <div className='flex justify-between items-center w-full'>
-                        <span className='text-sm font-semibold text-gray-700'>Balance</span>
-                        <span className='text-xl font-black text-green-600'>
-                          ₹ {formData.balanceAmount.toFixed(2)}
-                        </span>
-                      </div>
+                  {/* Paid Now */}
+                  <div>
+                    <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                      Paid Now
+                    </label>
+                    <div className='relative'>
+                      <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
+                      <input
+                        type='number'
+                        name='paidAmount'
+                        value={formData.paidAmount}
+                        onChange={handleChange}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault()
+                            e.target.form.requestSubmit()
+                          }
+                        }}
+                        max={formData.totalAmount}
+                        className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent font-semibold text-base md:text-lg'
+                        required
+                      />
                     </div>
-                    {/* Profit */}
-                    <div>
-                      <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                        Profit (Commission)
-                      </label>
-                      <div className='relative'>
-                        <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
-                        <input
-                          type='number'
-                          name='profit'
-                          value={formData.profit}
-                          onChange={handleChange}
-                          min='0'
-                          step='1'
-                          placeholder='0'
-                          className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-semibold text-base md:text-lg'
-                        />
-                      </div>
+                  </div>
+
+                  {/* Balance */}
+                  <div>
+                    <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                      Balance
+                    </label>
+                    <div className='bg-white rounded-lg px-3 py-2 border-2 border-green-300 flex justify-center items-center h-[42px] md:h-[44px]'>
+                      <span className='text-lg font-black text-green-600'>
+                        ₹ {formData.balanceAmount.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Profit */}
+                  <div>
+                    <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                      Profit (Commission)
+                    </label>
+                    <div className='relative'>
+                      <span className='absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
+                      <input
+                        type='number'
+                        name='profit'
+                        value={formData.profit}
+                        onChange={handleChange}
+                        min='0'
+                        step='1'
+                        placeholder='0'
+                        className='w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-semibold text-base md:text-lg'
+                      />
                     </div>
                   </div>
                 </div>
