@@ -7,6 +7,8 @@ import { replacePaymentsForWork } from '../../../utils/paymentReceivedApi'
 import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
 import { getDefaultExpensesApi } from '../../../utils/defaultExpenseSettingsApi'
 
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+
 const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
   // Get current date in DD-MM-YYYY format
   const getCurrentDate = () => {
@@ -536,7 +538,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
       paidAmount: '2000',
       balanceAmount: 2000,
       profit: '',
-      expenseBreakup: getDefaultExpenses(),
+      expenseBreakup: [{ name: '', amount: '', remark: '' }],
       documents: {
         learningLicense: '',
         learningLicenseType: ''

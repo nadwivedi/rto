@@ -108,7 +108,7 @@ exports.createApplication = async (req, res) => {
     // Prepare application data
     const applicationData = {
       name,
-      dateOfBirth,
+      dateOfBirth: convertToDate(dateOfBirth),
       gender,
       fatherName,
       mobileNumber,
@@ -372,7 +372,7 @@ exports.updateApplication = async (req, res) => {
 
     // Update fields
     if (name !== undefined) application.name = name
-    if (dateOfBirth !== undefined) application.dateOfBirth = dateOfBirth
+    if (dateOfBirth !== undefined) application.dateOfBirth = convertToDate(dateOfBirth)
     if (gender !== undefined) application.gender = gender
     if (fatherName !== undefined) application.fatherName = fatherName
     if (mobileNumber !== undefined) application.mobileNumber = mobileNumber
