@@ -4,7 +4,6 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import Pagination from '../../components/Pagination'
 import QuickDLApplicationForm from './components/QuickDLApplicationForm'
-import EditDLApplicationForm from './components/EditDLApplicationForm'
 import ApplicationDetailModal from './components/ApplicationDetailModal'
 import AddButton from '../../components/AddButton'
 import SearchBar from '../../components/SearchBar'
@@ -574,12 +573,15 @@ const DrivingLicence = () => {
         />
       )}
 
-      {/* Edit DL Application Form */}
+      {/* Edit DL Application Form - uses same unified form */}
       {isEditFormOpen && (
-        <EditDLApplicationForm
+        <QuickDLApplicationForm
           isOpen={isEditFormOpen}
-          onClose={() => setIsEditFormOpen(false)}
-          onSubmit={handleEditSubmit}
+          onClose={() => {
+            setIsEditFormOpen(false)
+            fetchApplications()
+            fetchStatistics()
+          }}
           application={selectedApplication}
         />
       )}

@@ -3,13 +3,13 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import { handleSmartDateInput, normalizeAIExtractedDate } from '../../../utils/dateFormatter'
 import { validateMobileNumberRealtime, enforceMobileNumberFormat } from '../../../utils/contactValidation'
-import { replacePaymentsForWork } from '../../../utils/paymentReceivedApi'
+import { replacePaymentsForWork, getPaymentsByWork } from '../../../utils/paymentReceivedApi'
 import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
 import { getDefaultExpensesApi } from '../../../utils/defaultExpenseSettingsApi'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
-const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
+const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
   // Get current date in DD-MM-YYYY format
   const getCurrentDate = () => {
     const today = new Date()
@@ -83,6 +83,108 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
   const [dobDay, setDobDay] = useState('')
   const [dobMonth, setDobMonth] = useState('')
   const [dobYear, setDobYear] = useState('2000')
+
+  // Convert ISO date to DD-MM-YYYY format
+  const convertISOToDD_MM_YYYY = (isoDate) => {
+    if (!isoDate) return ''
+    const date = new Date(isoDate)
+    const day = String(date.getDate()).padStart(2, '0')
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const year = date.getFullYear()
+    return `${day}-${month}-${year}`
+  }
+
+  // Extract date parts from DD-MM-YYYY format
+  const extractDateParts = (dateStr) => {
+    if (!dateStr) return { day: '', month: '', year: '' }
+    const parts = dateStr.split('-')
+    return {
+      day: parts[0] || '',
+      month: parts[1] || '',
+      year: parts[2] || ''
+    }
+  }
+
+  // Pre-populate form with application data
+  useEffect(() => {
+    if (application && application.fullData) {
+      const appData = application.fullData
+
+      // Extract date parts from date of birth
+      const dobParts = extractDateParts(convertISOToDD_MM_YYYY(appData.dateOfBirth))
+      setDobDay(dobParts.day)
+      setDobMonth(dobParts.month)
+      setDobYear(dobParts.year)
+
+      const totalAmt = parseFloat(appData.totalAmount) || 0
+      const paidAmt = parseFloat(appData.paidAmount) || 0
+      const calculatedBalance = totalAmt - paidAmt
+
+      const mobileNum = appData.mobileNumber || ''
+
+      setFormData({
+        applicationType: appData.applicationType || 'New DL',
+        date: appData.date || '',
+        name: appData.name || '',
+        dateOfBirth: convertISOToDD_MM_YYYY(appData.dateOfBirth) || '',
+        gender: appData.gender || 'Male',
+        fatherName: appData.fatherName || '',
+        mobileNumber: mobileNum,
+        address: appData.address || '',
+        city: appData.city || '',
+        state: appData.state || '',
+        pincode: appData.pincode || '',
+        licenseClass: appData.licenseClass || 'MCWG+LMV',
+        licenseNumber: appData.licenseNumber || appData.LicenseNumber || '',
+        licenseIssueDate: convertISOToDD_MM_YYYY(appData.LicenseIssueDate) || '',
+        licenseExpiryDate: convertISOToDD_MM_YYYY(appData.LicenseExpiryDate) || '',
+        drivingLicenseNumber: appData.drivingLicenseNumber || '',
+        drivingLicenseIssueDate: convertISOToDD_MM_YYYY(appData.drivingLicenseIssueDate) || '',
+        drivingLicenseExpiryDate: convertISOToDD_MM_YYYY(appData.drivingLicenseExpiryDate) || '',
+        learningLicenseApplicationNumber: appData.learningLicenseApplicationNumber || '',
+        learningLicenseNumber: appData.learningLicenseNumber || '',
+        learningLicenseIssueDate: convertISOToDD_MM_YYYY(appData.learningLicenseIssueDate) || '',
+        learningLicenseExpiryDate: convertISOToDD_MM_YYYY(appData.learningLicenseExpiryDate) || '',
+        panNumber: appData.panNumber || '',
+        emergencyContact: appData.emergencyContact || '',
+        emergencyRelation: appData.emergencyRelation || 'Father',
+        totalAmount: appData.totalAmount?.toString() || '4000',
+        paidAmount: appData.paidAmount?.toString() || '2000',
+        balanceAmount: calculatedBalance >= 0 ? calculatedBalance : 0,
+        profit: appData.profit?.toString() || '',
+        byName: appData.byName || '',
+        byMobile: appData.byMobile || '',
+        expenseBreakup: (appData.expenseBreakup || []).length > 0
+          ? (appData.expenseBreakup || []).map(item => ({
+              name: item.name || '',
+              amount: item.amount ? item.amount.toString() : '',
+              remark: item.remark || ''
+            }))
+          : [{ name: '', amount: '', remark: '' }],
+        documents: appData.documents || {
+          learningLicense: '',
+          learningLicenseType: '',
+          drivingLicense: '',
+          drivingLicenseType: ''
+        }
+      })
+
+      // Validate pre-filled mobile number
+      if (mobileNum) {
+        const validation = validateMobileNumberRealtime(mobileNum)
+        setMobileValidation(validation)
+      }
+
+      if (appData?._id) {
+        getPaymentsByWork('DL', appData._id).then(res => {
+          const payments = res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode, remark: p.remark || '' }))
+          setPaymentReceived(payments.length > 0 ? payments : [{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+        }).catch(() => setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }]))
+      } else {
+        setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+      }
+    }
+  }, [application])
 
   // Generate options for dropdowns
   const months = [
@@ -517,7 +619,12 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     }
 
     try {
-      const response = await axios.post(`${API_URL}/api/driving-licenses`, filteredData, { withCredentials: true })
+      let response;
+      if (application) {
+        response = await axios.put(`${API_URL}/api/driving-licenses/${application.id}`, filteredData, { withCredentials: true })
+      } else {
+        response = await axios.post(`${API_URL}/api/driving-licenses`, filteredData, { withCredentials: true })
+      }
 
       if (response.data.success) {
         const recordId = response.data.data?._id
@@ -531,7 +638,11 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
           }
         }
 
-        toast.success('Application submitted successfully!', { autoClose: 1200 })
+        toast.success(`Application ${application ? 'updated' : 'submitted'} successfully!`, { autoClose: 1200 })
+        if (application) {
+          onClose()
+          return
+        }
       } else {
         toast.error(response.data.message || 'Failed to save application')
         return
@@ -607,7 +718,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
         <div className='bg-gradient-to-r from-indigo-600 to-purple-600 p-3 md:p-4 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>
             <div>
-              <h2 className='text-lg md:text-2xl font-bold'>Add New Driving Licence</h2>
+              <h2 className='text-lg md:text-2xl font-bold'>{application ? 'Edit Driving Licence' : 'Add New Driving Licence'}</h2>
             </div>
             <div className='flex shrink-0 items-center gap-2'>
               <div className='relative overflow-hidden rounded-lg'>
@@ -1421,12 +1532,12 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
 
               <button
                 type='submit'
-                className='flex-1 md:flex-none px-4 md:px-8 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 cursor-pointer text-sm md:text-base'
+                className='bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-6 md:px-10 py-2.5 md:py-3.5 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 text-sm md:text-base flex items-center gap-2 cursor-pointer'
               >
                 <svg className='w-4 h-4 md:w-5 md:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
                 </svg>
-                Save Application
+                {application ? 'Update Application' : 'Save Application'}
               </button>
             </div>
           </div>
