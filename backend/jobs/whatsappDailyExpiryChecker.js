@@ -95,7 +95,27 @@ const formatMessageFooter = (signature, address) => {
   return footer
 }
 
-const buildMessage = ({ alert, serviceName, vehicleNo, expiryDate, signature = 'RTO Services', address = '' }) => {
+const buildMessage = ({ alert, serviceName, vehicleNo, expiryDate, signature = 'RTO Services', address = '', customTemplate = null }) => {
+  let alertLabel = ''
+  if (alert.type === 'upcoming') alertLabel = `Expires on *${expiryDate}* _(${alert.label})_`
+  else if (alert.type === 'today') alertLabel = `🔴 *Expires TODAY*`
+  else alertLabel = `❌ Expired on *${expiryDate}* _(${alert.label})_`
+
+  if (customTemplate) {
+    let msg = customTemplate
+    msg = msg.replace(/\{serviceName\}/g, serviceName)
+    msg = msg.replace(/\{vehicleNo\}/g, vehicleNo)
+    msg = msg.replace(/\{expiryDate\}/g, expiryDate)
+    msg = msg.replace(/\{alertLabel\}/g, alertLabel)
+    msg = msg.replace(/\{signature\}/g, signature)
+    if (address && address.trim() !== '') {
+      msg = msg.replace(/\{address\}/g, `📍 ${address}`)
+    } else {
+      msg = msg.replace(/\{address\}/g, '')
+    }
+    return msg
+  }
+
   const footer = formatMessageFooter(signature, address)
   const docLine = `📄 *${serviceName}* · 🚗 *${vehicleNo}*`
 
@@ -122,11 +142,26 @@ const getNationalPermitPartLine = ({ partLabel, alert, expiryText }) => {
   return `- *${partLabel}* expired on *${expiryText}* (${alert.label})`
 }
 
-const buildNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'RTO Services', address = '' }) => {
+const buildNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'RTO Services', address = '', customTemplate = null }) => {
   const lines = partAlerts.map(getNationalPermitPartLine).join('\n')
-  const footer = formatMessageFooter(signature, address)
 
   if (partAlerts.length > 1) {
+    if (customTemplate) {
+      let msg = customTemplate
+      msg = msg.replace(/\{serviceName\}/g, 'National Permit')
+      msg = msg.replace(/\{vehicleNo\}/g, vehicleNo)
+      msg = msg.replace(/\{expiryDate\}/g, '')
+      msg = msg.replace(/\{alertLabel\}/g, `Both *Part A* and *Part B* are due:\n${lines}`)
+      msg = msg.replace(/\{signature\}/g, signature)
+      if (address && address.trim() !== '') {
+        msg = msg.replace(/\{address\}/g, `📍 ${address}`)
+      } else {
+        msg = msg.replace(/\{address\}/g, '')
+      }
+      return msg
+    }
+
+    const footer = formatMessageFooter(signature, address)
     return `Dear Customer,\n\n📄 *National Permit* · 🚗 *${vehicleNo}*\nBoth *Part A* and *Part B* are due:\n${lines}\n\n⚠️ Please visit for renewal to avoid penalties.${footer}`
   }
 
@@ -138,7 +173,8 @@ const buildNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'RTO Se
     vehicleNo,
     expiryDate: part.expiryText,
     signature,
-    address
+    address,
+    customTemplate
   })
 }
 
@@ -257,7 +293,8 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
           vehicleNo,
           expiryDate: doc[source.dateField],
           signature: userInfo.signature,
-          address: userInfo.address
+          address: userInfo.address,
+          customTemplate: rule.customMessage
         })
 
         await MessageLog.create({
@@ -351,7 +388,8 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
         partAlerts: missingPartAlerts,
         vehicleNo,
         signature: userInfo.signature,
-        address: userInfo.address
+        address: userInfo.address,
+        customTemplate: rule.customMessage
       })
 
       await MessageLog.create({

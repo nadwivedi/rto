@@ -23,11 +23,12 @@ const convertToDate = (dateString) => {
 exports.createApplication = async (req, res) => {
   try {
     const {
-      name, dateOfBirth, gender, fatherName,
+      applicationType, name, dateOfBirth, gender, fatherName,
       mobileNumber, date, email, address, licenseClass,
       licenseNumber, licenseIssueDate, licenseExpiryDate,
       learningLicenseApplicationNumber, learningLicenseNumber, learningLicenseIssueDate, learningLicenseExpiryDate,
       totalAmount, paidAmount, balanceAmount, profit, expenseBreakup,
+      byName, byMobile,
       documents
     } = req.body
 
@@ -107,6 +108,7 @@ exports.createApplication = async (req, res) => {
 
     // Prepare application data
     const applicationData = {
+      applicationType: applicationType || 'New Application',
       name,
       dateOfBirth: convertToDate(dateOfBirth),
       gender,
@@ -121,6 +123,8 @@ exports.createApplication = async (req, res) => {
       balanceAmount,
       profit,
       expenseBreakup,
+      byName: byName || '',
+      byMobile: byMobile || '',
       documents
     }
 
@@ -332,11 +336,12 @@ exports.updateApplication = async (req, res) => {
   try {
     const { id } = req.params
     const {
-      name, dateOfBirth, gender, fatherName,
+      applicationType, name, dateOfBirth, gender, fatherName,
       mobileNumber, date, email, address, licenseClass,
       licenseNumber, licenseIssueDate, licenseExpiryDate,
       learningLicenseApplicationNumber, learningLicenseNumber, learningLicenseIssueDate, learningLicenseExpiryDate,
       totalAmount, paidAmount, balanceAmount, profit, expenseBreakup,
+      byName, byMobile,
       documents
     } = req.body
 
@@ -371,6 +376,7 @@ exports.updateApplication = async (req, res) => {
     }
 
     // Update fields
+    if (applicationType !== undefined) application.applicationType = applicationType
     if (name !== undefined) application.name = name
     if (dateOfBirth !== undefined) application.dateOfBirth = convertToDate(dateOfBirth)
     if (gender !== undefined) application.gender = gender
@@ -385,6 +391,8 @@ exports.updateApplication = async (req, res) => {
     if (balanceAmount !== undefined) application.balanceAmount = balanceAmount
     if (profit !== undefined) application.profit = profit
     if (expenseBreakup !== undefined) application.expenseBreakup = expenseBreakup
+    if (byName !== undefined) application.byName = byName
+    if (byMobile !== undefined) application.byMobile = byMobile
     if (documents !== undefined) application.documents = documents
 
     // Map lowercase field names to uppercase (model field names)

@@ -21,7 +21,8 @@ const defaultRule = {
   beforeDays: [7],
   sendOnExpiryDay: true,
   sendAfterExpiry: false,
-  afterDays: [7, 10]
+  afterDays: [7, 10],
+  customMessage: `Dear Customer,\n\n📄 *{serviceName}* · 🚗 *{vehicleNo}*\n📅 {alertLabel} (*{expiryDate}*)\n\n⚠️ Please visit for renewal to avoid penalties.\n\n────────────────\n*{signature}*\n{address}`
 }
 
 const beforeDayOptions = [30, 15, 10, 7, 5, 3, 1]
@@ -227,8 +228,9 @@ const WhatsAppSettings = () => {
                   <p className='mt-1 text-[10px] text-gray-500'>{rule.enabled ? 'Messages enabled' : 'Messages disabled'}</p>
                 </div>
 
-                <div className='grid flex-1 grid-cols-1 gap-4 xl:grid-cols-2'>
-                  <div className={!rule.enabled ? 'opacity-50 pointer-events-none' : ''}>
+                <div className='grid flex-1 grid-cols-1 gap-4 lg:grid-cols-12'>
+                  <div className='flex flex-col gap-4 lg:col-span-5 xl:col-span-4'>
+                    <div className={!rule.enabled ? 'opacity-50 pointer-events-none' : ''}>
                     <label className='block text-[10px] font-bold uppercase text-gray-600 mb-2'>Before Expiry Days</label>
                     <div className='flex flex-wrap gap-2'>
                       {beforeDayOptions.map(day => (
@@ -329,6 +331,26 @@ const WhatsAppSettings = () => {
                         className='w-full rounded-lg border border-gray-300 px-3 py-1.5 text-[11px] focus:outline-none focus:ring-2 focus:ring-green-500'
                       />
                     </div>
+                  </div>
+                </div>
+
+                {/* Custom Message Editor */}
+                <div className={`flex flex-col lg:col-span-7 xl:col-span-8 ${!rule.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
+                    <label className='block text-[10px] font-bold uppercase text-gray-600 mb-1'>Custom Message Template</label>
+                    <div className='text-[9px] text-gray-500 font-medium mb-2 leading-tight'>
+                      Variables: <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{serviceName}"}</code>, <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{vehicleNo}"}</code>, <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{expiryDate}"}</code>, <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{alertLabel}"}</code>, <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{signature}"}</code>, <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{address}"}</code>
+                    </div>
+                    <textarea
+                      value={draftInputs[`${service.key}.customMessage`] ?? rule.customMessage}
+                      onChange={(e) => {
+                        const value = e.target.value
+                        setDraftInputs(prev => ({ ...prev, [`${service.key}.customMessage`]: value }))
+                        updateRule(service.key, { customMessage: value })
+                      }}
+                      rows={4}
+                      className='w-full flex-1 rounded-lg border border-gray-300 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-green-500 font-mono resize-y min-h-[100px]'
+                      placeholder='Enter your custom WhatsApp message template here...'
+                    />
                   </div>
                 </div>
               </div>

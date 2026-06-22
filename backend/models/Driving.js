@@ -8,6 +8,11 @@ const DrivingSchema = new mongoose.Schema({
     index: true
   },
   // Personal Information
+  applicationType: {
+    type: String,
+    enum: ['New Application', 'DL Renewal'],
+    default: 'New Application'
+  },
   name: {
     type: String,
     required: true,
@@ -49,6 +54,17 @@ const DrivingSchema = new mongoose.Schema({
     trim: true
   },
 
+  // Referral Details
+  byName: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  byMobile: {
+    type: String,
+    trim: true,
+    default: ''
+  },
   // License Information
 
   licenseClass: {

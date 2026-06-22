@@ -15,7 +15,8 @@ const DEFAULT_ALERT_RULE = {
   beforeDays: [7, 3],
   sendOnExpiryDay: true,
   sendAfterExpiry: false,
-  afterDays: [7, 10]
+  afterDays: [7, 10],
+  customMessage: `Dear Customer,\n\n📄 *{serviceName}* · 🚗 *{vehicleNo}*\n📅 {alertLabel} (*{expiryDate}*)\n\n⚠️ Please visit for renewal to avoid penalties.\n\n────────────────\n*{signature}*\n{address}`
 }
 
 const normalizeDays = (value, fallback = [], options = {}) => {
@@ -48,7 +49,8 @@ const normalizeAlertRule = (rule = {}, legacySetting = {}) => {
     beforeDays: beforeDays.length ? beforeDays : DEFAULT_ALERT_RULE.beforeDays,
     sendOnExpiryDay: rule.sendOnExpiryDay !== undefined ? rule.sendOnExpiryDay === true : legacySetting.sendOnExpiryDay !== false,
     sendAfterExpiry: rule.sendAfterExpiry !== undefined ? rule.sendAfterExpiry === true : legacySetting.enableGracePeriodAlerts === true,
-    afterDays: afterDays.length ? afterDays : DEFAULT_ALERT_RULE.afterDays
+    afterDays: afterDays.length ? afterDays : DEFAULT_ALERT_RULE.afterDays,
+    customMessage: rule.customMessage || DEFAULT_ALERT_RULE.customMessage
   }
 }
 

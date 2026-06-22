@@ -21,6 +21,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
 
   const [formData, setFormData] = useState({
     // Personal Information
+    applicationType: 'New Application',
     date: '',
     name: '',
     dateOfBirth: '',
@@ -58,6 +59,8 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
     paidAmount: '2000',
     balanceAmount: 2000,
     profit: '',
+    byName: '',
+    byMobile: '',
     expenseBreakup: [{ name: '', amount: '', remark: '' }],
     documents: {
       learningLicense: '',
@@ -638,7 +641,24 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                 Essential Information (Required)
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4'>
+                {/* Application Type */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Application Type <span className='text-red-500'>*</span>
+                  </label>
+                  <select
+                    name='applicationType'
+                    value={formData.applicationType}
+                    onChange={handleChange}
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                    required
+                  >
+                    <option value='New Application'>New Application</option>
+                    <option value='DL Renewal'>DL Renewal</option>
+                  </select>
+                </div>
+
                 {/* Date of Work */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -910,6 +930,50 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                     </div>
                   </div>
                 </div>
+
+                {/* By/Referral Details - inside left column */}
+                <div className='bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-xl p-3 md:p-6'>
+                  <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                    <span className='bg-amber-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>4</span>
+                    By / Referral <span className='text-xs font-normal text-gray-500'>(Optional)</span>
+                  </h3>
+
+                  <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                    <div>
+                      <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Name</label>
+                      <input
+                        type='text'
+                        name='byName'
+                        value={formData.byName}
+                        onChange={handleChange}
+                        placeholder='Referral / agent name'
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
+                      />
+                    </div>
+                    <div>
+                      <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Mobile Number</label>
+                      <input
+                        type='tel'
+                        name='byMobile'
+                        value={formData.byMobile}
+                        onChange={handleChange}
+                        placeholder='10-digit mobile number'
+                        maxLength='10'
+                        pattern='[0-9]{10}'
+                        className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent'
+                      />
+                    </div>
+                  </div>
+
+                  <div className='mt-3 bg-amber-100 border-l-4 border-amber-500 p-2 md:p-3 rounded'>
+                    <p className='text-xs md:text-sm text-amber-700 flex items-center gap-1'>
+                      <svg className='w-4 h-4 flex-shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
+                      </svg>
+                      Referral / agent who brought this DL application
+                    </p>
+                  </div>
+                </div>
               </div>
 
               {/* RIGHT COLUMN - Driving License & Payment */}
@@ -968,10 +1032,12 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                   </div>
                 </div>
 
+                {/* By/Referral Details - removed from here, now in left column */}
+
                 {/* Payment Details */}
                 <div className='bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-3 md:p-6'>
                   <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
-                    <span className='bg-green-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>4</span>
+                    <span className='bg-green-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>5</span>
                     Payment Details
                   </h3>
 
