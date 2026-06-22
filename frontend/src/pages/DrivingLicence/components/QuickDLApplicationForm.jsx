@@ -909,6 +909,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, onSubmit }) => {
                     <option value='HMV'>HMV - Heavy Vehicle</option>
                     <option value='Commercial'>Commercial</option>
                     <option value='Transport'>Transport</option>
+                    <option value='E-Rikshaw'>E-Rikshaw - 3 wheeler</option>
                   </select>
                 </div>
               </div>

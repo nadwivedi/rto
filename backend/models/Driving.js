@@ -70,7 +70,7 @@ const DrivingSchema = new mongoose.Schema({
   licenseClass: {
     type: String,
     required: true,
-    enum: ['MCWG', 'LMV', 'MCWG+LMV', 'HMV', 'Commercial', 'Transport'],
+    enum: ['MCWG', 'LMV', 'MCWG+LMV', 'HMV', 'Commercial', 'Transport', 'E-Rikshaw'],
     // MCWG = Two Wheeler, LMV = Light Motor Vehicle (Four Wheeler)
   },
 
