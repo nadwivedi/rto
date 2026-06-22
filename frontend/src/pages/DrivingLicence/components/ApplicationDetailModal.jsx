@@ -123,38 +123,87 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
 
         {/* Content */}
         <div className='flex-1 overflow-y-auto p-3 md:p-5'>
-          {/* Document Preview Section - Render on Top if Learning License Document exists */}
-          {application.fullData?.documents?.learningLicense && (
+          {/* Document Previews - LL and DL side by side */}
+          {(application.fullData?.documents?.learningLicense || application.fullData?.documents?.drivingLicense) && (
             <div className='mb-4 bg-gray-50 rounded-lg md:rounded-xl p-3 md:p-4 border-2 border-gray-200 shadow-sm'>
-              <h3 className='text-sm md:text-base font-bold text-gray-800 mb-2 flex items-center gap-2'>
+              <h3 className='text-sm md:text-base font-bold text-gray-800 mb-3 flex items-center gap-2'>
                 <svg className='w-4 h-4 text-indigo-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13' />
                 </svg>
-                Uploaded Learning License
+                Uploaded Documents
               </h3>
-              <div className='w-full flex justify-center bg-white rounded-lg border border-gray-200 p-3'>
-                {application.fullData.documents.learningLicenseType === 'application/pdf' ? (
-                  <button 
-                    onClick={() => handleViewPdf(application.fullData.documents.learningLicense)}
-                    className='flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-md text-xs font-semibold transition-colors shadow-sm'
-                  >
-                    <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
-                      <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z' clipRule='evenodd' />
-                    </svg>
-                    View PDF
-                  </button>
-                ) : (
-                  <img 
-                    src={application.fullData.documents.learningLicense} 
-                    alt='Learning License' 
-                    onClick={() => setIsImageModalOpen(true)}
-                    className='max-w-full h-32 md:h-40 object-contain rounded cursor-pointer border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105'
-                    title='Click to view full size'
-                  />
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+
+                {/* LL Document */}
+                {application.fullData?.documents?.learningLicense && (
+                  <div className='bg-white rounded-lg border border-gray-200 p-3'>
+                    <p className='text-xs font-bold text-indigo-700 mb-2 flex items-center gap-1'>
+                      <svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253' />
+                      </svg>
+                      Learning License (LL)
+                    </p>
+                    <div className='flex justify-center'>
+                      {application.fullData.documents.learningLicenseType === 'application/pdf' ? (
+                        <button
+                          onClick={() => handleViewPdf(application.fullData.documents.learningLicense)}
+                          className='flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-md text-xs font-semibold transition-colors shadow-sm'
+                        >
+                          <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
+                            <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z' clipRule='evenodd' />
+                          </svg>
+                          View LL PDF
+                        </button>
+                      ) : (
+                        <img
+                          src={application.fullData.documents.learningLicense}
+                          alt='Learning License'
+                          onClick={() => setIsImageModalOpen('ll')}
+                          className='max-w-full h-32 md:h-40 object-contain rounded cursor-pointer border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105'
+                          title='Click to view full size'
+                        />
+                      )}
+                    </div>
+                  </div>
                 )}
+
+                {/* DL Document */}
+                {application.fullData?.documents?.drivingLicense && (
+                  <div className='bg-white rounded-lg border border-gray-200 p-3'>
+                    <p className='text-xs font-bold text-purple-700 mb-2 flex items-center gap-1'>
+                      <svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2' />
+                      </svg>
+                      Driving License (DL)
+                    </p>
+                    <div className='flex justify-center'>
+                      {application.fullData.documents.drivingLicenseType === 'application/pdf' ? (
+                        <button
+                          onClick={() => handleViewPdf(application.fullData.documents.drivingLicense)}
+                          className='flex items-center gap-2 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-200 rounded-md text-xs font-semibold transition-colors shadow-sm'
+                        >
+                          <svg className='w-4 h-4' fill='currentColor' viewBox='0 0 20 20'>
+                            <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z' clipRule='evenodd' />
+                          </svg>
+                          View DL PDF
+                        </button>
+                      ) : (
+                        <img
+                          src={application.fullData.documents.drivingLicense}
+                          alt='Driving License'
+                          onClick={() => setIsImageModalOpen('dl')}
+                          className='max-w-full h-32 md:h-40 object-contain rounded cursor-pointer border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200 hover:scale-105'
+                          title='Click to view full size'
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
               </div>
             </div>
           )}
+
           {/* Application Details */}
           <div className='space-y-3 md:space-y-4'>
             {/* Personal Information */}
