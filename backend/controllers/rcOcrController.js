@@ -3,7 +3,7 @@ const pdfParse = require('pdf-parse');
 
 let groqKeyIndex = 0;
 const getGroqApiKey = () => {
-  const keys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2].filter(Boolean)
+  const keys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2, process.env.GROQ_API_KEY_3].filter(Boolean)
   groqKeyIndex = (groqKeyIndex + 1) % keys.length
   return keys[groqKeyIndex]
 }
