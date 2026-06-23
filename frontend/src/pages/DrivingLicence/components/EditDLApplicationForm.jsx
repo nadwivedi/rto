@@ -337,15 +337,17 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     }
   }, [formData.learningLicenseIssueDate])
 
-  // Auto-calculate profit from totalAmount - totalExpenses
+  // Auto-calculate profit from totalAmount - totalExpenses (only when expenses are entered)
   useEffect(() => {
     const totalExpenses = formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
     const totalFee = parseFloat(formData.totalAmount) || 0
-    const calculatedProfit = totalFee - totalExpenses
-    setFormData(prev => {
-      if (prev.profit === calculatedProfit.toString()) return prev
-      return { ...prev, profit: calculatedProfit.toString() }
-    })
+    if (totalExpenses > 0) {
+      const calculatedProfit = totalFee - totalExpenses
+      setFormData(prev => {
+        if (prev.profit === calculatedProfit.toString()) return prev
+        return { ...prev, profit: calculatedProfit.toString() }
+      })
+    }
   }, [formData.expenseBreakup, formData.totalAmount])
 
   const handleChange = (e) => {
