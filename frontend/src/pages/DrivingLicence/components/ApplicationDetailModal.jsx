@@ -107,6 +107,15 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
             <div className='min-w-0 flex-1'>
               <div className='flex items-center gap-2 mb-1 md:mb-2 flex-wrap'>
                 <h2 className='text-base md:text-xl font-bold truncate'>DL Application Details</h2>
+                {application.fullData?.applicationType && (
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] md:text-xs font-bold border ${
+                    application.fullData.applicationType === 'New DL'
+                      ? 'bg-green-200 text-green-900 border-green-300'
+                      : 'bg-amber-200 text-amber-900 border-amber-300'
+                  }`}>
+                    {application.fullData.applicationType === 'New DL' ? 'New DL' : 'DL Renewal'}
+                  </span>
+                )}
               </div>
               <p className='text-[10px] md:text-sm text-white/90 truncate'>Application ID: {application.id}</p>
             </div>
@@ -454,6 +463,9 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                       <p className='text-base md:text-lg font-black text-gray-800 mt-1'>
                         ₹{parseFloat(item.amount || 0).toLocaleString('en-IN')}
                       </p>
+                      {item.remark && (
+                        <p className='text-[10px] md:text-xs text-gray-500 mt-1 italic border-t border-orange-100 pt-1'>{item.remark}</p>
+                      )}
                     </div>
                   ))}
                 </div>
