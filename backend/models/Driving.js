@@ -10,7 +10,7 @@ const DrivingSchema = new mongoose.Schema({
   // Personal Information
   applicationType: {
     type: String,
-    enum: ['New Application', 'DL Renewal'],
+    enum: ['New Application', 'DL Renewal', 'New DL'],
     default: 'New Application'
   },
   name: {
