@@ -261,6 +261,11 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
   // Populate default expenses when modal is opened
   useEffect(() => {
     if (isOpen) {
+      // Don't fetch default expenses if we're editing an existing application with saved expenses
+      if (application?.fullData?.expenseBreakup && application.fullData.expenseBreakup.length > 0) {
+        return
+      }
+
       getDefaultExpensesApi('DL')
         .then(res => {
           const fetched = res.data?.expenses
@@ -284,7 +289,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
           }))
         })
     }
-  }, [isOpen])
+  }, [isOpen, application])
 
   // Auto-calculate balance amount
   useEffect(() => {
