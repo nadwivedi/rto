@@ -52,10 +52,10 @@ exports.createEmployee = async (req, res) => {
   }
 }
 
-// Get all employees
+// Get all employees for the logged-in admin
 exports.getAllEmployees = async (req, res) => {
   try {
-    const employees = await Employee.find().select('-password').sort({ createdAt: -1 })
+    const employees = await Employee.find({ adminId: req.user.id }).select('-password').sort({ createdAt: -1 })
     
     res.json({
       success: true,
@@ -76,11 +76,11 @@ exports.updateEmployee = async (req, res) => {
     const { id } = req.params
     const { name, mobile, password, permissions, isActive } = req.body
 
-    const employee = await Employee.findById(id)
+    const employee = await Employee.findOne({ _id: id, adminId: req.user.id })
     if (!employee) {
       return res.status(404).json({
         success: false,
-        message: 'Employee not found'
+        message: 'Employee not found or unauthorized'
       })
     }
 
@@ -118,11 +118,11 @@ exports.deleteEmployee = async (req, res) => {
   try {
     const { id } = req.params
     
-    const result = await Employee.findByIdAndDelete(id)
+    const result = await Employee.findOneAndDelete({ _id: id, adminId: req.user.id })
     if (!result) {
       return res.status(404).json({
         success: false,
-        message: 'Employee not found'
+        message: 'Employee not found or unauthorized'
       })
     }
 
