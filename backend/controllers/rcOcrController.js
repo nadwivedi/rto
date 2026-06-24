@@ -67,7 +67,7 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
     const response = await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
+        model: 'qwen/qwen3.6-27b',
         messages: [
           {
             role: 'user',
@@ -75,7 +75,9 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
           }
         ],
         temperature: 0.1,
-        max_tokens: 1024
+        max_completion_tokens: 4000,
+        response_format: { type: 'json_object' },
+        reasoning_format: 'hidden'
       },
       {
         headers: {
@@ -115,7 +117,10 @@ ${jsonTemplate}`;
 
     const response = await callGroqAPI(payload, fullPrompt, isPdf, backImageBase64);
 
-    const messageContent = response.data.choices[0].message.content;
+    let messageContent = response.data.choices[0].message.content;
+
+    // Strip out the <think>...</think> block if present
+    messageContent = messageContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
 
     let jsonStr = messageContent;
     const jsonMatch = messageContent.match(/```(?:json)?\n([\s\S]*?)\n```/);
@@ -298,3 +303,12 @@ exports.temporaryPermitOcr = async (req, res) => {
   return processOcrRequest(req, res, prompt, template, 1);
 };
 
+exports.dlOcr = async (req, res) => {
+  const prompt = "Extract the details from this Driving Licence document. Extract driving licence number, valid from date, and valid to date only. Map the valid from date to 'validFrom' and the valid to date or expiry date to 'validTo'. Remove any spaces or hyphens from the driving licence number.";
+  const template = `{
+  "drivingLicenceNumber": "",
+  "validFrom": "",
+  "validTo": ""
+}`;
+  return processOcrRequest(req, res, prompt, template);
+};

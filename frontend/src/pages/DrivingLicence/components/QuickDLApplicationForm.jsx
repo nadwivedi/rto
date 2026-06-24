@@ -75,6 +75,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
   // Validation states
   const [mobileValidation, setMobileValidation] = useState({ isValid: false, message: '' })
   const [isExtractingLl, setIsExtractingLl] = useState(false)
+  const [isExtractingDl, setIsExtractingDl] = useState(false)
   const [scanningFile, setScanningFile] = useState(null)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
@@ -454,7 +455,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
     }
   }
 
-  const handleDlUpload = (e) => {
+  const handleDlUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -463,22 +464,83 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setFormData(prev => {
-        const updated = { ...prev };
-        if (!updated.documents) updated.documents = {};
-        updated.documents.drivingLicense = reader.result;
-        updated.documents.drivingLicenseType = file.type;
-        return updated;
-      });
-      toast.success('Driving License uploaded successfully!', { position: 'top-right', autoClose: 3000 });
-    };
-    reader.onerror = () => {
+    setScanningFile(file);
+    e.target.value = '';
+
+    setIsExtractingDl(true);
+    const updateToast = toast.info('Analyzing Driving License document, please wait...', { autoClose: false, isLoading: true });
+
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const base64String = reader.result;
+          const response = await axios.post(
+            `${API_URL}/api/ocr/dl`,
+            { imageBase64: base64String },
+            { withCredentials: true }
+          );
+
+          if (response.data.success && response.data.data) {
+            const resultData = response.data.data;
+            
+            setFormData(prev => {
+              const updated = { ...prev };
+              
+              if (resultData.drivingLicenceNumber) {
+                updated.licenseNumber = resultData.drivingLicenceNumber.toUpperCase();
+                updated.drivingLicenseNumber = resultData.drivingLicenceNumber.toUpperCase();
+              }
+              
+              if (resultData.validFrom) {
+                const normalizedStr = normalizeAIExtractedDate(resultData.validFrom);
+                const formatted = handleSmartDateInput(normalizedStr, '');
+                if (formatted) {
+                  updated.licenseIssueDate = formatted;
+                  updated.drivingLicenseIssueDate = formatted;
+                }
+              }
+              
+              if (resultData.validTo) {
+                const normalizedStr = normalizeAIExtractedDate(resultData.validTo);
+                const formatted = handleSmartDateInput(normalizedStr, '');
+                if (formatted) {
+                  updated.licenseExpiryDate = formatted;
+                  updated.drivingLicenseExpiryDate = formatted;
+                }
+              }
+
+              if (!updated.documents) {
+                updated.documents = {};
+              }
+              updated.documents.drivingLicense = base64String;
+              updated.documents.drivingLicenseType = file.type;
+
+              return updated;
+            });
+
+            toast.dismiss(updateToast);
+            toast.success('Driving License Details Extracted Successfully!', { position: 'top-right', autoClose: 3000 });
+          } else {
+            toast.dismiss(updateToast);
+            toast.error('Failed to extract data correctly.', { position: 'top-right', autoClose: 3000 });
+          }
+        } catch (err) {
+          console.error(err);
+          toast.dismiss(updateToast);
+          toast.error('Server error during OCR processing.', { position: 'top-right', autoClose: 3000 });
+        } finally {
+          setIsExtractingDl(false);
+          setScanningFile(null);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.dismiss(updateToast);
       toast.error('Error reading the file.', { position: 'top-right', autoClose: 3000 });
-    };
-    reader.readAsDataURL(file);
-    e.target.value = ''; // reset file input
+      setIsExtractingDl(false);
+      setScanningFile(null);
+    }
   }
 
   const handleChange = (e) => {
@@ -764,18 +826,32 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
               <div className='relative overflow-hidden rounded-lg'>
                 <button
                   type='button'
-                  className='flex max-w-full items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/30 md:px-4 md:py-2 md:text-sm cursor-pointer'
+                  disabled={isExtractingDl}
+                  className='flex max-w-full items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/30 disabled:opacity-60 md:px-4 md:py-2 md:text-sm cursor-pointer'
                 >
-                  <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/>
-                  </svg>
-                  DL Upload
+                  {isExtractingDl ? (
+                    <>
+                      <svg className='h-4 w-4 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
+                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                      </svg>
+                      Extracting
+                    </>
+                  ) : (
+                    <>
+                      <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/>
+                      </svg>
+                      DL Upload
+                    </>
+                  )}
                 </button>
                 <input
                   type='file'
                   accept='image/*,application/pdf'
+                  disabled={isExtractingDl}
                   onChange={handleDlUpload}
-                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0'
+                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
                 />
               </div>
 

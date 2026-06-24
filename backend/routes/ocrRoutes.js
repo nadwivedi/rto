@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { rcOcr, taxOcr, fitnessOcr, pucOcr, gpsOcr, llOcr, insuranceOcr, temporaryPermitOcr } = require('../controllers/rcOcrController');
+const { rcOcr, taxOcr, fitnessOcr, pucOcr, gpsOcr, llOcr, dlOcr, insuranceOcr, temporaryPermitOcr } = require('../controllers/rcOcrController');
 
 // POST /api/ocr/rc
 router.post('/rc', rcOcr);
@@ -19,6 +19,9 @@ router.post('/gps', gpsOcr);
 
 // POST /api/ocr/ll
 router.post('/ll', llOcr);
+
+// POST /api/ocr/dl
+router.post('/dl', dlOcr);
 
 // POST /api/ocr/insurance
 router.post('/insurance', insuranceOcr);
