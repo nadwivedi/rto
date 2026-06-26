@@ -116,7 +116,7 @@ const NocDetailModal = ({ isOpen, onClose, record }) => {
                     <div key={index} className='flex items-center justify-between text-sm bg-white border border-orange-200 rounded-md px-3 py-2'>
                       <div>
                         <span className='font-semibold text-gray-700'>{item.name}</span>
-                        {item.date && <span className='text-[10px] text-gray-400 ml-2'>{item.date}</span>}
+                        {item.date && <span className='text-[10px] text-gray-400 ml-2'>{item.date.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3-$2-$1')}</span>}
                       </div>
                       <span className='font-bold text-gray-900'>₹{Number(item.amount).toLocaleString('en-IN')}</span>
                     </div>

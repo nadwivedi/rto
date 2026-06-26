@@ -232,7 +232,7 @@ const RegistrationRenewalDetailModal = ({ isOpen, onClose, renewal }) => {
                       <div key={index} className='flex justify-between items-center py-2 bg-white px-3 rounded-lg border border-orange-100'>
                         <div>
                           <span className='text-xs md:text-sm font-semibold text-gray-700'>{item.name}</span>
-                          {item.date && <span className='text-[10px] text-gray-400 ml-2'>{item.date}</span>}
+                          {item.date && <span className='text-[10px] text-gray-400 ml-2'>{item.date.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3-$2-$1')}</span>}
                         </div>
                         <span className='text-xs md:text-sm font-bold text-orange-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</span>
                       </div>

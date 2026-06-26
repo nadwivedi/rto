@@ -281,7 +281,7 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                               <label className='text-xs font-bold text-orange-700 uppercase tracking-wide'>{item.name}</label>
                             </div>
                             {item.date && (
-                              <span className='text-[10px] text-gray-500 font-semibold'>{item.date}</span>
+                              <span className='text-[10px] text-gray-500 font-semibold'>{item.date.replace(/^(\d{4})-(\d{2})-(\d{2})$/, '$3-$2-$1')}</span>
                             )}
                           </div>
                           <p className='text-base md:text-lg font-black text-gray-800 pl-1'>

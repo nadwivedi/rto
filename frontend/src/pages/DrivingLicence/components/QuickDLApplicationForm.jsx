@@ -184,7 +184,8 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
         }).catch(() => setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }]))
 
         getExpensesByWork('DL', appData._id).then(res => {
-          const expenses = res.data.map(e => ({ date: e.date || '', name: e.name || '', amount: e.amount?.toString() || '', remark: e.remark || '' }))
+          const normalizeForInput = (d) => d && /^\d{2}-\d{2}-\d{4}$/.test(d) ? d.split('-').reverse().join('-') : (d || '')
+          const expenses = res.data.map(e => ({ date: normalizeForInput(e.date), name: e.name || '', amount: e.amount?.toString() || '', remark: e.remark || '' }))
           setExpenseItems(expenses.length > 0 ? expenses : [{ date: '', name: '', amount: '', remark: '' }])
         }).catch(() => setExpenseItems([{ date: '', name: '', amount: '', remark: '' }]))
       } else {
@@ -274,7 +275,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
           const fetched = res.data?.expenses
           if (Array.isArray(fetched) && fetched.length > 0) {
             const today = new Date()
-            const defaultDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`
+            const defaultDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
             setExpenseItems(fetched.map(item => ({ date: defaultDate, name: item.name || '', amount: item.amount?.toString() || '', remark: '' })))
           } else {
             setExpenseItems([{ date: '', name: '', amount: '', remark: '' }])
@@ -1629,7 +1630,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
         type="DL"
         onSave={(newDefaults) => {
           const today = new Date()
-          const defaultDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`
+          const defaultDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
           setExpenseItems(newDefaults.map(item => ({ date: defaultDate, name: item.name || '', amount: item.amount?.toString() || '', remark: '' })))
         }}
       />

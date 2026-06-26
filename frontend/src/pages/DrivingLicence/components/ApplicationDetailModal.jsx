@@ -52,6 +52,24 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
     return `${day}-${month}-${year}`
   }
 
+  // Helper to format expense dates (handles both YYYY-MM-DD and DD-MM-YYYY)
+  const formatExpenseDate = (dateStr) => {
+    if (!dateStr) return ''
+    if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) return dateStr
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [y, m, d] = dateStr.split('-')
+      return `${d}-${m}-${y}`
+    }
+    const d = new Date(dateStr)
+    if (!isNaN(d.getTime())) {
+      const day = String(d.getDate()).padStart(2, '0')
+      const month = String(d.getMonth() + 1).padStart(2, '0')
+      const year = d.getFullYear()
+      return `${day}-${month}-${year}`
+    }
+    return ''
+  }
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'Approved': return 'bg-green-100 text-green-700 border-green-300'
@@ -468,7 +486,7 @@ const ApplicationDetailModal = ({ isOpen, onClose, application }) => {
                     <div key={index} className='bg-white/80 p-2.5 md:p-3 rounded-lg border border-orange-200'>
                       <label className='text-[10px] md:text-xs font-semibold text-orange-700 uppercase flex justify-between'>
                         <span>{item.name}</span>
-                        {item.date && <span>{item.date}</span>}
+                        {item.date && <span>{formatExpenseDate(item.date)}</span>}
                       </label>
                       <p className='text-base md:text-lg font-black text-gray-800 mt-1'>
                         ₹{parseFloat(item.amount || 0).toLocaleString('en-IN')}

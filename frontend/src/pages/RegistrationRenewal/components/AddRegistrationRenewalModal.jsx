@@ -85,8 +85,9 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
       getExpensesByWork('RR', editData._id).then(res => {
         const fetched = res.data
         if (Array.isArray(fetched) && fetched.length > 0) {
+          const normalizeForInput = (d) => d && /^\d{2}-\d{2}-\d{4}$/.test(d) ? d.split('-').reverse().join('-') : (d || '')
           setExpenseItems(fetched.map(item => ({
-            date: item.date || '',
+            date: normalizeForInput(item.date),
             name: item.name || '',
             amount: item.amount || '',
             remark: item.remark || ''
