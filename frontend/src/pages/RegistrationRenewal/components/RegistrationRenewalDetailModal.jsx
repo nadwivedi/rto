@@ -2,18 +2,24 @@ import { useEffect, useState } from 'react'
 import { getVehicleNumberParts } from '../../../utils/vehicleNoCheck'
 import { getVehicleNumberDesign } from '../../../context/ThemeContext'
 import { getPaymentsByWork } from '../../../utils/paymentReceivedApi'
+import { getExpensesByWork } from '../../../utils/expenseBreakdownApi'
 
 const RegistrationRenewalDetailModal = ({ isOpen, onClose, renewal }) => {
   const vehicleDesign = getVehicleNumberDesign()
   const [paymentReceived, setPaymentReceived] = useState([])
+  const [expenseItems, setExpenseItems] = useState([])
 
   useEffect(() => {
     if (renewal?._id) {
       getPaymentsByWork('RR', renewal._id).then(res => {
         setPaymentReceived(res.data)
       }).catch(() => setPaymentReceived([]))
+      getExpensesByWork('RR', renewal._id).then(res => {
+        setExpenseItems(res.data)
+      }).catch(() => setExpenseItems([]))
     } else {
       setPaymentReceived([])
+      setExpenseItems([])
     }
   }, [renewal?._id])
 
@@ -212,7 +218,7 @@ const RegistrationRenewalDetailModal = ({ isOpen, onClose, renewal }) => {
             )}
 
             {(() => {
-              const validExpenseItems = renewal.expenseBreakup?.filter(item => item.name && parseFloat(item.amount) > 0) || []
+              const validExpenseItems = expenseItems?.filter(item => item.name && parseFloat(item.amount) > 0) || []
               return validExpenseItems.length > 0 && (
                 <div className='bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 md:p-6 border border-orange-200'>
                   <h3 className='text-sm md:text-base font-bold text-orange-800 mb-3 flex items-center gap-2'>
@@ -224,7 +230,10 @@ const RegistrationRenewalDetailModal = ({ isOpen, onClose, renewal }) => {
                   <div className='space-y-2'>
                     {validExpenseItems.map((item, index) => (
                       <div key={index} className='flex justify-between items-center py-2 bg-white px-3 rounded-lg border border-orange-100'>
-                        <span className='text-xs md:text-sm font-semibold text-gray-700'>{item.name}</span>
+                        <div>
+                          <span className='text-xs md:text-sm font-semibold text-gray-700'>{item.name}</span>
+                          {item.date && <span className='text-[10px] text-gray-400 ml-2'>{item.date}</span>}
+                        </div>
                         <span className='text-xs md:text-sm font-bold text-orange-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</span>
                       </div>
                     ))}

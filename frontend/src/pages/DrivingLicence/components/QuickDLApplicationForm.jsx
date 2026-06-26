@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import { handleSmartDateInput, normalizeAIExtractedDate } from '../../../utils/dateFormatter'
 import { validateMobileNumberRealtime, enforceMobileNumberFormat } from '../../../utils/contactValidation'
 import { replacePaymentsForWork, getPaymentsByWork } from '../../../utils/paymentReceivedApi'
+import { replaceExpensesForWork, getExpensesByWork } from '../../../utils/expenseBreakdownApi'
 import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
 import { getDefaultExpensesApi } from '../../../utils/defaultExpenseSettingsApi'
 
@@ -61,7 +62,6 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
     profit: '',
     byName: '',
     byMobile: '',
-    expenseBreakup: [{ name: '', amount: '', remark: '' }],
     documents: {
       learningLicense: '',
       learningLicenseType: '',
@@ -78,6 +78,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
   const [isExtractingDl, setIsExtractingDl] = useState(false)
   const [scanningFile, setScanningFile] = useState(null)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+  const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
 
   // Date of Birth state
@@ -181,8 +182,14 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
           const payments = res.data.map(p => ({ date: p.date, amount: p.amount, paymentMode: p.paymentMode, remark: p.remark || '' }))
           setPaymentReceived(payments.length > 0 ? payments : [{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
         }).catch(() => setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }]))
+
+        getExpensesByWork('DL', appData._id).then(res => {
+          const expenses = res.data.map(e => ({ date: e.date || '', name: e.name || '', amount: e.amount?.toString() || '', remark: e.remark || '' }))
+          setExpenseItems(expenses.length > 0 ? expenses : [{ date: '', name: '', amount: '', remark: '' }])
+        }).catch(() => setExpenseItems([{ date: '', name: '', amount: '', remark: '' }]))
       } else {
         setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+        setExpenseItems([{ date: '', name: '', amount: '', remark: '' }])
       }
     }
   }, [application])
@@ -259,35 +266,22 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
     }
   }, [isOpen, onClose])
 
-  // Populate default expenses when modal is opened
+  // Populate default expenses when modal is opened (only for new applications)
   useEffect(() => {
-    if (isOpen) {
-      // Don't fetch default expenses if we're editing an existing application with saved expenses
-      if (application?.fullData?.expenseBreakup && application.fullData.expenseBreakup.length > 0) {
-        return
-      }
-
+    if (isOpen && !application) {
       getDefaultExpensesApi('DL')
         .then(res => {
           const fetched = res.data?.expenses
           if (Array.isArray(fetched) && fetched.length > 0) {
-            setFormData(prev => ({
-              ...prev,
-              expenseBreakup: fetched.map(item => ({ name: item.name || '', amount: item.amount || '', remark: '' }))
-            }))
+            const today = new Date()
+            const defaultDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`
+            setExpenseItems(fetched.map(item => ({ date: defaultDate, name: item.name || '', amount: item.amount?.toString() || '', remark: '' })))
           } else {
-            setFormData(prev => ({
-              ...prev,
-              expenseBreakup: [{ name: '', amount: '', remark: '' }]
-            }))
+            setExpenseItems([{ date: '', name: '', amount: '', remark: '' }])
           }
         })
-        .catch(err => {
-          console.error(err)
-          setFormData(prev => ({
-            ...prev,
-            expenseBreakup: [{ name: '', amount: '', remark: '' }]
-          }))
+        .catch(() => {
+          setExpenseItems([{ date: '', name: '', amount: '', remark: '' }])
         })
     }
   }, [isOpen, application])
@@ -349,7 +343,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
 
   // Auto-calculate profit from totalAmount - totalExpenses (only when expenses are entered)
   useEffect(() => {
-    const totalExpenses = formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const totalExpenses = expenseItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
     const totalFee = parseFloat(formData.totalAmount) || 0
     if (totalExpenses > 0) {
       const calculatedProfit = totalFee - totalExpenses
@@ -358,7 +352,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
         return { ...prev, profit: calculatedProfit.toString() }
       })
     }
-  }, [formData.expenseBreakup, formData.totalAmount])
+  }, [expenseItems, formData.totalAmount])
 
 
   const handleLlExtractionUpload = async (e) => {
@@ -611,28 +605,19 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
     }
   }
 
-  // Expense Breakup handlers
+  // Expense Item handlers
   const addExpenseItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      expenseBreakup: [...prev.expenseBreakup, { name: '', amount: '', remark: '' }]
-    }))
+    setExpenseItems(prev => [...prev, { date: '', name: '', amount: '', remark: '' }])
   }
 
   const removeExpenseItem = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      expenseBreakup: prev.expenseBreakup.filter((_, i) => i !== index)
-    }))
+    setExpenseItems(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleExpenseBreakupChange = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      expenseBreakup: prev.expenseBreakup.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      )
-    }))
+    setExpenseItems(prev => prev.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ))
   }
 
   // Handle Enter key to move to next field instead of submitting
@@ -672,20 +657,14 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
     }
 
     // Filter out empty optional fields to avoid backend validation errors
-    const filteredExpenseBreakup = formData.expenseBreakup.filter(item =>
-      item.name && item.amount && parseFloat(item.amount) > 0
-    )
     const filteredData = Object.keys(formData).reduce((acc, key) => {
       const value = formData[key]
       // Only include fields that have non-empty values
-      if (value !== '' && value !== null && value !== undefined && key !== 'expenseBreakup') {
+      if (value !== '' && value !== null && value !== undefined) {
         acc[key] = value
       }
       return acc
     }, {})
-    if (filteredExpenseBreakup.length > 0) {
-      filteredData.expenseBreakup = filteredExpenseBreakup
-    }
 
     try {
       let response;
@@ -703,7 +682,17 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
             await replacePaymentsForWork('DL', recordId, validPayments)
           } catch (paymentErr) {
             console.error('Failed to save payment received entries:', paymentErr)
-            toast.warn('Payment records saved, but payment breakdown could not be saved.')
+            toast.warn('Application saved, but payment breakdown could not be saved.')
+          }
+        }
+
+        const validExpenses = expenseItems.filter(e => e.date && e.name && e.amount && parseFloat(e.amount) > 0)
+        if (recordId) {
+          try {
+            await replaceExpensesForWork('DL', recordId, validExpenses)
+          } catch (expErr) {
+            console.error('Failed to save expense entries:', expErr)
+            toast.warn('Application saved, but expense breakdown could not be saved.')
           }
         }
 
@@ -750,7 +739,6 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
       paidAmount: '2000',
       balanceAmount: 2000,
       profit: '',
-      expenseBreakup: [{ name: '', amount: '', remark: '' }],
       documents: {
         learningLicense: '',
         learningLicenseType: ''
@@ -761,6 +749,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
     setDobMonth('')
     setDobYear('2000')
     setPaymentReceived([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+    setExpenseItems([{ date: '', name: '', amount: '', remark: '' }])
     onClose()
   }
 
@@ -1404,13 +1393,21 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
                       </button>
                     </div>
 
-                    {formData.expenseBreakup.length === 0 ? (
+                    {expenseItems.length === 0 ? (
                       <p className='text-sm text-gray-500 italic'>No expenses added. Click "Add Expense" to record expenses.</p>
                     ) : (
                       <div className='space-y-3'>
-                        {formData.expenseBreakup.map((item, index) => (
+                        {expenseItems.map((item, index) => (
                           <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-3 items-center'>
-                            <div className='md:col-span-4'>
+                            <div className='md:col-span-2'>
+                              <input
+                                type='date'
+                                value={item.date}
+                                onChange={(e) => handleExpenseBreakupChange(index, 'date', e.target.value)}
+                                className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
+                              />
+                            </div>
+                            <div className='md:col-span-3'>
                               <input
                                 type='text'
                                 placeholder='Expense name (e.g. Fitness, Commission)'
@@ -1419,7 +1416,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
                                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
                               />
                             </div>
-                            <div className='md:col-span-3'>
+                            <div className='md:col-span-2'>
                               <div className='relative'>
                                 <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-semibold'>₹</span>
                                 <input
@@ -1459,7 +1456,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
                         <div className='flex justify-between items-center bg-orange-100 rounded-lg px-4 py-2.5 border border-orange-300'>
                           <span className='text-sm font-bold text-orange-900'>Total Expense</span>
                           <span className='text-lg font-black text-orange-800'>
-                            ₹{formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                            ₹{expenseItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
                           </span>
                         </div>
                       </div>
@@ -1631,10 +1628,9 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
         onClose={() => setIsSettingsOpen(false)}
         type="DL"
         onSave={(newDefaults) => {
-          setFormData(prev => ({
-            ...prev,
-            expenseBreakup: newDefaults.map(item => ({ name: item.name || '', amount: item.amount || '', remark: '' }))
-          }))
+          const today = new Date()
+          const defaultDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`
+          setExpenseItems(newDefaults.map(item => ({ date: defaultDate, name: item.name || '', amount: item.amount?.toString() || '', remark: '' })))
         }}
       />
     </div>

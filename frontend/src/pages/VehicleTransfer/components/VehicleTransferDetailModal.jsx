@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getPaymentsByWork } from '../../../utils/paymentReceivedApi'
+import { getExpensesByWork } from '../../../utils/expenseBreakdownApi'
 
 const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
   useEffect(() => {
@@ -16,14 +17,20 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
   }, [isOpen, onClose])
 
   const [paymentReceived, setPaymentReceived] = useState([])
+  const [expenseItems, setExpenseItems] = useState([])
 
   useEffect(() => {
     if (transfer?._id) {
       getPaymentsByWork('VT', transfer._id).then(res => {
         setPaymentReceived(res.data)
       }).catch(() => setPaymentReceived([]))
+      
+      getExpensesByWork('VT', transfer._id).then(res => {
+        setExpenseItems(res.data)
+      }).catch(() => setExpenseItems([]))
     } else {
       setPaymentReceived([])
+      setExpenseItems([])
     }
   }, [transfer?._id])
 
@@ -250,9 +257,9 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                 </div>
               )}
 
-              {/* Expense Breakup - Show only if exists */}
+              {/* Expense Breakdown */}
               {(() => {
-                const validExpenseItems = transfer.expenseBreakup?.filter(item => item.name && parseFloat(item.amount) > 0) || []
+                const validExpenseItems = expenseItems?.filter(item => item.name && parseFloat(item.amount) > 0) || []
                 return validExpenseItems.length > 0 && (
                   <div className='mt-4 pt-4 border-t border-purple-300'>
                     <h4 className='text-xs md:text-sm font-bold text-purple-900 mb-3 flex items-center gap-2'>
@@ -264,13 +271,18 @@ const VehicleTransferDetailModal = ({ isOpen, onClose, transfer }) => {
                     <div className='grid grid-cols-2 md:grid-cols-4 gap-3'>
                       {validExpenseItems.map((item, index) => (
                         <div key={index} className='bg-white p-3 md:p-4 rounded-lg border border-gray-200 shadow-md hover:shadow-lg transition-all duration-200'>
-                          <div className='flex items-center gap-2 mb-2'>
-                            <div className='bg-orange-500 rounded-full p-1'>
-                              <svg className='w-3 h-3 md:w-4 md:h-4 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
-                              </svg>
+                          <div className='flex justify-between items-center mb-2'>
+                            <div className='flex items-center gap-2'>
+                              <div className='bg-orange-500 rounded-full p-1'>
+                                <svg className='w-3 h-3 md:w-4 md:h-4 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' />
+                                </svg>
+                              </div>
+                              <label className='text-xs font-bold text-orange-700 uppercase tracking-wide'>{item.name}</label>
                             </div>
-                            <label className='text-xs font-bold text-orange-700 uppercase tracking-wide'>{item.name}</label>
+                            {item.date && (
+                              <span className='text-[10px] text-gray-500 font-semibold'>{item.date}</span>
+                            )}
                           </div>
                           <p className='text-base md:text-lg font-black text-gray-800 pl-1'>
                             ₹{(item.amount || 0).toLocaleString('en-IN')}

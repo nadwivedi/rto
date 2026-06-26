@@ -5,6 +5,7 @@ import { validateVehicleNumberRealtime, enforceVehicleNumberFormat } from '../..
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 import { handleSmartDateInput } from '../../../utils/dateFormatter'
 import { replacePaymentsForWork, getPaymentsByWork } from '../../../utils/paymentReceivedApi'
+import { replaceExpensesForWork, getExpensesByWork } from '../../../utils/expenseBreakdownApi'
 import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
 import { getDefaultExpensesApi } from '../../../utils/defaultExpenseSettingsApi'
 
@@ -27,7 +28,6 @@ const getDefaultFormData = () => ({
   paid: '',
   balance: '0',
   profit: '',
-  expenseBreakup: [{ name: '', amount: '', remark: '' }],
   feeBreakup: [
     { name: 'Transfer', amount: '' },
     { name: 'PUC', amount: '' },
@@ -44,6 +44,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
   const [vehicleValidation, setVehicleValidation] = useState({ isValid: false, message: '' })
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+  const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
 
@@ -82,9 +83,6 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
         ...editData,
         balance: editData.balance?.toString() ?? `${(parseFloat(editData.totalFee) || 0) - (parseFloat(editData.paid) || 0)}`,
         profit: editData.profit?.toString() || '',
-        expenseBreakup: (editData.expenseBreakup || []).length > 0
-          ? (editData.expenseBreakup || []).map(item => ({ ...item }))
-          : [{ name: '', amount: '', remark: '' }],
         feeBreakup
       })
       // Validate vehicle number if editing
@@ -92,6 +90,21 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
         const validation = validateVehicleNumberRealtime(editData.vehicleNumber)
         setVehicleValidation(validation)
       }
+      // Fetch expenses for edit
+      getExpensesByWork('VT', editData._id).then(res => {
+        const fetched = res.data
+        if (Array.isArray(fetched) && fetched.length > 0) {
+          setExpenseItems(fetched.map(item => ({
+            date: item.date || '',
+            name: item.name || '',
+            amount: item.amount || '',
+            remark: item.remark || ''
+          })))
+        } else {
+          setExpenseItems([{ date: '', name: '', amount: '', remark: '' }])
+        }
+      }).catch(() => setExpenseItems([{ date: '', name: '', amount: '', remark: '' }]))
+      
     } else {
       setFormData(getDefaultFormData())
       setVehicleValidation({ isValid: false, message: '' })
@@ -101,13 +114,15 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
         .then(res => {
           const fetched = res.data?.expenses
           if (Array.isArray(fetched) && fetched.length > 0) {
-            setFormData(prev => ({
-              ...prev,
-              expenseBreakup: fetched.map(item => ({ name: item.name || '', amount: item.amount || '', remark: '' }))
-            }))
+            setExpenseItems(fetched.map(item => ({ date: '', name: item.name || '', amount: item.amount || '', remark: '' })))
+          } else {
+            setExpenseItems([{ date: '', name: '', amount: '', remark: '' }])
           }
         })
-        .catch(err => console.error(err))
+        .catch(err => {
+          console.error(err)
+          setExpenseItems([{ date: '', name: '', amount: '', remark: '' }])
+        })
     }
     setError('')
     // Fetch existing payment received entries for edit
@@ -123,14 +138,14 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
 
   // Auto-calculate profit from totalFee - totalExpenses
   useEffect(() => {
-    const totalExpenses = formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
+    const totalExpenses = expenseItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0)
     const totalFee = parseFloat(formData.totalFee) || 0
     const calculatedProfit = totalFee - totalExpenses
     setFormData(prev => {
       if (prev.profit === calculatedProfit.toString()) return prev
       return { ...prev, profit: calculatedProfit.toString() }
     })
-  }, [formData.expenseBreakup, formData.totalFee])
+  }, [expenseItems, formData.totalFee])
 
   // Auto-fill paid from paymentReceived total
   useEffect(() => {
@@ -247,14 +262,9 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
         item.name && item.amount && parseFloat(item.amount) > 0
       )
 
-      const filteredExpenseBreakup = formData.expenseBreakup.filter(item =>
-        item.name && item.amount && parseFloat(item.amount) > 0
-      )
-
       const dataToSend = {
         ...formData,
-        feeBreakup: filteredFeeBreakup,
-        expenseBreakup: filteredExpenseBreakup
+        feeBreakup: filteredFeeBreakup
       }
 
       const url = editData
@@ -272,13 +282,32 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
       if (data.success) {
         const recordId = data.data?._id || editData?._id
         const validPayments = paymentReceived.filter(p => p.date && p.amount && parseFloat(p.amount) > 0)
-        if (validPayments.length > 0 && recordId) {
+        
+        // Use transferDate or today as default expense date
+        const defaultDate = formData.transferDate || new Date().toISOString().slice(0, 10).split('-').reverse().join('-')
+        const validExpenses = expenseItems
+          .filter(e => e.name && e.amount && parseFloat(e.amount) > 0)
+          .map(e => ({
+            ...e,
+            date: e.date || defaultDate // Automatically assign date if empty
+          }))
+
+        if (recordId) {
           try {
-            await replacePaymentsForWork('VT', recordId, validPayments)
-    } catch (paymentErr) {
-      console.error('Failed to save payment received entries:', paymentErr)
-      toast.warn('Payment records saved, but payment breakdown could not be saved.')
-    }
+            if (validPayments.length > 0) {
+              await replacePaymentsForWork('VT', recordId, validPayments)
+            }
+          } catch (paymentErr) {
+            console.error('Failed to save payment received entries:', paymentErr)
+            toast.warn('Vehicle Transfer saved, but payment breakdown could not be saved.')
+          }
+
+          try {
+            await replaceExpensesForWork('VT', recordId, validExpenses)
+          } catch (expenseErr) {
+            console.error('Failed to save expense entries:', expenseErr)
+            toast.warn('Vehicle Transfer saved, but expense breakdown could not be saved.')
+          }
         }
         toast.success(editData ? 'Vehicle transfer updated successfully' : 'Vehicle transfer added successfully', {
           autoClose: 1200
@@ -335,26 +364,17 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
 
   // Expense Breakup Handlers
   const addExpenseBreakupItem = () => {
-    setFormData(prev => ({
-      ...prev,
-      expenseBreakup: [...prev.expenseBreakup, { name: '', amount: '', remark: '' }]
-    }))
+    setExpenseItems(prev => [...prev, { date: '', name: '', amount: '', remark: '' }])
   }
 
   const removeExpenseBreakupItem = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      expenseBreakup: prev.expenseBreakup.filter((_, i) => i !== index)
-    }))
+    setExpenseItems(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleExpenseBreakupChange = (index, field, value) => {
-    setFormData(prev => ({
-      ...prev,
-      expenseBreakup: prev.expenseBreakup.map((item, i) =>
-        i === index ? { ...item, [field]: value } : item
-      )
-    }))
+    setExpenseItems(prev => prev.map((item, i) =>
+      i === index ? { ...item, [field]: value } : item
+    ))
   }
 
   // Payment Received Handlers
@@ -893,15 +913,24 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                       </button>
                     </div>
 
-                    {formData.expenseBreakup.length === 0 ? (
+                    {expenseItems.length === 0 ? (
                       <div className='bg-orange-100 border-2 border-dashed border-orange-300 rounded-lg p-4 text-center'>
                         <p className='text-sm text-orange-700 font-semibold'>No expenses added yet. Click "Add Expense" to add expense details.</p>
                       </div>
                     ) : (
                       <div className='space-y-2'>
-                        {formData.expenseBreakup.map((item, index) => (
+                        {expenseItems.map((item, index) => (
                           <div key={index} className='grid grid-cols-1 md:grid-cols-12 gap-2 bg-white p-2 rounded-lg border border-orange-200'>
-                            <div className='md:col-span-4'>
+                            <div className='md:col-span-2'>
+                              <input
+                                type='date'
+                                value={item.date || ''}
+                                onChange={(e) => handleExpenseBreakupChange(index, 'date', e.target.value)}
+                                className='w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
+                                title='Expense Date (Optional, defaults to application date)'
+                              />
+                            </div>
+                            <div className='md:col-span-3'>
                               <input
                                 type='text'
                                 placeholder='Expense name'
@@ -911,7 +940,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                                 className='w-full px-3 py-2 border border-orange-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent text-sm font-semibold'
                               />
                             </div>
-                            <div className='md:col-span-3'>
+                            <div className='md:col-span-2'>
                               <div className='relative'>
                                 <span className='absolute left-3 top-2.5 text-gray-500 font-semibold'>₹</span>
                                 <input
@@ -952,7 +981,7 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
                         <div className='flex justify-end items-center bg-orange-100 p-2 rounded-lg border border-orange-300'>
                           <span className='text-sm font-bold text-gray-800'>Total Expense: </span>
                           <span className='text-sm font-bold text-orange-700 ml-2'>
-                            ₹{formData.expenseBreakup.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                            ₹{expenseItems.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
                           </span>
                         </div>
                       </div>

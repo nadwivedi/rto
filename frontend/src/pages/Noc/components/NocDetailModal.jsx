@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { getPaymentsByWork } from '../../../utils/paymentReceivedApi'
+import { getExpensesByWork } from '../../../utils/expenseBreakdownApi'
 
 const NocDetailModal = ({ isOpen, onClose, record }) => {
   useEffect(() => {
@@ -16,14 +17,19 @@ const NocDetailModal = ({ isOpen, onClose, record }) => {
   }, [isOpen, onClose])
 
   const [paymentReceived, setPaymentReceived] = useState([])
+  const [expenseItems, setExpenseItems] = useState([])
 
   useEffect(() => {
     if (record?._id) {
       getPaymentsByWork('NOC', record._id).then(res => {
         setPaymentReceived(res.data)
       }).catch(() => setPaymentReceived([]))
+      getExpensesByWork('NOC', record._id).then(res => {
+        setExpenseItems(res.data)
+      }).catch(() => setExpenseItems([]))
     } else {
       setPaymentReceived([])
+      setExpenseItems([])
     }
   }, [record?._id])
 
@@ -101,14 +107,17 @@ const NocDetailModal = ({ isOpen, onClose, record }) => {
           )}
 
           {(() => {
-            const validExpenseItems = record.expenseBreakup?.filter(item => item.name && Number(item.amount) > 0) || []
+            const validExpenseItems = expenseItems?.filter(item => item.name && Number(item.amount) > 0) || []
             return validExpenseItems.length > 0 && (
               <div className='bg-orange-50 rounded-lg border border-orange-200 p-4 mb-4'>
                 <h4 className='text-sm font-bold text-orange-800 mb-3'>Expense Breakdown</h4>
                 <div className='space-y-2'>
                   {validExpenseItems.map((item, index) => (
                     <div key={index} className='flex items-center justify-between text-sm bg-white border border-orange-200 rounded-md px-3 py-2'>
-                      <span className='font-semibold text-gray-700'>{item.name}</span>
+                      <div>
+                        <span className='font-semibold text-gray-700'>{item.name}</span>
+                        {item.date && <span className='text-[10px] text-gray-400 ml-2'>{item.date}</span>}
+                      </div>
                       <span className='font-bold text-gray-900'>₹{Number(item.amount).toLocaleString('en-IN')}</span>
                     </div>
                   ))}
@@ -121,50 +130,49 @@ const NocDetailModal = ({ isOpen, onClose, record }) => {
             )
           })()}
 
-              {/* Payment Received Breakdown */}
-              {paymentReceived.length > 0 && (
-                <div className='bg-gradient-to-br from-cyan-50 to-teal-50 rounded-xl p-4 border border-cyan-200 mb-4'>
-                  <h4 className='text-sm font-bold text-cyan-800 mb-3'>Payment Received Breakdown</h4>
-                  <div className='overflow-x-auto'>
-                    <table className='w-full text-sm'>
-                      <thead>
-                        <tr className='border-b-2 border-cyan-200'>
-                          <th className='text-left py-2 px-3 text-cyan-700 font-bold'>Date</th>
-                          <th className='text-right py-2 px-3 text-cyan-700 font-bold'>Amount</th>
-                          <th className='text-center py-2 px-3 text-cyan-700 font-bold'>Method</th>
-                          <th className='text-left py-2 px-3 text-cyan-700 font-bold'>Notes</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paymentReceived.map((p, i) => (
-                          <tr key={i} className='border-b border-cyan-100'>
-                            <td className='py-2 px-3 text-gray-700 font-semibold'>{p.date?.split('-').reverse().join('-')}</td>
-                            <td className='py-2 px-3 text-right font-bold text-gray-900'>₹{(p.amount || 0).toLocaleString('en-IN')}</td>
-                            <td className='py-2 px-3 text-center'>
-                              <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
-                                p.paymentMode === 'Cash' ? 'bg-green-100 text-green-700' :
-                                p.paymentMode === 'Bank' ? 'bg-blue-100 text-blue-700' :
-                                'bg-purple-100 text-purple-700'
-                              }`}>
-                                {p.paymentMode}
-                              </span>
-                            </td>
-                            <td className='py-2 px-3 text-gray-600 text-xs max-w-[150px] truncate' title={p.remark || ''}>{p.remark || '-'}</td>
-                          </tr>
-                        ))}
-                      </tbody>
-                      <tfoot>
-                        <tr className='bg-cyan-100 font-bold'>
-                          <td className='py-2 px-3 text-cyan-800'>Total</td>
-                          <td className='py-2 px-3 text-right text-cyan-900'>₹{paymentReceived.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString('en-IN')}</td>
-                          <td className='py-2 px-3'></td>
-                          <td className='py-2 px-3'></td>
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
-                </div>
-              )}
+          {paymentReceived.length > 0 && (
+            <div className='bg-gradient-to-br from-cyan-50 to-teal-50 rounded-xl p-4 border border-cyan-200 mb-4'>
+              <h4 className='text-sm font-bold text-cyan-800 mb-3'>Payment Received Breakdown</h4>
+              <div className='overflow-x-auto'>
+                <table className='w-full text-sm'>
+                  <thead>
+                    <tr className='border-b-2 border-cyan-200'>
+                      <th className='text-left py-2 px-3 text-cyan-700 font-bold'>Date</th>
+                      <th className='text-right py-2 px-3 text-cyan-700 font-bold'>Amount</th>
+                      <th className='text-center py-2 px-3 text-cyan-700 font-bold'>Method</th>
+                      <th className='text-left py-2 px-3 text-cyan-700 font-bold'>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentReceived.map((p, i) => (
+                      <tr key={i} className='border-b border-cyan-100'>
+                        <td className='py-2 px-3 text-gray-700 font-semibold'>{p.date?.split('-').reverse().join('-')}</td>
+                        <td className='py-2 px-3 text-right font-bold text-gray-900'>₹{(p.amount || 0).toLocaleString('en-IN')}</td>
+                        <td className='py-2 px-3 text-center'>
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
+                            p.paymentMode === 'Cash' ? 'bg-green-100 text-green-700' :
+                            p.paymentMode === 'Bank' ? 'bg-blue-100 text-blue-700' :
+                            'bg-purple-100 text-purple-700'
+                          }`}>
+                            {p.paymentMode}
+                          </span>
+                        </td>
+                        <td className='py-2 px-3 text-gray-600 text-xs max-w-[150px] truncate' title={p.remark || ''}>{p.remark || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className='bg-cyan-100 font-bold'>
+                      <td className='py-2 px-3 text-cyan-800'>Total</td>
+                      <td className='py-2 px-3 text-right text-cyan-900'>₹{paymentReceived.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString('en-IN')}</td>
+                      <td className='py-2 px-3'></td>
+                      <td className='py-2 px-3'></td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+          )}
 
           {validFeeItems.length > 0 && (
             <div className='bg-gray-50 rounded-lg border border-gray-200 p-4 mb-4'>

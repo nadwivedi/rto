@@ -63,7 +63,6 @@ exports.createNoc = async (req, res) => {
       balance,
       feeBreakup,
       profit,
-      expenseBreakup,
       remarks
     } = req.body
 
@@ -97,7 +96,6 @@ exports.createNoc = async (req, res) => {
       balance,
       feeBreakup: normalizeFeeBreakup(feeBreakup),
       profit,
-      expenseBreakup,
       remarks,
       userId: req.user.id
     })
@@ -305,7 +303,6 @@ exports.updateNoc = async (req, res) => {
     if (req.body.remarks !== undefined) record.remarks = req.body.remarks
     if (req.body.feeBreakup !== undefined) record.feeBreakup = normalizeFeeBreakup(req.body.feeBreakup)
     if (req.body.profit !== undefined) record.profit = req.body.profit
-    if (req.body.expenseBreakup !== undefined) record.expenseBreakup = req.body.expenseBreakup
 
     await record.save()
 

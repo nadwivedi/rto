@@ -124,26 +124,6 @@ const DrivingSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
-  expenseBreakup: [{
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    amount: {
-      type: Number,
-      required: true,
-      default: 0
-    },
-    remark: {
-      type: String,
-      trim: true,
-      default: ''
-    },
-    _id: false
-  }],
-
-
 
   // Documents (store file paths or URLs)
   documents: {

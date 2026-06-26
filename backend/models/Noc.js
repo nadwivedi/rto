@@ -61,26 +61,6 @@ const nocSchema = new mongoose.Schema({
     default: 0
   },
 
-  expenseBreakup: [{
-    name: {
-      type: String,
-      required: true,
-      trim: true
-    },
-    amount: {
-      type: Number,
-      required: true,
-      min: 0,
-      default: 0
-    },
-    remark: {
-      type: String,
-      trim: true,
-      default: ''
-    },
-    _id: false
-  }],
-
   feeBreakup: [{
     name: {
       type: String,
