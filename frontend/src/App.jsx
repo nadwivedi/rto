@@ -37,6 +37,7 @@ import Sarthi from './pages/Sarthi'
 import KycZone from './pages/KycZone/KycZone'
 import WhatsApp from './pages/WhatsApp/WhatsApp'
 import Javak from './pages/Javak/Javak'
+import CashflowReport from './pages/Reports/CashflowReport'
 import PWAPrompt from './components/PWAPrompt'
 // import { Agentation } from 'agentation'
 
@@ -78,7 +79,7 @@ function ProtectedLayout() {
 
         const vahanHubPages = ['/vahan', '/whatsapp', '/setting', '/javak', '/kyc'];
         const sarthiHubPages = ['/sarthi'];
-        const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal', '/hpa-hpt'];
+        const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal', '/hpa-hpt', '/cashflow-report'];
 
         const vahanSubPages = [
           '/vehicle-registration',
@@ -154,6 +155,7 @@ function ProtectedLayout() {
                 <Route path='/parties/:partyId' element={<LegacyPartyDetailRedirect />} />
                 <Route path='/whatsapp' element={<WhatsApp />} />
                 <Route path='/javak' element={<Javak />} />
+                <Route path='/cashflow-report' element={<CashflowReport />} />
               </Routes>
             </main>
           </div>

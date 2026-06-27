@@ -203,6 +203,13 @@ const Home2 = () => {
             <span className='text-base sm:text-xl'>⚙️</span>
             Setting
           </button>
+          <button
+            onClick={() => navigate('/cashflow-report')}
+            className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-emerald-700 transition-all duration-300 font-bold text-xs sm:text-base'
+          >
+            <span className='text-base sm:text-xl'>💰</span>
+            Cashflow
+          </button>
         </div>
       </div>
 

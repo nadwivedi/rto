@@ -138,6 +138,13 @@ const Navbar = () => {
     },
 
     {
+      name: "Cashflow",
+      icon: "💰",
+      path: "/cashflow-report",
+      description: "Expense & Income Report",
+    },
+
+    {
       name: "setting",
       icon: "⚙️",
       path: "/setting",
