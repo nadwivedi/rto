@@ -1037,12 +1037,12 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
       return;
     }
 
-    // PDF: convert to images first (works for both text-based AND scanned/image-based PDFs)
+    // PDF: render pages as images for vision OCR, save original PDF to server
     if (file.type === 'application/pdf') {
       setIsExtractingRc(true);
       const updateToast = toast.info('Rendering RC PDF pages, please wait...', { autoClose: false, isLoading: true });
       try {
-        // Step 1: Render PDF pages → JPEG images via PDF.js (browser canvas)
+        // Step 1: Render PDF pages → JPEG images via PDF.js (works for both text-based and scanned PDFs)
         const pageImages = await pdfToImages(file, 2); // up to 2 pages
         if (!pageImages || pageImages.length === 0) {
           toast.dismiss(updateToast);
@@ -1051,10 +1051,11 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
           return;
         }
 
-        const frontImageBase64 = pageImages[0];           // page 1 as JPEG
-        const backImageBase64 = pageImages[1] || null;    // page 2 as JPEG (if exists)
+        const frontImageBase64 = pageImages[0];        // page 1 as JPEG base64
+        const backImageBase64 = pageImages[1] || null; // page 2 as JPEG base64 (if exists)
 
-        // Step 2: OCR via vision model (images, not raw PDF text)
+        // Step 2: OCR via vision model (image-based, works for both scanned & digital RCs)
+        toast.update(updateToast, { render: 'Analyzing RC document, please wait...', isLoading: true });
         try {
           const response = await axios.post(
             `${API_URL}/api/ocr/rc`,
@@ -1065,7 +1066,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
           if (response.data.success && response.data.data) {
             const resultData = response.data.data;
 
-            // Step 3: Immediately populate form with extracted data
+            // Step 3: Populate form with extracted data
             const matchedParty = findMatchingParty(resultData.ownerName);
             if (matchedParty) {
               setSelectedPartyName(matchedParty.partyName);
@@ -1087,27 +1088,28 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
               }
               return updated;
             });
-            // Show the rendered page 1 image as the preview
+            // Show rendered page 1 as preview while PDF uploads
             setRcImagePreview(frontImageBase64);
 
             toast.dismiss(updateToast);
             toast.success('RC Details Extracted Successfully!', { position: 'top-right', autoClose: 3000 });
 
-            // Step 4: Upload the original PDF for storage (failure won't affect extracted data)
+            // Step 4: Upload original PDF for storage (failure won't affect extracted data)
             try {
-              const reader = new FileReader();
-              reader.onloadend = async () => {
+              const pdfReader = new FileReader();
+              pdfReader.onloadend = async () => {
                 try {
-                  const pdfBase64 = reader.result;
+                  const pdfBase64 = pdfReader.result;
                   const uploadData = await uploadRcDocument(pdfBase64, 'front', resultData.registrationNumber);
                   if (uploadData) {
+                    setRcImagePreview(`${API_URL}${uploadData.path}`);
                     toast.success(`RC PDF saved! (${uploadData.sizeInMB}MB)`, { position: 'top-right', autoClose: 2000 });
                   }
                 } catch (uploadErr) {
                   console.warn('RC PDF upload failed (data still extracted):', uploadErr);
                 }
               };
-              reader.readAsDataURL(file);
+              pdfReader.readAsDataURL(file);
             } catch (uploadErr) {
               console.warn('RC PDF upload error:', uploadErr);
             }
@@ -1220,7 +1222,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
     }
   }
 
-  // Handle RC Back document upload (direct, no scanner step) + OCR extraction
+  // Handle RC Back document upload + OCR extraction
   const handleBackImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1239,6 +1241,112 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
     }
     e.target.value = '';
     setUploadingBackImage(true);
+
+    // --- PDF path: render to image for OCR, save original PDF ---
+    if (isPDF) {
+      try {
+        const backToast = toast.info('Rendering RC Back PDF pages...', { autoClose: false, isLoading: true });
+
+        // Step 1: Render PDF → JPEG images
+        const pageImages = await pdfToImages(file, 1); // just page 1 for back
+        if (!pageImages || pageImages.length === 0) {
+          toast.dismiss(backToast);
+          toast.error('Could not render RC Back PDF. Please try a different file.', { position: 'top-right', autoClose: 3000 });
+          setUploadingBackImage(false);
+          return;
+        }
+
+        const backImageForOcr = pageImages[0]; // JPEG base64 of page 1
+        // Show rendered image as preview while PDF uploads
+        setRcBackImagePreview(backImageForOcr);
+
+        toast.update(backToast, { render: 'Analyzing RC Back document...', isLoading: true });
+
+        // Step 2: Run OCR + upload the original PDF in parallel
+        const [ocrResult, uploadResult] = await Promise.allSettled([
+          // OCR: send rendered image to vision model
+          axios.post(
+            `${API_URL}/api/ocr/rc`,
+            { imageBase64: backImageForOcr },
+            { withCredentials: true }
+          ),
+          // Upload: save original PDF to server
+          (async () => {
+            const pdfReader = new FileReader();
+            return new Promise((resolve, reject) => {
+              pdfReader.onloadend = async () => {
+                try {
+                  const pdfBase64 = pdfReader.result;
+                  const res = await axios.post(
+                    `${API_URL}/api/upload/rc-back-image`,
+                    {
+                      imageData: pdfBase64,
+                      vehicleRegistrationId: editData?._id || null,
+                      vehicleNumber: formData.registrationNumber || 'EXTRACTED'
+                    },
+                    { withCredentials: true }
+                  );
+                  resolve(res);
+                } catch (err) {
+                  reject(err);
+                }
+              };
+              pdfReader.onerror = reject;
+              pdfReader.readAsDataURL(file);
+            });
+          })()
+        ]);
+
+        // Handle upload result
+        if (uploadResult.status === 'fulfilled' && uploadResult.value?.data?.success) {
+          const serverPath = uploadResult.value.data.data.path;
+          setFormData(prev => ({ ...prev, rcBackImage: serverPath }));
+          setRcBackImagePreview(`${API_URL}${serverPath}`);
+          toast.dismiss(backToast);
+          toast.success(`RC Back PDF saved! (${uploadResult.value.data.data.sizeInMB}MB)`, { position: 'top-right', autoClose: 2000 });
+        } else {
+          toast.dismiss(backToast);
+          toast.error('Failed to upload RC Back PDF', { position: 'top-right', autoClose: 3000 });
+          setRcBackImagePreview(null);
+        }
+
+        // Handle OCR result — fill only empty fields
+        if (ocrResult.status === 'fulfilled' && ocrResult.value?.data?.success && ocrResult.value?.data?.data) {
+          const resultData = ocrResult.value.data.data;
+          const matchedParty = findMatchingParty(resultData.ownerName);
+          if (matchedParty) {
+            setSelectedPartyName(matchedParty.partyName);
+          } else if (resultData.ownerName) {
+            setSelectedPartyName('');
+            setPendingPartyDraft({
+              partyName: resultData.ownerName,
+              sonWifeDaughterOf: resultData.sonWifeDaughterOf,
+              mobile: resultData.mobileNumber,
+              email: resultData.email,
+              address: resultData.address
+            });
+          }
+          setFormData(prev => {
+            const updated = mergeExtractedRcData(prev, resultData, { onlyEmpty: true, matchedParty });
+            if (resultData.registrationNumber && !updated.registrationNumber) {
+              const validation = validateVehicleNumberRealtime(resultData.registrationNumber);
+              setVehicleValidation(validation);
+            }
+            return updated;
+          });
+          toast.info('Back side data also extracted!', { position: 'top-right', autoClose: 2000 });
+        }
+      } catch (err) {
+        console.error('RC Back PDF error:', err);
+        toast.error('Error processing RC Back PDF.', { position: 'top-right', autoClose: 3000 });
+        setRcBackImagePreview(null);
+      } finally {
+        setUploadingBackImage(false);
+      }
+      return;
+    }
+
+    // --- Image path: read base64 directly ---
     const reader = new FileReader();
     reader.onloadend = async () => {
       const base64String = reader.result;
@@ -1257,7 +1365,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
           },
           { withCredentials: true }
         ),
-        // 2. OCR: send back image/PDF to extract any remaining fields
+        // 2. OCR: send back image to extract any remaining fields
         axios.post(
           `${API_URL}/api/ocr/rc`,
           { imageBase64: base64String },
