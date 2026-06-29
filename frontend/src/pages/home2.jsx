@@ -194,7 +194,7 @@ const Home2 = () => {
             className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-indigo-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold text-xs sm:text-base'
           >
             <span className='text-base sm:text-xl'>📋</span>
-            Javak
+            Javak(notes)
           </button>
           <button
             onClick={() => navigate('/setting')}
