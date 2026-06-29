@@ -308,61 +308,90 @@ const CashflowReport = () => {
             </span>
           </div>
 
-          <div className='overflow-x-auto'>
-            <table className='w-full text-xs'>
-              <thead>
-                <tr className='bg-gray-50 border-b border-gray-100'>
-                  <th className='text-left px-3 py-2 text-gray-600 font-bold'>Type</th>
-                  <th className='text-left px-3 py-2 text-gray-600 font-bold'>Work Type</th>
-                  <th className='text-left px-3 py-2 text-gray-600 font-bold'>Name</th>
-                  <th className='text-left px-3 py-2 text-gray-600 font-bold'>Customer</th>
-                  <th className='text-right px-3 py-2 text-gray-600 font-bold'>Amount</th>
-                  <th className='text-center px-3 py-2 text-gray-600 font-bold'>Payment</th>
-                  <th className='text-left px-3 py-2 text-gray-600 font-bold'>Notes</th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-gray-100'>
-                {income?.items?.map((item, idx) => (
-                  <tr key={`i-${item._id || idx}`} className='hover:bg-green-50/50'>
-                    <td className='px-3 py-2'>
-                      <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700'>Income</span>
-                    </td>
-                    <td className='px-3 py-2'>
-                      <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-700 border border-cyan-200'>{item.workTypeLabel}</span>
-                    </td>
-                    <td className='px-3 py-2 text-gray-400'>-</td>
-                    <td className='px-3 py-2 text-gray-600 font-semibold'>{item.customerName || '-'}</td>
-                    <td className='px-3 py-2 text-right font-bold text-green-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</td>
-                    <td className='px-3 py-2 text-center'>
-                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                        item.paymentMode === 'Cash' ? 'bg-green-100 text-green-700' :
-                        item.paymentMode === 'Bank' ? 'bg-blue-100 text-blue-700' :
-                        'bg-purple-100 text-purple-700'
-                      }`}>{item.paymentMode || 'Cash'}</span>
-                    </td>
-                    <td className='px-3 py-2 text-gray-500 max-w-[120px] truncate' title={item.remark || ''}>{item.remark || '-'}</td>
-                  </tr>
-                ))}
-                {expense?.items?.map((item, idx) => (
-                  <tr key={`e-${item._id || idx}`} className='hover:bg-red-50/50'>
-                    <td className='px-3 py-2'>
-                      <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700'>Expense</span>
-                    </td>
-                    <td className='px-3 py-2'>
-                      <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200'>{item.workTypeLabel}</span>
-                    </td>
-                    <td className='px-3 py-2 font-semibold text-gray-900'>{item.name}</td>
-                    <td className='px-3 py-2 text-gray-600 font-semibold'>{item.customerName || '-'}</td>
-                    <td className='px-3 py-2 text-right font-bold text-red-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</td>
-                    <td className='px-3 py-2 text-center text-gray-400'>-</td>
-                    <td className='px-3 py-2 text-gray-500 max-w-[120px] truncate' title={item.remark || ''}>{item.remark || '-'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            {!income && !expense && (
-              <div className='text-center py-8 text-gray-400 text-xs'>No entries for this date</div>
-            )}
+          <div className='p-3 grid grid-cols-1 md:grid-cols-2 gap-3'>
+            <div className='rounded-lg border border-green-200 overflow-hidden'>
+              <div className='px-3 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200 flex items-center justify-between'>
+                <span className='text-xs font-bold text-green-700 uppercase tracking-wider'>Income</span>
+                <span className='text-[10px] text-green-600 font-semibold'>{income?.items?.length || 0} entries · ₹{incomeTotal.toLocaleString('en-IN')}</span>
+              </div>
+              {income?.items?.length > 0 ? (
+                <div className='overflow-x-auto'>
+                  <table className='w-full text-xs'>
+                    <thead>
+                      <tr className='bg-green-100/50'>
+                        <th className='text-left px-3 py-1.5 text-green-800 font-bold'>Work</th>
+                        <th className='text-left px-3 py-1.5 text-green-800 font-bold'>Customer</th>
+                        <th className='text-left px-3 py-1.5 text-green-800 font-bold'>Payment</th>
+                        <th className='text-right px-3 py-1.5 text-green-800 font-bold'>Amount</th>
+                        <th className='text-left px-3 py-1.5 text-green-800 font-bold'>Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-green-100'>
+                      {income.items.map((item, idx) => (
+                        <tr key={item._id || idx} className='hover:bg-green-50/50'>
+                          <td className='px-3 py-2'>
+                            <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-700 border border-cyan-200'>{item.workTypeLabel}</span>
+                          </td>
+                          <td className='px-3 py-2 text-gray-700 font-medium'>{item.customerName || '-'}</td>
+                          <td className='px-3 py-2'>
+                            <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                              item.paymentMode === 'Cash' ? 'bg-green-100 text-green-700' :
+                              item.paymentMode === 'Bank' ? 'bg-blue-100 text-blue-700' :
+                              'bg-purple-100 text-purple-700'
+                            }`}>{item.paymentMode || 'Cash'}</span>
+                          </td>
+                          <td className='px-3 py-2 text-right font-bold text-green-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</td>
+                          <td className='px-3 py-2 text-gray-500 max-w-[120px] truncate' title={item.remark || ''}>{item.remark || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className='px-3 py-6 text-center'>
+                  <p className='text-xs text-gray-400 italic'>No income entries</p>
+                </div>
+              )}
+            </div>
+
+            <div className='rounded-lg border border-red-200 overflow-hidden'>
+              <div className='px-3 py-2 bg-gradient-to-r from-red-50 to-orange-50 border-b border-red-200 flex items-center justify-between'>
+                <span className='text-xs font-bold text-red-700 uppercase tracking-wider'>Expense</span>
+                <span className='text-[10px] text-red-600 font-semibold'>{expense?.items?.length || 0} entries · ₹{expenseTotal.toLocaleString('en-IN')}</span>
+              </div>
+              {expense?.items?.length > 0 ? (
+                <div className='overflow-x-auto'>
+                  <table className='w-full text-xs'>
+                    <thead>
+                      <tr className='bg-red-100/50'>
+                        <th className='text-left px-3 py-1.5 text-red-800 font-bold'>Work</th>
+                        <th className='text-left px-3 py-1.5 text-red-800 font-bold'>Customer</th>
+                        <th className='text-left px-3 py-1.5 text-red-800 font-bold'>Type</th>
+                        <th className='text-right px-3 py-1.5 text-red-800 font-bold'>Amount</th>
+                        <th className='text-left px-3 py-1.5 text-red-800 font-bold'>Remarks</th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-red-100'>
+                      {expense.items.map((item, idx) => (
+                        <tr key={item._id || idx} className='hover:bg-red-50/50'>
+                          <td className='px-3 py-2'>
+                            <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200'>{item.workTypeLabel}</span>
+                          </td>
+                          <td className='px-3 py-2 text-gray-700 font-medium'>{item.customerName || '-'}</td>
+                          <td className='px-3 py-2 font-semibold text-gray-900'>{item.name}</td>
+                          <td className='px-3 py-2 text-right font-bold text-red-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</td>
+                          <td className='px-3 py-2 text-gray-500 max-w-[120px] truncate' title={item.remark || ''}>{item.remark || '-'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className='px-3 py-6 text-center'>
+                  <p className='text-xs text-gray-400 italic'>No expense entries</p>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className='px-4 py-2.5 bg-gradient-to-r from-gray-50 to-white border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 text-xs'>
