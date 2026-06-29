@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck';
 import { handlePaymentCalculation } from '../../../utils/paymentValidation';
 import { handleSmartDateInput, normalizeAIExtractedDate } from '../../../utils/dateFormatter';
+import { pdfToImages } from '../../../utils/pdfToImages';
 import DocumentScannerPreview from '../../../components/DocumentScannerPreview';
 import ImageViewer from '../../../components/ImageViewer';
 
@@ -463,9 +464,84 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
     if (!file) return;
 
     if (file.type === 'application/pdf') {
-       // Direct upload to backend for parsing
        e.target.value = '';
-       await processExtraction(file);
+       
+       // PDF: render to images for vision OCR, store original PDF as document
+       setIsExtractingFitness(true);
+       const updateToast = toast.info('Rendering Fitness PDF pages, please wait...', { autoClose: false, isLoading: true });
+       try {
+         // Step 1: Render PDF → JPEG images (works for scanned & digital PDFs)
+         const pageImages = await pdfToImages(file, 1); // page 1 is enough for fitness cert
+         if (!pageImages || pageImages.length === 0) {
+           toast.dismiss(updateToast);
+           toast.error('Could not render PDF pages. Please try a different file.', { position: 'top-right', autoClose: 3000 });
+           setIsExtractingFitness(false);
+           return;
+         }
+
+         const imageBase64ForOcr = pageImages[0]; // JPEG base64
+         toast.update(updateToast, { render: 'Analyzing Fitness document, please wait...', isLoading: true });
+
+         // Step 2: Send rendered image to OCR (vision model)
+         try {
+           const response = await axios.post(
+             `${API_URL}/api/ocr/fitness`,
+             { imageBase64: imageBase64ForOcr },
+             { withCredentials: true }
+           );
+
+           if (response.data.success && response.data.data) {
+             const resultData = response.data.data;
+             isOcrUpdate.current = true;
+
+             setFormData(prev => {
+               const updated = { ...prev };
+               Object.keys(resultData).forEach(key => {
+                 if (resultData[key] && Object.prototype.hasOwnProperty.call(updated, key)) {
+                   if (key === 'validFrom' || key === 'validTo') {
+                     const normalizedStr = normalizeAIExtractedDate(resultData[key]);
+                     const formatted = handleSmartDateInput(normalizedStr, '');
+                     if (formatted) updated[key] = formatted;
+                   } else {
+                     updated[key] = resultData[key].toUpperCase();
+                   }
+                 }
+               });
+               if (resultData.vehicleNumber) {
+                 const validation = validateVehicleNumberRealtime(resultData.vehicleNumber);
+                 setVehicleValidation(validation);
+               }
+               return updated;
+             });
+             setTimeout(() => { isOcrUpdate.current = false; }, 200);
+
+             // Step 3: Store original PDF base64 as the document (saved on submit)
+             const pdfReader = new FileReader();
+             pdfReader.onloadend = () => {
+               setFitnessDocumentBase64(pdfReader.result);
+               setFitnessDocumentName(file.name || 'fitness.pdf');
+             };
+             pdfReader.readAsDataURL(file);
+
+             toast.dismiss(updateToast);
+             toast.success('Fitness Details Extracted Successfully!', { position: 'top-right', autoClose: 3000 });
+           } else {
+             toast.dismiss(updateToast);
+             toast.error('Failed to extract data from Fitness PDF.', { position: 'top-right', autoClose: 3000 });
+           }
+         } catch (err) {
+           console.error('Fitness OCR error:', err);
+           toast.dismiss(updateToast);
+           toast.error('Server error during OCR processing.', { position: 'top-right', autoClose: 3000 });
+         } finally {
+           setIsExtractingFitness(false);
+         }
+       } catch (err) {
+         console.error('PDF render error:', err);
+         toast.dismiss(updateToast);
+         toast.error('Error rendering PDF. Please try a different file.', { position: 'top-right', autoClose: 3000 });
+         setIsExtractingFitness(false);
+       }
     } else if (file.type.startsWith('image/')) {
        // Send to scanner preview
        setScanningFile(file);
