@@ -754,7 +754,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
                 rcImage: response.data.data.path
               }))
 
-              setRcImagePreview(base64String)
+              setRcImagePreview(`${API_URL}${response.data.data.path}`)
               setUploadingImage(false)
               toast.success(`RC PDF uploaded successfully! (${response.data.data.sizeInMB}MB)`, {
                 position: 'top-right',
@@ -947,7 +947,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
 
             if (response.data.success) {
               setFormData(prev => ({ ...prev, speedGovernorImage: response.data.data.path }))
-              setSpeedGovernorImagePreview(base64String)
+              setSpeedGovernorImagePreview(`${API_URL}${response.data.data.path}`)
               setUploadingSpeedGovernor(false)
               toast.success(`Speed Governor PDF uploaded successfully!`, { position: 'top-right', autoClose: 2000 })
             }
@@ -1253,7 +1253,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
           {
             imageData: base64String,
             vehicleRegistrationId: editData?._id || null,
-            vehicleNumber: formData.registrationNumber
+            vehicleNumber: formData.registrationNumber || 'EXTRACTED'
           },
           { withCredentials: true }
         ),
@@ -1269,7 +1269,9 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
 
       // Handle upload result
       if (uploadResult.status === 'fulfilled' && uploadResult.value.data.success) {
-        setFormData(prev => ({ ...prev, rcBackImage: uploadResult.value.data.data.path }));
+        const serverPath = uploadResult.value.data.data.path;
+        setFormData(prev => ({ ...prev, rcBackImage: serverPath }));
+        setRcBackImagePreview(`${API_URL}${serverPath}`);
         backUploadSaved = true;
         toast.success(`RC Back uploaded! (${uploadResult.value.data.data.sizeInMB}MB)`, {
           position: 'top-right', autoClose: 2000
@@ -1300,7 +1302,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
             const uploadData = await uploadRcDocument(base64String, 'back', resultData.registrationNumber);
             if (uploadData) {
               backUploadSaved = true;
-              setRcBackImagePreview(base64String);
+              setRcBackImagePreview(`${API_URL}${uploadData.path}`);
               toast.success(`RC Back saved! (${uploadData.sizeInMB}MB)`, {
                 position: 'top-right', autoClose: 2000
               });
