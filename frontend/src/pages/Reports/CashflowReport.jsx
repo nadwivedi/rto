@@ -379,7 +379,7 @@ const CashflowReport = () => {
 
   const renderCashflow = () => (
     <div className='space-y-4'>
-      <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+      <div className='grid grid-cols-1 sm:grid-cols-3 gap-3'>
         <div className='bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl border border-green-200 p-4'>
           <p className='text-xs font-bold text-green-700 uppercase tracking-wider'>Total Income</p>
           <p className='text-xl font-black text-green-800 mt-1'>₹{incomeGrandTotal.toLocaleString('en-IN')}</p>
@@ -388,20 +388,16 @@ const CashflowReport = () => {
           <p className='text-xs font-bold text-red-700 uppercase tracking-wider'>Total Expense</p>
           <p className='text-xl font-black text-red-800 mt-1'>₹{expenseGrandTotal.toLocaleString('en-IN')}</p>
         </div>
-      </div>
-
-      <div className={`rounded-xl border-2 p-4 flex items-center justify-between ${
-        (incomeGrandTotal - expenseGrandTotal) >= 0
-          ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
-          : 'bg-gradient-to-br from-red-50 to-orange-50 border-red-300'
-      }`}>
-        <div>
+        <div className={`rounded-xl border-2 p-4 flex flex-col justify-center ${
+          (incomeGrandTotal - expenseGrandTotal) >= 0
+            ? 'bg-gradient-to-br from-green-50 to-emerald-50 border-green-300'
+            : 'bg-gradient-to-br from-red-50 to-orange-50 border-red-300'
+        }`}>
           <p className='text-xs font-bold uppercase tracking-wider text-gray-600'>Net Cashflow</p>
-          <p className='text-xs text-gray-500 mt-0.5'>{incomeGrandTotal - expenseGrandTotal >= 0 ? 'Positive' : 'Negative'}</p>
+          <p className={`text-lg font-black mt-0.5 ${incomeGrandTotal - expenseGrandTotal >= 0 ? 'text-green-800' : 'text-red-800'}`}>
+            ₹{(incomeGrandTotal - expenseGrandTotal).toLocaleString('en-IN')}
+          </p>
         </div>
-        <span className={`text-xl font-black ${incomeGrandTotal - expenseGrandTotal >= 0 ? 'text-green-800' : 'text-red-800'}`}>
-          ₹{(incomeGrandTotal - expenseGrandTotal).toLocaleString('en-IN')}
-        </span>
       </div>
 
       <div className='text-center'>
