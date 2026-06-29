@@ -56,7 +56,6 @@ const quickButtons = [
   { title: 'NOC List', shortLabel: 'NOC', path: '/noc', tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' },
   { title: 'Renewal List', shortLabel: 'Renewal', path: '/registration-renewal', tone: 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100' },
   { title: 'HPA+HPT List', shortLabel: 'HPA+HPT', path: '/hpa-hpt', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100' },
-  { title: 'Cashflow Report', shortLabel: 'Cashflow', path: '/cashflow-report', tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' }
 ]
 
 const Sarthi = () => {
