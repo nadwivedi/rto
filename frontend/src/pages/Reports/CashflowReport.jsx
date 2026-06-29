@@ -71,10 +71,39 @@ const CashflowReport = () => {
 
   useEffect(() => { fetchData() }, [activeTab])
 
+  useEffect(() => {
+    const allDates = [...expenseData, ...incomeData].map(g => g.date)
+    if (allDates.length > 0) {
+      setExpandedDates(prev => {
+        const newState = { ...prev }
+        allDates.forEach(d => { newState[d] = true })
+        return newState
+      })
+    }
+  }, [expenseData, incomeData])
+
   const handleFilter = () => { fetchData() }
 
   const toggleExpand = (date) => {
     setExpandedDates(prev => ({ ...prev, [date]: !prev[date] }))
+  }
+
+  const expandAll = () => {
+    const allDates = [...expenseData, ...incomeData].map(g => g.date)
+    setExpandedDates(prev => {
+      const newState = { ...prev }
+      allDates.forEach(d => { newState[d] = true })
+      return newState
+    })
+  }
+
+  const collapseAll = () => {
+    const allDates = [...expenseData, ...incomeData].map(g => g.date)
+    setExpandedDates(prev => {
+      const newState = { ...prev }
+      allDates.forEach(d => { newState[d] = false })
+      return newState
+    })
   }
 
   const formatDate = (dateStr) => {
@@ -260,6 +289,9 @@ const CashflowReport = () => {
     </div>
   )
 
+  const allDates = [...expenseData, ...incomeData].map(g => g.date)
+  const allExpanded = allDates.length > 0 && allDates.every(d => expandedDates[d])
+
   return (
     <div className='min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50'>
       <div className='w-full px-3 md:px-4 lg:px-6 pt-4 lg:pt-6 pb-8'>
@@ -298,19 +330,22 @@ const CashflowReport = () => {
 
         {/* Date Filter */}
         <div className='mb-4 bg-white rounded-xl shadow-sm border border-gray-200 p-3 flex flex-wrap items-center gap-2'>
-          <label className='text-xs font-bold text-gray-600'>From:</label>
+          <svg className='w-4 h-4 text-indigo-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' />
+          </svg>
+          <span className='text-xs font-bold text-gray-700'>From:</span>
           <input
             type='date'
             value={fromDate}
             onChange={e => setFromDate(e.target.value)}
-            className='px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500'
+            className='px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
           />
-          <label className='text-xs font-bold text-gray-600'>To:</label>
+          <span className='text-xs text-gray-400'>to</span>
           <input
             type='date'
             value={toDate}
             onChange={e => setToDate(e.target.value)}
-            className='px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500'
+            className='px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
           />
           <button
             onClick={handleFilter}
@@ -324,6 +359,15 @@ const CashflowReport = () => {
               className='px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-300 transition-all cursor-pointer'
             >
               Clear
+            </button>
+          )}
+          <div className='flex-1' />
+          {[...expenseData, ...incomeData].length > 0 && (
+            <button
+              onClick={allExpanded ? collapseAll : expandAll}
+              className='px-3 py-1.5 bg-white border border-gray-300 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-100 transition-all cursor-pointer shadow-sm'
+            >
+              {allExpanded ? 'Collapse All' : 'Expand All'}
             </button>
           )}
         </div>
