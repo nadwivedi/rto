@@ -315,6 +315,7 @@ const CashflowReport = () => {
                   <th className='text-left px-3 py-2 text-gray-600 font-bold'>Type</th>
                   <th className='text-left px-3 py-2 text-gray-600 font-bold'>Work Type</th>
                   <th className='text-left px-3 py-2 text-gray-600 font-bold'>Name</th>
+                  <th className='text-left px-3 py-2 text-gray-600 font-bold'>Customer</th>
                   <th className='text-right px-3 py-2 text-gray-600 font-bold'>Amount</th>
                   <th className='text-center px-3 py-2 text-gray-600 font-bold'>Payment</th>
                   <th className='text-left px-3 py-2 text-gray-600 font-bold'>Notes</th>
@@ -330,6 +331,7 @@ const CashflowReport = () => {
                       <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-700 border border-cyan-200'>{item.workTypeLabel}</span>
                     </td>
                     <td className='px-3 py-2 text-gray-400'>-</td>
+                    <td className='px-3 py-2 text-gray-600 font-semibold'>{item.customerName || '-'}</td>
                     <td className='px-3 py-2 text-right font-bold text-green-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</td>
                     <td className='px-3 py-2 text-center'>
                       <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
@@ -350,6 +352,7 @@ const CashflowReport = () => {
                       <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200'>{item.workTypeLabel}</span>
                     </td>
                     <td className='px-3 py-2 font-semibold text-gray-900'>{item.name}</td>
+                    <td className='px-3 py-2 text-gray-600 font-semibold'>{item.customerName || '-'}</td>
                     <td className='px-3 py-2 text-right font-bold text-red-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</td>
                     <td className='px-3 py-2 text-center text-gray-400'>-</td>
                     <td className='px-3 py-2 text-gray-500 max-w-[120px] truncate' title={item.remark || ''}>{item.remark || '-'}</td>
