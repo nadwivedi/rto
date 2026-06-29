@@ -308,44 +308,58 @@ const CashflowReport = () => {
             </span>
           </div>
 
-          <div className='grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100'>
-            <div className='p-3 space-y-1.5'>
-              {income ? income.items.map((item, idx) => (
-                <div key={item._id || idx} className='flex items-center justify-between text-xs py-1'>
-                  <div className='flex items-center gap-2 min-w-0'>
-                    <span className='font-bold text-green-700 shrink-0'>₹{(item.amount || 0).toLocaleString('en-IN')}</span>
-                    <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-700 border border-cyan-200 truncate'>
-                      {item.workTypeLabel}
-                    </span>
-                  </div>
-                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
-                    item.paymentMode === 'Cash' ? 'bg-green-100 text-green-700' :
-                    item.paymentMode === 'Bank' ? 'bg-blue-100 text-blue-700' :
-                    'bg-purple-100 text-purple-700'
-                  }`}>
-                    {item.paymentMode || 'Cash'}
-                  </span>
-                </div>
-              )) : (
-                <p className='text-xs text-gray-400 italic py-2 text-center'>No income</p>
-              )}
-            </div>
-
-            <div className='p-3 space-y-1.5'>
-              {expense ? expense.items.map((item, idx) => (
-                <div key={item._id || idx} className='flex items-center justify-between text-xs py-1'>
-                  <div className='flex items-center gap-2 min-w-0'>
-                    <span className='font-semibold text-gray-900 truncate'>{item.name}</span>
-                    <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 shrink-0'>
-                      {item.workTypeLabel}
-                    </span>
-                  </div>
-                  <span className='font-bold text-red-700 shrink-0'>₹{(item.amount || 0).toLocaleString('en-IN')}</span>
-                </div>
-              )) : (
-                <p className='text-xs text-gray-400 italic py-2 text-center'>No expenses</p>
-              )}
-            </div>
+          <div className='overflow-x-auto'>
+            <table className='w-full text-xs'>
+              <thead>
+                <tr className='bg-gray-50 border-b border-gray-100'>
+                  <th className='text-left px-3 py-2 text-gray-600 font-bold'>Type</th>
+                  <th className='text-left px-3 py-2 text-gray-600 font-bold'>Work Type</th>
+                  <th className='text-left px-3 py-2 text-gray-600 font-bold'>Name</th>
+                  <th className='text-right px-3 py-2 text-gray-600 font-bold'>Amount</th>
+                  <th className='text-center px-3 py-2 text-gray-600 font-bold'>Payment</th>
+                  <th className='text-left px-3 py-2 text-gray-600 font-bold'>Notes</th>
+                </tr>
+              </thead>
+              <tbody className='divide-y divide-gray-100'>
+                {income?.items?.map((item, idx) => (
+                  <tr key={`i-${item._id || idx}`} className='hover:bg-green-50/50'>
+                    <td className='px-3 py-2'>
+                      <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-green-100 text-green-700'>Income</span>
+                    </td>
+                    <td className='px-3 py-2'>
+                      <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-700 border border-cyan-200'>{item.workTypeLabel}</span>
+                    </td>
+                    <td className='px-3 py-2 text-gray-400'>-</td>
+                    <td className='px-3 py-2 text-right font-bold text-green-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</td>
+                    <td className='px-3 py-2 text-center'>
+                      <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        item.paymentMode === 'Cash' ? 'bg-green-100 text-green-700' :
+                        item.paymentMode === 'Bank' ? 'bg-blue-100 text-blue-700' :
+                        'bg-purple-100 text-purple-700'
+                      }`}>{item.paymentMode || 'Cash'}</span>
+                    </td>
+                    <td className='px-3 py-2 text-gray-500 max-w-[120px] truncate' title={item.remark || ''}>{item.remark || '-'}</td>
+                  </tr>
+                ))}
+                {expense?.items?.map((item, idx) => (
+                  <tr key={`e-${item._id || idx}`} className='hover:bg-red-50/50'>
+                    <td className='px-3 py-2'>
+                      <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-100 text-red-700'>Expense</span>
+                    </td>
+                    <td className='px-3 py-2'>
+                      <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200'>{item.workTypeLabel}</span>
+                    </td>
+                    <td className='px-3 py-2 font-semibold text-gray-900'>{item.name}</td>
+                    <td className='px-3 py-2 text-right font-bold text-red-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</td>
+                    <td className='px-3 py-2 text-center text-gray-400'>-</td>
+                    <td className='px-3 py-2 text-gray-500 max-w-[120px] truncate' title={item.remark || ''}>{item.remark || '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            {!income && !expense && (
+              <div className='text-center py-8 text-gray-400 text-xs'>No entries for this date</div>
+            )}
           </div>
 
           <div className='px-4 py-2.5 bg-gradient-to-r from-gray-50 to-white border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 text-xs'>
