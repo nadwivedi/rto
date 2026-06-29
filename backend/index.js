@@ -126,6 +126,7 @@ const paymentReceivedRoutes = require('./routes/paymentReceivedRoutes')
 const expenseBreakdownRoutes = require('./routes/expenseBreakdownRoutes')
 const defaultExpenseSettingsRoutes = require('./routes/defaultExpenseSettings')
 const reportRoutes = require('./routes/reportRoutes')
+const licenseClassRoutes = require('./routes/licenseClassRoutes')
 
 // Use Routes
 
@@ -170,6 +171,7 @@ app.use('/api/payment-received', userAuth, paymentReceivedRoutes)
 app.use('/api/expense-breakdown', userAuth, expenseBreakdownRoutes)
 app.use('/api/default-expense-settings', userAuth, defaultExpenseSettingsRoutes)
 app.use('/api/reports', userAuth, reportRoutes)
+app.use('/api/license-classes', userAuth, licenseClassRoutes)
 
 // Public routes (no auth)
 app.use('/api/blogs', publicBlogRoutes)

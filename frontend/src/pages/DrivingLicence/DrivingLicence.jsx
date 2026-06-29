@@ -10,6 +10,7 @@ import SearchBar from '../../components/SearchBar'
 import StatisticsCard from '../../components/StatisticsCard'
 import MobileCardView from '../../components/MobileCardView'
 import { getTheme } from '../../context/ThemeContext'
+import LicenseClassFilter from '../../components/LicenseClassFilter'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -612,21 +613,7 @@ const DrivingLicence = () => {
 
 
               {/* License Class Filter */}
-              <select
-                value={typeFilter}
-                onChange={(e) => {
-                  setTypeFilter(e.target.value)
-                }}
-                className='w-[calc(50%-0.25rem)] lg:w-auto px-2 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 font-semibold bg-white hover:border-indigo-300 transition-all shadow-sm'
-              >
-                <option value='All'>All Types</option>
-                <option value='MCWG'>MCWG</option>
-                <option value='LMV'>LMV</option>
-                <option value='MCWG+LMV'>Both</option>
-                <option value='HMV'>HMV</option>
-                <option value='Commercial'>Commercial</option>
-                <option value='Transport'>Transport</option>
-              </select>
+              <LicenseClassFilter value={typeFilter} onChange={setTypeFilter} />
 
               {/* Payment Status Filter */}
               <select

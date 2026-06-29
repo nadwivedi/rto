@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import { replacePaymentsForWork, getPaymentsByWork } from '../../../utils/paymentReceivedApi'
 import { replaceExpensesForWork, getExpensesByWork } from '../../../utils/expenseBreakdownApi'
 import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
+import LicenseClassDropdown from '../../../components/LicenseClassDropdown'
 
 const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   // Get current date in DD-MM-YYYY format
@@ -793,20 +794,11 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                     <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
                       License Class <span className='text-red-500'>*</span>
                     </label>
-                    <select
-                      name='licenseClass'
+                    <LicenseClassDropdown
                       value={formData.licenseClass}
                       onChange={handleChange}
-                      className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-transparent font-semibold'
                       required
-                    >
-                      <option value='MCWG'>MCWG - Two Wheeler</option>
-                      <option value='LMV'>LMV - Four Wheeler</option>
-                      <option value='MCWG+LMV'>MCWG+LMV - Both</option>
-                      <option value='HMV'>HMV - Heavy Vehicle</option>
-                      <option value='Commercial'>Commercial</option>
-                      <option value='Transport'>Transport</option>
-                    </select>
+                    />
                   </div>
 
                   {/* Learning License Section */}
