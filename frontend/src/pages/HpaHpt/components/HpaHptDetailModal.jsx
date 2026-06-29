@@ -1,9 +1,56 @@
+import { useEffect, useState } from 'react'
+import { getPaymentsByWork } from '../../../utils/paymentReceivedApi'
+import { getExpensesByWork } from '../../../utils/expenseBreakdownApi'
+
 const HpaHptDetailModal = ({ isOpen, onClose, record, onEdit, onDelete, onMarkAsPaid }) => {
+  const [paymentReceived, setPaymentReceived] = useState([])
+  const [expenseItems, setExpenseItems] = useState([])
+
+  useEffect(() => {
+    if (!isOpen || !record) return
+    const recordId = record._id
+    if (recordId) {
+      getPaymentsByWork('HPA', recordId).then(res => {
+        setPaymentReceived(res.data)
+      }).catch(() => setPaymentReceived([]))
+
+      getExpensesByWork('HPA', recordId).then(res => {
+        setExpenseItems(res.data)
+      }).catch(() => setExpenseItems([]))
+    } else {
+      setPaymentReceived([])
+      setExpenseItems([])
+    }
+  }, [isOpen, record])
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose])
+
   if (!isOpen || !record) return null;
 
   const typeLabel = record.type === 'hpa' ? 'HPA' : 'HPT';
   const typeFullLabel = record.type === 'hpa' ? 'Hypothecation Addition' : 'Hypothecation Termination';
   const hasBalance = (record.balance || 0) > 0;
+
+  const formatExpenseDate = (dateStr) => {
+    if (!dateStr) return ''
+    if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) return dateStr
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+      const [y, m, d] = dateStr.split('-')
+      return `${d}-${m}-${y}`
+    }
+    const d = new Date(dateStr)
+    if (!isNaN(d.getTime())) {
+      return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`
+    }
+    return ''
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-2">
@@ -100,6 +147,90 @@ const HpaHptDetailModal = ({ isOpen, onClose, record, onEdit, onDelete, onMarkAs
                     ₹{record.feeBreakup.reduce((sum, item) => sum + (item.amount || 0), 0).toLocaleString('en-IN')}
                   </span>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Expense Breakdown */}
+          {(expenseItems?.filter(item => item.name && parseFloat(item.amount) > 0) || []).length > 0 && (
+            <div className='bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4 border-2 border-orange-200'>
+              <h3 className='text-sm font-bold text-orange-900 mb-3 flex items-center gap-2'>
+                <svg className='w-4 h-4 text-orange-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' />
+                </svg>
+                Expense Breakdown
+              </h3>
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3'>
+                {(expenseItems?.filter(item => item.name && parseFloat(item.amount) > 0) || []).map((item, index) => (
+                  <div key={index} className='bg-white/80 p-2.5 md:p-3 rounded-lg border border-orange-200'>
+                    <label className='text-[10px] md:text-xs font-semibold text-orange-700 uppercase flex justify-between'>
+                      <span>{item.name}</span>
+                      {item.date && <span>{formatExpenseDate(item.date)}</span>}
+                    </label>
+                    <p className='text-base md:text-lg font-black text-gray-800 mt-1'>
+                      ₹{parseFloat(item.amount || 0).toLocaleString('en-IN')}
+                    </p>
+                    {item.remark && (
+                      <p className='text-[10px] md:text-xs text-gray-500 mt-1 italic border-t border-orange-100 pt-1'>{item.remark}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className='mt-3 pt-3 border-t border-orange-200 flex justify-between items-center bg-white/60 rounded-lg px-3 py-2'>
+                <span className='text-sm font-bold text-orange-900'>Total Expense</span>
+                <span className='text-lg font-black text-orange-800'>
+                  ₹{(expenseItems?.filter(item => item.name && parseFloat(item.amount) > 0) || []).reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0).toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Payment Received Breakdown */}
+          {paymentReceived.length > 0 && (
+            <div className='bg-gradient-to-br from-cyan-50 to-teal-50 rounded-xl p-4 border-2 border-cyan-200'>
+              <h3 className='text-sm font-bold text-cyan-900 mb-3 flex items-center gap-2'>
+                <svg className='w-4 h-4 text-cyan-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' />
+                </svg>
+                Payment Received Breakdown
+              </h3>
+              <div className='overflow-x-auto'>
+                <table className='w-full text-xs md:text-sm'>
+                  <thead>
+                    <tr className='border-b-2 border-cyan-200'>
+                      <th className='text-left py-2 px-3 text-cyan-700 font-bold'>Date</th>
+                      <th className='text-right py-2 px-3 text-cyan-700 font-bold'>Amount</th>
+                      <th className='text-center py-2 px-3 text-cyan-700 font-bold'>Method</th>
+                      <th className='text-left py-2 px-3 text-cyan-700 font-bold'>Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paymentReceived.map((p, i) => (
+                      <tr key={i} className='border-b border-cyan-100'>
+                        <td className='py-2 px-3 text-gray-700 font-semibold'>{p.date?.split('-').reverse().join('-')}</td>
+                        <td className='py-2 px-3 text-right font-bold text-gray-900'>₹{(p.amount || 0).toLocaleString('en-IN')}</td>
+                        <td className='py-2 px-3 text-center'>
+                          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-bold ${
+                            p.paymentMode === 'Cash' ? 'bg-green-100 text-green-700' :
+                            p.paymentMode === 'Bank' ? 'bg-blue-100 text-blue-700' :
+                            'bg-purple-100 text-purple-700'
+                          }`}>
+                            {p.paymentMode}
+                          </span>
+                        </td>
+                        <td className='py-2 px-3 text-gray-600 text-xs max-w-[150px] truncate' title={p.remark || ''}>{p.remark || '-'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className='bg-cyan-100 font-bold'>
+                      <td className='py-2 px-3 text-cyan-800'>Total</td>
+                      <td className='py-2 px-3 text-right text-cyan-900'>₹{paymentReceived.reduce((sum, p) => sum + (p.amount || 0), 0).toLocaleString('en-IN')}</td>
+                      <td className='py-2 px-3'></td>
+                      <td className='py-2 px-3'></td>
+                    </tr>
+                  </tfoot>
+                </table>
               </div>
             </div>
           )}

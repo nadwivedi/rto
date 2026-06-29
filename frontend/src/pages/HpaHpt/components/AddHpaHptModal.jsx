@@ -3,6 +3,8 @@ import axios from 'axios';
 import { toast } from 'react-toastify';
 import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck';
 import { handlePaymentCalculation } from '../../../utils/paymentValidation';
+import { replaceExpensesForWork } from '../../../utils/expenseBreakdownApi'
+import { replacePaymentsForWork } from '../../../utils/paymentReceivedApi'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
@@ -31,6 +33,8 @@ const AddHpaHptModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = ''
   const [selectedDropdownIndex, setSelectedDropdownIndex] = useState(0);
   const dropdownItemRefs = useRef([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [expenseItems, setExpenseItems] = useState([])
+  const [paymentItems, setPaymentItems] = useState([])
 
   const resetForm = () => {
     setFormData({
@@ -55,6 +59,8 @@ const AddHpaHptModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = ''
     setVehicleMatches([]);
     setShowVehicleDropdown(false);
     setSelectedDropdownIndex(0);
+    setExpenseItems([]);
+    setPaymentItems([]);
   };
 
   useEffect(() => {
@@ -62,6 +68,15 @@ const AddHpaHptModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = ''
       resetForm();
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (isOpen && (prefilledVehicleNumber || prefilledOwnerName || prefilledMobileNumber)) {
@@ -230,6 +245,38 @@ const AddHpaHptModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = ''
     }));
   };
 
+  const handleExpenseChange = (index, field, value) => {
+    setExpenseItems(prev => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], [field]: value }
+      return updated
+    })
+  }
+
+  const addExpenseRow = () => {
+    setExpenseItems(prev => [...prev, { name: '', amount: '', remark: '' }])
+  }
+
+  const removeExpenseRow = (index) => {
+    setExpenseItems(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handlePaymentChange = (index, field, value) => {
+    setPaymentItems(prev => {
+      const updated = [...prev]
+      updated[index] = { ...updated[index], [field]: value }
+      return updated
+    })
+  }
+
+  const addPaymentRow = () => {
+    setPaymentItems(prev => [...prev, { amount: '', paymentMode: 'Cash', remark: '' }])
+  }
+
+  const removePaymentRow = (index) => {
+    setPaymentItems(prev => prev.filter((_, i) => i !== index))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.vehicleNumber) {
@@ -262,6 +309,34 @@ const AddHpaHptModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = ''
 
       const response = await axios.post(`${API_URL}/api/hpa-hpt`, payload, { withCredentials: true });
       if (response.data.success) {
+        const recordId = response.data.data._id
+
+        const cleanedExpenses = expenseItems
+          .filter(item => item.name && item.name.trim() && parseFloat(item.amount) > 0)
+          .map(item => ({
+            date: formData.date || new Date().toISOString().split('T')[0],
+            name: item.name.trim(),
+            amount: parseFloat(item.amount) || 0,
+            remark: item.remark || ''
+          }))
+
+        if (cleanedExpenses.length > 0) {
+          await replaceExpensesForWork('HPA', recordId, cleanedExpenses)
+        }
+
+        const cleanedPayments = paymentItems
+          .filter(item => parseFloat(item.amount) > 0)
+          .map(item => ({
+            date: formData.date || new Date().toISOString().split('T')[0],
+            amount: parseFloat(item.amount) || 0,
+            paymentMode: item.paymentMode || 'Cash',
+            remark: item.remark || ''
+          }))
+
+        if (cleanedPayments.length > 0) {
+          await replacePaymentsForWork('HPA', recordId, cleanedPayments)
+        }
+
         toast.success('HPA/HPT record created successfully!');
         onSubmit();
         onClose();
@@ -548,6 +623,118 @@ const AddHpaHptModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = ''
                 rows={2}
                 className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-rose-500 focus:border-transparent resize-none'
               />
+            </div>
+
+            {/* Section 4 - Expense Breakdown */}
+            <div className='bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <span className='bg-orange-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>4</span>
+                Expense Breakdown
+                <span className='text-xs text-gray-500 font-normal ml-1'>(Optional)</span>
+              </h3>
+              <div className='space-y-2'>
+                {expenseItems.map((item, index) => (
+                  <div key={index} className='flex flex-wrap gap-2 items-center'>
+                    <input
+                      type='text'
+                      value={item.name}
+                      onChange={e => handleExpenseChange(index, 'name', e.target.value)}
+                      placeholder='Expense name'
+                      className='flex-1 min-w-[120px] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+                    />
+                    <input
+                      type='number'
+                      value={item.amount}
+                      onChange={e => handleExpenseChange(index, 'amount', e.target.value)}
+                      placeholder='₹ Amount'
+                      className='w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm text-right focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+                    />
+                    <input
+                      type='text'
+                      value={item.remark || ''}
+                      onChange={e => handleExpenseChange(index, 'remark', e.target.value)}
+                      placeholder='Remark'
+                      className='w-28 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => removeExpenseRow(index)}
+                      className='text-red-400 hover:text-red-600 transition-colors p-1 cursor-pointer'
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type='button'
+                  onClick={addExpenseRow}
+                  className='text-xs text-orange-600 hover:text-orange-700 font-semibold flex items-center gap-1 transition-colors cursor-pointer'
+                >
+                  <svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+                  </svg>
+                  Add Expense
+                </button>
+              </div>
+            </div>
+
+            {/* Section 5 - Payment Received */}
+            <div className='bg-gradient-to-r from-cyan-50 to-teal-50 border-2 border-cyan-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <span className='bg-cyan-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>5</span>
+                Payment Received
+                <span className='text-xs text-gray-500 font-normal ml-1'>(Optional)</span>
+              </h3>
+              <div className='space-y-2'>
+                {paymentItems.map((item, index) => (
+                  <div key={index} className='flex flex-wrap gap-2 items-center'>
+                    <input
+                      type='number'
+                      value={item.amount}
+                      onChange={e => handlePaymentChange(index, 'amount', e.target.value)}
+                      placeholder='₹ Amount'
+                      className='w-24 px-3 py-2 border border-gray-300 rounded-lg text-sm text-right focus:ring-2 focus:ring-cyan-500 focus:border-transparent'
+                    />
+                    <select
+                      value={item.paymentMode || 'Cash'}
+                      onChange={e => handlePaymentChange(index, 'paymentMode', e.target.value)}
+                      className='w-20 px-2 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent'
+                    >
+                      <option value='Cash'>Cash</option>
+                      <option value='Bank'>Bank</option>
+                      <option value='UPI'>UPI</option>
+                    </select>
+                    <input
+                      type='text'
+                      value={item.remark || ''}
+                      onChange={e => handlePaymentChange(index, 'remark', e.target.value)}
+                      placeholder='Remark'
+                      className='flex-1 min-w-[120px] px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500 focus:border-transparent'
+                    />
+                    <button
+                      type='button'
+                      onClick={() => removePaymentRow(index)}
+                      className='text-red-400 hover:text-red-600 transition-colors p-1 cursor-pointer'
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                      </svg>
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type='button'
+                  onClick={addPaymentRow}
+                  className='text-xs text-cyan-600 hover:text-cyan-700 font-semibold flex items-center gap-1 transition-colors cursor-pointer'
+                >
+                  <svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+                  </svg>
+                  Add Payment
+                </button>
+              </div>
             </div>
           </div>
 
