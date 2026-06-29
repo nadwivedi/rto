@@ -131,7 +131,9 @@ const DrivingSchema = new mongoose.Schema({
     learningLicense: String, 
     learningLicenseType: String, // e.g. application/pdf, image/jpeg
     drivingLicense: String,
-    drivingLicenseType: String
+    drivingLicenseType: String,
+    otherDocument: String,
+    otherDocumentType: String
   },
   
 }, {

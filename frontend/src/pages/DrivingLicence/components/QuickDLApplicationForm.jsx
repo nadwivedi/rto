@@ -67,7 +67,9 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
       learningLicense: '',
       learningLicenseType: '',
       drivingLicense: '',
-      drivingLicenseType: ''
+      drivingLicenseType: '',
+      otherDocument: '',
+      otherDocumentType: ''
     }
   })
 
@@ -77,6 +79,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
   const [mobileValidation, setMobileValidation] = useState({ isValid: false, message: '' })
   const [isExtractingLl, setIsExtractingLl] = useState(false)
   const [isExtractingDl, setIsExtractingDl] = useState(false)
+  const [isUploadingOther, setIsUploadingOther] = useState(false)
   const [scanningFile, setScanningFile] = useState(null)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
   const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }])
@@ -168,7 +171,9 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
           learningLicense: '',
           learningLicenseType: '',
           drivingLicense: '',
-          drivingLicenseType: ''
+          drivingLicenseType: '',
+          otherDocument: '',
+          otherDocumentType: ''
         }
       })
 
@@ -539,6 +544,51 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
     }
   }
 
+  const handleOtherUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+      toast.error('Please upload an image or PDF file.', { position: 'top-right', autoClose: 3000 });
+      return;
+    }
+
+    e.target.value = '';
+
+    setIsUploadingOther(true);
+    const toastId = toast.info('Uploading document, please wait...', { autoClose: false, isLoading: true });
+
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        try {
+          const base64String = reader.result;
+          setFormData(prev => {
+            const updated = { ...prev };
+            if (!updated.documents) updated.documents = {};
+            updated.documents.otherDocument = base64String;
+            updated.documents.otherDocumentType = file.type;
+            return updated;
+          });
+
+          toast.dismiss(toastId);
+          toast.success('Document uploaded successfully!', { position: 'top-right', autoClose: 3000 });
+        } catch (err) {
+          console.error(err);
+          toast.dismiss(toastId);
+          toast.error('Error uploading document.', { position: 'top-right', autoClose: 3000 });
+        } finally {
+          setIsUploadingOther(false);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      toast.dismiss(toastId);
+      toast.error('Error reading the file.', { position: 'top-right', autoClose: 3000 });
+      setIsUploadingOther(false);
+    }
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target
 
@@ -743,7 +793,11 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
       profit: '',
       documents: {
         learningLicense: '',
-        learningLicenseType: ''
+        learningLicenseType: '',
+        drivingLicense: '',
+        drivingLicenseType: '',
+        otherDocument: '',
+        otherDocumentType: ''
       }
     })
     // Reset date dropdowns
@@ -842,6 +896,39 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
                   accept='image/*,application/pdf'
                   disabled={isExtractingDl}
                   onChange={handleDlUpload}
+                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
+                />
+              </div>
+
+              {/* Other Upload Button */}
+              <div className='relative overflow-hidden rounded-lg'>
+                <button
+                  type='button'
+                  disabled={isUploadingOther}
+                  className='flex max-w-full items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/30 disabled:opacity-60 md:px-4 md:py-2 md:text-sm cursor-pointer'
+                >
+                  {isUploadingOther ? (
+                    <>
+                      <svg className='h-4 w-4 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
+                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                      </svg>
+                      Uploading
+                    </>
+                  ) : (
+                    <>
+                      <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'/>
+                      </svg>
+                      Other Upload
+                    </>
+                  )}
+                </button>
+                <input
+                  type='file'
+                  accept='image/*,application/pdf'
+                  disabled={isUploadingOther}
+                  onChange={handleOtherUpload}
                   className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
                 />
               </div>
@@ -1580,6 +1667,21 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
                      <iframe src={formData.documents.drivingLicense} className='w-full h-96' title='DL PDF Preview'></iframe>
                   ) : (
                      <img src={formData.documents.drivingLicense} alt='DL Preview' className='max-h-96 object-contain' />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {formData.documents?.otherDocument && (
+              <div className='bg-gray-100 border border-gray-300 rounded-xl p-3 md:p-6 mb-4 md:mb-6 mt-4'>
+                <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4'>
+                  Other Document Preview
+                </h3>
+                <div className='w-full rounded-lg overflow-hidden flex justify-center bg-white border border-gray-200'>
+                  {formData.documents.otherDocumentType === 'application/pdf' ? (
+                     <iframe src={formData.documents.otherDocument} className='w-full h-96' title='Other PDF Preview'></iframe>
+                  ) : (
+                     <img src={formData.documents.otherDocument} alt='Other Preview' className='max-h-96 object-contain' />
                   )}
                 </div>
               </div>
