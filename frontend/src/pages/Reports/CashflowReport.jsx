@@ -106,6 +106,22 @@ const CashflowReport = () => {
     })
   }
 
+  const toDateKey = (dateStr) => {
+    if (!dateStr) return ''
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr
+    if (/^\d{2}-\d{2}-\d{4}$/.test(dateStr)) {
+      const [d, m, y] = dateStr.split('-')
+      return `${y}-${m}-${d}`
+    }
+    try {
+      const d = new Date(dateStr)
+      if (!isNaN(d.getTime())) {
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      }
+    } catch {}
+    return dateStr
+  }
+
   const formatDate = (dateStr) => {
     if (!dateStr) return '-'
     if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
@@ -249,6 +265,101 @@ const CashflowReport = () => {
     </div>
   )
 
+  const renderCashflowDateGroups = () => {
+    const dateMap = {}
+
+    expenseData.forEach(group => {
+      const key = toDateKey(group.date)
+      if (!dateMap[key]) dateMap[key] = { income: null, expense: null, displayDate: group.date }
+      dateMap[key].expense = group
+    })
+
+    incomeData.forEach(group => {
+      const key = toDateKey(group.date)
+      if (!dateMap[key]) dateMap[key] = { income: null, expense: null, displayDate: group.date }
+      dateMap[key].income = group
+    })
+
+    const sortedDates = Object.keys(dateMap).sort((a, b) => b.localeCompare(a))
+
+    if (sortedDates.length === 0) {
+      return (
+        <div className='text-center py-12 text-gray-500'>
+          <svg className='w-12 h-12 mx-auto mb-3 text-gray-300' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.5} d='M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' />
+          </svg>
+          <p className='font-semibold'>No data found</p>
+        </div>
+      )
+    }
+
+    return sortedDates.map(date => {
+      const { income, expense } = dateMap[date]
+      const incomeTotal = income?.total || 0
+      const expenseTotal = expense?.total || 0
+      const netTotal = incomeTotal - expenseTotal
+
+      return (
+        <div key={date} className='bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden'>
+          <div className='px-4 py-2.5 bg-gradient-to-r from-gray-50 to-white border-b border-gray-100 flex items-center justify-between'>
+            <span className='text-sm font-bold text-gray-800'>{formatDate(date)}</span>
+            <span className='text-xs text-gray-500'>
+              {income?.items?.length || 0} income / {expense?.items?.length || 0} expenses
+            </span>
+          </div>
+
+          <div className='grid grid-cols-1 md:grid-cols-2 divide-y md:divide-y-0 md:divide-x divide-gray-100'>
+            <div className='p-3 space-y-1.5'>
+              {income ? income.items.map((item, idx) => (
+                <div key={item._id || idx} className='flex items-center justify-between text-xs py-1'>
+                  <div className='flex items-center gap-2 min-w-0'>
+                    <span className='font-bold text-green-700 shrink-0'>₹{(item.amount || 0).toLocaleString('en-IN')}</span>
+                    <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-100 text-cyan-700 border border-cyan-200 truncate'>
+                      {item.workTypeLabel}
+                    </span>
+                  </div>
+                  <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold shrink-0 ${
+                    item.paymentMode === 'Cash' ? 'bg-green-100 text-green-700' :
+                    item.paymentMode === 'Bank' ? 'bg-blue-100 text-blue-700' :
+                    'bg-purple-100 text-purple-700'
+                  }`}>
+                    {item.paymentMode || 'Cash'}
+                  </span>
+                </div>
+              )) : (
+                <p className='text-xs text-gray-400 italic py-2 text-center'>No income</p>
+              )}
+            </div>
+
+            <div className='p-3 space-y-1.5'>
+              {expense ? expense.items.map((item, idx) => (
+                <div key={item._id || idx} className='flex items-center justify-between text-xs py-1'>
+                  <div className='flex items-center gap-2 min-w-0'>
+                    <span className='font-semibold text-gray-900 truncate'>{item.name}</span>
+                    <span className='inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-orange-100 text-orange-700 border border-orange-200 shrink-0'>
+                      {item.workTypeLabel}
+                    </span>
+                  </div>
+                  <span className='font-bold text-red-700 shrink-0'>₹{(item.amount || 0).toLocaleString('en-IN')}</span>
+                </div>
+              )) : (
+                <p className='text-xs text-gray-400 italic py-2 text-center'>No expenses</p>
+              )}
+            </div>
+          </div>
+
+          <div className='px-4 py-2.5 bg-gradient-to-r from-gray-50 to-white border-t border-gray-100 flex flex-wrap items-center justify-between gap-2 text-xs'>
+            <span className='text-green-700 font-bold'>Income: ₹{incomeTotal.toLocaleString('en-IN')}</span>
+            <span className='text-red-700 font-bold'>Expense: ₹{expenseTotal.toLocaleString('en-IN')}</span>
+            <span className={`font-black ${netTotal >= 0 ? 'text-green-800' : 'text-red-800'}`}>
+              Net: ₹{netTotal.toLocaleString('en-IN')}
+            </span>
+          </div>
+        </div>
+      )
+    })
+  }
+
   const renderCashflow = () => (
     <div className='space-y-4'>
       <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
@@ -281,10 +392,7 @@ const CashflowReport = () => {
       </div>
 
       <div className='space-y-3'>
-        {renderIncome()}
-        <div className='border-t border-gray-200 pt-3'>
-          {renderExpense()}
-        </div>
+        {renderCashflowDateGroups()}
       </div>
     </div>
   )
