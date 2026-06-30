@@ -622,6 +622,20 @@ exports.getStatistics = async (req, res) => {
     const baseMatch = { userId: new mongoose.Types.ObjectId(req.user.id) }
     if (dateExpr) baseMatch.$expr = dateExpr
 
+    // Profit aggregation
+    const profitPipeline = [
+      { $match: { ...baseMatch } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: '$profit' }
+        }
+      }
+    ]
+
+    const profitResults = await Driving.aggregate(profitPipeline)
+    const profitTotal = profitResults.length > 0 ? profitResults[0].total : 0
+
     // Pending payment aggregation
     const pendingPaymentPipeline = [
       { $match: { ...baseMatch, balanceAmount: { $gt: 0 } } },
@@ -676,6 +690,7 @@ exports.getStatistics = async (req, res) => {
     res.status(200).json({
       success: true,
       data: {
+        profitTotal,
         pendingPaymentCount,
         pendingPaymentAmount,
         llExpiringCount,

@@ -36,6 +36,7 @@ const DrivingLicence = () => {
   const [llEligibleForDLCount, setLlEligibleForDLCount] = useState(0)
   const [pendingPaymentCount, setPendingPaymentCount] = useState(0)
   const [totalPendingAmount, setTotalPendingAmount] = useState(0)
+  const [profitTotal, setProfitTotal] = useState(0)
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -66,11 +67,13 @@ const DrivingLicence = () => {
         const data = response.data.data
         setLlExpiringCount(data.llExpiringCount || 0)
         setLlEligibleForDLCount(data.llEligibleForDLCount || 0)
+        setProfitTotal(data.profitTotal || 0)
         setPendingPaymentCount(data.pendingPaymentCount || 0)
         setTotalPendingAmount(data.pendingPaymentAmount || 0)
       }
     } catch (error) {
       console.error('Error fetching statistics:', error)
+      setProfitTotal(0)
       setLlExpiringCount(0)
       setLlEligibleForDLCount(0)
       setPendingPaymentCount(0)
@@ -247,9 +250,10 @@ const DrivingLicence = () => {
       llEligibleForDL,
       llExpiringSoon,
       totalPending: totalPendingAmount,
-      pendingCount: pendingPaymentCount
+      pendingCount: pendingPaymentCount,
+      profit: profitTotal
     }
-  }, [pagination.totalRecords, llEligibleForDLCount, llExpiringCount, totalPendingAmount, pendingPaymentCount])
+  }, [pagination.totalRecords, llEligibleForDLCount, llExpiringCount, totalPendingAmount, pendingPaymentCount, profitTotal])
 
   // Page change handler
   const handlePageChange = (newPage) => {
@@ -492,7 +496,7 @@ const DrivingLicence = () => {
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
                 </svg>
               </button>
-              <div className='grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 flex-1'>
+              <div className='grid grid-cols-2 lg:grid-cols-5 gap-2 lg:gap-3 flex-1'>
               <StatisticsCard
                 title='Total Applications'
                 value={stats.total}
@@ -506,6 +510,16 @@ const DrivingLicence = () => {
                 icon={
                   <svg className='w-4 h-4 lg:w-6 lg:h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                  </svg>
+                }
+              />
+              <StatisticsCard
+                title='Total Profit'
+                value={`₹${stats.profit.toLocaleString('en-IN')}`}
+                color='teal'
+                icon={
+                  <svg className='w-4 h-4 lg:w-6 lg:h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
                   </svg>
                 }
               />
