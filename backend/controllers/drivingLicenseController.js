@@ -225,6 +225,24 @@ exports.getAllApplications = async (req, res) => {
       }
     }
 
+    // Filter by application type
+    if (req.query.applicationType) {
+      query.applicationType = req.query.applicationType
+    }
+
+    // Filter by date range (date of work - string field in DD-MM-YYYY format)
+    if (req.query.dateFrom || req.query.dateTo) {
+      const fromStr = req.query.dateFrom ? req.query.dateFrom.split('-').reverse().join('-') : ''
+      const toStr = req.query.dateTo ? req.query.dateTo.split('-').reverse().join('-') : ''
+
+      // Convert stored DD-MM-YYYY to YYYY-MM-DD for lexicographic comparison
+      const dateExpr = { $concat: [{ $substrCP: ['$date', 6, 4] }, '-', { $substrCP: ['$date', 3, 2] }, '-', { $substrCP: ['$date', 0, 2] }] }
+      const conditions = []
+      if (fromStr) conditions.push({ $gte: [dateExpr, fromStr] })
+      if (toStr) conditions.push({ $lte: [dateExpr, toStr] })
+      query.$expr = conditions.length === 1 ? conditions[0] : { $and: conditions }
+    }
+
     // Filter by LL eligible for DL (completed 30 days and not expired)
     if (llEligibleForDL === 'true') {
       const today = new Date()
@@ -588,9 +606,25 @@ exports.getStatistics = async (req, res) => {
     const today = new Date()
     const thirtyDaysFromNow = new Date(today.getTime() + (30 * 24 * 60 * 60 * 1000))
 
+    // Build date range filter for date of work
+    const buildDateExpr = () => {
+      if (!req.query.dateFrom && !req.query.dateTo) return null
+      const fromStr = req.query.dateFrom ? req.query.dateFrom.split('-').reverse().join('-') : ''
+      const toStr = req.query.dateTo ? req.query.dateTo.split('-').reverse().join('-') : ''
+      const dateExpr = { $concat: [{ $substrCP: ['$date', 6, 4] }, '-', { $substrCP: ['$date', 3, 2] }, '-', { $substrCP: ['$date', 0, 2] }] }
+      const conditions = []
+      if (fromStr) conditions.push({ $gte: [dateExpr, fromStr] })
+      if (toStr) conditions.push({ $lte: [dateExpr, toStr] })
+      return conditions.length === 1 ? conditions[0] : { $and: conditions }
+    }
+
+    const dateExpr = buildDateExpr()
+    const baseMatch = { userId: new mongoose.Types.ObjectId(req.user.id) }
+    if (dateExpr) baseMatch.$expr = dateExpr
+
     // Pending payment aggregation
     const pendingPaymentPipeline = [
-      { $match: { balanceAmount: { $gt: 0 }, userId: new mongoose.Types.ObjectId(req.user.id) } },
+      { $match: { ...baseMatch, balanceAmount: { $gt: 0 } } },
       {
         $group: {
           _id: null,
@@ -605,7 +639,7 @@ exports.getStatistics = async (req, res) => {
     const pendingPaymentAmount = pendingPaymentResults.length > 0 ? pendingPaymentResults[0].totalAmount : 0
 
     // Count LL expiring in next 30 days
-    const llExpiringCount = await Driving.countDocuments({
+    const llExpiringQuery = {
       userId: new mongoose.Types.ObjectId(req.user.id),
       learningLicenseExpiryDate: {
         $exists: true,
@@ -613,7 +647,9 @@ exports.getStatistics = async (req, res) => {
         $gte: today,
         $lte: thirtyDaysFromNow
       }
-    })
+    }
+    if (dateExpr) llExpiringQuery.$expr = dateExpr
+    const llExpiringCount = await Driving.countDocuments(llExpiringQuery)
 
     // Count LL eligible for DL (completed 30 days and not expired)
     const todayStart = new Date(today)
@@ -621,7 +657,7 @@ exports.getStatistics = async (req, res) => {
 
     const thirtyDaysAgo = new Date(todayStart.getTime() - (30 * 24 * 60 * 60 * 1000))
 
-    const llEligibleForDLCount = await Driving.countDocuments({
+    const llEligibleQuery = {
       userId: new mongoose.Types.ObjectId(req.user.id),
       learningLicenseIssueDate: {
         $exists: true,
@@ -633,7 +669,9 @@ exports.getStatistics = async (req, res) => {
         $ne: null,
         $gte: todayStart
       }
-    })
+    }
+    if (dateExpr) llEligibleQuery.$expr = dateExpr
+    const llEligibleForDLCount = await Driving.countDocuments(llEligibleQuery)
 
     res.status(200).json({
       success: true,

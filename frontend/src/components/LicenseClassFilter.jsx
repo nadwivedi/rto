@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { getLicenseClasses } from '../utils/licenseClassApi'
 
-const LicenseClassFilter = ({ value, onChange }) => {
+const LicenseClassFilter = ({ value, onChange, className }) => {
   const [classes, setClasses] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -21,7 +21,7 @@ const LicenseClassFilter = ({ value, onChange }) => {
     <select
       value={value}
       onChange={e => onChange(e.target.value)}
-      className='w-[calc(50%-0.25rem)] lg:w-auto px-2 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 font-semibold bg-white hover:border-indigo-300 transition-all shadow-sm'
+      className={className || 'w-[calc(50%-0.25rem)] lg:w-auto px-2 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 font-semibold bg-white hover:border-indigo-300 transition-all shadow-sm'}
     >
       <option value='All'>All Types</option>
       {loading ? (

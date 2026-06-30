@@ -28,6 +28,10 @@ const DrivingLicence = () => {
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('All')
   const [llEligibleForDLFilter, setLlEligibleForDLFilter] = useState('All')
   const [llExpiryFilter, setLlExpiryFilter] = useState('All')
+  const [showFilterPanel, setShowFilterPanel] = useState(false)
+  const [applicationTypeFilter, setApplicationTypeFilter] = useState('All')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [llExpiringCount, setLlExpiringCount] = useState(0)
   const [llEligibleForDLCount, setLlEligibleForDLCount] = useState(0)
   const [pendingPaymentCount, setPendingPaymentCount] = useState(0)
@@ -42,17 +46,20 @@ const DrivingLicence = () => {
   // Fetch applications from backend
   useEffect(() => {
     fetchApplications(1)
-  }, [searchQuery, typeFilter, paymentStatusFilter, llEligibleForDLFilter])
+  }, [searchQuery, typeFilter, paymentStatusFilter, llEligibleForDLFilter, applicationTypeFilter, dateFrom, dateTo])
 
-  // Fetch statistics on component mount
+  // Fetch statistics on component mount and when date filter changes
   useEffect(() => {
     fetchStatistics()
-  }, [])
+  }, [dateFrom, dateTo])
 
   const fetchStatistics = async () => {
     try {
-      // Fetch all statistics in one call
+      const params = {}
+      if (dateFrom) params.dateFrom = dateFrom
+      if (dateTo) params.dateTo = dateTo
       const response = await axios.get(`${API_URL}/api/driving-licenses/statistics`, {
+        params,
         withCredentials: true
       })
       if (response.data.success) {
@@ -82,6 +89,9 @@ const DrivingLicence = () => {
       if (searchQuery) params.search = searchQuery
       if (typeFilter !== 'All') params.licenseClass = typeFilter
       if (paymentStatusFilter !== 'All') params.paymentStatus = paymentStatusFilter
+      if (applicationTypeFilter !== 'All') params.applicationType = applicationTypeFilter
+      if (dateFrom) params.dateFrom = dateFrom
+      if (dateTo) params.dateTo = dateTo
       if (llEligibleForDLFilter !== 'All') params.llEligibleForDL = 'true'
 
       const response = await axios.get(`${API_URL}/api/driving-licenses`, { params, withCredentials: true })
@@ -213,6 +223,16 @@ const DrivingLicence = () => {
 
     return filtered
   }, [applications, llExpiryFilter])
+
+  // Count active filters (excluding search and stat-card filters)
+  const activeFilterCount = useMemo(() => {
+    let count = 0
+    if (typeFilter !== 'All') count++
+    if (paymentStatusFilter !== 'All') count++
+    if (applicationTypeFilter !== 'All') count++
+    if (dateFrom || dateTo) count++
+    return count
+  }, [typeFilter, paymentStatusFilter, applicationTypeFilter, dateFrom, dateTo])
 
   // Calculate statistics
   const stats = useMemo(() => {
@@ -610,31 +630,37 @@ const DrivingLicence = () => {
 
             {/* Filters Group */}
             <div className='flex flex-wrap gap-2'>
-
-
-              {/* License Class Filter */}
-              <LicenseClassFilter value={typeFilter} onChange={setTypeFilter} />
-
-              {/* Payment Status Filter */}
-              <select
-                value={paymentStatusFilter}
-                onChange={(e) => {
-                  setPaymentStatusFilter(e.target.value)
-                }}
-                className='w-[calc(50%-0.25rem)] lg:w-auto px-2 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm border-2 border-indigo-200 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 font-semibold bg-white hover:border-indigo-300 transition-all shadow-sm'
+              {/* Filter Button */}
+              <button
+                onClick={() => setShowFilterPanel(!showFilterPanel)}
+                className={`relative flex items-center gap-2 px-3 lg:px-4 py-2 lg:py-3 text-xs lg:text-sm border-2 rounded-xl font-semibold transition-all shadow-sm cursor-pointer ${
+                  showFilterPanel || activeFilterCount > 0
+                    ? 'border-indigo-400 bg-indigo-50 text-indigo-700'
+                    : 'border-indigo-200 bg-white text-gray-700 hover:border-indigo-300'
+                }`}
               >
-                <option value='All'>All Status</option>
-                <option value='Paid'>Paid</option>
-                <option value='Pending'>Pending</option>
-              </select>
+                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z' />
+                </svg>
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className='absolute -top-1.5 -right-1.5 bg-indigo-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-md'>
+                    {activeFilterCount}
+                  </span>
+                )}
+              </button>
 
               {/* Clear Filters */}
-              {(typeFilter !== 'All' || searchQuery || paymentStatusFilter !== 'All' || llEligibleForDLFilter !== 'All' || llExpiryFilter !== 'All') && (
+              {(typeFilter !== 'All' || searchQuery || paymentStatusFilter !== 'All' || applicationTypeFilter !== 'All' || dateFrom || dateTo || llEligibleForDLFilter !== 'All' || llExpiryFilter !== 'All') && (
                 <button
                   onClick={() => {
                     setTypeFilter('All')
                     setSearchQuery('')
                     setPaymentStatusFilter('All')
+                    setApplicationTypeFilter('All')
+                    setDateFrom('')
+                    setDateTo('')
+                    setShowFilterPanel(false)
                     setLlEligibleForDLFilter('All')
                     setLlExpiryFilter('All')
                   }}
@@ -649,8 +675,77 @@ const DrivingLicence = () => {
             <AddButton onClick={() => setIsFormOpen(true)} title='New Application' />
           </div>
 
+          {/* Filter Panel */}
+          {showFilterPanel && (
+            <div className='mt-3 p-4 bg-white border-2 border-indigo-200 rounded-xl shadow-inner'>
+              <div className='grid grid-cols-2 lg:grid-cols-5 gap-3'>
+                {/* Date From */}
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-1'>Date From</label>
+                  <input
+                    type='date'
+                    value={dateFrom ? dateFrom.split('-').reverse().join('-') : ''}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (!val) { setDateFrom(''); return }
+                      const [y, m, d] = val.split('-')
+                      setDateFrom(`${d}-${m}-${y}`)
+                    }}
+                    className='w-full px-2 py-2 text-xs border-2 border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white shadow-sm'
+                  />
+                </div>
+                {/* Date To */}
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-1'>Date To</label>
+                  <input
+                    type='date'
+                    value={dateTo ? dateTo.split('-').reverse().join('-') : ''}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (!val) { setDateTo(''); return }
+                      const [y, m, d] = val.split('-')
+                      setDateTo(`${d}-${m}-${y}`)
+                    }}
+                    className='w-full px-2 py-2 text-xs border-2 border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 bg-white shadow-sm'
+                  />
+                </div>
+                {/* Application Type */}
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-1'>Application Type</label>
+                  <select
+                    value={applicationTypeFilter}
+                    onChange={(e) => setApplicationTypeFilter(e.target.value)}
+                    className='w-full px-2 py-2 text-xs border-2 border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 font-semibold bg-white shadow-sm'
+                  >
+                    <option value='All'>All Types</option>
+                    <option value='New DL'>New DL</option>
+                    <option value='DL Renewal'>DL Renewal</option>
+                  </select>
+                </div>
+                {/* License Class */}
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-1'>License Class</label>
+                  <LicenseClassFilter value={typeFilter} onChange={setTypeFilter} className='w-full px-2 py-2 text-xs border-2 border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 font-semibold bg-white shadow-sm' />
+                </div>
+                {/* Payment Status */}
+                <div>
+                  <label className='block text-xs font-semibold text-gray-600 mb-1'>Payment Status</label>
+                  <select
+                    value={paymentStatusFilter}
+                    onChange={(e) => setPaymentStatusFilter(e.target.value)}
+                    className='w-full px-2 py-2 text-xs border-2 border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-400 font-semibold bg-white shadow-sm'
+                  >
+                    <option value='All'>All Status</option>
+                    <option value='Paid'>Paid</option>
+                    <option value='Pending'>Pending</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Active Filter Indicators */}
-          {(llEligibleForDLFilter !== 'All' || llExpiryFilter !== 'All') && (
+          {(llEligibleForDLFilter !== 'All' || llExpiryFilter !== 'All' || typeFilter !== 'All' || paymentStatusFilter !== 'All' || applicationTypeFilter !== 'All' || dateFrom || dateTo) && (
             <div className='mt-3 flex flex-wrap gap-2'>
               {llEligibleForDLFilter !== 'All' && (
                 <span className='inline-flex items-center gap-1 px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-semibold'>
@@ -683,6 +778,83 @@ const DrivingLicence = () => {
                       setLlExpiryFilter('All')
                     }}
                     className='ml-1 hover:bg-yellow-200 rounded-full p-0.5'
+                  >
+                    <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                    </svg>
+                  </button>
+                </span>
+              )}
+              {typeFilter !== 'All' && (
+                <span className='inline-flex items-center gap-1 px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-semibold'>
+                  <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                  </svg>
+                  Class: {typeFilter}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setTypeFilter('All')
+                    }}
+                    className='ml-1 hover:bg-blue-200 rounded-full p-0.5'
+                  >
+                    <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                    </svg>
+                  </button>
+                </span>
+              )}
+              {paymentStatusFilter !== 'All' && (
+                <span className='inline-flex items-center gap-1 px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold'>
+                  <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' />
+                  </svg>
+                  Payment: {paymentStatusFilter}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setPaymentStatusFilter('All')
+                    }}
+                    className='ml-1 hover:bg-orange-200 rounded-full p-0.5'
+                  >
+                    <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                    </svg>
+                  </button>
+                </span>
+              )}
+              {applicationTypeFilter !== 'All' && (
+                <span className='inline-flex items-center gap-1 px-3 py-1 bg-cyan-100 text-cyan-700 rounded-full text-xs font-semibold'>
+                  <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                  </svg>
+                  Type: {applicationTypeFilter}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setApplicationTypeFilter('All')
+                    }}
+                    className='ml-1 hover:bg-cyan-200 rounded-full p-0.5'
+                  >
+                    <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                    </svg>
+                  </button>
+                </span>
+              )}
+              {(dateFrom || dateTo) && (
+                <span className='inline-flex items-center gap-1 px-3 py-1 bg-pink-100 text-pink-700 rounded-full text-xs font-semibold'>
+                  <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z' />
+                  </svg>
+                  Date: {dateFrom || 'Any'} - {dateTo || 'Any'}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setDateFrom('')
+                      setDateTo('')
+                    }}
+                    className='ml-1 hover:bg-pink-200 rounded-full p-0.5'
                   >
                     <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
