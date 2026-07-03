@@ -110,6 +110,16 @@ const vehicleRegistrationSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  additionalDocuments: [{
+    name: {
+      type: String,
+      trim: true
+    },
+    path: {
+      type: String,
+      trim: true
+    }
+  }],
   numberOfCylinders: {
     type: Number
   },

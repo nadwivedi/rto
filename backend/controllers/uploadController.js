@@ -14,7 +14,11 @@ const cgPermitUploadsDir = path.join(__dirname, '..', 'uploads', 'cg-permit-docu
 const busPermitUploadsDir = path.join(__dirname, '..', 'uploads', 'bus-permit-documents')
 const npPartAUploadsDir = path.join(__dirname, '..', 'uploads', 'np-part-a-documents')
 const npPartBUploadsDir = path.join(__dirname, '..', 'uploads', 'np-part-b-documents')
+const additionalDocsUploadsDir = path.join(__dirname, '..', 'uploads', 'additional-documents')
 
+if (!fs.existsSync(additionalDocsUploadsDir)) {
+  fs.mkdirSync(additionalDocsUploadsDir, { recursive: true })
+}
 if (!fs.existsSync(kycUploadsDir)) {
   fs.mkdirSync(kycUploadsDir, { recursive: true })
 }
@@ -972,6 +976,98 @@ exports.uploadNationalPermitPartADocument = async (req, res) => {
 // Upload NP Part B Document
 exports.uploadNationalPermitPartBDocument = async (req, res) => {
   return uploadNpDocument(req, res, 'partB')
+}
+
+// Upload Additional Vehicle Document (for dynamic document upload in vehicle registration)
+exports.uploadAdditionalDocument = async (req, res) => {
+  try {
+    const { imageData, vehicleRegistrationId, vehicleNumber, documentName } = req.body
+
+    if (!imageData) {
+      return res.status(400).json({
+        success: false,
+        message: 'Document data is required'
+      })
+    }
+
+    if (!vehicleNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vehicle registration number is required'
+      })
+    }
+
+    // Validate base64 format
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp|avif);base64,/
+    const pdfFormatRegex = /^data:application\/pdf;base64,/
+
+    let fileFormat = null
+    let fileExtension = null
+
+    const imageMatch = imageData.match(imageFormatRegex)
+    const pdfMatch = imageData.match(pdfFormatRegex)
+
+    if (imageMatch) {
+      fileFormat = imageMatch[1] === 'jpeg' ? 'jpg' : imageMatch[1]
+      fileExtension = fileFormat
+    } else if (pdfMatch) {
+      fileFormat = 'pdf'
+      fileExtension = 'pdf'
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: 'Only JPG, JPEG, PNG, WebP, AVIF and PDF formats are accepted'
+      })
+    }
+
+    // Extract base64 data
+    const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
+    const buffer = Buffer.from(base64Data, 'base64')
+
+    // Check file size (12MB limit)
+    const fileSizeInMB = buffer.length / (1024 * 1024)
+    if (fileSizeInMB > 12) {
+      return res.status(400).json({
+        success: false,
+        message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit`
+      })
+    }
+
+    // Generate filename
+    const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '')
+    const sanitizedDocName = documentName
+      ? documentName.replace(/[^a-zA-Z0-9]/g, '_').toLowerCase()
+      : 'document'
+    const filename = `additional-${sanitizedDocName}-${sanitizedVehicleNumber}-${Date.now()}.${fileExtension}`
+    const filePath = path.join(additionalDocsUploadsDir, filename)
+
+    fs.writeFileSync(filePath, buffer)
+
+    const relativePath = `/uploads/additional-documents/${filename}`
+
+    res.status(200).json({
+      success: true,
+      message: 'Additional document uploaded successfully',
+      data: {
+        filename,
+        path: relativePath,
+        size: buffer.length,
+        sizeInMB: fileSizeInMB.toFixed(2),
+        format: fileFormat.toUpperCase(),
+        documentName: documentName || ''
+      }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: new Date().toISOString()
+    })
+  }
 }
 
 // Upload KYC Document (accepts base64 image/PDF)

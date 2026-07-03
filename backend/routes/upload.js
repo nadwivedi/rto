@@ -33,4 +33,7 @@ router.post('/np-part-a-document', uploadController.uploadNationalPermitPartADoc
 // POST upload National Permit Part B Document image/PDF (base64, max 12MB)
 router.post('/np-part-b-document', uploadController.uploadNationalPermitPartBDocument)
 
+// POST upload Additional Vehicle Document (base64, max 12MB)
+router.post('/additional-document', uploadController.uploadAdditionalDocument)
+
 module.exports = router

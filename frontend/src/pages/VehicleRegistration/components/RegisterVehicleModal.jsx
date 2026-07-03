@@ -95,6 +95,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
   const [isExtractingRc, setIsExtractingRc] = useState(false)
   const [scanningFile, setScanningFile] = useState(null)
   const [scanningBackFile, setScanningBackFile] = useState(null)
+  const [additionalDocs, setAdditionalDocs] = useState([])
 
   const uploadRcDocument = async (imageData, side = 'front', vehicleNumberOverride = '') => {
     const vehicleNumber = (vehicleNumberOverride || formData.registrationNumber || 'EXTRACTED').trim().toUpperCase()
@@ -290,6 +291,23 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
       } else {
         setSpeedGovernorImagePreview(null)
       }
+
+      // Set additional documents if they exist
+      if (editData.additionalDocuments && Array.isArray(editData.additionalDocuments)) {
+        setAdditionalDocs(editData.additionalDocuments.map(doc => ({
+          id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
+          name: doc.name || '',
+          preview: doc.path ? (
+            doc.path.match(/\.(jpg|jpeg|png|webp|avif)$/i)
+              ? `${API_URL}${doc.path}`
+              : null
+          ) : null,
+          path: doc.path || '',
+          uploading: false
+        })))
+      } else {
+        setAdditionalDocs([])
+      }
     } else {
       setFormData({
         registrationNumber: '',
@@ -327,6 +345,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
       setRcImagePreview(null)
       setRcBackImagePreview(null)
       setSpeedGovernorImagePreview(null)
+      setAdditionalDocs([])
       setNewParty(createEmptyNewParty())
     }
     setError('')
@@ -1028,6 +1047,104 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
     toast.info('Speed Governor document removed', { position: 'top-right', autoClose: 2000 })
   }
 
+  // Additional Documents handlers
+  const handleAddDocument = () => {
+    const newDoc = {
+      id: Date.now().toString(),
+      name: '',
+      preview: null,
+      path: '',
+      uploading: false
+    }
+    setAdditionalDocs(prev => [...prev, newDoc])
+  }
+
+  const handleRemoveAdditionalDoc = (id) => {
+    setAdditionalDocs(prev => prev.filter(doc => doc.id !== id))
+  }
+
+  const handleAdditionalDocNameChange = (id, name) => {
+    setAdditionalDocs(prev => prev.map(doc =>
+      doc.id === id ? { ...doc, name } : doc
+    ))
+  }
+
+  const handleAdditionalDocFileUpload = async (id, file) => {
+    if (!file) return
+
+    const isImage = file.type.startsWith('image/')
+    const isPDF = file.type === 'application/pdf'
+
+    if (!isImage && !isPDF) {
+      toast.error('Please select a valid image or PDF file', { position: 'top-right', autoClose: 3000 })
+      return
+    }
+
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error('File size should be less than 12MB', { position: 'top-right', autoClose: 3000 })
+      return
+    }
+
+    setAdditionalDocs(prev => prev.map(doc =>
+      doc.id === id ? { ...doc, uploading: true } : doc
+    ))
+
+    try {
+      const toBase64 = (file) => new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.onload = () => resolve(reader.result)
+        reader.onerror = reject
+        reader.readAsDataURL(file)
+      })
+
+      const base64String = await toBase64(file)
+
+      const doc = additionalDocs.find(d => d.id === id)
+      const response = await axios.post(
+        `${API_URL}/api/upload/additional-document`,
+        {
+          imageData: base64String,
+          vehicleRegistrationId: editData?._id || null,
+          vehicleNumber: formData.registrationNumber || 'EXTRACTED',
+          documentName: doc?.name || ''
+        },
+        { withCredentials: true }
+      )
+
+      if (response.data.success) {
+        const previewUrl = isImage ? URL.createObjectURL(file) : null
+        setAdditionalDocs(prev => prev.map(d =>
+          d.id === id ? {
+            ...d,
+            path: response.data.data.path,
+            preview: previewUrl,
+            uploading: false
+          } : d
+        ))
+        toast.success(`Document uploaded successfully! (${response.data.data.sizeInMB}MB)`, {
+          position: 'top-right',
+          autoClose: 2000
+        })
+      } else {
+        setAdditionalDocs(prev => prev.map(d =>
+          d.id === id ? { ...d, uploading: false } : d
+        ))
+        toast.error(response.data.message || 'Failed to upload document', {
+          position: 'top-right',
+          autoClose: 3000
+        })
+      }
+    } catch (uploadError) {
+      setAdditionalDocs(prev => prev.map(d =>
+        d.id === id ? { ...d, uploading: false } : d
+      ))
+      toast.error(uploadError.response?.data?.message || 'Failed to upload document', {
+        position: 'top-right',
+        autoClose: 3000
+      })
+    }
+  }
+
   const handleRcExtractionUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -1491,6 +1608,11 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
         ...formData,
         vehicleNumber: formData.registrationNumber
       }
+
+      // Add additional documents
+      submitData.additionalDocuments = additionalDocs
+        .filter(doc => doc.path)
+        .map(doc => ({ name: doc.name, path: doc.path }))
 
       // Only include rcImage if it has a value (optional field)
       if (!submitData.rcImage) {
@@ -2644,6 +2766,144 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            {/* Additional Documents Section */}
+            <div className='mb-4 md:mb-8'>
+              <div className='flex items-center gap-2 md:gap-3 mb-3 md:mb-6'>
+                <div className='bg-gradient-to-br from-purple-500 to-violet-600 p-1.5 md:p-2.5 rounded-lg md:rounded-xl shadow-lg'>
+                  <svg className='w-4 h-4 md:w-6 md:h-6 text-white' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className='text-sm md:text-xl font-bold text-gray-800'>Additional Documents</h3>
+                  <p className='text-[10px] md:text-sm text-gray-500 hidden md:block'>Upload any number of supporting documents (Optional)</p>
+                </div>
+                <button
+                  type='button'
+                  onClick={handleAddDocument}
+                  className='ml-auto flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold text-purple-700 bg-purple-100 rounded-lg hover:bg-purple-200 transition-all duration-200 border border-purple-200'
+                >
+                  <svg className='w-3.5 h-3.5 md:w-4 md:h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+                  </svg>
+                  Add Document
+                </button>
+              </div>
+              <div className='bg-gradient-to-br from-purple-50 to-violet-50 p-3 md:p-6 rounded-xl md:rounded-2xl border border-purple-100'>
+                {additionalDocs.length === 0 ? (
+                  <div className='text-center py-6 md:py-10'>
+                    <svg className='w-10 h-10 md:w-16 md:h-16 text-purple-300 mx-auto mb-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                    </svg>
+                    <p className='text-sm md:text-base text-purple-400 font-semibold'>No additional documents added yet</p>
+                    <p className='text-[10px] md:text-xs text-purple-300 mt-1'>Click "Add Document" to upload supporting documents</p>
+                  </div>
+                ) : (
+                  <div className='space-y-3 md:space-y-4'>
+                    {additionalDocs.map((doc, index) => (
+                      <div key={doc.id} className='bg-white rounded-lg md:rounded-xl border border-purple-200 p-3 md:p-4 shadow-sm hover:shadow-md transition-shadow'>
+                        <div className='flex items-start gap-3 md:gap-4'>
+                          {/* Document Index */}
+                          <div className='flex-shrink-0 w-7 h-7 md:w-8 md:h-8 bg-purple-100 rounded-full flex items-center justify-center'>
+                            <span className='text-xs md:text-sm font-bold text-purple-700'>{index + 1}</span>
+                          </div>
+
+                          {/* Document Content */}
+                          <div className='flex-1 min-w-0'>
+                            <div className='flex flex-col sm:flex-row gap-2 md:gap-3'>
+                              {/* Document Name Input */}
+                              <div className='flex-1'>
+                                <input
+                                  type='text'
+                                  value={doc.name}
+                                  onChange={(e) => handleAdditionalDocNameChange(doc.id, e.target.value)}
+                                  placeholder='Document name (optional)'
+                                  className='w-full px-2.5 py-1.5 md:px-3 md:py-2 text-xs md:text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-all'
+                                />
+                              </div>
+
+                              {/* File Upload / Preview */}
+                              <div className='flex-shrink-0'>
+                                {!doc.path ? (
+                                  <div className='relative'>
+                                    <input
+                                      type='file'
+                                      accept='image/*,application/pdf'
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0]
+                                        if (file) handleAdditionalDocFileUpload(doc.id, file)
+                                      }}
+                                      disabled={doc.uploading}
+                                      className='hidden'
+                                      id={`additional-doc-input-${doc.id}`}
+                                    />
+                                    <label
+                                      htmlFor={`additional-doc-input-${doc.id}`}
+                                      className={`flex items-center gap-1.5 px-3 py-1.5 md:px-4 md:py-2 text-xs md:text-sm font-semibold rounded-lg cursor-pointer transition-all duration-200 border ${
+                                        doc.uploading
+                                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                          : 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100'
+                                      }`}
+                                    >
+                                      {doc.uploading ? (
+                                        <>
+                                          <svg className='w-3.5 h-3.5 animate-spin' fill='none' viewBox='0 0 24 24'>
+                                            <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' />
+                                            <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' />
+                                          </svg>
+                                          Uploading...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
+                                          </svg>
+                                          Choose File
+                                        </>
+                                      )}
+                                    </label>
+                                  </div>
+                                ) : (
+                                  <div className='flex items-center gap-2'>
+                                    {doc.preview ? (
+                                      <img
+                                        src={doc.preview}
+                                        alt={doc.name || 'Document'}
+                                        className='w-12 h-12 md:w-16 md:h-16 object-cover rounded-lg border border-purple-200'
+                                      />
+                                    ) : (
+                                      <div className='w-12 h-12 md:w-16 md:h-16 flex items-center justify-center bg-red-50 rounded-lg border border-red-200'>
+                                        <svg className='w-6 h-6 md:w-8 md:h-8 text-red-400' fill='currentColor' viewBox='0 0 20 20'>
+                                          <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
+                                        </svg>
+                                      </div>
+                                    )}
+                                    <span className='text-[10px] md:text-xs text-green-600 font-semibold'>Uploaded</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Remove Button */}
+                          <button
+                            type='button'
+                            onClick={() => handleRemoveAdditionalDoc(doc.id)}
+                            className='flex-shrink-0 p-1.5 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all'
+                            title='Remove document'
+                          >
+                            <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 

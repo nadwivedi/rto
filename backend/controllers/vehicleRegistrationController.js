@@ -338,6 +338,9 @@ exports.createRegistration = async (req, res) => {
     const rcBackImage = req.body.rcBackImage
     const speedGovernorImage = req.body.speedGovernorImage
 
+    // Additional documents (dynamic array)
+    const additionalDocuments = req.body.additionalDocuments
+
     // Validate required fields
     if (!registrationNumber) {
       return res.status(400).json({
@@ -409,6 +412,11 @@ exports.createRegistration = async (req, res) => {
       registrationData.speedGovernorImage = speedGovernorImage
     }
 
+    // Add additional documents if provided
+    if (additionalDocuments && Array.isArray(additionalDocuments) && additionalDocuments.length > 0) {
+      registrationData.additionalDocuments = additionalDocuments.filter(doc => doc.path)
+    }
+
     const registration = await VehicleRegistration.create(registrationData)
 
     res.status(201).json({
@@ -464,6 +472,7 @@ exports.updateRegistration = async (req, res) => {
     const rcImage = req.body.rcImage
     const rcBackImage = req.body.rcBackImage
     const speedGovernorImage = req.body.speedGovernorImage
+    const additionalDocuments = req.body.additionalDocuments
 
     const registration = await VehicleRegistration.findOne({
       _id: req.params.id,
@@ -538,6 +547,13 @@ exports.updateRegistration = async (req, res) => {
     }
     if (speedGovernorImage !== undefined) {
       registration.speedGovernorImage = speedGovernorImage || undefined
+    }
+
+    // Handle additional documents array
+    if (additionalDocuments !== undefined) {
+      registration.additionalDocuments = Array.isArray(additionalDocuments)
+        ? additionalDocuments.filter(doc => doc.path)
+        : []
     }
 
     await registration.save()
