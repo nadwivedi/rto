@@ -696,9 +696,9 @@ const Gps = () => {
                         </td>
 
                         {/* Valid From */}
-                        <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 pl-8 2xl:pl-12">
+                        <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 pl-8 2xl:pl-12 whitespace-nowrap">
                           <div className="flex items-center text-[11px] 2xl:text-[13.8px]">
-                            <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-green-100 text-green-700 font-semibold border border-green-200">
+                            <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-green-100 text-green-700 font-semibold border border-green-200 whitespace-nowrap">
                               <svg
                                 className="w-3 h-3 2xl:w-4 2xl:h-4 mr-1 2xl:mr-2"
                                 fill="none"
@@ -718,9 +718,9 @@ const Gps = () => {
                         </td>
 
                         {/* Valid To */}
-                        <td className="px-0.5 2xl:px-1 py-3 2xl:py-5">
+                        <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 whitespace-nowrap">
                           <div className="flex items-center text-[11px] 2xl:text-[13.8px]">
-                            <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-red-100 text-red-700 font-semibold border border-red-200">
+                            <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-red-100 text-red-700 font-semibold border border-red-200 whitespace-nowrap">
                               <svg
                                 className="w-3 h-3 2xl:w-4 2xl:h-4 mr-1 2xl:mr-2"
                                 fill="none"
