@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { getTodayDate as utilGetTodayDate, handleSmartDateInput } from '../../../utils/dateFormatter'
@@ -1206,7 +1206,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Total Fee */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Total Premium (â‚¹) <span className='text-red-500'>*</span>
+                    Total Premium (₹) <span className='text-red-500'>*</span>
                   </label>
                   <input
                     type='number'
@@ -1225,7 +1225,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Paid */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Paid (â‚¹) <span className='text-red-500'>*</span>
+                    Paid (₹) <span className='text-red-500'>*</span>
                   </label>
                   <input
                     type='number'
@@ -1253,7 +1253,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Balance (Auto-calculated) */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Balance (â‚¹) <span className='text-xs text-gray-500'>(Auto)</span>
+                    Balance (₹) <span className='text-xs text-gray-500'>(Auto)</span>
                   </label>
                   <input
                     type='number'
@@ -1267,7 +1267,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Renew Premium */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Renew Premium (â‚¹)
+                    Renew Premium (₹)
                   </label>
                   <input
                     type='number'
@@ -1285,7 +1285,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Commission */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Commission (â‚¹)
+                    Commission (₹)
                   </label>
                   <input
                     type='number'
@@ -1308,7 +1308,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
                     </svg>
-                    Partial Payment - Balance: â‚¹{formData.balance}
+                    Partial Payment - Balance: ₹{formData.balance}
                   </p>
                 </div>
               )}
