@@ -4,6 +4,7 @@ import { toast } from 'react-toastify'
 import { getTodayDate as utilGetTodayDate, handleSmartDateInput } from '../../../utils/dateFormatter'
 import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck'
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
+import { pdfToImages } from '../../../utils/pdfToImages'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -532,7 +533,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
   };
 
   // AI Extraction logic
-  const processExtraction = async (base64String) => {
+  const processExtraction = async (base64String, originalFile = null) => {
     setIsExtractingInsurance(true)
     const updateToast = toast.info('Analyzing insurance document, please wait...', { autoClose: false, isLoading: true })
 
@@ -617,11 +618,73 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     } catch (err) {
       toast.dismiss(updateToast)
       // Specific error for scanned/image-only PDFs (HTTP 422)
-      if (err.response?.status === 422 && err.response?.data?.isScannedPdf) {
-        toast.error('⚠️ Scanned PDF detected — no text to extract. Please take a photo of the document and upload the image instead.', {
-          position: 'top-right',
-          autoClose: 6000
-        })
+      if (err.response?.status === 422 && err.response?.data?.isScannedPdf && originalFile) {
+        const fallbackToast = toast.info('Scanned PDF detected. Converting to images for visual analysis...', { autoClose: false, isLoading: true });
+        try {
+          // Convert up to 2 pages to images. Use scale=1.2 to keep tokens under 8000 TPM limit.
+          const pageImages = await pdfToImages(originalFile, 2, 1.2, 0.7);
+          
+          if (pageImages && pageImages.length > 0) {
+            toast.update(fallbackToast, { render: 'Analyzing scanned document with Vision AI...', isLoading: true });
+            
+            const visionResponse = await axios.post(
+              `${API_URL}/api/ocr/insurance`,
+              { imageBase64: pageImages[0], backImageBase64: pageImages[1] || null },
+              { withCredentials: true }
+            );
+
+            if (visionResponse.data.success && visionResponse.data.data) {
+              const resultData = visionResponse.data.data;
+              isOcrUpdate.current = true;
+              
+              setFormData(prev => {
+                const updated = { ...prev };
+                if (resultData.vehicleNumber) {
+                  updated.vehicleNumber = resultData.vehicleNumber.toUpperCase();
+                  setVehicleValidation(validateVehicleNumberRealtime(updated.vehicleNumber));
+                }
+                if (resultData.policyNumber) updated.policyNumber = resultData.policyNumber.toUpperCase();
+                if (resultData.policyHolderName) updated.policyHolderName = resultData.policyHolderName.toUpperCase();
+                if (resultData.validFrom) {
+                  const formatted = handleSmartDateInput(normalizeAIExtractedDate(resultData.validFrom), '');
+                  if (formatted) updated.validFrom = formatted;
+                }
+                if (resultData.validTo) {
+                  const formatted = handleSmartDateInput(normalizeAIExtractedDate(resultData.validTo), '');
+                  if (formatted) updated.validTo = formatted;
+                }
+                if (resultData.insuranceCompany) updated.insuranceCompany = matchInsuranceCompany(resultData.insuranceCompany);
+                if (resultData.chassisNumber) updated.chassisNumber = resultData.chassisNumber.toUpperCase();
+                if (resultData.engineNumber) updated.engineNumber = resultData.engineNumber.toUpperCase();
+                if (resultData.makerName) updated.makerName = resultData.makerName.toUpperCase();
+                if (resultData.makerModel) updated.makerModel = resultData.makerModel.toUpperCase();
+                if (resultData.manufactureYear) updated.manufactureYear = resultData.manufactureYear;
+                if (resultData.cubicCapacity) updated.cubicCapacity = resultData.cubicCapacity;
+                if (resultData.seatingCapacity) updated.seatingCapacity = resultData.seatingCapacity;
+                if (resultData.bodyType) updated.bodyType = resultData.bodyType.toUpperCase();
+                if (resultData.address) updated.address = resultData.address.toUpperCase();
+                if (resultData.totalPremium) {
+                  const numericPremium = resultData.totalPremium.replace(/[^0-9.]/g, '');
+                  if (numericPremium) {
+                    updated.totalFee = numericPremium;
+                    updated.paid = numericPremium;
+                  }
+                }
+                return updated;
+              });
+
+              setTimeout(() => { isOcrUpdate.current = false; }, 500);
+              toast.dismiss(fallbackToast);
+              toast.success('Insurance Details Extracted Successfully via Vision!', { position: 'top-right', autoClose: 3000 });
+              return; // Success!
+            }
+          }
+        } catch (visionErr) {
+          console.error('Vision fallback failed:', visionErr);
+        }
+        
+        toast.dismiss(fallbackToast);
+        toast.error('Could not analyze the scanned PDF. Please fill details manually.', { position: 'top-right', autoClose: 4000 });
       } else {
         console.error('OCR extraction error:', {
           message: err.message,
@@ -663,7 +726,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           const base64String = reader.result
           
           // Trigger OCR extraction
-          await processExtraction(base64String)
+          await processExtraction(base64String, file)
 
           // If vehicle number is not set, we might need it for the path, 
           // but we can try to use what was extracted or just upload.

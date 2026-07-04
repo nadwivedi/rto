@@ -120,20 +120,28 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
       });
     }
 
-    const body = {
-      model: 'qwen/qwen3.6-27b',
-      messages: [
-        {
-          role: 'user',
-          content: contentArray
-        }
-      ],
-      temperature: 0.1,
-      max_completion_tokens: 4000,
-      response_format: { type: 'json_object' },
-      reasoning_format: 'hidden'
+    const makeVisionRequest = (withFormat) => {
+      const body = {
+        model: 'qwen/qwen3.6-27b',
+        messages: [{ role: 'user', content: contentArray }],
+        temperature: 0.1,
+        max_completion_tokens: 2048,
+        reasoning_format: 'hidden'
+      };
+      if (withFormat) body.response_format = { type: 'json_object' };
+      return executeWithRetry('https://api.groq.com/openai/v1/chat/completions', body);
     };
-    return await executeWithRetry('https://api.groq.com/openai/v1/chat/completions', body);
+
+    try {
+      return await makeVisionRequest(true);
+    } catch (firstErr) {
+      const errCode = firstErr.response?.data?.error?.code;
+      if (errCode === 'json_validate_failed' || errCode === 'invalid_request_error') {
+        console.warn('Groq json_object mode failed for vision, retrying in free-text mode...');
+        return await makeVisionRequest(false);
+      }
+      throw firstErr;
+    }
   }
 };
 
