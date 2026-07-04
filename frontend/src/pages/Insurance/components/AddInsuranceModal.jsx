@@ -744,7 +744,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
           if (response.data.success) {
             setFormData(prev => ({ ...prev, insuranceDocument: response.data.data.path }))
-            setInsuranceDocPreview(base64String)
+            setInsuranceDocPreview(`${API_URL}${response.data.data.path}`)
             setUploadingInsuranceDoc(false)
             toast.success(`Insurance document uploaded successfully!`, { position: 'top-right', autoClose: 2000 })
           }
@@ -947,7 +947,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Vehicle Number */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Vehicle Number <span className='text-red-500'>*</span>
+                    Vehicle Number
                   </label>
                   <div className='relative'>
                     <input
@@ -967,7 +967,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                           : 'border-gray-300 focus:ring-indigo-500'
                       }`}
                       autoFocus
-                      required
                     />
                     {/* Loading spinner */}
                     {fetchingVehicle && (
@@ -1409,14 +1408,14 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     type='file'
                     accept='image/*,application/pdf'
                     onChange={handleInsuranceDocUpload}
-                    disabled={uploadingInsuranceDoc || !formData.vehicleNumber}
+                    disabled={uploadingInsuranceDoc}
                     className='hidden'
                     id='insuranceDocInput'
                   />
                   <label
                     htmlFor='insuranceDocInput'
                     className={`flex flex-col items-center justify-center w-full h-32 md:h-40 border-2 border-dashed rounded-lg cursor-pointer transition-all duration-200 ${
-                      uploadingInsuranceDoc || !formData.vehicleNumber
+                      uploadingInsuranceDoc
                         ? 'border-gray-300 bg-gray-50 cursor-not-allowed'
                         : 'border-purple-300 bg-white hover:bg-purple-50 hover:border-purple-400'
                     }`}
@@ -1428,13 +1427,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                           <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' />
                         </svg>
                         <p className='text-sm text-gray-600 font-semibold'>Uploading...</p>
-                      </div>
-                    ) : !formData.vehicleNumber ? (
-                      <div className='flex flex-col items-center'>
-                        <svg className='w-10 h-10 md:w-12 md:h-12 text-gray-400 mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z' />
-                        </svg>
-                        <p className='text-xs md:text-sm text-gray-500 font-semibold mb-1'>Enter vehicle number first</p>
                       </div>
                     ) : (
                       <>

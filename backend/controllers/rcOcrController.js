@@ -6,7 +6,7 @@ const rateLimitedKeys = new Map();
 const RATE_LIMIT_DURATION = 12 * 60 * 60 * 1000; // 12 hours
 
 const getGroqApiKeyInfo = () => {
-  const allKeys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2, process.env.GROQ_API_KEY_3].filter(Boolean);
+  const allKeys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2, process.env.GROQ_API_KEY_3, process.env.GROQ_API_KEY_4].filter(Boolean);
   const now = Date.now();
   for (const [key, timestamp] of rateLimitedKeys.entries()) {
     if (now - timestamp > RATE_LIMIT_DURATION) rateLimitedKeys.delete(key);

@@ -436,13 +436,6 @@ exports.uploadInsuranceDocument = async (req, res) => {
       })
     }
 
-    if (!vehicleNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle registration number is required'
-      })
-    }
-
     // If insuranceId provided, check for existing document and delete it
     if (insuranceId) {
       const Insurance = require('../models/Insurance')
@@ -501,7 +494,7 @@ exports.uploadInsuranceDocument = async (req, res) => {
 
     // Generate unique filename with vehicle number and timestamp
     // Format: insurance-VEHICLENUMBER-TIMESTAMP.extension
-    const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '')
+    const sanitizedVehicleNumber = vehicleNumber ? vehicleNumber.replace(/[^a-zA-Z0-9]/g, '') : 'UNKNOWN'
     const filename = `insurance-${sanitizedVehicleNumber}-${Date.now()}.${fileExtension}`
     const filePath = path.join(insuranceUploadsDir, filename)
 

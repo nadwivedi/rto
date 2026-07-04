@@ -38,13 +38,6 @@ exports.createInsurance = async (req, res) => {
 
     // Validate required fields
 
-    if (!vehicleNumber) {
-      return res.status(400).json({
-        success: false,
-        message: 'Vehicle number is required'
-      })
-    }
-
     if (!validFrom || !validTo) {
       return res.status(400).json({
         success: false,
@@ -76,17 +69,19 @@ exports.createInsurance = async (req, res) => {
     }
 
     // Check if vehicle already has an active insurance policy
-    const existingActiveInsurance = await Insurance.findOne({
-      vehicleNumber: vehicleNumber.toUpperCase().trim(),
-      userId: req.user.id,
-      status: 'active'
-    })
-
-    if (existingActiveInsurance) {
-      return res.status(400).json({
-        success: false,
-        message: `Vehicle ${vehicleNumber.toUpperCase().trim()} already has an active insurance policy (Policy #${existingActiveInsurance.policyNumber || 'N/A'}). You can add new insurance only when the current policy status is expiring soon or expired.`
+    if (vehicleNumber) {
+      const existingActiveInsurance = await Insurance.findOne({
+        vehicleNumber: vehicleNumber.toUpperCase().trim(),
+        userId: req.user.id,
+        status: 'active'
       })
+
+      if (existingActiveInsurance) {
+        return res.status(400).json({
+          success: false,
+          message: `Vehicle ${vehicleNumber.toUpperCase().trim()} already has an active insurance policy (Policy #${existingActiveInsurance.policyNumber || 'N/A'}). You can add new insurance only when the current policy status is expiring soon or expired.`
+        })
+      }
     }
 
     // Calculate status
@@ -94,7 +89,7 @@ exports.createInsurance = async (req, res) => {
 
     // Use partyId from request body if provided, otherwise auto-fetch from vehicle registration
     let partyId = reqPartyId || null
-    if (!partyId) {
+    if (!partyId && vehicleNumber) {
       const vehicle = await VehicleRegistration.findOne({
         registrationNumber: vehicleNumber.toUpperCase().trim(),
         userId: req.user.id
@@ -105,19 +100,21 @@ exports.createInsurance = async (req, res) => {
     }
 
     // Mark any existing non-renewed insurance records for this vehicle as expired and renewed
-    await Insurance.updateMany(
-      {
-        vehicleNumber: vehicleNumber.toUpperCase().trim(),
-        userId: req.user.id,
-        isRenewed: false
-      },
-      {
-        $set: {
-          status: 'expired',
-          isRenewed: true
+    if (vehicleNumber) {
+      await Insurance.updateMany(
+        {
+          vehicleNumber: vehicleNumber.toUpperCase().trim(),
+          userId: req.user.id,
+          isRenewed: false
+        },
+        {
+          $set: {
+            status: 'expired',
+            isRenewed: true
+          }
         }
-      }
-    )
+      )
+    }
 
     // Create new insurance record
     const insuranceData = {
@@ -151,47 +148,49 @@ exports.createInsurance = async (req, res) => {
 
     // Auto-create VehicleRegistration if it doesn't already exist
     let vehicleAutoCreated = false
-    try {
-      const normalizedVehicleNumber = vehicleNumber.toUpperCase().trim()
-      const existingVehicle = await VehicleRegistration.findOne({
-        registrationNumber: normalizedVehicleNumber,
-        userId: req.user.id
-      })
-      if (!existingVehicle) {
-        const vehiclePayload = {
+    if (vehicleNumber) {
+      try {
+        const normalizedVehicleNumber = vehicleNumber.toUpperCase().trim()
+        const existingVehicle = await VehicleRegistration.findOne({
           registrationNumber: normalizedVehicleNumber,
-          chassisNumber: rcDetails?.chassisNumber || 'N/A',
-          engineNumber: rcDetails?.engineNumber || '',
-          ownerName: policyHolderName || '',
-          mobileNumber: mobileNumber || '',
-          makerName: rcDetails?.makerName || '',
-          makerModel: rcDetails?.makerModel || '',
-          manufactureYear: rcDetails?.manufactureYear || null,
-          cubicCapacity: rcDetails?.cubicCapacity || null,
-          seatingCapacity: rcDetails?.seatingCapacity || null,
-          bodyType: rcDetails?.bodyType || '',
-          address: rcDetails?.address || '',
-          userId: req.user.id,
-          partyId: partyId || undefined
+          userId: req.user.id
+        })
+        if (!existingVehicle) {
+          const vehiclePayload = {
+            registrationNumber: normalizedVehicleNumber,
+            chassisNumber: rcDetails?.chassisNumber || 'N/A',
+            engineNumber: rcDetails?.engineNumber || '',
+            ownerName: policyHolderName || '',
+            mobileNumber: mobileNumber || '',
+            makerName: rcDetails?.makerName || '',
+            makerModel: rcDetails?.makerModel || '',
+            manufactureYear: rcDetails?.manufactureYear || null,
+            cubicCapacity: rcDetails?.cubicCapacity || null,
+            seatingCapacity: rcDetails?.seatingCapacity || null,
+            bodyType: rcDetails?.bodyType || '',
+            address: rcDetails?.address || '',
+            userId: req.user.id,
+            partyId: partyId || undefined
+          }
+          // Link the insurance document as the RC image if no RC image exists
+          if (insuranceDocument) {
+            vehiclePayload.rcImage = insuranceDocument
+          }
+          await VehicleRegistration.create(vehiclePayload)
+          vehicleAutoCreated = true
+          console.log(`[Insurance] Auto-created vehicle registration for ${normalizedVehicleNumber}`)
+        } else {
+          // Vehicle already exists, update address on vehicle details if provided
+          if (rcDetails?.address) {
+            existingVehicle.address = rcDetails.address
+            await existingVehicle.save()
+            console.log(`[Insurance] Saved extracted owner's address on existing vehicle registration: ${normalizedVehicleNumber}`)
+          }
         }
-        // Link the insurance document as the RC image if no RC image exists
-        if (insuranceDocument) {
-          vehiclePayload.rcImage = insuranceDocument
-        }
-        await VehicleRegistration.create(vehiclePayload)
-        vehicleAutoCreated = true
-        console.log(`[Insurance] Auto-created vehicle registration for ${normalizedVehicleNumber}`)
-      } else {
-        // Vehicle already exists, update address on vehicle details if provided
-        if (rcDetails?.address) {
-          existingVehicle.address = rcDetails.address
-          await existingVehicle.save()
-          console.log(`[Insurance] Saved extracted owner's address on existing vehicle registration: ${normalizedVehicleNumber}`)
-        }
+      } catch (vehicleErr) {
+        // Non-blocking — insurance is already saved, just log the error
+        console.error('[Insurance] Could not auto-create vehicle registration:', vehicleErr.message)
       }
-    } catch (vehicleErr) {
-      // Non-blocking — insurance is already saved, just log the error
-      console.error('[Insurance] Could not auto-create vehicle registration:', vehicleErr.message)
     }
 
     // Queue alerts then immediately try to send (uses existing limits + session logic)
@@ -680,7 +679,7 @@ exports.updateInsurance = async (req, res) => {
     if (date !== undefined) insurance.date = date
     if (insuranceCompany !== undefined) insurance.insuranceCompany = insuranceCompany
     if (productType !== undefined) insurance.productType = productType
-    if (vehicleNumber) insurance.vehicleNumber = vehicleNumber
+    if (vehicleNumber !== undefined) insurance.vehicleNumber = vehicleNumber
     if (mobileNumber !== undefined) insurance.mobileNumber = mobileNumber
     if (validFrom) insurance.validFrom = validFrom
     if (validTo) {
