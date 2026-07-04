@@ -615,17 +615,26 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         toast.error('Failed to extract data from document.', { position: 'top-right', autoClose: 3000 })
       }
     } catch (err) {
-      console.error('OCR extraction error:', {
-        message: err.message,
-        response: err.response?.data,
-        status: err.response?.status
-      })
       toast.dismiss(updateToast)
-      toast.error('Error during OCR processing. Please fill details manually.', { position: 'top-right', autoClose: 3000 })
+      // Specific error for scanned/image-only PDFs (HTTP 422)
+      if (err.response?.status === 422 && err.response?.data?.isScannedPdf) {
+        toast.error('⚠️ Scanned PDF detected — no text to extract. Please take a photo of the document and upload the image instead.', {
+          position: 'top-right',
+          autoClose: 6000
+        })
+      } else {
+        console.error('OCR extraction error:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status
+        })
+        toast.error('Error during OCR processing. Please fill details manually.', { position: 'top-right', autoClose: 3000 })
+      }
     } finally {
       setIsExtractingInsurance(false)
     }
   }
+
 
   // Handle insurance document upload
   const handleInsuranceDocUpload = async (e) => {
