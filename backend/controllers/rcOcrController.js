@@ -2,10 +2,46 @@ const axios = require('axios');
 const pdfParse = require('pdf-parse');
 
 let groqKeyIndex = 0;
-const getGroqApiKey = () => {
-  const keys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2, process.env.GROQ_API_KEY_3].filter(Boolean)
-  groqKeyIndex = (groqKeyIndex + 1) % keys.length
-  return keys[groqKeyIndex]
+const rateLimitedKeys = new Map();
+const RATE_LIMIT_DURATION = 12 * 60 * 60 * 1000; // 12 hours
+
+const getGroqApiKeyInfo = () => {
+  const allKeys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2, process.env.GROQ_API_KEY_3].filter(Boolean);
+  const now = Date.now();
+  for (const [key, timestamp] of rateLimitedKeys.entries()) {
+    if (now - timestamp > RATE_LIMIT_DURATION) rateLimitedKeys.delete(key);
+  }
+  const availableKeys = allKeys.filter(key => !rateLimitedKeys.has(key));
+  const keysToUse = availableKeys.length > 0 ? availableKeys : allKeys;
+  groqKeyIndex = (groqKeyIndex + 1) % keysToUse.length;
+  return { key: keysToUse[groqKeyIndex], totalAvailable: allKeys.length };
+}
+
+const markKeyRateLimited = (key) => {
+  rateLimitedKeys.set(key, Date.now());
+  console.warn(`Groq API key starting with ${key.substring(0, 8)} rate limited. Cooldown for 12 hours.`);
+}
+
+const executeWithRetry = async (url, body, retryCount = 0) => {
+  const keyInfo = getGroqApiKeyInfo();
+  if (retryCount >= keyInfo.totalAvailable) {
+    throw new Error('All Groq API keys are currently rate-limited or max retries reached.');
+  }
+  const currentKey = keyInfo.key;
+  try {
+    return await axios.post(url, body, {
+      headers: {
+        'Authorization': `Bearer ${currentKey}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  } catch (error) {
+    if (error.response?.status === 429) {
+      markKeyRateLimited(currentKey);
+      return executeWithRetry(url, body, retryCount + 1);
+    }
+    throw error;
+  }
 }
 
 const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase64 = null) => {
@@ -52,16 +88,7 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
         max_tokens: 2048
       };
       if (withFormat) body.response_format = { type: 'json_object' };
-      return axios.post(
-        'https://api.groq.com/openai/v1/chat/completions',
-        body,
-        {
-          headers: {
-            'Authorization': `Bearer ${getGroqApiKey()}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
+      return executeWithRetry('https://api.groq.com/openai/v1/chat/completions', body);
     };
 
     try {
@@ -103,29 +130,20 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
       });
     }
 
-    const response = await axios.post(
-      'https://api.groq.com/openai/v1/chat/completions',
-      {
-        model: 'qwen/qwen3.6-27b',
-        messages: [
-          {
-            role: 'user',
-            content: contentArray
-          }
-        ],
-        temperature: 0.1,
-        max_completion_tokens: 4000,
-        response_format: { type: 'json_object' },
-        reasoning_format: 'hidden'
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${getGroqApiKey()}`,
-          'Content-Type': 'application/json'
+    const body = {
+      model: 'qwen/qwen3.6-27b',
+      messages: [
+        {
+          role: 'user',
+          content: contentArray
         }
-      }
-    );
-    return response;
+      ],
+      temperature: 0.1,
+      max_completion_tokens: 4000,
+      response_format: { type: 'json_object' },
+      reasoning_format: 'hidden'
+    };
+    return await executeWithRetry('https://api.groq.com/openai/v1/chat/completions', body);
   }
 };
 
