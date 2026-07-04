@@ -485,28 +485,86 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     if (!extractedText) return ''
     const upper = extractedText.toUpperCase().replace(/[^A-Z0-9 ]/g, '').trim()
 
-    // Check 1: extracted text contains the full company name
+    // Priority map: unique brand keywords that unambiguously identify a company
+    // Checked FIRST before any fuzzy matching to prevent false positives (e.g. IFFCO matching BAJAJ GENERAL INSURANCE)
+    const PRIORITY_KEYWORDS = [
+      { keywords: ['IFFCO', 'TOKIO'], company: 'IFFCO TOKIO' },
+      { keywords: ['HDFC', 'ERGO'], company: 'HDFC ERGO' },
+      { keywords: ['ICICI', 'LOMBARD'], company: 'ICICI LOMBARD' },
+      { keywords: ['TATA', 'AIG'], company: 'TATA AIG GENERAL INSURANCE' },
+      { keywords: ['BAJAJ'], company: 'BAJAJ GENERAL INSURANCE' },
+      { keywords: ['BHARTI', 'AXA'], company: 'BHARTI AXA' },
+      { keywords: ['CHOLAMANDALAM'], company: 'CHOLAMANDALAM MS' },
+      { keywords: ['FUTURE', 'GENERALI'], company: 'FUTURE GENERALI' },
+      { keywords: ['GO DIGIT', 'GODIGIT', 'DIGIT'], company: 'GO DIGIT' },
+      { keywords: ['NATIONAL INSURANCE', 'NATIONAL INS'], company: 'NATIONAL INSURANCE' },
+      { keywords: ['NEW INDIA'], company: 'NEW INDIA ASSURANCE' },
+      { keywords: ['ORIENTAL'], company: 'ORIENTAL INSURANCE' },
+      { keywords: ['UNITED INDIA'], company: 'UNITED INDIA INSURANCE' },
+      { keywords: ['SBI GENERAL', 'SBI GEN'], company: 'SBI GENERAL INSURANCE' },
+      { keywords: ['SHRIRAM'], company: 'SHRIRAM GENERAL INSURANCE' },
+      { keywords: ['ROYAL SUNDARAM', 'SUNDARAM'], company: 'ROYAL SUNDARAM' },
+      { keywords: ['RELIANCE GENERAL', 'RELIANCE GEN'], company: 'RELIANCE GENERAL INSURANCE' },
+      { keywords: ['UNIVERSAL SOMPO', 'SOMPO'], company: 'UNIVERSAL SOMPO' },
+      { keywords: ['KOTAK MAHINDRA', 'KOTAK'], company: 'KOTAK MAHINDRA' },
+      { keywords: ['ZURICH KOTAK'], company: 'ZURICH KOTAK' },
+      { keywords: ['LIBERTY'], company: 'LIBERTY GENERAL INSURANCE' },
+      { keywords: ['MAGMA'], company: 'MAGMA GENERAL INSURANCE' },
+      { keywords: ['INDUSIND'], company: 'INDUSIND' },
+      { keywords: ['EDELWEISS'], company: 'EDELWEISS' },
+      { keywords: ['NAVI'], company: 'NAVI INSURANCE' },
+      { keywords: ['KSHEMA'], company: 'KSHEMA' },
+      { keywords: ['RAHEJA', 'QBE'], company: 'RAHEJA QBE' },
+      { keywords: ['ZUNO'], company: 'ZUNO' },
+      { keywords: ['ACKO'], company: 'ACKO' },
+    ]
+
+    // Check priority map first — any single keyword hit is enough for specific brands
+    for (const { keywords, company } of PRIORITY_KEYWORDS) {
+      if (keywords.every(kw => upper.includes(kw)) || keywords.some(kw => upper.includes(kw) && kw.length >= 5)) {
+        return company
+      }
+    }
+
+    // Fallback Check 1: extracted text contains a full list company name exactly
     for (const company of INSURANCE_COMPANIES) {
       if (upper.includes(company)) return company
     }
 
-    // Check 2: company name contains the extracted short form (e.g. 'TATA AIG' -> 'TATA AIG GENERAL INSURANCE')
+    // Fallback Check 2: company name contains the short extracted form
     if (upper.length >= 5) {
       for (const company of INSURANCE_COMPANIES) {
         if (company.includes(upper)) return company
       }
     }
 
-    // Check 3: word-level match - most words in extracted text appear in company name
-    const words = upper.split(/\s+/).filter(w => w.length > 2)
-    if (words.length >= 2) {
-      for (const company of INSURANCE_COMPANIES) {
-        const matchCount = words.filter(w => company.includes(w)).length
-        if (matchCount >= Math.min(words.length, 2)) return company
-      }
-    }
-
     return upper
+  }
+
+  const matchProductType = (extractedText) => {
+    if (!extractedText) return ''
+    // Normalize: uppercase and replace hyphens with spaces so TWO-WHEELER and TWO WHEELER both match
+    const t = extractedText.toUpperCase().replace(/-/g, ' ')
+
+    if (/PRIVATE\s*CAR|PRIVATE\s*VEHICLE|PRIVATE\s*MOTORCAR|PKG\s*OD/.test(t)) return 'Pvt. Car'
+    if (/TWO\s*WHEEL|2\s*WHEEL|MOTOR\s*CYCLE|BIKE|SCOOTER|MOTORCYCLE/.test(t)) return 'Two Wheeler'
+    if (/GCV\s*3W|GOODS.*THREE\s*WHEEL|THREE\s*WHEEL.*GOODS|3\s*WHEEL.*GOODS|GOODS.*3\s*WHEEL/.test(t)) return 'GCV-3W'
+    if (/GCV|GOODS\s*CARR|GOODS\s*VEHICLE|LIGHT\s*GOODS|HEAVY\s*GOODS|COMMERCIAL\s*GOODS|HGV|LGV/.test(t)) return 'GCV'
+    if (/PCV\s*3W|PASS.*THREE\s*WHEEL|THREE\s*WHEEL.*PASS|AUTO\s*RICKSHAW|E\s*RICKSHAW/.test(t)) return 'PCV-3W'
+    if (/TAXI|CAB|HACKNEY/.test(t)) return 'Taxi'
+    if (/PCV|PASS.*CAR|PASSENGER\s*CAR|PASSENGER\s*VEHICLE|BUS|PASSENGER\s*CARR/.test(t)) return 'PCV'
+    if (/MIS\s*D|MISC.*DOMESTIC|MISCELLANEOUS/.test(t)) return 'Mis-D'
+    if (/HEALTH/.test(t)) return 'Health'
+    if (/LIFE/.test(t)) return 'Life'
+    if (/FIRE/.test(t)) return 'Fire'
+    if (/BURGLARY/.test(t)) return 'Burglary'
+    if (/MARINE/.test(t)) return 'Marine'
+    if (/TRAVEL/.test(t)) return 'Travel'
+    if (/GPA|PERSONAL\s*ACCIDENT/.test(t)) return 'GPA'
+    if (/GMC|GROUP\s*MED/.test(t)) return 'GMC'
+    if (/CPM|CONTRACTOR/.test(t)) return 'CPM'
+    if (/WC|WORKER.*COMP|WORKMEN/.test(t)) return 'WC'
+    return ''
   }
 
   const normalizeAIExtractedDate = (dateStr) => {
@@ -601,6 +659,15 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
               updated.paid = numericPremium
             }
           }
+
+          if (resultData.productType) {
+            const matched = matchProductType(resultData.productType)
+            if (matched) updated.productType = matched
+          }
+          // Fallback: infer productType from bodyType if still not set
+          if (!updated.productType && updated.bodyType) {
+            updated.productType = matchProductType(updated.bodyType)
+          }
           
           return updated
         })
@@ -669,6 +736,14 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     updated.totalFee = numericPremium;
                     updated.paid = numericPremium;
                   }
+                }
+                if (resultData.productType) {
+                  const matched = matchProductType(resultData.productType);
+                  if (matched) updated.productType = matched;
+                }
+                // Fallback: infer productType from bodyType if still not set
+                if (!updated.productType && updated.bodyType) {
+                  updated.productType = matchProductType(updated.bodyType);
                 }
                 return updated;
               });
