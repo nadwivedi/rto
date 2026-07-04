@@ -10,32 +10,71 @@ const getGroqApiKey = () => {
 
 const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase64 = null) => {
   if (isPdf) {
-    // If PDF, imageBase64 is actually raw text extracted by pdf-parse
-    const response = await axios.post(
-      'https://api.groq.com/openai/v1/chat/completions',
+    // imageBase64 here is actually sanitized PDF text (extracted by pdf-parse + extractRelevantPdfText)
+
+    // Step 1: Sanitize PDF ligature characters that confuse LLMs
+    const sanitizedText = imageBase64
+      .replace(/ﬀ/g, 'ff').replace(/ﬁ/g, 'fi').replace(/ﬂ/g, 'fl')
+      .replace(/ﬃ/g, 'ffi').replace(/ﬄ/g, 'ffl').replace(/ﬅ/g, 'st')
+      .replace(/\u0000/g, ' ')  // null bytes
+      .replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\uFFFF]/g, ' ') // strip other control chars
+      .replace(/[ \t]{3,}/g, '  ') // collapse excessive whitespace
+      .trim();
+
+    // Step 2: Use a 3-message structure to clearly separate document from extraction task.
+    // This prevents the model from treating the document text as a prompt to generate examples.
+    const messages = [
       {
-        model: 'llama-3.3-70b-versatile',
-        messages: [
-          {
-             role: 'system',
-             content: 'You are a document extraction assistant. Respond ONLY with a raw JSON object string. Do not include markdown formatting or explanations.'
-          },
-          {
-            role: 'user',
-            content: `${textPrompt}\n\nHere is the raw text from the document:\n\n${imageBase64}`
-          }
-        ],
-        temperature: 0.1,
-        max_tokens: 1024
+        role: 'system',
+        content: 'You are a strict data extraction assistant. When given an insurance document, you extract ONLY values that literally appear in the document text. You never guess, infer, or invent values. You output only valid JSON.'
       },
       {
-        headers: {
-          'Authorization': `Bearer ${getGroqApiKey()}`,
-          'Content-Type': 'application/json'
-        }
+        // Present the document as raw source data first
+        role: 'user',
+        content: 'I am sharing the raw text extracted from an insurance PDF document. This is the SOURCE DATA:\n\n<DOCUMENT>\n' + sanitizedText + '\n</DOCUMENT>\n\nConfirm you have received the document.'
+      },
+      {
+        // Simulate assistant acknowledgement so the next user turn is clearly the extraction task
+        role: 'assistant',
+        content: 'I have received the insurance document text. I will extract only values that actually appear in it.'
+      },
+      {
+        role: 'user',
+        content: textPrompt
       }
-    );
-    return response;
+    ];
+
+    const makeRequest = (withFormat) => {
+      const body = {
+        model: 'llama-3.3-70b-versatile',
+        messages,
+        temperature: 0,
+        max_tokens: 2048
+      };
+      if (withFormat) body.response_format = { type: 'json_object' };
+      return axios.post(
+        'https://api.groq.com/openai/v1/chat/completions',
+        body,
+        {
+          headers: {
+            'Authorization': `Bearer ${getGroqApiKey()}`,
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+    };
+
+    try {
+      const response = await makeRequest(true);
+      return response;
+    } catch (firstErr) {
+      const errCode = firstErr.response?.data?.error?.code;
+      if (errCode === 'json_validate_failed' || errCode === 'invalid_request_error') {
+        console.warn('Groq json_object mode failed, retrying in free-text mode...');
+        return await makeRequest(false);
+      }
+      throw firstErr;
+    }
   } else {
     // Standard vision model - support front + optional back image
     const formattedImage = imageBase64.startsWith('data:image')
@@ -90,6 +129,51 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
   }
 };
 
+/**
+ * Smartly extracts the most relevant portions of PDF text for OCR.
+ * Rather than a blind character slice, it:
+ *   1. Splits the text into page-like segments (on "Page X of Y" markers)
+ *   2. Scores each segment by how many insurance/vehicle keywords it contains
+ *   3. Returns the top-scoring segments up to ~5000 chars
+ * This ensures we capture the Policy Schedule (page 4) even in 12-page TATA AIG PDFs.
+ */
+const extractRelevantPdfText = (fullText, maxPages = 0) => {
+  // Keywords that indicate a relevant section (vehicle details, schedule, receipt, proposal)
+  const HIGH_VALUE_KEYWORDS = [
+    'registration no', 'vehicle no', 'engine number', 'chassis', 'make', 'model',
+    'policy no', 'policy number', 'valid from', 'valid till', 'period of insurance',
+    'premium', 'total premium', 'insured', 'insured name', 'receipt', 'proposal',
+    'certificate of insurance', 'policy schedule', 'fuel type', 'seating capacity',
+    'mfg. year', 'manufacture year', 'date of registration', 'body type'
+  ];
+
+  // Split into page segments using common page markers
+  const segments = fullText.split(/Page \d+ of \d+/i).filter(s => s.trim().length > 50);
+
+  if (segments.length <= 1) {
+    // No page markers — just return up to 5000 chars
+    return fullText.slice(0, 5000);
+  }
+
+  // Score each segment
+  const scored = segments.map((seg, i) => {
+    const lower = seg.toLowerCase();
+    const score = HIGH_VALUE_KEYWORDS.reduce((acc, kw) => acc + (lower.includes(kw) ? 1 : 0), 0);
+    return { seg, score, i };
+  });
+
+  // Sort by score descending, pick top segments, then re-sort by original order
+  const topSegments = scored
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5)
+    .sort((a, b) => a.i - b.i);
+
+  let result = topSegments.map(s => s.seg.trim()).join('\n\n---\n\n');
+
+  // Final safety cap: 5500 chars to stay under token limits
+  return result.slice(0, 5500);
+};
+
 const processOcrRequest = async (req, res, promptText, jsonTemplate, maxPages = 0) => {
   try {
     const { imageBase64, backImageBase64 } = req.body;
@@ -103,12 +187,11 @@ const processOcrRequest = async (req, res, promptText, jsonTemplate, maxPages = 
 
     if (imageBase64.startsWith('data:application/pdf')) {
         isPdf = true;
-        // extract base64 part
         const base64Data = imageBase64.replace(/^data:application\/pdf;base64,/, "");
         const buffer = Buffer.from(base64Data, 'base64');
-        const options = maxPages > 0 ? { max: maxPages } : {};
-        const pdfData = await pdfParse(buffer, options);
-        payload = pdfData.text; // replace the payload with raw text
+        // Always parse ALL pages — vehicle schedule data can appear on page 4+ in multi-page PDFs
+        const pdfData = await pdfParse(buffer);
+        payload = extractRelevantPdfText(pdfData.text, maxPages);
     }
 
     const fullPrompt = `${promptText}
@@ -282,8 +365,8 @@ exports.insuranceOcr = async (req, res) => {
   "seatingCapacity": "",
   "bodyType": ""
 }`;
-  // Send 2 pages to capture both the policy and RC schedule
-  return processOcrRequest(req, res, prompt, template, 2);
+  // Parse all pages — TATA AIG vehicle schedule appears on page 4+
+  return processOcrRequest(req, res, prompt, template, 0);
 };
 
 exports.temporaryPermitOcr = async (req, res) => {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { getTodayDate as utilGetTodayDate, handleSmartDateInput } from '../../../utils/dateFormatter'
@@ -482,10 +482,29 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
   const matchInsuranceCompany = (extractedText) => {
     if (!extractedText) return ''
-    const upper = extractedText.toUpperCase().replace(/[^A-Z0-9 ]/g, '')
+    const upper = extractedText.toUpperCase().replace(/[^A-Z0-9 ]/g, '').trim()
+
+    // Check 1: extracted text contains the full company name
     for (const company of INSURANCE_COMPANIES) {
       if (upper.includes(company)) return company
     }
+
+    // Check 2: company name contains the extracted short form (e.g. 'TATA AIG' -> 'TATA AIG GENERAL INSURANCE')
+    if (upper.length >= 5) {
+      for (const company of INSURANCE_COMPANIES) {
+        if (company.includes(upper)) return company
+      }
+    }
+
+    // Check 3: word-level match - most words in extracted text appear in company name
+    const words = upper.split(/\s+/).filter(w => w.length > 2)
+    if (words.length >= 2) {
+      for (const company of INSURANCE_COMPANIES) {
+        const matchCount = words.filter(w => company.includes(w)).length
+        if (matchCount >= Math.min(words.length, 2)) return company
+      }
+    }
+
     return upper
   }
 
@@ -758,7 +777,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
         // If vehicle was auto-created, inform the user
         if (!isEditMode && response.data.vehicleAutoCreated) {
-          toast.info('✅ Vehicle record also auto-created in Vahan from insurance data.', { autoClose: 5000 })
+          toast.info('âœ… Vehicle record also auto-created in Vahan from insurance data.', { autoClose: 5000 })
         }
 
         // Call onSubmit callback to notify parent (for refresh)
@@ -903,7 +922,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                           <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
                           </svg>
-                          {vehicleMatches.length} vehicle{vehicleMatches.length !== 1 ? 's' : ''} found - Use ↑↓ to navigate, Enter to select
+                          {vehicleMatches.length} vehicle{vehicleMatches.length !== 1 ? 's' : ''} found - Use â†‘â†“ to navigate, Enter to select
                         </div>
                         {vehicleMatches.map((vehicle, index) => (
                           <div
@@ -958,8 +977,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                         <br />
                         <span className='text-red-600'>
                           Policy: {activeInsuranceCheck.policyNumber || 'N/A'}
-                          {activeInsuranceCheck.insuranceCompany ? ` · ${activeInsuranceCheck.insuranceCompany}` : ''}
-                          {activeInsuranceCheck.validTo ? ` · Valid till ${activeInsuranceCheck.validTo}` : ''}
+                          {activeInsuranceCheck.insuranceCompany ? ` Â· ${activeInsuranceCheck.insuranceCompany}` : ''}
+                          {activeInsuranceCheck.validTo ? ` Â· Valid till ${activeInsuranceCheck.validTo}` : ''}
                         </span>
                       </div>
                     </div>
@@ -1187,7 +1206,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Total Fee */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Total Premium (₹) <span className='text-red-500'>*</span>
+                    Total Premium (â‚¹) <span className='text-red-500'>*</span>
                   </label>
                   <input
                     type='number'
@@ -1206,7 +1225,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Paid */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Paid (₹) <span className='text-red-500'>*</span>
+                    Paid (â‚¹) <span className='text-red-500'>*</span>
                   </label>
                   <input
                     type='number'
@@ -1234,7 +1253,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Balance (Auto-calculated) */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Balance (₹) <span className='text-xs text-gray-500'>(Auto)</span>
+                    Balance (â‚¹) <span className='text-xs text-gray-500'>(Auto)</span>
                   </label>
                   <input
                     type='number'
@@ -1248,7 +1267,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Renew Premium */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Renew Premium (₹)
+                    Renew Premium (â‚¹)
                   </label>
                   <input
                     type='number'
@@ -1266,7 +1285,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 {/* Commission */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Commission (₹)
+                    Commission (â‚¹)
                   </label>
                   <input
                     type='number'
@@ -1289,7 +1308,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
                     </svg>
-                    Partial Payment - Balance: ₹{formData.balance}
+                    Partial Payment - Balance: â‚¹{formData.balance}
                   </p>
                 </div>
               )}
