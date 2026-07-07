@@ -280,9 +280,9 @@ const VahanDashboard = () => {
   }
 
   return (
-    <div className='h-full overflow-auto p-1 sm:p-3'>
-      <div className='grid gap-3'>
-        <section className='min-w-0'>
+    <div className='flex-1 flex flex-col p-1 sm:p-3 overflow-hidden'>
+      <div className='flex flex-col gap-3 flex-1 min-h-0'>
+        <section className='min-w-0 flex flex-col flex-1'>
           <div className='mb-3 grid grid-cols-1 items-center gap-3 text-center md:grid-cols-[auto_1fr]'>
             <h2 className='text-left text-base font-bold text-gray-800 lg:text-[15px] xl:text-base 2xl:text-lg'>Expiry Soon</h2>
 
@@ -317,8 +317,8 @@ const VahanDashboard = () => {
               <p className='font-medium text-gray-500'>No documents expiring soon</p>
             </div>
           ) : (
-            <div className='mt-2 sm:mt-4 overflow-hidden rounded-lg border border-gray-200 bg-white'>
-              <div className='overflow-x-auto'>
+            <div className='mt-2 sm:mt-4 flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white'>
+              <div className='h-full overflow-auto'>
                 <table className='w-full table-fixed'>
                   <thead className='border-b border-gray-200 bg-gray-50'>
                     <tr>
