@@ -10,6 +10,7 @@ const NationalPermit = require('../models/NationalPermit')
 const CgPermit = require('../models/CgPermit')
 const BusPermit = require('../models/BusPermit')
 const TemporaryPermit = require('../models/TemporaryPermit')
+const Driving = require('../models/Driving')
 const User = require('../models/User')
 const { normalizeAlertSettings } = require('../utils/whatsappAlertSettings')
 
@@ -408,6 +409,84 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
       const partLabels = missingPartAlerts.map((partAlert) => partAlert.partLabel).join(' + ')
       console.log(`[WHATSAPP-CRON:${docUserId}] Queued: NP ${partLabels} | ${vehicleNo} | ${mobileNumber}`)
     }
+
+    // ── LL Eligible for DL reminder (30–40 days after LL issue date) ──────────
+    const today_ll = new Date()
+    today_ll.setHours(0, 0, 0, 0)
+
+    // Window: LL was issued between 40 and 30 days ago (inclusive)
+    const day30ago = new Date(today_ll.getTime() - 30 * 24 * 60 * 60 * 1000)
+    const day40ago = new Date(today_ll.getTime() - 40 * 24 * 60 * 60 * 1000)
+
+    const llEligibleQuery = {
+      mobileNumber: { $exists: true, $nin: [null, '', undefined] },
+      learningLicenseIssueDate: {
+        $exists: true,
+        $ne: null,
+        $gte: day40ago,  // issued at most 40 days ago
+        $lte: day30ago   // issued at least 30 days ago
+      },
+      learningLicenseExpiryDate: {
+        $exists: true,
+        $ne: null,
+        $gte: today_ll   // LL has not expired yet
+      }
+    }
+    if (specificUserId) llEligibleQuery.userId = specificUserId
+
+    const llEligibleDocs = await Driving.find(llEligibleQuery).lean()
+    console.log(`[WHATSAPP-CRON] LL Eligible for DL: checking ${llEligibleDocs.length} applications in 30–40 day window`)
+
+    const LL_ELIGIBLE_ALERT_KEY = 'll-eligible-30-40'
+
+    for (const doc of llEligibleDocs) {
+      if (!doc.userId) continue
+
+      const docUserId = doc.userId.toString()
+      const setting = await getSettingForUser(docUserId)
+      const rule = setting.alertRules.llEligible
+
+      // Skip if user has disabled this alert type
+      if (!rule || rule.enabled === false) continue
+
+      // Deduplication: only send once in the entire 30–40 day window
+      const alreadyQueued = await MessageLog.findOne({
+        userId: docUserId,
+        documentId: doc._id,
+        documentType: 'Driving',
+        status: { $in: ['pending', 'sent'] },
+        alertKey: LL_ELIGIBLE_ALERT_KEY
+      })
+      if (alreadyQueued) continue
+
+      const mobileNumber = String(doc.mobileNumber).trim()
+      const userInfo = await getUserInfo(docUserId)
+
+      // Build short bilingual message (English + Hindi)
+      let messageBody = `Dear *${doc.name || 'Customer'}*,\n\n`
+      messageBody += `You are now eligible to apply for your *Driving Licence (DL)*.\n`
+      messageBody += `Please visit us as soon as possible.\n\n`
+      messageBody += `आप अब *Driving Licence (DL)* के लिए आवेदन करने के लिए तैयार हैं।\n`
+      messageBody += `कृपया जल्द से जल्द हमारे पास पहुँचें।\n`
+      messageBody += `\n────────────────\n*${userInfo.signature}*`
+      if (userInfo.address) messageBody += `\n\n📍 ${userInfo.address}`
+
+      await MessageLog.create({
+        userId: docUserId,
+        documentId: doc._id,
+        documentType: 'Driving',
+        targetNumber: mobileNumber,
+        ownerName: doc.name || 'Unknown',
+        messageBody,
+        alertKey: LL_ELIGIBLE_ALERT_KEY,
+        status: 'pending',
+        scheduledFor: new Date()
+      })
+
+      queuedCount++
+      console.log(`[WHATSAPP-CRON:${docUserId}] Queued: LL Eligible | ${doc.name} | ${mobileNumber} | Day ${daysSinceIssue}`)
+    }
+    // ── End LL Eligible scan ──────────────────────────────────────────────────
 
     console.log(`[WHATSAPP-CRON] Scan complete: ${queuedCount} new alerts queued`)
     return queuedCount

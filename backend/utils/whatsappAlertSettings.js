@@ -7,7 +7,8 @@ const WHATSAPP_ALERT_SERVICES = [
   { key: 'statePermit', label: 'State Permit' },
   { key: 'busPermit', label: 'Bus Permit' },
   { key: 'temporaryPermit', label: 'Temp Permit' },
-  { key: 'insurance', label: 'Insurance' }
+  { key: 'insurance', label: 'Insurance' },
+  { key: 'llEligible', label: 'LL Eligible for DL' }
 ]
 
 const DEFAULT_ALERT_RULE = {
