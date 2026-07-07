@@ -298,12 +298,12 @@ const Vahan = () => {
             </button>
           </div>
           <div className="flex-1 overflow-y-auto p-3">
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 gap-2">
               {quickButtons.map((button) => {
                 const option = vahanOptions.find((item) => item.title === button.title)
                 const targetPath = button.path || option?.path
                 const Icon = buttonIcons[button.title]
-                const btnClass = 'flex flex-col items-center justify-center aspect-square border border-white/10 bg-white/5 hover:bg-white/10 hover:scale-[1.04] transition-all duration-200 text-white'
+                const btnClass = 'flex flex-col items-center justify-center aspect-[2/1] border border-white/10 bg-white/5 hover:bg-white/10 hover:scale-[1.04] transition-all duration-200 text-white'
                 const inner = (
                   <>
                     {Icon && (
@@ -328,12 +328,12 @@ const Vahan = () => {
         <div className='flex w-full flex-col gap-6 lg:flex-row lg:max-h-[calc(100vh-5rem)]'>
           <aside className='hidden lg:block lg:w-96 lg:shrink-0 lg:self-start lg:sticky lg:top-4'>
             <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4'>
-              <div className='grid grid-cols-3 gap-3'>
+              <div className='grid grid-cols-2 gap-3'>
               {quickButtons.map((button) => {
                 const option = vahanOptions.find((item) => item.title === button.title)
                 const targetPath = button.path || option?.path
                 const Icon = buttonIcons[button.title]
-                const btnClass = `flex flex-col items-center justify-center aspect-square border transition-all duration-200 hover:scale-[1.04] hover:shadow-md ${button.tone}`
+                const btnClass = `flex flex-col items-center justify-center aspect-[2/1] border transition-all duration-200 hover:scale-[1.04] hover:shadow-md ${button.tone}`
                 const inner = (
                   <>
                     {Icon && (
