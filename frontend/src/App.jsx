@@ -38,6 +38,7 @@ import KycZone from './pages/KycZone/KycZone'
 import WhatsApp from './pages/WhatsApp/WhatsApp'
 import Javak from './pages/Javak/Javak'
 import CashflowReport from './pages/Reports/CashflowReport'
+import SpeedGovernor from './pages/SpeedGovernor/SpeedGovernor'
 import PWAPrompt from './components/PWAPrompt'
 // import { Agentation } from 'agentation'
 
@@ -96,7 +97,8 @@ function ProtectedLayout() {
           '/puc',
           '/gps',
           '/dealer-bill',
-          '/party'
+          '/party',
+          '/speed-governor'
         ];
 
         if (location.pathname.startsWith('/party/')) {
@@ -156,6 +158,7 @@ function ProtectedLayout() {
                 <Route path='/whatsapp' element={<WhatsApp />} />
                 <Route path='/javak' element={<Javak />} />
                 <Route path='/cashflow-report' element={<CashflowReport />} />
+                <Route path='/speed-governor' element={<SpeedGovernor />} />
               </Routes>
             </main>
           </div>

@@ -127,6 +127,7 @@ const expenseBreakdownRoutes = require('./routes/expenseBreakdownRoutes')
 const defaultExpenseSettingsRoutes = require('./routes/defaultExpenseSettings')
 const reportRoutes = require('./routes/reportRoutes')
 const licenseClassRoutes = require('./routes/licenseClassRoutes')
+const speedGovernorRoutes = require('./routes/speedGovernor')
 
 // Use Routes
 
@@ -172,6 +173,7 @@ app.use('/api/expense-breakdown', userAuth, expenseBreakdownRoutes)
 app.use('/api/default-expense-settings', userAuth, defaultExpenseSettingsRoutes)
 app.use('/api/reports', userAuth, reportRoutes)
 app.use('/api/license-classes', userAuth, licenseClassRoutes)
+app.use('/api/speed-governor', userAuth, speedGovernorRoutes)
 
 // Public routes (no auth)
 app.use('/api/blogs', publicBlogRoutes)

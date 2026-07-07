@@ -137,12 +137,19 @@ const Navbar = () => {
       description: "RTO Forms",
     },
 
-    {
-      name: "Cashflow",
-      icon: "💰",
-      path: "/cashflow-report",
-      description: "Expense & Income Report",
-    },
+     {
+       name: "Speed Gov",
+       icon: "⚡",
+       path: "/speed-governor",
+       description: "Speed Governor Records",
+     },
+
+     {
+       name: "Cashflow",
+       icon: "💰",
+       path: "/cashflow-report",
+       description: "Expense & Income Report",
+     },
 
     {
       name: "setting",
@@ -165,6 +172,12 @@ const Navbar = () => {
       icon: "🚚",
       path: "/vahan",
       description: "Vehicle Services",
+    },
+    {
+      name: "Speed Gov",
+      icon: "⚡",
+      path: "/speed-governor",
+      description: "Speed Governor Records",
     },
     {
       name: "Sarthi",
