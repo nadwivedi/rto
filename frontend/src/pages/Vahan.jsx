@@ -13,7 +13,7 @@ import AddInsuranceModal from './Insurance/components/AddInsuranceModal'
 import AddDealerBillModal from '../components/AddDealerBillModal'
 import AddMoneyReceivedModal from './Party/components/AddMoneyReceivedModal'
 import VahanDashboard from './Vahan/components/VahanDashboard'
-import { Menu, X, FileText } from 'lucide-react'
+import { Menu, X, FileText, Users, Truck, Globe, ScrollText, Bus, Clock, FilePlus, Shield, Activity, Receipt, Wind, MapPin } from 'lucide-react'
 import IssueBusPermitModal from './BusPermit/components/IssueBusPermitModal'
 
 const vahanOptions = [
@@ -45,6 +45,22 @@ const quickButtons = [
 ]
 
 const actionNavbarButtons = []
+
+const buttonIcons = {
+  Party: Users,
+  'Manage Vehicle': Truck,
+  'Add NP': Globe,
+  'Add CG Permit': ScrollText,
+  'Add Bus Permit': Bus,
+  'Add Temp Permit': Clock,
+  'Add Temp Other State': FilePlus,
+  Insurance: Shield,
+  'Add Fitness': Activity,
+  'Add Tax': Receipt,
+  PUC: Wind,
+  'Add GPS': MapPin,
+  Bill: FileText,
+}
 
 const PermitTypeSelectModal = ({ onClose, openModal }) => {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -126,7 +142,6 @@ const PermitTypeSelectModal = ({ onClose, openModal }) => {
 const Vahan = () => {
   const navigate = useNavigate()
   const [activeModal, setActiveModal] = useState(null)
-  const [focusedIndex, setFocusedIndex] = useState(0)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
 
@@ -142,39 +157,11 @@ const Vahan = () => {
   }
   const closeModal = () => {
     setActiveModal(null)
-    setFocusedIndex(prev => prev ?? 0)
   }
-
-  // Global arrow-key navigation for sidebar — disabled while a modal is open
-  useEffect(() => {
-    if (activeModal || isMobileMenuOpen || isReportModalOpen) return
-    const handleKeyDown = (e) => {
-      if (['ArrowDown', 'ArrowUp', 'Enter'].includes(e.key)) {
-        e.preventDefault()
-      }
-      if (e.key === 'ArrowDown') {
-        setFocusedIndex(prev => {
-          const next = (prev === null ? 0 : prev + 1)
-          return next >= vahanOptions.length ? 0 : next
-        })
-      } else if (e.key === 'ArrowUp') {
-        setFocusedIndex(prev => {
-          const next = (prev === null ? vahanOptions.length - 1 : prev - 1)
-          return next < 0 ? vahanOptions.length - 1 : next
-        })
-      } else if (e.key === 'Enter') {
-        if (focusedIndex !== null) {
-          openModal(vahanOptions[focusedIndex].title)
-        }
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [activeModal, focusedIndex, isMobileMenuOpen])
 
   return (
     <>
-      <nav className='sticky top-0 z-[60] border-b border-slate-200 bg-white px-4 py-2 shadow-sm'>
+      <nav className='sticky top-0 z-[60] border-b border-slate-200 bg-white px-4 py-2 shadow-sm lg:hidden'>
         <div className='flex items-center justify-between'>
           <div className='flex items-center gap-2'>
             <button
@@ -188,14 +175,16 @@ const Vahan = () => {
               {quickButtons.map((button) => {
                 const option = vahanOptions.find((item) => item.title === button.title)
                 const targetPath = button.path || option?.path
+                const Icon = buttonIcons[button.title]
 
                 if (!targetPath) {
                   return (
                     <button
                       key={button.title}
                       onClick={() => openModal(button.title)}
-                      className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${button.tone}`}
+                      className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition ${button.tone}`}
                     >
+                      {Icon && <Icon size={14} />}
                       {button.shortLabel}
                     </button>
                   )
@@ -205,8 +194,9 @@ const Vahan = () => {
                   <Link
                     key={button.title}
                     to={targetPath}
-                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition ${button.tone}`}
+                    className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-semibold transition ${button.tone}`}
                   >
+                    {Icon && <Icon size={14} />}
                     {button.shortLabel}
                   </Link>
                 )
@@ -242,21 +232,28 @@ const Vahan = () => {
                  </button>
               </div>
               <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[70vh] overflow-y-auto">
-                 {quickButtons.map((button) => {
+                  {quickButtons.map((button) => {
                     const option = vahanOptions.find((item) => item.title === button.title)
                     const targetPath = button.path || option?.path
+                    const Icon = buttonIcons[button.title]
+
+                    const content = (
+                      <>
+                        <div className="w-10 h-10 rounded-lg bg-white/70 flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform">
+                          {Icon ? <Icon size={20} className='text-current' /> : <FileText size={18} />}
+                        </div>
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-center">{button.shortLabel}</span>
+                      </>
+                    )
 
                     if (!targetPath) {
                        return (
                           <button
                              key={button.title}
                              onClick={() => openModal(button.title)}
-                             className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-95 group ${button.tone}`}
+                             className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-200 hover:scale-[1.04] group ${button.tone}`}
                           >
-                             <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform">
-                                <FileText size={18} />
-                             </div>
-                             <span className="text-[10px] font-bold uppercase tracking-wider text-center">{button.shortLabel}</span>
+                             {content}
                           </button>
                        )
                     }
@@ -266,16 +263,13 @@ const Vahan = () => {
                           key={button.title}
                           to={targetPath}
                           onClick={() => setIsReportModalOpen(false)}
-                          className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all active:scale-95 group ${button.tone}`}
+                          className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all duration-200 hover:scale-[1.04] group ${button.tone}`}
                        >
-                          <div className="w-10 h-10 rounded-full bg-white/50 flex items-center justify-center mb-2 shadow-sm group-hover:scale-110 transition-transform">
-                             <FileText size={18} />
-                          </div>
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-center">{button.shortLabel}</span>
+                          {content}
                        </Link>
                     )
-                 })}
-              </div>
+                  })}
+               </div>
               <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 text-center">
                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">Generated by RTO Sarthi</p>
               </div>
@@ -300,108 +294,64 @@ const Vahan = () => {
               <X size={20} />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-2">
-            {vahanOptions.map((option, index) => (
-              <button
-                key={option.title}
-                onClick={() => openModal(option.title)}
-                className="w-full group relative overflow-hidden rounded-xl bg-white/5 hover:bg-white/10 transition-all border border-white/5 text-left"
-              >
-                {option.image ? (
-                  <img
-                    src={option.image}
-                    alt={option.title}
-                    className="w-full h-auto object-contain opacity-90 group-hover:opacity-100 transition-opacity"
-                  />
-                ) : (
-                  <div className="p-4 flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-amber-400/20 text-amber-400 flex items-center justify-center font-bold text-xs">
-                      {index + 1}
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold">{option.title}</div>
-                      <div className="text-[10px] text-slate-400">{option.note}</div>
-                    </div>
-                  </div>
-                )}
-              </button>
-            ))}
-          </div>
-          <div className="p-6 border-t border-white/10 bg-slate-950/50">
-             <p className="text-[10px] text-slate-500 uppercase tracking-widest text-center">RTO Sarthi Management</p>
+          <div className="flex-1 overflow-y-auto p-3">
+            <div className="grid grid-cols-3 gap-2">
+              {quickButtons.map((button) => {
+                const option = vahanOptions.find((item) => item.title === button.title)
+                const targetPath = button.path || option?.path
+                const Icon = buttonIcons[button.title]
+                const btnClass = 'flex flex-col items-center justify-center aspect-square border border-white/10 bg-white/5 hover:bg-white/10 hover:scale-[1.04] transition-all duration-200 text-white'
+                const inner = (
+                  <>
+                    {Icon && (
+                      <div className='w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 mb-0.5'>
+                        <Icon size={18} className='text-white/80' />
+                      </div>
+                    )}
+                    <span className='text-[10px] font-bold text-center leading-tight'>{button.shortLabel}</span>
+                  </>
+                )
+                if (targetPath) {
+                  return <Link key={button.title} to={targetPath} onClick={() => setIsMobileMenuOpen(false)} className={btnClass}>{inner}</Link>
+                }
+                return <button key={button.title} onClick={() => openModal(button.title)} className={btnClass}>{inner}</button>
+              })}
+            </div>
           </div>
         </div>
       </aside>
 
       <div className='min-h-screen bg-slate-100 px-0.5 pb-8 pt-4 sm:px-4 lg:px-6 lg:pt-5'>
-        <div className='flex w-full flex-col gap-6 lg:flex-row'>
-          <aside className='hidden lg:block lg:fixed lg:left-0 lg:top-[4.75rem] lg:h-[calc(100vh-4.75rem)] lg:w-60 xl:w-64 2xl:w-[19rem] lg:overflow-y-auto'>
-            <div className='overflow-hidden rounded-[28px] bg-slate-900 text-white shadow-2xl'>
-              {/* Keyboard hint bar */}
-              <div className='px-4 pt-3 pb-1 flex items-center gap-2 border-b border-white/10'>
-                <span className='text-[10px] text-slate-400 font-medium tracking-wide flex items-center gap-1'>
-                  <kbd className='bg-white/10 text-slate-300 px-1 py-0.5 rounded text-[10px] font-mono'>↑↓</kbd>
-                  Navigate
-                  <kbd className='bg-white/10 text-slate-300 px-1.5 py-0.5 rounded text-[10px] font-mono ml-1'>↵</kbd>
-                  Open
-                </span>
-                {focusedIndex !== null && (
-                  <span className='ml-auto text-[10px] font-semibold text-amber-300 bg-amber-900/40 px-2 py-0.5 rounded-full truncate max-w-[100px]'>
-                    {vahanOptions[focusedIndex]?.title}
-                  </span>
-                )}
-              </div>
-              <div className='space-y-2 p-4'>
-                {vahanOptions.map((option, index) => {
-                  const isFocused = focusedIndex === index
-                  return (
-                    <button
-                      key={option.title}
-                      type='button'
-                      onClick={() => { setFocusedIndex(index); openModal(option.title) }}
-                      onMouseEnter={() => setFocusedIndex(index)}
-                      className={
-                        option.image
-                          ? `block w-full transition duration-200 rounded-xl ${
-                              isFocused
-                                ? 'ring-2 ring-amber-400 ring-offset-2 ring-offset-slate-900 opacity-100 scale-[1.02] shadow-lg shadow-amber-500/30'
-                                : 'hover:opacity-95'
-                            }`
-                          : `block w-full rounded-2xl border px-4 py-3 text-left transition duration-200 ${
-                              isFocused
-                                ? 'border-amber-400 bg-amber-500/20 shadow-lg shadow-amber-500/20 scale-[1.02]'
-                                : 'border-white/10 bg-white/5 hover:bg-white/10 hover:shadow-lg'
-                            }`
-                      }
-                    >
-                      {option.image ? (
-                        <img
-                          src={option.image}
-                          alt={option.title}
-                          className='mx-auto h-auto w-[92%] object-contain'
-                        />
-                      ) : (
-                        <div className='flex items-start gap-3'>
-                          <span className={`mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                            isFocused ? 'bg-amber-400 text-slate-900' : 'bg-white/10 text-amber-200'
-                          }`}>
-                            {index + 1}
-                          </span>
-                          <div>
-                            <h2 className={`text-sm font-bold ${isFocused ? 'text-amber-300' : 'text-white'}`}>{option.title}</h2>
-                            <p className='mt-1 text-xs leading-5 text-slate-300'>{option.note}</p>
-                          </div>
-                        </div>
-                      )}
-                    </button>
-                  )
-                })}
-              </div>
+        <div className='flex w-full flex-col gap-6 lg:flex-row lg:max-h-[calc(100vh-5rem)]'>
+          <aside className='hidden lg:block lg:w-96 lg:shrink-0 lg:self-start lg:sticky lg:top-4'>
+            <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4'>
+              <div className='grid grid-cols-3 gap-3'>
+              {quickButtons.map((button) => {
+                const option = vahanOptions.find((item) => item.title === button.title)
+                const targetPath = button.path || option?.path
+                const Icon = buttonIcons[button.title]
+                const btnClass = `flex flex-col items-center justify-center aspect-square border transition-all duration-200 hover:scale-[1.04] hover:shadow-md ${button.tone}`
+                const inner = (
+                  <>
+                    {Icon && (
+                      <div className='w-10 h-10 rounded-xl flex items-center justify-center bg-white/70 shadow-sm mb-1'>
+                        <Icon size={22} className='text-current' />
+                      </div>
+                    )}
+                    <span className='text-xs font-bold text-center leading-tight'>{button.shortLabel}</span>
+                  </>
+                )
+                if (targetPath) {
+                  return <Link key={button.title} to={targetPath} className={btnClass}>{inner}</Link>
+                }
+                return <button key={button.title} onClick={() => openModal(button.title)} className={btnClass}>{inner}</button>
+              })}
             </div>
+          </div>
           </aside>
 
-          <main id='vahan-dashboard' className='flex-1 lg:ml-60 xl:ml-64 2xl:ml-[19rem]'>
-            <div className='bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200 min-h-[calc(100vh-6rem)]'>
+          <main id='vahan-dashboard' className='flex-1 min-w-0 lg:overflow-y-auto'>
+            <div className='bg-white rounded-xl sm:rounded-2xl shadow-lg border border-gray-200'>
               <div className="flex items-center px-4 py-2.5 sm:px-5 sm:py-3 border-b border-gray-100">
                 <button
                   onClick={() => navigate('/')}

@@ -54,19 +54,13 @@ const formatDate = (date) => {
 
 const getDateTime = (date) => parseAppDate(date)?.getTime() || Number.MAX_SAFE_INTEGER
 
-const formatCurrency = (amount) => `₹${Number(amount || 0).toLocaleString('en-IN')}`
-
 const VahanDashboard = () => {
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState('all')
   const [allRecords, setAllRecords] = useState([])
-  const [pendingLoading, setPendingLoading] = useState(true)
-  const [pendingParties, setPendingParties] = useState([])
-  const [pendingGrandTotal, setPendingGrandTotal] = useState(0)
 
   useEffect(() => {
     fetchData()
-    fetchPendingBalances()
   }, [])
 
   const fetchData = async () => {
@@ -197,22 +191,6 @@ const VahanDashboard = () => {
     }
   }
 
-  const fetchPendingBalances = async () => {
-    try {
-      setPendingLoading(true)
-      const response = await axios.get(`${BACKEND_URL}/api/parties/pending-summary`, { withCredentials: true })
-      const summary = response.data.data
-      const parties = (summary.parties || []).filter(party => Number(party.totalPending || 0) > 0)
-
-      setPendingParties(parties)
-      setPendingGrandTotal(summary.grandTotal || 0)
-    } catch (error) {
-      console.error('Error fetching pending balances:', error)
-    } finally {
-      setPendingLoading(false)
-    }
-  }
-
   const docTypeOrder = {
     'Tax': 1,
     'Fitness': 2,
@@ -303,7 +281,7 @@ const VahanDashboard = () => {
 
   return (
     <div className='h-full overflow-auto p-1 sm:p-3'>
-      <div className='grid gap-3 xl:grid-cols-[65%_minmax(0,1fr)]'>
+      <div className='grid gap-3'>
         <section className='min-w-0'>
           <div className='mb-3 grid grid-cols-1 items-center gap-3 text-center md:grid-cols-[auto_1fr]'>
             <h2 className='text-left text-base font-bold text-gray-800 lg:text-[15px] xl:text-base 2xl:text-lg'>Expiry Soon</h2>
@@ -389,37 +367,6 @@ const VahanDashboard = () => {
             </div>
           )}
         </section>
-
-        <aside className='min-w-0 rounded-lg border border-gray-200 bg-white'>
-          <div className='border-b border-gray-200 px-3 py-2'>
-            <div className='flex items-center justify-between gap-2'>
-              <h2 className='text-base font-bold text-gray-800'>Pending Balance</h2>
-              <span className='text-sm font-black text-orange-600'>{formatCurrency(pendingGrandTotal)}</span>
-            </div>
-          </div>
-
-          {pendingLoading ? (
-            <div className='space-y-2 p-3'>
-              {[...Array(5)].map((_, index) => (
-                <div key={index} className='h-11 animate-pulse rounded-lg bg-gray-100'></div>
-              ))}
-            </div>
-          ) : pendingParties.length === 0 ? (
-            <div className='px-3 py-8 text-center text-sm font-medium text-gray-500'>No pending balance</div>
-          ) : (
-            <div className='max-h-[calc(100vh-13rem)] divide-y divide-gray-100 overflow-y-auto'>
-              {pendingParties.map((party) => (
-                <div key={party.partyId} className='flex items-center justify-between gap-3 px-3 py-2 hover:bg-orange-50/40'>
-                  <div className='min-w-0'>
-                    <div className='truncate text-[11px] sm:text-sm font-semibold text-gray-800'>{party.partyName || '-'}</div>
-                    <div className='text-xs text-gray-500'>{party.vehicleCount || 0} vehicle{party.vehicleCount === 1 ? '' : 's'}</div>
-                  </div>
-                  <div className='shrink-0 text-sm font-black text-orange-600'>{formatCurrency(party.totalPending)}</div>
-                </div>
-              ))}
-            </div>
-          )}
-        </aside>
       </div>
     </div>
   )
