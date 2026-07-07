@@ -162,6 +162,34 @@ const Vahan = () => {
     setActiveModal(null)
   }
 
+  const quickAddModals = {
+    'Party': null,
+    'Manage Vehicle': 'Manage Vehicle',
+    'Add NP': 'Add NP',
+    'Add CG Permit': 'Add CG Permit',
+    'Add Bus Permit': 'Add Bus Permit',
+    'Add Temp Permit': 'Issue Temp Permit',
+    'Add Temp Other State': 'Issue Temp Permit Other State',
+    'Insurance': 'Insurance',
+    'Add Fitness': 'Add Fitness',
+    'Add Tax': 'Add Tax',
+    'PUC': 'PUC',
+    'Add GPS': 'Add GPS',
+    'Bill': 'Bill',
+    'Speed Governor': null,
+  }
+
+  const handleQuickAdd = (title, e) => {
+    e.stopPropagation()
+    e.preventDefault()
+    const modalTitle = quickAddModals[title]
+    if (modalTitle) {
+      setActiveModal(modalTitle)
+      setIsMobileMenuOpen(false)
+      setIsReportModalOpen(false)
+    }
+  }
+
   return (
     <>
       <nav className='sticky top-0 z-[60] border-b border-slate-200 bg-white px-4 py-2 shadow-sm lg:hidden'>
@@ -314,10 +342,25 @@ const Vahan = () => {
                     <span className='text-[10px] font-bold text-center leading-tight'>{button.shortLabel}</span>
                   </>
                 )
-                if (targetPath) {
-                  return <Link key={button.title} to={targetPath} onClick={() => setIsMobileMenuOpen(false)} className={btnClass}>{inner}</Link>
-                }
-                return <button key={button.title} onClick={() => openModal(button.title)} className={btnClass}>{inner}</button>
+                const card = targetPath
+                  ? <Link to={targetPath} onClick={() => setIsMobileMenuOpen(false)} className={btnClass}>{inner}</Link>
+                  : <button onClick={() => openModal(button.title)} className={btnClass}>{inner}</button>
+                return (
+                  <div key={button.title} className='relative group'>
+                    {card}
+                    {quickAddModals[button.title] && (
+                      <button
+                        onClick={(e) => handleQuickAdd(button.title, e)}
+                        className='absolute -top-1.5 -right-1.5 w-5 h-5 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-900 hover:scale-110 transition-all flex items-center justify-center z-10 opacity-0 group-hover:opacity-100'
+                        title={`Add ${button.shortLabel}`}
+                      >
+                        <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M12 4v16m8-8H4' />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )
               })}
             </div>
           </div>
@@ -344,10 +387,25 @@ const Vahan = () => {
                     <span className='text-xs font-bold text-center leading-tight'>{button.shortLabel}</span>
                   </>
                 )
-                if (targetPath) {
-                  return <Link key={button.title} to={targetPath} className={btnClass}>{inner}</Link>
-                }
-                return <button key={button.title} onClick={() => openModal(button.title)} className={btnClass}>{inner}</button>
+                const card = targetPath
+                  ? <Link to={targetPath} className={btnClass}>{inner}</Link>
+                  : <button onClick={() => openModal(button.title)} className={btnClass}>{inner}</button>
+                return (
+                  <div key={button.title} className='relative group'>
+                    {card}
+                    {quickAddModals[button.title] && (
+                      <button
+                        onClick={(e) => handleQuickAdd(button.title, e)}
+                        className='absolute -top-1.5 -right-1.5 w-6 h-6 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-900 hover:scale-110 transition-all flex items-center justify-center z-10 opacity-0 group-hover:opacity-100'
+                        title={`Add ${button.shortLabel}`}
+                      >
+                        <svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M12 4v16m8-8H4' />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )
               })}
             </div>
           </div>
