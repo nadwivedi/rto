@@ -106,41 +106,41 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
                 <table className='w-full table-fixed h-full'>
                   <thead className='border-b border-gray-200 bg-gray-50'>
                     <tr>
-                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Customer Detail</th>
-                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Work Type</th>
-                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Date</th>
-                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Total Fee</th>
-                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Paid</th>
-                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Balance</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600'>Date</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600'>Customer Detail</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600'>Work Type</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600'>Total Fee</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600'>Paid</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-600'>Balance</th>
                     </tr>
                   </thead>
                   <tbody className='divide-y divide-gray-200'>
                     {filteredRecords.map((record, index) => (
                       <tr key={record._id || index} className='transition-colors hover:bg-gray-50'>
                         <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
+                          <div className='text-xs font-semibold text-gray-700'>{record.date || '-'}</div>
+                        </td>
+                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
                           <div className='space-y-0.5'>
-                            <div className='text-[10px] sm:text-xs font-semibold text-gray-800'>{record.customerName || '-'}</div>
+                            <div className='text-xs font-semibold text-gray-800'>{record.customerName || '-'}</div>
                             {record.vehicleNumber && (
-                              <div className='font-mono text-[10px] sm:text-xs font-bold text-blue-900'>{record.vehicleNumber}</div>
+                              <div className='font-mono text-xs font-bold text-blue-900'>{record.vehicleNumber}</div>
                             )}
                           </div>
                         </td>
                         <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
-                          <span className={`rounded px-1.5 py-0.5 text-[9px] sm:text-[11px] lg:text-xs xl:text-sm font-semibold ${getTypeBadge(record.type)}`}>
+                          <span className={`rounded px-1.5 py-0.5 text-xs font-semibold ${getTypeBadge(record.type)}`}>
                             {record.type}
                           </span>
                         </td>
-                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
-                          <div className='text-[10px] sm:text-xs font-semibold text-gray-700'>{record.date || '-'}</div>
+                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right'>
+                          <div className='text-xs font-semibold text-gray-800'>₹{(record.totalFee || 0).toLocaleString('en-IN')}</div>
                         </td>
                         <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right'>
-                          <div className='text-[10px] sm:text-xs font-semibold text-gray-800'>₹{(record.totalFee || 0).toLocaleString('en-IN')}</div>
+                          <div className='text-xs font-semibold text-emerald-600'>₹{(record.paid || 0).toLocaleString('en-IN')}</div>
                         </td>
                         <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right'>
-                          <div className='text-[10px] sm:text-xs font-semibold text-emerald-600'>₹{(record.paid || 0).toLocaleString('en-IN')}</div>
-                        </td>
-                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right'>
-                          <div className={`text-[10px] sm:text-xs font-semibold ${(record.balance || 0) > 0 ? 'text-orange-600' : 'text-gray-500'}`}>₹{(record.balance || 0).toLocaleString('en-IN')}</div>
+                          <div className={`text-xs font-semibold ${(record.balance || 0) > 0 ? 'text-orange-600' : 'text-gray-500'}`}>₹{(record.balance || 0).toLocaleString('en-IN')}</div>
                         </td>
                       </tr>
                     ))}
