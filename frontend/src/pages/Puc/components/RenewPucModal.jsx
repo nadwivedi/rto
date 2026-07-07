@@ -423,6 +423,12 @@ const RenewPucModal = ({ isOpen, onClose, onSubmit, oldPuc }) => {
                       }`}
                       required
                       autoFocus
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !showVehicleDropdown) {
+                          e.preventDefault()
+                          e.target.form.querySelector('input[name="ownerName"]')?.focus()
+                        }
+                      }}
                     />
                     {fetchingVehicle && (
                       <div className='absolute right-3 top-2.5'>
@@ -496,6 +502,12 @@ const RenewPucModal = ({ isOpen, onClose, onSubmit, oldPuc }) => {
                     name='ownerName'
                     value={formData.ownerName}
                     onChange={handleChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.target.form.querySelector('input[name="mobileNumber"]')?.focus()
+                      }
+                    }}
                     placeholder='Enter owner name'
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
                   />
@@ -511,6 +523,12 @@ const RenewPucModal = ({ isOpen, onClose, onSubmit, oldPuc }) => {
                     name='mobileNumber'
                     value={formData.mobileNumber}
                     onChange={handleChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.target.form.querySelector('input[name="validFrom"]')?.focus()
+                      }
+                    }}
                     placeholder='10-digit number'
                     maxLength='10'
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent'
@@ -538,6 +556,12 @@ const RenewPucModal = ({ isOpen, onClose, onSubmit, oldPuc }) => {
                     value={formData.validFrom}
                     onChange={handleChange}
                     onBlur={handleDateBlur}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.target.form.querySelector('input[name="validTo"]')?.focus()
+                      }
+                    }}
                     placeholder='DD-MM-YYYY (e.g., 24-01-2025)'
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
                     required
@@ -555,6 +579,12 @@ const RenewPucModal = ({ isOpen, onClose, onSubmit, oldPuc }) => {
                     value={formData.validTo}
                     onChange={handleChange}
                     onBlur={handleDateBlur}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.target.form.querySelector('input[name="totalFee"]')?.focus()
+                      }
+                    }}
                     placeholder='DD-MM-YYYY (auto-calculated)'
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-indigo-50/50'
                   />
@@ -580,6 +610,12 @@ const RenewPucModal = ({ isOpen, onClose, onSubmit, oldPuc }) => {
                     name='totalFee'
                     value={formData.totalFee}
                     onChange={handleChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.target.form.querySelector('input[name="paid"]')?.focus()
+                      }
+                    }}
                     placeholder=''
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold'
                     required
@@ -596,6 +632,12 @@ const RenewPucModal = ({ isOpen, onClose, onSubmit, oldPuc }) => {
                     name='paid'
                     value={formData.paid}
                     onChange={handleChange}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        e.target.form.querySelector('button[type="submit"]')?.focus()
+                      }
+                    }}
                     placeholder=''
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 font-semibold ${
                       paidExceedsTotal
