@@ -2,6 +2,11 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { Menu, X, FileText, IdCard, ArrowLeftRight, FileCheck, RefreshCw, FileSignature } from 'lucide-react'
 import SarthiDashboard from './Sarthi/components/SarthiDashboard'
+import QuickDLApplicationForm from './DrivingLicence/components/QuickDLApplicationForm'
+import AddVehicleTransferModal from './VehicleTransfer/components/AddVehicleTransferModal'
+import AddNocModal from './Noc/components/AddNocModal'
+import AddRegistrationRenewalModal from './RegistrationRenewal/components/AddRegistrationRenewalModal'
+import AddHpaHptModal from './HpaHpt/components/AddHpaHptModal'
 
 const buttonIcons = {
   'DL List': IdCard,
@@ -21,9 +26,34 @@ const quickButtons = [
 
 const Sarthi = () => {
   const navigate = useNavigate()
+  const [activeModal, setActiveModal] = useState(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0)
+
+  const closeModal = () => {
+    setActiveModal(null)
+    setDashboardRefreshKey(prev => prev + 1)
+  }
+
+  const quickAddModals = {
+    'DL List': 'DL',
+    'Transfer List': 'Transfer',
+    'NOC List': 'NOC',
+    'Renewal List': 'Renewal',
+    'HPA+HPT List': 'HPA+HPT',
+  }
+
+  const handleQuickAdd = (title, e) => {
+    e.stopPropagation()
+    e.preventDefault()
+    const modalTitle = quickAddModals[title]
+    if (modalTitle) {
+      setActiveModal(modalTitle)
+      setIsMobileMenuOpen(false)
+      setIsReportModalOpen(false)
+    }
+  }
 
   return (
     <>
@@ -123,7 +153,7 @@ const Sarthi = () => {
                       <span className='text-[10px] font-bold text-center leading-tight'>{button.shortLabel}</span>
                     </Link>
                     <button
-                      onClick={(e) => { e.preventDefault(); navigate(button.path); setIsMobileMenuOpen(false); }}
+                      onClick={(e) => handleQuickAdd(button.title, e)}
                       className='absolute -top-2 -right-2 w-7 h-7 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-900 hover:scale-110 transition-all flex items-center justify-center z-10 opacity-0 group-hover:opacity-100'
                       title={`Add ${button.shortLabel}`}
                     >
@@ -164,7 +194,7 @@ const Sarthi = () => {
                   <div key={button.title} className='relative group'>
                     <Link to={button.path} className={btnClass}>{inner}</Link>
                     <button
-                      onClick={(e) => { e.preventDefault(); navigate(button.path); }}
+                      onClick={(e) => handleQuickAdd(button.title, e)}
                       className='absolute -top-2 -right-2 w-7 h-7 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-900 hover:scale-110 transition-all flex items-center justify-center z-10 opacity-0 group-hover:opacity-100'
                       title={`Add ${button.shortLabel}`}
                     >
@@ -198,6 +228,48 @@ const Sarthi = () => {
           </main>
         </div>
       </div>
+
+      {activeModal === 'DL' && (
+        <QuickDLApplicationForm
+          isOpen={true}
+          onClose={closeModal}
+        />
+      )}
+
+      {activeModal === 'Transfer' && (
+        <AddVehicleTransferModal
+          isOpen={true}
+          onClose={closeModal}
+          onSuccess={closeModal}
+          editData={null}
+        />
+      )}
+
+      {activeModal === 'NOC' && (
+        <AddNocModal
+          isOpen={true}
+          onClose={closeModal}
+          onSuccess={closeModal}
+          editData={null}
+        />
+      )}
+
+      {activeModal === 'Renewal' && (
+        <AddRegistrationRenewalModal
+          isOpen={true}
+          onClose={closeModal}
+          onSuccess={closeModal}
+          editData={null}
+        />
+      )}
+
+      {activeModal === 'HPA+HPT' && (
+        <AddHpaHptModal
+          isOpen={true}
+          onClose={closeModal}
+          onSubmit={closeModal}
+        />
+      )}
     </>
   )
 }
