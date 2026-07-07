@@ -128,6 +128,7 @@ const defaultExpenseSettingsRoutes = require('./routes/defaultExpenseSettings')
 const reportRoutes = require('./routes/reportRoutes')
 const licenseClassRoutes = require('./routes/licenseClassRoutes')
 const speedGovernorRoutes = require('./routes/speedGovernor')
+const sarthiDashboardRoutes = require('./routes/sarthiDashboard')
 
 // Use Routes
 
@@ -174,6 +175,7 @@ app.use('/api/default-expense-settings', userAuth, defaultExpenseSettingsRoutes)
 app.use('/api/reports', userAuth, reportRoutes)
 app.use('/api/license-classes', userAuth, licenseClassRoutes)
 app.use('/api/speed-governor', userAuth, speedGovernorRoutes)
+app.use('/api/sarthi-dashboard', userAuth, sarthiDashboardRoutes)
 
 // Public routes (no auth)
 app.use('/api/blogs', publicBlogRoutes)

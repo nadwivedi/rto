@@ -1,205 +1,160 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
-import { Link } from 'react-router-dom'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
 
+const getTypeBadge = (type) => {
+  const styles = {
+    'DL': 'bg-indigo-100 text-indigo-700',
+    'Transfer': 'bg-orange-100 text-orange-700',
+    'NOC': 'bg-emerald-100 text-emerald-700',
+    'Renewal': 'bg-sky-100 text-sky-700',
+    'HPA': 'bg-rose-100 text-rose-700',
+    'HPT': 'bg-pink-100 text-pink-700',
+  }
+  return styles[type] || 'bg-gray-100 text-gray-700'
+}
+
 const SarthiDashboard = ({ refreshKey = 0 }) => {
-  const [stats, setStats] = useState({
-    dl: 0,
-    transfer: 0,
-    noc: 0,
-    renewal: 0,
-    hpaHpt: 0
-  })
   const [loading, setLoading] = useState(true)
+  const [filter, setFilter] = useState('all')
+  const [allRecords, setAllRecords] = useState([])
 
   useEffect(() => {
-    fetchStats()
+    fetchRecentlyAdded()
   }, [refreshKey])
 
-  const fetchStats = async () => {
+  const fetchRecentlyAdded = async () => {
     try {
       setLoading(true)
-      // For now using individual counts if summary endpoint doesn't exist
-      // In a real scenario, you'd have an API that returns these counts
-      const [dlRes, transferRes, nocRes, renewalRes, hpaHptRes] = await Promise.all([
-        axios.get(`${BACKEND_URL}/api/driving-licence`, { withCredentials: true }),
-        axios.get(`${BACKEND_URL}/api/vehicle-transfers`, { withCredentials: true }),
-        axios.get(`${BACKEND_URL}/api/noc`, { withCredentials: true }),
-        axios.get(`${BACKEND_URL}/api/registration-renewal`, { withCredentials: true }),
-        axios.get(`${BACKEND_URL}/api/hpa-hpt/statistics`, { withCredentials: true })
-      ])
-
-      setStats({
-        dl: dlRes.data.data?.length || 0,
-        transfer: transferRes.data.data?.length || 0,
-        noc: nocRes.data.data?.length || 0,
-        renewal: renewalRes.data.data?.length || 0,
-        hpaHpt: hpaHptRes.data.data?.total || 0
-      })
+      const response = await axios.get(`${BACKEND_URL}/api/sarthi-dashboard/recently-added`, { withCredentials: true })
+      if (response.data.success) {
+        setAllRecords(response.data.data)
+      }
     } catch (error) {
-      console.error('Error fetching Sarthi stats:', error)
+      console.error('Error fetching recently added records:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const statCards = [
-    { 
-      title: 'Driving License', 
-      count: stats.dl, 
-      path: '/driving', 
-      icon: <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/></svg>, 
-      gradient: 'from-indigo-500 to-purple-600', 
-      glow: 'shadow-indigo-500/20' 
-    },
-    { 
-      title: 'Vehicle Transfer', 
-      count: stats.transfer, 
-      path: '/vehicle-transfer', 
-      icon: <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>, 
-      gradient: 'from-orange-400 to-red-500', 
-      glow: 'shadow-orange-500/20'
-    },
-    { 
-      title: 'NOC Issued', 
-      count: stats.noc, 
-      path: '/noc', 
-      icon: <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>, 
-      gradient: 'from-emerald-400 to-teal-500', 
-      glow: 'shadow-emerald-500/20'
-    },
-    { 
-      title: 'RC Renewals', 
-      count: stats.renewal, 
-      path: '/registration-renewal', 
-      icon: <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>, 
-      gradient: 'from-sky-400 to-blue-600', 
-      glow: 'shadow-blue-500/20'
-    },
-    { 
-      title: 'HPA+HPT', 
-      count: stats.hpaHpt, 
-      path: '/hpa-hpt', 
-      icon: <svg className="w-5 h-5 sm:w-6 sm:h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>, 
-      gradient: 'from-rose-400 to-pink-600', 
-      glow: 'shadow-rose-500/20'
-    }
+  const filteredRecords = useMemo(() => {
+    if (filter === 'all') return allRecords
+    return allRecords.filter(r => r.type === filter)
+  }, [allRecords, filter])
+
+  const filterButtons = [
+    { key: 'all', label: 'All' },
+    { key: 'DL', label: 'DL' },
+    { key: 'Transfer', label: 'Transfer' },
+    { key: 'NOC', label: 'NOC' },
+    { key: 'Renewal', label: 'Renewal' },
+    { key: 'HPA', label: 'HPA' },
+    { key: 'HPT', label: 'HPT' },
   ]
 
+  const counts = {
+    all: allRecords.length,
+    DL: allRecords.filter(r => r.type === 'DL').length,
+    Transfer: allRecords.filter(r => r.type === 'Transfer').length,
+    NOC: allRecords.filter(r => r.type === 'NOC').length,
+    Renewal: allRecords.filter(r => r.type === 'Renewal').length,
+    HPA: allRecords.filter(r => r.type === 'HPA').length,
+    HPT: allRecords.filter(r => r.type === 'HPT').length,
+  }
+
   return (
-    <div className='p-1 sm:p-6'>
-      <div className='flex flex-wrap items-end justify-between gap-4 mb-4 sm:mb-8 pt-2 px-2'>
-        <div>
-          <h1 className='text-xl sm:text-[28px] font-black text-slate-800 tracking-tight'>Sarthi Overview</h1>
-          <p className='text-sm font-medium text-slate-500 mt-1'>Manage all your driving and vehicle applications</p>
-        </div>
-        <button 
-          onClick={fetchStats}
-          className='group flex items-center gap-2 px-4 py-2.5 bg-slate-900 text-white rounded-xl font-semibold shadow-lg shadow-slate-900/20 hover:-translate-y-0.5 hover:shadow-xl transition-all duration-300'
-        >
-          <svg className="w-4 h-4 transition-transform duration-500 group-hover:rotate-180" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-          </svg>
-          Refresh
-        </button>
-      </div>
+    <div className='flex-1 flex flex-col p-1 sm:p-3 overflow-auto'>
+      <div className='flex flex-col gap-3 flex-1 min-h-0'>
+        <section className='min-w-0 flex flex-col flex-1'>
+          <div className='mb-3 grid grid-cols-1 items-center gap-3 text-center md:grid-cols-[auto_1fr]'>
+            <h2 className='text-left text-base font-bold text-gray-800 lg:text-[15px] xl:text-base 2xl:text-lg'>Recently Added</h2>
 
-      <div className='grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4 lg:gap-4 px-2'>
-        {statCards.map((card) => (
-          <Link 
-            key={card.title} 
-            to={card.path}
-            className="group relative block overflow-hidden rounded-[20px] sm:rounded-[20px] bg-white p-3 sm:p-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]"
-          >
-            <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${card.gradient} opacity-5 rounded-bl-[100px] transition-transform duration-500 group-hover:scale-110`} />
-            
-            <div className='flex justify-between items-start relative z-10'>
-              <div className={`flex w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br ${card.gradient} items-center justify-center rounded-xl sm:rounded-xl shadow-lg ${card.glow} transition-transform duration-300 group-hover:-rotate-3 group-hover:scale-110`}>
-                {card.icon}
-              </div>
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-slate-400 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
+            <div className='flex flex-wrap justify-center gap-1 lg:gap-1 xl:gap-1.5 2xl:gap-2'>
+              {filterButtons.map(btn => (
+                <button
+                  key={btn.key}
+                  onClick={() => setFilter(btn.key)}
+                  className={`rounded-md px-2 py-0.5 text-[10px] font-semibold transition lg:text-[10px] xl:px-2.5 xl:py-1 xl:text-[11px] 2xl:text-xs ${
+                    filter === btn.key
+                      ? 'bg-blue-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {btn.label} ({counts[btn.key]})
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {loading ? (
+            <div className='mt-4 animate-pulse space-y-2'>
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className='h-12 rounded-lg bg-gray-100'></div>
+              ))}
+            </div>
+          ) : filteredRecords.length === 0 ? (
+            <div className='mt-4 rounded-lg border border-gray-200 bg-white py-10 text-center'>
+              <svg className='mx-auto mb-3 h-10 w-10 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4' />
+              </svg>
+              <p className='font-medium text-gray-500'>No recently added records</p>
+            </div>
+          ) : (
+            <div className='mt-2 sm:mt-4 flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white'>
+              <div className='h-full overflow-auto'>
+                <table className='w-full table-fixed h-full'>
+                  <thead className='border-b border-gray-200 bg-gray-50'>
+                    <tr>
+                      <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Customer / Vehicle</th>
+                      <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Work Type</th>
+                      <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Date</th>
+                      <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Fee Details</th>
+                    </tr>
+                  </thead>
+                  <tbody className='divide-y divide-gray-200'>
+                    {filteredRecords.map((record, index) => (
+                      <tr key={record._id || index} className='transition-colors hover:bg-gray-50'>
+                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
+                          <div className='space-y-0.5'>
+                            <div className='text-[10px] sm:text-xs font-semibold text-gray-800'>{record.customerName || '-'}</div>
+                            {record.vehicleNumber && (
+                              <div className='font-mono text-[10px] sm:text-xs font-bold text-blue-900'>{record.vehicleNumber}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
+                          <span className={`rounded px-1.5 py-0.5 text-[9px] sm:text-[11px] lg:text-xs xl:text-sm font-semibold ${getTypeBadge(record.type)}`}>
+                            {record.type}
+                          </span>
+                        </td>
+                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
+                          <div className='text-[10px] sm:text-xs font-semibold text-gray-700'>{record.date || '-'}</div>
+                        </td>
+                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
+                          <div className='space-y-0.5 text-[10px] sm:text-xs font-semibold'>
+                            <div className='flex items-baseline'>
+                              <span className='text-gray-500 w-14 shrink-0'>Total:</span>
+                              <span className='text-gray-800'>₹{(record.totalFee || 0).toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className='flex items-baseline'>
+                              <span className='text-emerald-600 w-14 shrink-0'>Paid:</span>
+                              <span className='text-emerald-600'>₹{(record.paid || 0).toLocaleString('en-IN')}</span>
+                            </div>
+                            <div className='flex items-baseline'>
+                              <span className='text-orange-600 w-14 shrink-0'>Balance:</span>
+                              <span className='text-orange-600'>₹{(record.balance || 0).toLocaleString('en-IN')}</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
-            
-            <div className="mt-4 sm:mt-3 relative z-10">
-              <h3 className='text-[10px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider'>{card.title}</h3>
-              <div className="flex items-baseline gap-2 mt-1">
-                <p className='text-xl sm:text-2xl font-black text-slate-800 tracking-tight'>
-                  {loading ? (
-                    <span className="flex h-9 items-center"><span className="h-6 w-12 animate-pulse rounded-md bg-slate-200"></span></span>
-                  ) : card.count}
-                </p>
-                <span className="text-[9px] sm:text-[10px] font-semibold text-emerald-500 bg-emerald-50 px-1.5 py-0.5 rounded-md">Total</span>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
-
-      <div className='mt-6 sm:mt-12 px-2'>
-        <h2 className='text-[16px] sm:text-[18px] font-bold text-slate-800 mb-3 sm:mb-6 flex items-center gap-2'>
-          <svg className="w-5 h-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-          </svg>
-          Quick Shortcuts
-        </h2>
-        <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
-            <Link to='/driving' className='group p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between'>
-                <div className='flex items-center gap-4'>
-                    <div className='w-12 h-12 rounded-xl bg-indigo-50 border border-indigo-100/50 flex items-center justify-center text-indigo-600 font-bold transition-transform duration-300 group-hover:scale-110'>
-                      DL
-                    </div>
-                    <div>
-                        <p className='font-bold text-slate-800 text-[15px]'>DL List</p>
-                        <p className='text-xs font-medium text-slate-500 mt-0.5'>View and manage all license applications</p>
-                    </div>
-                </div>
-                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-indigo-600 transition-colors group-hover:bg-indigo-50'>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-            </Link>
-            
-            <Link to='/vehicle-transfer' className='group p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between'>
-                <div className='flex items-center gap-4'>
-                    <div className='w-12 h-12 rounded-xl bg-orange-50 border border-orange-100/50 flex items-center justify-center text-orange-600 font-bold transition-transform duration-300 group-hover:scale-110'>
-                      VT
-                    </div>
-                    <div>
-                        <p className='font-bold text-slate-800 text-[15px]'>Transfer List</p>
-                        <p className='text-xs font-medium text-slate-500 mt-0.5'>View and manage all vehicle transfers</p>
-                    </div>
-                </div>
-                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-orange-600 transition-colors group-hover:bg-orange-50'>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-            </Link>
-
-            <Link to='/hpa-hpt' className='group p-5 bg-white border border-slate-100 rounded-2xl shadow-sm hover:shadow-md transition-all duration-300 flex items-center justify-between'>
-                <div className='flex items-center gap-4'>
-                    <div className='w-12 h-12 rounded-xl bg-rose-50 border border-rose-100/50 flex items-center justify-center text-rose-600 font-bold text-[10px] transition-transform duration-300 group-hover:scale-110'>
-                      HPA
-                    </div>
-                    <div>
-                        <p className='font-bold text-slate-800 text-[15px]'>HPA+HPT List</p>
-                        <p className='text-xs font-medium text-slate-500 mt-0.5'>Hypothecation addition &amp; termination</p>
-                    </div>
-                </div>
-                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-slate-50 text-rose-600 transition-colors group-hover:bg-rose-50'>
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-            </Link>
-        </div>
+          )}
+        </section>
       </div>
     </div>
   )
