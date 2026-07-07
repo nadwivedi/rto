@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import axios from 'axios'
 import ImageViewer from '../../../components/ImageViewer'
 import AddFitnessModal from '../../Fitness/components/AddFitnessModal'
 import AddTaxModal from '../../Tax/components/AddTaxModal'
@@ -15,10 +16,34 @@ const getPartyDisplayId = (registration) => {
   return typeof registration.partyId === 'object' ? registration.partyId._id || '' : registration.partyId
 }
 
+const DOC_TYPE_CONFIG = {
+  fitness:         { label: 'Fitness',                   color: 'green'  },
+  puc:             { label: 'PUC',                       color: 'teal'   },
+  insurance:       { label: 'Insurance',                 color: 'purple' },
+  gps:             { label: 'GPS',                       color: 'amber'  },
+  busPermit:       { label: 'Bus Permit',                color: 'orange' },
+  cgPermit:        { label: 'State Permit',              color: 'rose'   },
+  nationalPermitA: { label: 'National Permit (Part A)',  color: 'indigo' },
+  nationalPermitB: { label: 'National Permit (Part B)',  color: 'violet' },
+  tempPermit:      { label: 'Temp Permit',               color: 'sky'    },
+  tempPermitOS:    { label: 'Temp Permit (Other State)', color: 'cyan'   },
+}
+
+const STATUS_STYLE = {
+  active:        { border: 'border-green-400',  bg: 'bg-green-50',  badge: 'bg-green-100 text-green-800',   text: 'Active'        },
+  expiring_soon: { border: 'border-yellow-400', bg: 'bg-yellow-50', badge: 'bg-yellow-100 text-yellow-800', text: 'Expiring Soon' },
+  expired:       { border: 'border-red-400',    bg: 'bg-red-50',    badge: 'bg-red-100 text-red-800',       text: 'Expired'       },
+  inactive:      { border: 'border-gray-300',   bg: 'bg-gray-50',   badge: 'bg-gray-100 text-gray-600',     text: 'Inactive'      },
+}
+
 const ViewVehicleRegistrationModal = ({ isOpen, onClose, selectedRegistration, onRefresh }) => {
   const [showImageViewer, setShowImageViewer] = useState(false)
   const [currentImageUrl, setCurrentImageUrl] = useState('')
   const [currentImageTitle, setCurrentImageTitle] = useState('')
+
+  // Fetched vehicle documents from all collections
+  const [vehicleDocs, setVehicleDocs] = useState([])
+  const [loadingDocs, setLoadingDocs] = useState(false)
 
   // State for quick-add modals
   const [showAddFitnessModal, setShowAddFitnessModal] = useState(false)
@@ -38,6 +63,107 @@ const ViewVehicleRegistrationModal = ({ isOpen, onClose, selectedRegistration, o
     document.addEventListener('keydown', handleKeyDown)
     return () => document.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onClose])
+
+  // Fetch all document records for this vehicle whenever the modal opens
+  useEffect(() => {
+    if (!isOpen || !selectedRegistration) return
+    const vehicleNum = selectedRegistration.registrationNumber || selectedRegistration.vehicleNumber
+    if (!vehicleNum) return
+
+    const buildUrl = (imageData) => {
+      if (!imageData) return null
+      return imageData.startsWith('data:') ? imageData : `${API_URL}${imageData}`
+    }
+
+    const fetchDocs = async () => {
+      setLoadingDocs(true)
+      setVehicleDocs([])
+      try {
+        const params = { search: vehicleNum, limit: 100 }
+        const opts = { withCredentials: true }
+        const [fitnessRes, pucRes, insuranceRes, gpsRes, busPermitRes, cgPermitRes, npRes, tpRes, tposRes] =
+          await Promise.allSettled([
+            axios.get(`${API_URL}/api/fitness`,                         { params, ...opts }),
+            axios.get(`${API_URL}/api/puc`,                             { params, ...opts }),
+            axios.get(`${API_URL}/api/insurance`,                       { params, ...opts }),
+            axios.get(`${API_URL}/api/gps`,                             { params, ...opts }),
+            axios.get(`${API_URL}/api/bus-permits`,                     { params, ...opts }),
+            axios.get(`${API_URL}/api/cg-permits`,                      { params, ...opts }),
+            axios.get(`${API_URL}/api/national-permits`,                { params, ...opts }),
+            axios.get(`${API_URL}/api/temporary-permits`,               { params, ...opts }),
+            axios.get(`${API_URL}/api/temporary-permits-other-state`,   { params, ...opts }),
+          ])
+
+        const docs = []
+
+        const ok = (res) => res.status === 'fulfilled' && res.value?.data?.success
+
+        if (ok(fitnessRes)) fitnessRes.value.data.data.forEach(r => docs.push({
+          type: 'fitness', status: r.status || 'active', validFrom: r.validFrom, validTo: r.validTo,
+          documentUrl: buildUrl(r.fitnessDocument), _id: r._id,
+        }))
+
+        if (ok(pucRes)) pucRes.value.data.data.forEach(r => docs.push({
+          type: 'puc', status: r.status || 'active', validFrom: r.validFrom, validTo: r.validTo,
+          documentUrl: null, _id: r._id,
+        }))
+
+        if (ok(insuranceRes)) insuranceRes.value.data.data.forEach(r => docs.push({
+          type: 'insurance', status: r.status || 'active', validFrom: r.validFrom, validTo: r.validTo,
+          documentUrl: buildUrl(r.insuranceDocument), extra: r.policyNumber, _id: r._id,
+        }))
+
+        if (ok(gpsRes)) gpsRes.value.data.data.forEach(r => docs.push({
+          type: 'gps', status: r.status || 'active', validFrom: r.validFrom, validTo: r.validTo,
+          documentUrl: buildUrl(r.gpsDocument), _id: r._id,
+        }))
+
+        if (ok(busPermitRes)) busPermitRes.value.data.data.forEach(r => docs.push({
+          type: 'busPermit', status: r.status || 'active', validFrom: r.validFrom, validTo: r.validTo,
+          documentUrl: buildUrl(r.documents?.permitDocument), extra: r.permitNumber, _id: r._id,
+        }))
+
+        if (ok(cgPermitRes)) cgPermitRes.value.data.data.forEach(r => docs.push({
+          type: 'cgPermit', status: r.status || 'active', validFrom: r.validFrom, validTo: r.validTo,
+          documentUrl: buildUrl(r.documents?.permitDocument), extra: r.permitNumber, _id: r._id,
+        }))
+
+        if (ok(npRes)) npRes.value.data.data.forEach(r => {
+          if (r.partAValidFrom || r.partAValidTo) docs.push({
+            type: 'nationalPermitA', status: r.partAStatus || 'inactive',
+            validFrom: r.partAValidFrom, validTo: r.partAValidTo,
+            documentUrl: buildUrl(r.partADocument), extra: r.permitNumber, _id: r._id + '-A',
+          })
+          if (r.partBValidFrom || r.partBValidTo) docs.push({
+            type: 'nationalPermitB', status: r.partBStatus || 'inactive',
+            validFrom: r.partBValidFrom, validTo: r.partBValidTo,
+            documentUrl: buildUrl(r.partBDocument), extra: r.authNumber, _id: r._id + '-B',
+          })
+        })
+
+        if (ok(tpRes)) tpRes.value.data.data.forEach(r => docs.push({
+          type: 'tempPermit', status: r.status || 'active', validFrom: r.validFrom, validTo: r.validTo,
+          documentUrl: buildUrl(r.temporaryPermitDocument), extra: r.permitNumber, _id: r._id,
+        }))
+
+        if (ok(tposRes)) tposRes.value.data.data.forEach(r => docs.push({
+          type: 'tempPermitOS', status: r.status || 'active', validFrom: r.validFrom, validTo: r.validTo,
+          documentUrl: null, extra: r.permitNumber, _id: r._id,
+        }))
+
+        // Sort: active → expiring_soon → expired → inactive
+        const order = { active: 0, expiring_soon: 1, expired: 2, inactive: 3 }
+        docs.sort((a, b) => (order[a.status] ?? 4) - (order[b.status] ?? 4))
+        setVehicleDocs(docs)
+      } catch (err) {
+        console.error('Error fetching vehicle docs:', err)
+      } finally {
+        setLoadingDocs(false)
+      }
+    }
+
+    fetchDocs()
+  }, [isOpen, selectedRegistration])
 
   if (!isOpen || !selectedRegistration) {
     return null
@@ -276,6 +402,112 @@ const ViewVehicleRegistrationModal = ({ isOpen, onClose, selectedRegistration, o
               </div>
             </div>
           )}
+
+          {/* ── All Vehicle Documents (fetched from DB) ── */}
+          <div className='mb-4 bg-gradient-to-br from-slate-50 to-blue-50 p-3 md:p-4 rounded-lg md:rounded-xl border-2 border-blue-300'>
+            <h3 className='text-sm md:text-base font-bold text-slate-800 mb-3 flex items-center gap-2'>
+              <svg className='w-4 h-4 text-blue-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2' />
+              </svg>
+              Vehicle Documents
+              {!loadingDocs && vehicleDocs.length > 0 && (
+                <span className='ml-1 text-xs font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full'>{vehicleDocs.length}</span>
+              )}
+            </h3>
+
+            {loadingDocs ? (
+              <div className='flex items-center justify-center py-6 gap-2 text-slate-500'>
+                <svg className='w-5 h-5 animate-spin text-blue-500' fill='none' viewBox='0 0 24 24'>
+                  <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' />
+                  <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8v8z' />
+                </svg>
+                <span className='text-sm'>Fetching documents…</span>
+              </div>
+            ) : vehicleDocs.length === 0 ? (
+              <p className='text-center text-sm text-slate-400 py-4'>No documents found for this vehicle.</p>
+            ) : (
+              <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3'>
+                {vehicleDocs.map((doc) => {
+                  const cfg = DOC_TYPE_CONFIG[doc.type] || { label: doc.type, color: 'gray' }
+                  const st = STATUS_STYLE[doc.status] || STATUS_STYLE.inactive
+                  const isPdf = doc.documentUrl && (doc.documentUrl.toLowerCase().includes('.pdf') || doc.documentUrl.startsWith('data:application/pdf'))
+
+                  return (
+                    <div
+                      key={doc._id}
+                      className={`bg-white rounded-xl border-2 ${st.border} overflow-hidden shadow-sm hover:shadow-md transition-shadow flex flex-col`}
+                    >
+                      {/* Status bar */}
+                      <div className={`px-2 py-1 flex items-center justify-between gap-1 ${st.bg}`}>
+                        <span className='text-[10px] font-bold text-slate-700 truncate'>{cfg.label}</span>
+                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full whitespace-nowrap ${st.badge}`}>{st.text}</span>
+                      </div>
+
+                      {/* Document thumbnail / placeholder */}
+                      <div
+                        className='relative flex-1 min-h-[90px] cursor-pointer group bg-slate-50 flex items-center justify-center'
+                        onClick={() => doc.documentUrl && handleImageClick(doc.documentUrl, `${cfg.label} ${st.text}`)}
+                      >
+                        {doc.documentUrl ? (
+                          isPdf ? (
+                            <div className='flex flex-col items-center justify-center gap-1 p-2 w-full h-full'>
+                              <svg className='w-10 h-10 text-red-400' fill='currentColor' viewBox='0 0 20 20'>
+                                <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
+                              </svg>
+                              <span className='text-[9px] font-semibold text-red-500 uppercase'>PDF</span>
+                            </div>
+                          ) : (
+                            <img
+                              src={doc.documentUrl}
+                              alt={cfg.label}
+                              className='w-full h-full object-cover'
+                              style={{ minHeight: 90, maxHeight: 110 }}
+                            />
+                          )
+                        ) : (
+                          <div className='flex flex-col items-center justify-center gap-1 p-2 opacity-30'>
+                            <svg className='w-8 h-8 text-slate-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.5} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                            </svg>
+                            <span className='text-[9px] text-slate-400'>No Doc</span>
+                          </div>
+                        )}
+
+                        {/* View overlay – only if there's a document */}
+                        {doc.documentUrl && (
+                          <div className='absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center'>
+                            <span className='bg-white text-gray-800 text-[10px] font-bold px-2 py-1 rounded flex items-center gap-1'>
+                              <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' />
+                              </svg>
+                              View
+                            </span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Dates */}
+                      <div className='px-2 py-1.5 space-y-0.5 border-t border-slate-100'>
+                        {doc.extra && (
+                          <p className='text-[9px] text-slate-500 truncate font-mono'>{doc.extra}</p>
+                        )}
+                        <div className='flex justify-between text-[9px] text-slate-500'>
+                          <span>From</span><span className='font-semibold text-slate-700'>{doc.validFrom || '—'}</span>
+                        </div>
+                        <div className='flex justify-between text-[9px] text-slate-500'>
+                          <span>To</span>
+                          <span className={`font-semibold ${doc.status === 'expired' ? 'text-red-600' : doc.status === 'expiring_soon' ? 'text-yellow-600' : 'text-slate-700'}`}>
+                            {doc.validTo || '—'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
 
           {/* Vehicle Related Documents Section */}
           {(selectedRegistration.fitness || selectedRegistration.tax || selectedRegistration.insurance || selectedRegistration.puc || selectedRegistration.gps || selectedRegistration.cgPermit || selectedRegistration.nationalPermit) && (
