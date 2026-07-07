@@ -106,10 +106,12 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
                 <table className='w-full table-fixed h-full'>
                   <thead className='border-b border-gray-200 bg-gray-50'>
                     <tr>
-                      <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Customer / Vehicle</th>
-                      <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Work Type</th>
-                      <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Date</th>
-                      <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Fee Details</th>
+                      <th className='w-2/5 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Customer / Vehicle</th>
+                      <th className='w-20 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Work Type</th>
+                      <th className='w-24 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Date</th>
+                      <th className='w-24 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Total Fee</th>
+                      <th className='w-24 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Paid</th>
+                      <th className='w-24 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Balance</th>
                     </tr>
                   </thead>
                   <tbody className='divide-y divide-gray-200'>
@@ -131,21 +133,14 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
                         <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
                           <div className='text-[10px] sm:text-xs font-semibold text-gray-700'>{record.date || '-'}</div>
                         </td>
-                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
-                          <div className='space-y-0.5 text-[10px] sm:text-xs font-semibold'>
-                            <div className='flex items-baseline'>
-                              <span className='text-gray-500 w-14 shrink-0'>Total:</span>
-                              <span className='text-gray-800'>₹{(record.totalFee || 0).toLocaleString('en-IN')}</span>
-                            </div>
-                            <div className='flex items-baseline'>
-                              <span className='text-emerald-600 w-14 shrink-0'>Paid:</span>
-                              <span className='text-emerald-600'>₹{(record.paid || 0).toLocaleString('en-IN')}</span>
-                            </div>
-                            <div className='flex items-baseline'>
-                              <span className='text-orange-600 w-14 shrink-0'>Balance:</span>
-                              <span className='text-orange-600'>₹{(record.balance || 0).toLocaleString('en-IN')}</span>
-                            </div>
-                          </div>
+                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right'>
+                          <div className='text-[10px] sm:text-xs font-semibold text-gray-800'>₹{(record.totalFee || 0).toLocaleString('en-IN')}</div>
+                        </td>
+                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right'>
+                          <div className='text-[10px] sm:text-xs font-semibold text-emerald-600'>₹{(record.paid || 0).toLocaleString('en-IN')}</div>
+                        </td>
+                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right'>
+                          <div className={`text-[10px] sm:text-xs font-semibold ${(record.balance || 0) > 0 ? 'text-orange-600' : 'text-gray-500'}`}>₹{(record.balance || 0).toLocaleString('en-IN')}</div>
                         </td>
                       </tr>
                     ))}
