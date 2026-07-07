@@ -280,7 +280,7 @@ const VahanDashboard = () => {
   }
 
   return (
-    <div className='flex-1 flex flex-col p-1 sm:p-3 overflow-hidden'>
+    <div className='flex-1 flex flex-col p-1 sm:p-3 overflow-auto'>
       <div className='flex flex-col gap-3 flex-1 min-h-0'>
         <section className='min-w-0 flex flex-col flex-1'>
           <div className='mb-3 grid grid-cols-1 items-center gap-3 text-center md:grid-cols-[auto_1fr]'>
