@@ -106,12 +106,12 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
                 <table className='w-full table-fixed h-full'>
                   <thead className='border-b border-gray-200 bg-gray-50'>
                     <tr>
-                      <th className='w-2/5 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Customer Detail</th>
-                      <th className='w-20 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Work Type</th>
-                      <th className='w-24 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Date</th>
-                      <th className='w-24 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Total Fee</th>
-                      <th className='w-24 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Paid</th>
-                      <th className='w-24 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Balance</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Customer Detail</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Work Type</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Date</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Total Fee</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Paid</th>
+                      <th className='w-1/6 px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-right text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Balance</th>
                     </tr>
                   </thead>
                   <tbody className='divide-y divide-gray-200'>
