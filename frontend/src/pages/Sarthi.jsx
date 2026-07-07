@@ -109,19 +109,29 @@ const Sarthi = () => {
                 const Icon = buttonIcons[button.title]
                 const btnClass = 'flex flex-col items-center justify-center h-24 border border-white/10 bg-white/5 hover:bg-white/10 hover:scale-[1.04] transition-all duration-200 text-white rounded-lg'
                 return (
-                  <Link
-                    key={button.title}
-                    to={button.path}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={btnClass}
-                  >
-                    {Icon && (
-                      <div className='w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 mb-0.5'>
-                        <Icon size={18} className='text-white/80' />
-                      </div>
-                    )}
-                    <span className='text-[10px] font-bold text-center leading-tight'>{button.shortLabel}</span>
-                  </Link>
+                  <div key={button.title} className='relative group'>
+                    <Link
+                      to={button.path}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className={btnClass}
+                    >
+                      {Icon && (
+                        <div className='w-8 h-8 rounded-lg flex items-center justify-center bg-white/10 mb-0.5'>
+                          <Icon size={18} className='text-white/80' />
+                        </div>
+                      )}
+                      <span className='text-[10px] font-bold text-center leading-tight'>{button.shortLabel}</span>
+                    </Link>
+                    <button
+                      onClick={(e) => { e.preventDefault(); navigate(button.path); setIsMobileMenuOpen(false); }}
+                      className='absolute -top-2 -right-2 w-7 h-7 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-900 hover:scale-110 transition-all flex items-center justify-center z-10 opacity-0 group-hover:opacity-100'
+                      title={`Add ${button.shortLabel}`}
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M12 4v16m8-8H4' />
+                      </svg>
+                    </button>
+                  </div>
                 )
               })}
             </div>
@@ -150,7 +160,20 @@ const Sarthi = () => {
                     <span className='text-xs font-bold text-center leading-tight'>{button.shortLabel}</span>
                   </>
                 )
-                return <Link key={button.title} to={button.path} className={btnClass}>{inner}</Link>
+                return (
+                  <div key={button.title} className='relative group'>
+                    <Link to={button.path} className={btnClass}>{inner}</Link>
+                    <button
+                      onClick={(e) => { e.preventDefault(); navigate(button.path); }}
+                      className='absolute -top-2 -right-2 w-7 h-7 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-900 hover:scale-110 transition-all flex items-center justify-center z-10 opacity-0 group-hover:opacity-100'
+                      title={`Add ${button.shortLabel}`}
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M12 4v16m8-8H4' />
+                      </svg>
+                    </button>
+                  </div>
+                )
               })}
             </div>
             </div>
