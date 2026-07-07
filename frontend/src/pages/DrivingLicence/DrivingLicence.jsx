@@ -47,7 +47,7 @@ const DrivingLicence = () => {
   // Fetch applications from backend
   useEffect(() => {
     fetchApplications(1)
-  }, [searchQuery, typeFilter, paymentStatusFilter, llEligibleForDLFilter, applicationTypeFilter, dateFrom, dateTo])
+  }, [searchQuery, typeFilter, paymentStatusFilter, llEligibleForDLFilter, llExpiryFilter, applicationTypeFilter, dateFrom, dateTo])
 
   // Fetch statistics on component mount and when date filter changes
   useEffect(() => {
@@ -96,6 +96,7 @@ const DrivingLicence = () => {
       if (dateFrom) params.dateFrom = dateFrom
       if (dateTo) params.dateTo = dateTo
       if (llEligibleForDLFilter !== 'All') params.llEligibleForDL = 'true'
+      if (llExpiryFilter !== 'All') params.llExpiringSoon = llExpiryFilter
 
       const response = await axios.get(`${API_URL}/api/driving-licenses`, { params, withCredentials: true })
 
@@ -195,37 +196,36 @@ const DrivingLicence = () => {
   }
 
 
-  // Apply client-side filtering for LL expiry only
-  const currentApplications = useMemo(() => {
-    let filtered = [...applications]
+  // No client-side LL expiry filtering needed — handled server-side via llExpiringSoon param
+  const currentApplications = useMemo(() => applications, [applications])
 
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
+  // Helper: get days until a Date object expires (returns null if invalid)
+  const getDaysUntilExpiry = (isoDateStr) => {
+    if (!isoDateStr) return null
+    try {
+      const expiry = new Date(isoDateStr)
+      if (isNaN(expiry.getTime())) return null
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      expiry.setHours(0, 0, 0, 0)
+      return Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
+    } catch { return null }
+  }
 
-    // Filter by LL Expiry
-    if (llExpiryFilter !== 'All') {
-      filtered = filtered.filter(app => {
-        const llExpiryDate = app.fullData?.learningLicenseExpiryDate
-        if (!llExpiryDate) return false
-
-        try {
-          const expiry = new Date(llExpiryDate)
-          const daysUntilExpiry = Math.ceil((expiry - today) / (1000 * 60 * 60 * 24))
-
-          if (llExpiryFilter === '30') {
-            return daysUntilExpiry >= 0 && daysUntilExpiry <= 30
-          } else if (llExpiryFilter === '45') {
-            return daysUntilExpiry >= 0 && daysUntilExpiry <= 45
-          }
-        } catch (e) {
-          return false
-        }
-        return true
-      })
-    }
-
-    return filtered
-  }, [applications, llExpiryFilter])
+  // Helper: render a days-remaining urgency badge — only shown when within 30 days
+  const renderDaysBadge = (days) => {
+    if (days === null || days < 0 || days > 30) return null
+    let bg, text
+    if (days <= 7) { bg = 'bg-red-500'; text = 'text-white' }
+    else if (days <= 15) { bg = 'bg-orange-400'; text = 'text-white' }
+    else { bg = 'bg-yellow-400'; text = 'text-gray-900' }
+    return (
+      <span className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-bold ${bg} ${text} whitespace-nowrap`}>
+        <svg className='w-2.5 h-2.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2.5} d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' /></svg>
+        {days === 0 ? 'Expires Today!' : `${days} days left`}
+      </span>
+    )
+  }
 
   // Count active filters (excluding search and stat-card filters)
   const activeFilterCount = useMemo(() => {
@@ -1020,21 +1020,28 @@ const DrivingLicence = () => {
                           </svg>
                           LL Expiry Date
                         </p>
-                        <p className='text-[10px] font-semibold text-gray-700'>
+                        <div className='flex flex-col gap-1 mt-0.5'>
+                          <p className='text-[10px] font-semibold text-gray-700'>
+                            {(() => {
+                              const llExpiryDate = record.fullData?.learningLicenseExpiryDate;
+                              if (!llExpiryDate) return '-';
+                              try {
+                                const d = new Date(llExpiryDate);
+                                const day = String(d.getDate()).padStart(2, '0');
+                                const month = String(d.getMonth() + 1).padStart(2, '0');
+                                const year = d.getFullYear();
+                                return `${day}-${month}-${year}`;
+                              } catch (e) {
+                                return '-';
+                              }
+                            })()}
+                          </p>
                           {(() => {
                             const llExpiryDate = record.fullData?.learningLicenseExpiryDate;
-                            if (!llExpiryDate) return '-';
-                            try {
-                              const d = new Date(llExpiryDate);
-                              const day = String(d.getDate()).padStart(2, '0');
-                              const month = String(d.getMonth() + 1).padStart(2, '0');
-                              const year = d.getFullYear();
-                              return `${day}-${month}-${year}`;
-                            } catch (e) {
-                              return '-';
-                            }
+                            const days = getDaysUntilExpiry(llExpiryDate);
+                            return days !== null && days >= 0 ? renderDaysBadge(days) : null;
                           })()}
-                        </p>
+                        </div>
                       </div>
                     </div>
                   ),
@@ -1203,10 +1210,14 @@ const DrivingLicence = () => {
                             const month = String(d.getMonth() + 1).padStart(2, '0');
                             const year = d.getFullYear();
                             const formattedDate = `${day}-${month}-${year}`;
+                            const days = getDaysUntilExpiry(llExpiryDate);
                             return (
-                              <span className='inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-red-100 text-red-700 font-semibold border border-red-200 whitespace-nowrap'>
-                                {formattedDate}
-                              </span>
+                              <div className='flex flex-col items-center gap-1'>
+                                <span className='inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-red-100 text-red-700 font-semibold border border-red-200 whitespace-nowrap'>
+                                  {formattedDate}
+                                </span>
+                                {days !== null && days >= 0 && renderDaysBadge(days)}
+                              </div>
                             );
                           } catch (e) {
                             return null;

@@ -190,7 +190,8 @@ exports.getAllApplications = async (req, res) => {
       search,
       applicationStatus,
       paymentStatus,
-      llEligibleForDL
+      llEligibleForDL,
+      llExpiringSoon
     } = req.query
 
     // Build query - filter by logged-in user
@@ -261,6 +262,21 @@ exports.getAllApplications = async (req, res) => {
       }
     }
 
+    // Filter by LL expiring soon (within N days, default 30)
+    if (llExpiringSoon) {
+      const days = parseInt(llExpiringSoon) || 30
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const futureDate = new Date(today.getTime() + (days * 24 * 60 * 60 * 1000))
+
+      query.learningLicenseExpiryDate = {
+        $exists: true,
+        $ne: null,
+        $gte: today,
+        $lte: futureDate
+      }
+    }
+
     // Calculate pagination
     const skip = (parseInt(page) - 1) * parseInt(limit)
 
@@ -269,6 +285,9 @@ exports.getAllApplications = async (req, res) => {
     if (llEligibleForDL === 'true') {
       // Sort by most recently eligible (most recent issue date first)
       sortCriteria = { learningLicenseIssueDate: -1 }
+    } else if (llExpiringSoon) {
+      // Sort by soonest expiring first
+      sortCriteria = { learningLicenseExpiryDate: 1 }
     }
 
     // Execute query with sort
