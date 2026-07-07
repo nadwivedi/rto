@@ -333,8 +333,8 @@ const VahanDashboard = () => {
                       <tr key={index} className='transition-colors hover:bg-gray-50'>
                         <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
                           <div className='space-y-0.5'>
-                            <div className='text-[10px] sm:text-xs lg:text-sm font-semibold text-gray-800'>{record.ownerName || record.partyName || '-'}</div>
-                            <div className='font-mono text-[10px] sm:text-xs lg:text-sm font-bold text-blue-900'>{record.vehicleNumber || '-'}</div>
+                            <div className='text-[10px] sm:text-xs font-semibold text-gray-800'>{record.ownerName || record.partyName || '-'}</div>
+                            <div className='font-mono text-[10px] sm:text-xs font-bold text-blue-900'>{record.vehicleNumber || '-'}</div>
                           </div>
                         </td>
                         <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
@@ -343,7 +343,7 @@ const VahanDashboard = () => {
                           </span>
                         </td>
                         <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
-                          <div className='space-y-0.5 text-[10px] sm:text-xs lg:text-sm font-semibold'>
+                          <div className='space-y-0.5 text-[10px] sm:text-xs font-semibold'>
                             <div className='flex items-baseline'>
                               <span className='w-14 shrink-0 text-gray-900'>From:</span>
                               <span className='text-green-700'>{formatDate(record.validFrom)}</span>
