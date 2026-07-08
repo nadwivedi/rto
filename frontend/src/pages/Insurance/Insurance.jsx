@@ -860,10 +860,10 @@ const Insurance = () => {
                           Issue Date
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
-                          Insurance / Client
+                          Client Info
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
-                          Vehicle / Contact
+                          Insurance Company
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
                           Valid From
@@ -912,31 +912,15 @@ const Insurance = () => {
                               )}
                             </td>
 
-                            {/* Insurance / Client Column */}
-                            <td className='px-4 2xl:px-6 py-3 2xl:py-5'>
-                              <div className='flex flex-col gap-1'>
+                            {/* Client Info Column */}
+                            <td className="px-4 2xl:px-6 py-3 2xl:py-5">
+                              <div className='flex flex-col gap-1.5'>
                                 <div className='flex items-center gap-1.5'>
-                                  <div className='bg-blue-100 p-1 rounded-md'>
-                                    <svg className='w-3 h-3 text-blue-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' />
-                                    </svg>
-                                  </div>
-                                  <span className='text-[11px] 2xl:text-[13px] font-bold text-gray-900 truncate max-w-[110px]'>
-                                    {insurance.insuranceCompany || 'N/A'}
-                                  </span>
-                                </div>
-                                <div className='flex items-center gap-1.5 ml-1'>
                                   <div className='w-1 h-1 rounded-full bg-gray-400'></div>
-                                  <span className='text-[10px] 2xl:text-[12px] font-medium text-gray-600 truncate max-w-[110px]'>
+                                  <span className='text-[11px] 2xl:text-[13px] font-bold text-gray-900 truncate max-w-[110px]'>
                                     {insurance.policyHolderName || 'N/A'}
                                   </span>
                                 </div>
-                              </div>
-                            </td>
-
-                            {/* Vehicle / Contact Column */}
-                            <td className="px-4 2xl:px-6 py-3 2xl:py-5">
-                              <div className='flex flex-col gap-1.5'>
                                 <div className='flex items-center gap-2'>
                                   {(() => {
                                     const parts = getVehicleNumberParts(insurance.vehicleNumber);
@@ -957,6 +941,20 @@ const Insurance = () => {
                                   </svg>
                                   <span className='text-[10px] 2xl:text-[12px] font-semibold text-gray-500'>{insurance.mobileNumber || 'N/A'}</span>
                                 </div>
+                              </div>
+                            </td>
+
+                            {/* Insurance Company Column */}
+                            <td className='px-4 2xl:px-6 py-3 2xl:py-5'>
+                              <div className='flex items-center gap-1.5'>
+                                <div className='bg-blue-100 p-1 rounded-md'>
+                                  <svg className='w-3 h-3 text-blue-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' />
+                                  </svg>
+                                </div>
+                                <span className='text-[10px] 2xl:text-[12px] font-medium text-gray-600 truncate max-w-[110px]'>
+                                  {insurance.insuranceCompany || 'N/A'}
+                                </span>
                               </div>
                             </td>
 

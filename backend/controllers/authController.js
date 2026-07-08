@@ -234,6 +234,7 @@ exports.staffLogin = async (req, res) => {
           mobile: employee.mobile,
           type: 'staff',
           permissions: employee.permissions,
+          isActive: employee.isActive,
           lastLogin: employee.lastLogin,
           lastActivity: employee.lastActivity
         }
@@ -372,6 +373,7 @@ exports.getProfile = async (req, res) => {
             mobile: employee.mobile,
             type: 'staff',
             permissions: employee.permissions,
+            isActive: employee.isActive,
             lastLogin: employee.lastLogin,
             lastActivity: employee.lastActivity
           }
