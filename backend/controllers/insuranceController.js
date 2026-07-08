@@ -34,7 +34,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, issueDate, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails } = req.body
 
     // Validate required fields
 
@@ -128,6 +128,8 @@ exports.createInsurance = async (req, res) => {
       issueDate: issueDate || '',
       validFrom,
       validTo,
+      thirdPartyValidFrom: thirdPartyValidFrom || '',
+      thirdPartyValidTo: thirdPartyValidTo || '',
       totalFee,
       paid,
       balance,
@@ -642,7 +644,7 @@ exports.checkVehicleActiveInsurance = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, issueDate, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -689,6 +691,8 @@ exports.updateInsurance = async (req, res) => {
       // Recalculate status if validTo is updated
       insurance.status = getInsuranceStatus(validTo)
     }
+    if (thirdPartyValidFrom !== undefined) insurance.thirdPartyValidFrom = thirdPartyValidFrom
+    if (thirdPartyValidTo !== undefined) insurance.thirdPartyValidTo = thirdPartyValidTo
     if (totalFee !== undefined) insurance.totalFee = totalFee
     if (paid !== undefined) insurance.paid = paid
     if (balance !== undefined) insurance.balance = balance

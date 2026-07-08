@@ -71,6 +71,18 @@ const InsuranceSchema = new mongoose.Schema({
     required: true
   },
 
+  // Third Party Validity
+  thirdPartyValidFrom: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  thirdPartyValidTo: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
 
 
   totalFee: {

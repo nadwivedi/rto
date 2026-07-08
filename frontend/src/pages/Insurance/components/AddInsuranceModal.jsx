@@ -22,6 +22,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     issueDate: '',
     validFrom: '',
     validTo: '',
+    thirdPartyValidFrom: '',
+    thirdPartyValidTo: '',
     totalFee: '0',
     paid: '0',
     balance: '0',
@@ -75,6 +77,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         issueDate: initialData.issueDate || '',
         validFrom: initialData.validFrom || '',
         validTo: initialData.validTo || '',
+        thirdPartyValidFrom: initialData.thirdPartyValidFrom || '',
+        thirdPartyValidTo: initialData.thirdPartyValidTo || '',
         totalFee: initialData.totalFee?.toString() || '',
         paid: initialData.paid?.toString() || '',
         balance: initialData.balance?.toString() || '',
@@ -114,6 +118,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         issueDate: '',
         validFrom: '',
         validTo: '',
+        thirdPartyValidFrom: '',
+        thirdPartyValidTo: '',
         totalFee: '0',
         paid: '0',
         balance: '0',
@@ -493,7 +499,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     }
 
     // Auto-format date fields with automatic dash insertion
-    if (name === 'validFrom' || name === 'validTo') {
+    if (name === 'validFrom' || name === 'validTo' || name === 'thirdPartyValidFrom' || name === 'thirdPartyValidTo') {
       if (name === 'validTo') setIsManualValidTo(true)
       const formatted = handleSmartDateInput(value, formData[name] || '')
 
@@ -702,6 +708,18 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
             if (formatted) updated.issueDate = formatted;
           }
 
+          if (resultData.thirdPartyValidFrom) {
+            const normalized = normalizeAIExtractedDate(resultData.thirdPartyValidFrom);
+            const formatted = handleSmartDateInput(normalized, '');
+            if (formatted) updated.thirdPartyValidFrom = formatted;
+          }
+
+          if (resultData.thirdPartyValidTo) {
+            const normalized = normalizeAIExtractedDate(resultData.thirdPartyValidTo);
+            const formatted = handleSmartDateInput(normalized, '');
+            if (formatted) updated.thirdPartyValidTo = formatted;
+          }
+
           if (resultData.insuranceCompany) {
             updated.insuranceCompany = matchInsuranceCompany(resultData.insuranceCompany)
           }
@@ -788,6 +806,14 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 if (resultData.issueDate) {
                   const formatted = handleSmartDateInput(normalizeAIExtractedDate(resultData.issueDate), '');
                   if (formatted) updated.issueDate = formatted;
+                }
+                if (resultData.thirdPartyValidFrom) {
+                  const formatted = handleSmartDateInput(normalizeAIExtractedDate(resultData.thirdPartyValidFrom), '');
+                  if (formatted) updated.thirdPartyValidFrom = formatted;
+                }
+                if (resultData.thirdPartyValidTo) {
+                  const formatted = handleSmartDateInput(normalizeAIExtractedDate(resultData.thirdPartyValidTo), '');
+                  if (formatted) updated.thirdPartyValidTo = formatted;
                 }
                 if (resultData.insuranceCompany) updated.insuranceCompany = matchInsuranceCompany(resultData.insuranceCompany);
                 if (resultData.chassisNumber) updated.chassisNumber = resultData.chassisNumber.toUpperCase();
@@ -974,6 +1000,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       issueDate: formData.issueDate || '',
       validFrom: formData.validFrom,
       validTo: formData.validTo,
+      thirdPartyValidFrom: formData.thirdPartyValidFrom || '',
+      thirdPartyValidTo: formData.thirdPartyValidTo || '',
       totalFee: parseFloat(formData.totalFee) || 0,
       paid: parseFloat(formData.paid) || 0,
       balance: parseFloat(formData.balance) || 0,
@@ -1489,6 +1517,40 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                   />
                   <p className='text-xs text-gray-500 mt-1'>Auto-calculated: 1 year from Valid From date minus 1 day</p>
                 </div>
+
+                {/* Third Party Valid From */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Third Party Valid From
+                  </label>
+                  <input
+                    type='text'
+                    name='thirdPartyValidFrom'
+                    value={formData.thirdPartyValidFrom}
+                    onChange={handleChange}
+                    onKeyDown={handleInputKeyDown}
+                    placeholder='DD-MM-YYYY'
+                    tabIndex="11"
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white'
+                  />
+                </div>
+
+                {/* Third Party Valid To */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Third Party Valid To
+                  </label>
+                  <input
+                    type='text'
+                    name='thirdPartyValidTo'
+                    value={formData.thirdPartyValidTo}
+                    onChange={handleChange}
+                    onKeyDown={handleInputKeyDown}
+                    placeholder='DD-MM-YYYY'
+                    tabIndex="12"
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent bg-white'
+                  />
+                </div>
               </div>
             </div>
 
@@ -1513,7 +1575,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="11"
+                    tabIndex="13"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                     required
                   />
@@ -1532,7 +1594,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="12"
+                    tabIndex="14"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 font-semibold ${
                       paidExceedsTotal
                         ? 'border-red-500 focus:ring-red-500 bg-red-50'
@@ -1574,7 +1636,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder='For next year'
-                    tabIndex="13"
+                    tabIndex="15"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>
@@ -1592,7 +1654,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder='Agent commission'
-                    tabIndex="14"
+                    tabIndex="16"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>
