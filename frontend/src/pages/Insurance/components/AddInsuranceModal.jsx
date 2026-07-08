@@ -60,6 +60,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
   const dropdownItemRefs = useRef([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [activeInsuranceCheck, setActiveInsuranceCheck] = useState(null) // { loading, exists, policyNumber, validTo } | null
+  const [policyNumberCheck, setPolicyNumberCheck] = useState(null) // { loading, exists, productType, policyHolderName, validFrom, validTo } | null
   const isOcrUpdate = useRef(false)
 
   // Pre-fill form when initialData is provided (for edit/renewal) or reset on open
@@ -134,6 +135,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       setInsuranceDocPreview(null)
       setIsManualValidTo(false)
       setActiveInsuranceCheck(null)
+      setPolicyNumberCheck(null)
     }
   }, [initialData, isOpen, prefilledVehicleNumber, prefilledOwnerName, prefilledMobileNumber])
 
@@ -369,6 +371,49 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
     return () => clearTimeout(timeoutId)
   }, [formData.vehicleNumber, isEditMode])
+
+  // Check if policy number already exists (for non-motor / no vehicle number scenarios)
+  useEffect(() => {
+    if (isEditMode) return
+
+    const policyNum = formData.policyNumber.trim()
+    if (policyNum.length < 4) {
+      setPolicyNumberCheck(null)
+      return
+    }
+
+    setPolicyNumberCheck({ loading: true })
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/insurance/policy/${encodeURIComponent(policyNum)}`, {
+          withCredentials: true
+        })
+        if (res.data.success && res.data.data) {
+          const d = res.data.data
+          setPolicyNumberCheck({
+            loading: false,
+            exists: true,
+            productType: d.productType || '',
+            policyHolderName: d.policyHolderName || '',
+            validFrom: d.validFrom || '',
+            validTo: d.validTo || '',
+          })
+        } else {
+          setPolicyNumberCheck({ loading: false, exists: false })
+        }
+      } catch (err) {
+        // 404 means policy not found — that's fine
+        if (err.response?.status === 404) {
+          setPolicyNumberCheck({ loading: false, exists: false })
+        } else {
+          setPolicyNumberCheck(null)
+        }
+      }
+    }, 500)
+
+    return () => clearTimeout(timeoutId)
+  }, [formData.policyNumber, isEditMode])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -878,6 +923,24 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       return
     }
 
+    // Block if active vehicle insurance already exists
+    if (!isEditMode && activeInsuranceCheck?.exists) {
+      toast.error(
+        `Cannot save — vehicle already has an active insurance policy (Policy: ${activeInsuranceCheck.policyNumber || 'N/A'}).`,
+        { autoClose: 5000 }
+      )
+      return
+    }
+
+    // Block if the same policy number already exists
+    if (!isEditMode && policyNumberCheck?.exists) {
+      toast.error(
+        `Cannot save — Policy Number already exists for ${policyNumberCheck.policyHolderName || 'another policyholder'} (${policyNumberCheck.productType || 'Insurance'}, valid ${policyNumberCheck.validFrom || '—'} to ${policyNumberCheck.validTo || '—'}).`,
+        { autoClose: 6000 }
+      )
+      return
+    }
+
     // Prepare data for submission
     const submitData = {
       vehicleNumber: formData.vehicleNumber,
@@ -1144,8 +1207,51 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onKeyDown={handleInputKeyDown}
                     placeholder='INS001234567'
                     tabIndex="2"
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent font-mono bg-white'
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:border-transparent font-mono bg-white ${
+                      policyNumberCheck?.exists
+                        ? 'border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:ring-indigo-500'
+                    }`}
                   />
+
+                  {/* Policy number checking spinner */}
+                  {policyNumberCheck?.loading && formData.policyNumber.trim().length >= 4 && (
+                    <div className='mt-2 flex items-center gap-1.5 text-amber-700 bg-amber-50 border border-amber-300 rounded-md px-2.5 py-1.5'>
+                      <svg className='w-3.5 h-3.5 animate-spin' fill='none' viewBox='0 0 24 24'>
+                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' />
+                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' />
+                      </svg>
+                      <span className='text-xs font-medium'>Checking policy number…</span>
+                    </div>
+                  )}
+
+                  {/* Policy number duplicate alert */}
+                  {policyNumberCheck?.exists && (
+                    <div className='mt-2 flex items-start gap-1.5 bg-red-50 border border-red-300 rounded-md px-2.5 py-2'>
+                      <svg className='w-4 h-4 mt-0.5 shrink-0 text-red-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
+                      </svg>
+                      <div className='text-xs'>
+                        <span className='font-semibold text-red-700'>Policy Number already exists.</span>
+                        <ul className='mt-1 space-y-0.5 text-red-600'>
+                          {policyNumberCheck.productType && (
+                            <li>Insurance Type: <span className='font-medium'>{policyNumberCheck.productType}</span></li>
+                          )}
+                          {policyNumberCheck.policyHolderName && (
+                            <li>Policyholder: <span className='font-medium'>{policyNumberCheck.policyHolderName}</span></li>
+                          )}
+                          {(policyNumberCheck.validFrom || policyNumberCheck.validTo) && (
+                            <li>
+                              Policy Validity:{' '}
+                              <span className='font-medium'>
+                                {policyNumberCheck.validFrom || '—'} to {policyNumberCheck.validTo || '—'}
+                              </span>
+                            </li>
+                          )}
+                        </ul>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Policy Holder Name */}
