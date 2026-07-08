@@ -857,6 +857,9 @@ const Insurance = () => {
                     <thead className={theme.tableHeader}>
                       <tr>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
+                          Issue Date
+                        </th>
+                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
                           Insurance / Client
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
@@ -895,6 +898,20 @@ const Insurance = () => {
                             key={insurance.id}
                             className="hover:bg-gradient-to-r hover:from-blue-50 hover:via-indigo-50 hover:to-purple-50 transition-all duration-300 group"
                           >
+                            {/* Issue Date */}
+                            <td className="px-4 2xl:px-6 py-3 2xl:py-5 whitespace-nowrap">
+                              {insurance.issueDate ? (
+                                <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-blue-50 text-blue-700 font-semibold border border-blue-200 text-[11px] 2xl:text-[13.8px] whitespace-nowrap">
+                                  <svg className="w-3 h-3 2xl:w-4 2xl:h-4 mr-1 2xl:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                  </svg>
+                                  {insurance.issueDate}
+                                </span>
+                              ) : (
+                                <span className="text-[11px] text-gray-400">—</span>
+                              )}
+                            </td>
+
                             {/* Insurance / Client Column */}
                             <td className='px-4 2xl:px-6 py-3 2xl:py-5'>
                               <div className='flex flex-col gap-1'>

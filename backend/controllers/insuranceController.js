@@ -34,7 +34,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, issueDate, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails } = req.body
 
     // Validate required fields
 
@@ -125,6 +125,7 @@ exports.createInsurance = async (req, res) => {
       vehicleNumber,
       mobileNumber,
       date,
+      issueDate: issueDate || '',
       validFrom,
       validTo,
       totalFee,
@@ -641,7 +642,7 @@ exports.checkVehicleActiveInsurance = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, issueDate, validFrom, validTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -677,6 +678,7 @@ exports.updateInsurance = async (req, res) => {
     if (policyNumber) insurance.policyNumber = policyNumber
     if (policyHolderName) insurance.policyHolderName = policyHolderName
     if (date !== undefined) insurance.date = date
+    if (issueDate !== undefined) insurance.issueDate = issueDate
     if (insuranceCompany !== undefined) insurance.insuranceCompany = insuranceCompany
     if (productType !== undefined) insurance.productType = productType
     if (vehicleNumber !== undefined) insurance.vehicleNumber = vehicleNumber

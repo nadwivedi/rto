@@ -41,6 +41,13 @@ const InsuranceSchema = new mongoose.Schema({
     default: ''
   },
 
+  // Issue Date (when insurance document was issued)
+  issueDate: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+
   // Vehicle Information
   vehicleNumber: {
     type: String,

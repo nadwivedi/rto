@@ -397,13 +397,14 @@ exports.insuranceOcr = async (req, res) => {
 - policyNumber: as printed
 - policyHolderName: primary insured person/company name
 - validFrom / validTo: DD-MM-YYYY format
+- issueDate: the date the policy document was issued. Look for "Policy Issue Date", "Date of Issue", "Invoice Date", "Policy Date", "Issue Date". Format: DD-MM-YYYY.
 - insuranceCompany: full insurer name as it appears (e.g. "HDFC ERGO", "National Insurance Company Limited")
 - totalPremium: numeric value only after GST — look for "Total Premium", "Gross Premium", "Total Amount", "Premium After GST". No currency symbols or commas.
 - productType: the class/type of the insured vehicle or policy. Look for it in the "UIN No." field, "Policy Type", "Vehicle Class", or product name header. Common values: "Private Car", "Two-Wheeler", "Goods Carrying Vehicle", "GCV", "Passenger Carrying Vehicle", "PCV", "Taxi", "Commercial Vehicle", "Health", "Fire", "Marine", "Travel". For example "Digit Two-Wheeler Insurance" → return "Two-Wheeler". Return only the vehicle/product class keyword, not the full brand name.
 - address: policy holder / owner address if present
 - chassisNumber, engineNumber, makerName, makerModel, manufactureYear, cubicCapacity, seatingCapacity, bodyType: from vehicle details section
 - Use empty string "" for any absent field`;
-  const template = `{"vehicleNumber":"","policyNumber":"","policyHolderName":"","validFrom":"","validTo":"","insuranceCompany":"","totalPremium":"","productType":"","address":"","chassisNumber":"","engineNumber":"","makerName":"","makerModel":"","manufactureYear":"","cubicCapacity":"","seatingCapacity":"","bodyType":""}`;
+  const template = `{"vehicleNumber":"","policyNumber":"","policyHolderName":"","validFrom":"","validTo":"","issueDate":"","insuranceCompany":"","totalPremium":"","productType":"","address":"","chassisNumber":"","engineNumber":"","makerName":"","makerModel":"","manufactureYear":"","cubicCapacity":"","seatingCapacity":"","bodyType":""}`;
   return processOcrRequest(req, res, prompt, template, 0);
 };
 

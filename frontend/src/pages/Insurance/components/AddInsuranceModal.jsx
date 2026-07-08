@@ -19,6 +19,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     policyNumber: '',
     policyHolderName: prefilledOwnerName,
     mobileNumber: prefilledMobileNumber,
+    issueDate: '',
     validFrom: '',
     validTo: '',
     totalFee: '0',
@@ -71,6 +72,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         vehicleNumber: vehicleNum,
         policyNumber: initialData.policyNumber || '',
         policyHolderName: initialData.policyHolderName || '',
+        issueDate: initialData.issueDate || '',
         validFrom: initialData.validFrom || '',
         validTo: initialData.validTo || '',
         totalFee: initialData.totalFee?.toString() || '',
@@ -109,6 +111,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         policyNumber: '',
         policyHolderName: prefilledOwnerName,
         mobileNumber: prefilledMobileNumber,
+        issueDate: '',
         validFrom: '',
         validTo: '',
         totalFee: '0',
@@ -478,11 +481,22 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       return
     }
 
+    // Issue Date from calendar picker (YYYY-MM-DD → DD-MM-YYYY)
+    if (name === 'issueDate') {
+      if (!value) {
+        setFormData(prev => ({ ...prev, issueDate: '' }))
+      } else {
+        const [yyyy, mm, dd] = value.split('-')
+        setFormData(prev => ({ ...prev, issueDate: `${dd}-${mm}-${yyyy}` }))
+      }
+      return
+    }
+
     // Auto-format date fields with automatic dash insertion
     if (name === 'validFrom' || name === 'validTo') {
       if (name === 'validTo') setIsManualValidTo(true)
       const formatted = handleSmartDateInput(value, formData[name] || '')
-      
+
       // If smart formatting returns a value, use it
       if (formatted !== null) {
         setFormData(prev => ({
@@ -490,7 +504,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           [name]: formatted
         }))
       } else {
-        // If smart formatting rejects (e.g. invalid first digit), 
+        // If smart formatting rejects (e.g. invalid first digit),
         // still allow the user to type/delete so the field isn't "locked"
         setFormData(prev => ({
           ...prev,
@@ -682,6 +696,12 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
             if (formatted) updated.validTo = formatted;
           }
 
+          if (resultData.issueDate) {
+            const normalized = normalizeAIExtractedDate(resultData.issueDate);
+            const formatted = handleSmartDateInput(normalized, '');
+            if (formatted) updated.issueDate = formatted;
+          }
+
           if (resultData.insuranceCompany) {
             updated.insuranceCompany = matchInsuranceCompany(resultData.insuranceCompany)
           }
@@ -764,6 +784,10 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 if (resultData.validTo) {
                   const formatted = handleSmartDateInput(normalizeAIExtractedDate(resultData.validTo), '');
                   if (formatted) updated.validTo = formatted;
+                }
+                if (resultData.issueDate) {
+                  const formatted = handleSmartDateInput(normalizeAIExtractedDate(resultData.issueDate), '');
+                  if (formatted) updated.issueDate = formatted;
                 }
                 if (resultData.insuranceCompany) updated.insuranceCompany = matchInsuranceCompany(resultData.insuranceCompany);
                 if (resultData.chassisNumber) updated.chassisNumber = resultData.chassisNumber.toUpperCase();
@@ -947,9 +971,9 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       policyNumber: formData.policyNumber,
       policyHolderName: formData.policyHolderName,
       mobileNumber: formData.mobileNumber,
+      issueDate: formData.issueDate || '',
       validFrom: formData.validFrom,
       validTo: formData.validTo,
-      issueDate: formData.validFrom,
       totalFee: parseFloat(formData.totalFee) || 0,
       paid: parseFloat(formData.paid) || 0,
       balance: parseFloat(formData.balance) || 0,
@@ -1082,6 +1106,27 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
               </h3>
 
               <div className='grid grid-cols-1 md:grid-cols-4 gap-3 md:gap-4'>
+                {/* Issue Date */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Issue Date
+                  </label>
+                  <input
+                    type='date'
+                    name='issueDate'
+                    value={(() => {
+                      const d = formData.issueDate
+                      if (!d || d.length !== 10) return ''
+                      const [dd, mm, yyyy] = d.split('-')
+                      return yyyy && mm && dd ? `${yyyy}-${mm}-${dd}` : ''
+                    })()}
+                    onChange={handleChange}
+                    tabIndex="1"
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-white'
+                  />
+                  <p className='text-[10px] text-gray-400 mt-1'>When document was issued</p>
+                </div>
+
                 {/* Vehicle Number */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -1096,7 +1141,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                       onKeyDown={handleInputKeyDown}
                       placeholder='CG04AA1234 or 4793'
                       maxLength='10'
-                      tabIndex="1"
+                      tabIndex="2"
                       className={`w-full px-3 py-2 pr-10 border rounded-lg focus:ring-2 focus:border-transparent font-mono bg-white ${
                         formData.vehicleNumber && !vehicleValidation.isValid
                           ? 'border-red-500 focus:ring-red-500'
