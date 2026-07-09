@@ -226,7 +226,7 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
 
   return (
     <div className='fixed inset-0 bg-black/60 flex items-center justify-center z-[70] p-0 md:p-4 overflow-y-auto'>
-      <div className='bg-white rounded-none md:rounded-3xl shadow-2xl w-[95%] md:max-w-4xl 2xl:max-w-5xl md:w-full my-0 md:my-8 h-full md:h-auto md:max-h-[95vh] flex flex-col'>
+      <div className='bg-white rounded-none md:rounded-3xl shadow-2xl w-[95%] md:max-w-4xl 2xl:max-w-5xl md:w-full my-0 md:my-8 h-full md:h-auto flex flex-col'>
         {/* Header */}
         <div className='bg-gradient-to-r from-blue-600 to-indigo-600 px-3 sm:px-4 2xl:px-6 py-1.5 2xl:py-3 text-white flex-shrink-0 rounded-t-none md:rounded-t-3xl'>
           <div className='flex flex-col sm:flex-row justify-between items-start sm:items-center gap-1.5 2xl:gap-4'>
@@ -267,13 +267,13 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
           <div className='flex-1 overflow-y-auto p-2 md:p-3 2xl:p-4 pb-2 md:pb-0'>
             {/* Bill Preview - Scaled down */}
             <div className='w-full'>
-              <div className='border-2 border-black p-3 2xl:p-6 bg-white w-full' style={{ fontFamily: 'Arial, sans-serif' }}>
+              <div className='border-2 border-black p-2 2xl:p-4 bg-white w-full' style={{ fontFamily: 'Arial, sans-serif' }}>
             {/* Bill Header */}
-            <div className='text-center mb-4 2xl:mb-6'>
-              <div className='flex justify-between items-start mb-2.5 2xl:mb-3'>
+            <div className='text-center mb-2 2xl:mb-4'>
+              <div className='flex justify-between items-start mb-1.5 2xl:mb-2'>
                 <div className='flex-1'></div>
                 <div className='flex-1 text-center'>
-                  <div className='inline-block bg-gray-800 text-white px-2.5 2xl:px-4 py-1 2xl:py-1 rounded-full text-[8.5px] 2xl:text-xs font-bold mb-2 2xl:mb-3 whitespace-nowrap'>
+                  <div className='inline-block bg-gray-800 text-white px-2.5 2xl:px-4 py-1 2xl:py-1 rounded-full text-[8.5px] 2xl:text-xs font-bold mb-1 2xl:mb-2 whitespace-nowrap'>
                     BILL / CASH MEMO
                   </div>
                 </div>
@@ -292,14 +292,14 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
                 <h1 className='text-xl 2xl:text-4xl font-bold italic mb-1 2xl:mb-1' style={{ whiteSpace: 'nowrap' }}>
                   {userInfo?.billName ? userInfo.billName.toUpperCase() : (userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')}
                 </h1>
-                <p className='text-[8.5px] 2xl:text-xs mb-1 2xl:mb-1.5'>
+                <p className='text-[8.5px] 2xl:text-xs mb-0.5'>
                   {userInfo?.address || 'GF-17, Ground Floor, Shyam Plaza, Opp. Bus Stand, Pandri, RAIPUR'}
                 </p>
                 <p className={`text-[9.5px] 2xl:text-sm italic ${userInfo?.email ? 'mb-1.5 2xl:mb-2' : 'mb-2.5 2xl:mb-3'}`}>
                   {userInfo?.billDescription ? `(${userInfo.billDescription})` : '(Transport Consultant)'}
                 </p>
                 {userInfo?.email && (
-                  <p className='text-[8.5px] 2xl:text-xs mb-2.5 2xl:mb-3'>
+                  <p className='text-[8.5px] 2xl:text-xs mb-1.5'>
                     Email : {userInfo.email}
                   </p>
                 )}
@@ -307,7 +307,7 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
 
             {/* Bill No and Date */}
-            <div className='flex justify-between mb-2.5 2xl:mb-4 text-[9.5px] 2xl:text-sm'>
+            <div className='flex justify-between mb-1.5 2xl:mb-2.5 text-[9.5px] 2xl:text-sm'>
               <div>
                 <span className='font-bold'>No.</span>
                 <span className='ml-2 text-red-700 font-bold'>PENDING</span>
@@ -340,7 +340,7 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
 
             {/* Items Table */}
-            <table className='w-full border-2 border-black mb-2.5 2xl:mb-4' style={{ borderCollapse: 'collapse' }}>
+            <table className='w-full border-2 border-black mb-1.5 2xl:mb-2.5' style={{ borderCollapse: 'collapse' }}>
               <thead>
                 <tr className='bg-gray-200'>
                   <th className='border border-black px-1.5 2xl:px-2 py-1.5 2xl:py-2 text-[9.5px] 2xl:text-xs font-bold text-center' style={{ width: '8%' }}>
@@ -438,7 +438,7 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
             </table>
 
             {/* Add/Remove Item Buttons */}
-            <div className='flex gap-2 mb-4'>
+            <div className='flex gap-2 mb-2'>
               <button
                 type='button'
                 onClick={addItem}
@@ -458,7 +458,7 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
 
             {/* Amount in Words */}
-            <div className='mb-6 text-[10px] md:text-sm'>
+            <div className='mb-3 text-[10px] md:text-sm'>
               <span className='font-bold'>Rs</span>
               <span className='ml-2 border-b border-black inline-block px-2' style={{ minWidth: '200px' }}>
                 {/* Amount in words will be shown on PDF */}
@@ -466,7 +466,7 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
 
             {/* Signature */}
-            <div className='text-right mt-8 md:mt-12'>
+            <div className='text-right mt-4 md:mt-6'>
               <div className='text-[10px] md:text-sm font-bold'>
                 For, {userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR'}
               </div>
@@ -476,7 +476,7 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
           </div>
 
           {/* Fixed Bottom Section - Error and Buttons */}
-          <div className='flex-shrink-0 bg-white border-t border-gray-200 md:border-0 p-2 md:p-0 md:px-8 md:pb-8'>
+          <div className='flex-shrink-0 bg-white border-t border-gray-200 md:border-0 p-2 md:p-0 md:px-6 md:pb-4'>
             {/* Error Message */}
             {error && (
               <div className='bg-red-50 border-2 border-red-500 rounded-xl p-2 md:p-4 mb-2 md:mt-4 md:mb-0'>
@@ -485,7 +485,7 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
             )}
 
             {/* Submit Button */}
-            <div className='flex gap-2 md:gap-3 mt-0 md:mt-6'>
+            <div className='flex gap-2 md:gap-3 mt-0 md:mt-3'>
               <button
                 type='button'
                 onClick={onClose}
