@@ -289,7 +289,7 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
                 </div>
               </div>
               <div>
-                <h1 className='text-xl 2xl:text-4xl font-bold italic mb-1 2xl:mb-1' style={{ whiteSpace: 'nowrap' }}>
+                <h1 className='text-lg md:text-xl 2xl:text-2xl font-bold italic mb-1 break-words leading-tight'>
                   {userInfo?.billName ? userInfo.billName.toUpperCase() : (userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')}
                 </h1>
                 <p className='text-[8.5px] 2xl:text-xs mb-0.5'>
