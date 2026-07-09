@@ -11,7 +11,11 @@ router.get('/status', async (req, res) => {
 
     // With the new low-memory architecture, the client might purposely be null (sleeping)
     // We do NOT auto-restore here to save RAM. It will auto-restore on the next send request.
-    
+
+    // Signals "someone is actually looking at the QR page right now" — keeps the pending
+    // handshake alive while polled, so it only gets torn down after real inactivity.
+    whatsappService.touchPoll(userId)
+
     res.json({
       ...(session ? session.toObject() : {}),
       isStopped: whatsappService.isClientStopped(userId),

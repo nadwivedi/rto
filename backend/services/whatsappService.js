@@ -6,7 +6,9 @@ const fs = require('fs')
 
 const AUTH_DATA_PATH = process.env.WHATSAPP_AUTH_DIR || '.wwebjs_auth'
 const IDLE_TIMEOUT_MS = 15 * 60 * 1000 // 15 minutes
-const QR_IDLE_TIMEOUT_MS = 30 * 60 * 1000 // 30 minutes while waiting for QR
+// Waiting-for-QR timeout is kept short and is refreshed on every /status poll (see touchPoll)
+// rather than on a fixed clock, so it really means "5 minutes since anyone last looked at the page".
+const QR_IDLE_TIMEOUT_MS = 5 * 60 * 1000
 
 class WhatsappUserClient {
   constructor(userId) {
@@ -40,10 +42,30 @@ class WhatsappUserClient {
   resetIdleTimeout(isQr = false) {
     if (this.idleTimer) clearTimeout(this.idleTimer)
     const timeout = isQr ? QR_IDLE_TIMEOUT_MS : IDLE_TIMEOUT_MS
-    this.idleTimer = setTimeout(() => {
+    this.idleTimer = setTimeout(async () => {
       console.log(`[WHATSAPP:${this.userId}] Session idle for ${timeout/1000/60} minutes. Destroying client to free RAM...`)
+      // If we were still waiting for a QR scan, clear the now-dead QR from the DB so the
+      // frontend doesn't keep showing an expired code. Marking disconnected lets the UI
+      // auto-restart and fetch a fresh QR.
+      if (isQr && !this.authReceived) {
+        await this.updateStatus('disconnected', {
+          qrCodeDataUrl: null,
+          lastError: 'QR code expired. Restart to get a fresh code.'
+        }).catch(() => {})
+      }
       this.destroySession()
     }, timeout)
+  }
+
+  // Called on every /status poll while a QR/handshake is pending. As long as the frontend
+  // keeps polling (i.e. the user is actually on the WhatsApp page), this keeps pushing the
+  // abandonment timer out so the browser stays alive. The moment polling stops — user
+  // navigated away, closed the tab, lost connection — the timer is left alone and fires
+  // QR_IDLE_TIMEOUT_MS after that last poll, freeing the RAM nobody was using.
+  touchPoll() {
+    if (this.client && !this.authReceived) {
+      this.resetIdleTimeout(true)
+    }
   }
 
   async updateStatus(status, extra = {}) {
@@ -231,21 +253,57 @@ class WhatsappUserClient {
     })
   }
 
+  // Tear down the browser AND wipe saved auth, marking the user disconnected. Unlike
+  // logoutSession this does NOT set isStopped, so the WhatsApp page can auto-start and show
+  // a fresh QR for the user to re-scan. Used when a lazy connect during send fails — per the
+  // rule "if we can't connect while sending, mark the user logged out". Assumes it's already
+  // running inside the task queue (called from sendWhatsAppMessage), so it does not enqueue.
+  async _forceLoggedOut(reason) {
+    if (this.idleTimer) clearTimeout(this.idleTimer)
+    const clientRef = this.client
+    this.client = null
+    this.authReceived = false
+    if (clientRef) {
+      try { await clientRef.logout() } catch (_) {}
+      try { await clientRef.destroy() } catch (_) {}
+    }
+    try {
+      const authDir = path.resolve(AUTH_DATA_PATH, `session-${this.sessionId}`)
+      if (fs.existsSync(authDir)) fs.rmSync(authDir, { recursive: true, force: true })
+    } catch (_) {}
+    this.clearChromeLock()
+    await this.updateStatus('disconnected', {
+      qrCodeDataUrl: null,
+      phoneNumber: null,
+      lastError: reason
+    }).catch(() => {})
+    console.log(`[WHATSAPP:${this.userId}] Forced logout during send: ${reason}`)
+  }
+
   sendWhatsAppMessage(targetNumber, text) {
     return this.enqueueTask(async () => {
       if (this.isStopped) throw new Error('Sending paused. Resume session first.')
-      
+
       // Call internal init directly to prevent queue deadlock
       if (!this.client) {
-        await this._init() 
+        await this._init()
       }
-      
+
       this.resetIdleTimeout()
-      
+
+      // Lazy cold-start finished but we never authenticated — the saved session on disk is
+      // invalid/expired (init resolved on a QR instead of 'ready'). Mark logged out so the
+      // user is prompted to re-scan, rather than looping on a dead session forever.
+      if (!this.authReceived) {
+        await this._forceLoggedOut('WhatsApp session expired. Please scan the QR code again to reconnect.')
+        throw new Error('WhatsApp not connected — session logged out. Please re-scan the QR code.')
+      }
+
       try {
         const state = await this.client.getState().catch(() => null)
         if (state !== 'CONNECTED') {
-           throw new Error(`Not connected. Current State: ${state}`)
+           await this._forceLoggedOut(`WhatsApp disconnected (state: ${state}). Please scan the QR code again to reconnect.`)
+           throw new Error(`WhatsApp not connected (state: ${state}) — session logged out. Please re-scan the QR code.`)
         }
 
         let num = targetNumber.replace(/\D/g, '')
@@ -295,6 +353,7 @@ class WhatsappServiceManager {
   destroySession(userId, manualStop = false) { return this.getInstance(userId).destroySession(manualStop) }
   getSessionStatus(userId) { return this.getInstance(userId).getSessionStatus() }
   logoutSession(userId) { return this.getInstance(userId).logoutSession() }
+  touchPoll(userId) { return this.getInstance(userId).touchPoll() }
   
   // Backwards compatibility methods temporarily retained if called directly
   isClientConnected(userId) { return this.getInstance(userId).isClientConnected() }
@@ -305,47 +364,29 @@ class WhatsappServiceManager {
   getStatus(userId) { return this.getInstance(userId).getSessionStatus() }
   sendMessage(userId, num, txt) { return this.sendWhatsAppMessage(userId, num, txt) }
 
-  // On server restart: reconcile DB session status with what's actually saved on disk.
-  // - Was fully authenticated + auth folder still present -> silently restore it (no QR).
-  // - Was fully authenticated but auth folder missing -> mark logged out (was misleading otherwise).
-  // - Was stuck mid-handshake (qr_ready/initializing) when the process died -> mark logged out,
-  //   since that in-memory client no longer exists and the stale QR/state is useless.
+  // On server restart we intentionally DO NOT launch any browsers or verify anyone's auth.
+  // Authenticated users are left in their "sleeping" state — the saved auth stays on disk and
+  // the browser is cold-started lazily on the next send (or when the user opens the QR page).
+  // If that lazy connect fails, sendWhatsAppMessage marks the user logged out at that point.
+  //
+  // The only thing we tidy up here is sessions that were mid-handshake (qr_ready / initializing)
+  // when the process died: their in-memory client is gone and the stored QR is stale, so we flip
+  // them to disconnected. No browser is started for anyone.
   async restoreSessionsOnStartup() {
     try {
-      const sessions = await WaSession.find({
-        status: { $in: ['authenticated', 'qr_ready', 'initializing'] }
-      })
-
-      if (sessions.length === 0) return
-      console.log(`[WHATSAPP] Reconciling ${sessions.length} session(s) found from before restart...`)
-
-      for (const session of sessions) {
-        const userId = session.userId.toString()
-        const authDir = path.resolve(AUTH_DATA_PATH, `session-user_${userId}`)
-        const hasSavedAuth = session.status === 'authenticated' && fs.existsSync(authDir)
-
-        if (hasSavedAuth) {
-          console.log(`[WHATSAPP:${userId}] Saved auth found on disk. Restoring session in background...`)
-          this.initializeSession(userId).catch(err => {
-            console.error(`[WHATSAPP:${userId}] Auto-restore failed:`, err.message)
-          })
-          // Stagger browser launches so a restart with many logged-in users doesn't spike RAM/CPU
-          await new Promise(r => setTimeout(r, 8000))
-        } else {
-          console.log(`[WHATSAPP:${userId}] No valid saved session on disk. Marking as logged out.`)
-          await WaSession.findOneAndUpdate(
-            { userId },
-            {
-              status: 'disconnected',
-              qrCodeDataUrl: null,
-              phoneNumber: null,
-              lastError: 'Session not found after server restart. Please login again.'
-            }
-          )
+      const stale = await WaSession.updateMany(
+        { status: { $in: ['qr_ready', 'initializing'] } },
+        {
+          status: 'disconnected',
+          qrCodeDataUrl: null,
+          lastError: 'Session interrupted by server restart. Please reconnect.'
         }
+      )
+      if (stale.modifiedCount > 0) {
+        console.log(`[WHATSAPP] Cleared ${stale.modifiedCount} stale mid-handshake session(s) after restart. No browsers launched.`)
       }
     } catch (error) {
-      console.error('[WHATSAPP] Error reconciling sessions on startup:', error)
+      console.error('[WHATSAPP] Error clearing stale sessions on startup:', error)
     }
   }
 }

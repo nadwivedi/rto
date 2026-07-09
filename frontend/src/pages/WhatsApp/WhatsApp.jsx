@@ -1,8 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+// Real WhatsApp QR codes expire roughly every 20-60s. If ours hasn't changed within this
+// window, force a fresh one instead of waiting on the backend's 30-min idle cleanup.
+const QR_SAFETY_REFRESH_MS = 45000
 
 const statusConfig = {
   authenticated: {
@@ -43,6 +46,14 @@ const WhatsApp = () => {
   const [statusFilter, setStatusFilter] = useState('all')
   const [selectedIds, setSelectedIds] = useState([])
   const [bulkDeleting, setBulkDeleting] = useState(false)
+  const [dailyLimit, setDailyLimit] = useState(25)
+  const [qrSecondsLeft, setQrSecondsLeft] = useState(null)
+
+  // Guards a single auto-start attempt per disconnected episode so we don't spam /start.
+  const autoStartRef = useRef(false)
+  // Tracks the currently-shown QR image so we can detect when a new one arrives vs. going stale.
+  const lastQrRef = useRef(null)
+  const qrGeneratedAtRef = useRef(null)
 
   const fetchStatus = async () => {
     try {
@@ -65,6 +76,15 @@ const WhatsApp = () => {
     }
   }
 
+  const fetchSettings = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/whatsapp-settings`, { withCredentials: true })
+      if (res.data?.maxMessagesPerDay) setDailyLimit(res.data.maxMessagesPerDay)
+    } catch (error) {
+      console.error('[WhatsApp] Settings fetch error:', error)
+    }
+  }
+
   const runCheckNow = async () => {
     setActionBusy('check')
     try {
@@ -83,6 +103,7 @@ const WhatsApp = () => {
     const init = async () => {
       await fetchStatus()
       await fetchLogs(1)
+      await fetchSettings()
       setLoading(false)
     }
     init()
@@ -97,18 +118,83 @@ const WhatsApp = () => {
     return () => clearInterval(interval)
   }, [statusInfo?.status])
 
-  const doAction = async (action, successMsg) => {
+  // Auto-start the session (and thus the QR scanner) the moment the page shows a
+  // disconnected/failed session — unless the user deliberately stopped or logged out.
+  // Also recovers automatically when a QR expires (backend flips it to disconnected).
+  useEffect(() => {
+    if (!statusInfo) return
+    const s = statusInfo.status
+
+    // Session is alive or coming up — nothing to do, and re-arm the guard so a future
+    // disconnect (e.g. expired QR) triggers a fresh auto-start.
+    if (['authenticated', 'qr_ready', 'initializing'].includes(s)) {
+      autoStartRef.current = false
+      return
+    }
+
+    // User intentionally stopped or logged out — respect that, don't reconnect on them.
+    if (statusInfo.isStopped) return
+
+    if (autoStartRef.current || actionBusy) return
+    autoStartRef.current = true
+
+    axios
+      .post(`${API_URL}/api/whatsapp/start`, {}, { withCredentials: true })
+      .then(() => fetchStatus())
+      .catch((err) => console.error('[WhatsApp] Auto-start failed:', err))
+  }, [statusInfo?.status, statusInfo?.isStopped])
+
+  const doAction = async (action, successMsg, silent = false) => {
     setActionBusy(action)
     try {
       await axios.post(`${API_URL}/api/whatsapp/${action}`, {}, { withCredentials: true })
-      toast.success(successMsg)
+      if (!silent) toast.success(successMsg)
       await fetchStatus()
     } catch (error) {
-      toast.error(`Failed: ${error?.response?.data?.message || error.message}`)
+      if (!silent) toast.error(`Failed: ${error?.response?.data?.message || error.message}`)
     } finally {
       setActionBusy(null)
     }
   }
+
+  // Live QR countdown + safety-net auto-renew: WhatsApp's real QR expires every ~20-60s.
+  // Normally whatsapp-web.js re-emits a fresh 'qr' and our fast polling picks it up for free.
+  // If that doesn't happen (known flakiness in headless mode), force a renew before the user notices.
+  useEffect(() => {
+    const qr = statusInfo?.qrCodeDataUrl
+    if (statusInfo?.status === 'qr_ready' && qr) {
+      if (lastQrRef.current !== qr) {
+        lastQrRef.current = qr
+        qrGeneratedAtRef.current = Date.now()
+      }
+    } else {
+      lastQrRef.current = null
+      qrGeneratedAtRef.current = null
+      setQrSecondsLeft(null)
+    }
+  }, [statusInfo?.status, statusInfo?.qrCodeDataUrl])
+
+  useEffect(() => {
+    if (statusInfo?.status !== 'qr_ready') return
+
+    const tick = () => {
+      if (!qrGeneratedAtRef.current) return
+      // Don't force a Chrome relaunch for a QR nobody's looking at — freeze the countdown
+      // while the tab is backgrounded, and only judge staleness once it's visible again.
+      if (document.hidden) return
+      const elapsed = Date.now() - qrGeneratedAtRef.current
+      const left = Math.max(0, Math.ceil((QR_SAFETY_REFRESH_MS - elapsed) / 1000))
+      setQrSecondsLeft(left)
+
+      if (elapsed >= QR_SAFETY_REFRESH_MS && actionBusy !== 'renew-qr') {
+        doAction('renew-qr', null, true)
+      }
+    }
+
+    tick()
+    const t = setInterval(tick, 1000)
+    return () => clearInterval(t)
+  }, [statusInfo?.status, actionBusy])
 
   const handleDeleteLog = async (id) => {
     if (!window.confirm('Are you sure you want to delete this log?')) return
@@ -207,8 +293,14 @@ const WhatsApp = () => {
                 alt='WhatsApp QR Code'
                 className='w-52 h-52 rounded-xl border-4 border-white shadow-lg'
               />
-              <p className='text-[11px] text-orange-500 mt-2 mb-3'>QR refreshes automatically every ~30s</p>
-              
+              <p className='text-[11px] text-orange-500 mt-2 mb-3'>
+                {actionBusy === 'renew-qr'
+                  ? 'Getting a fresh code...'
+                  : qrSecondsLeft !== null
+                    ? `Auto-refreshing in ${qrSecondsLeft}s if not scanned`
+                    : 'Waiting for scan...'}
+              </p>
+
               <button
                 onClick={() => doAction('renew-qr', 'Refreshing QR code...')}
                 disabled={actionBusy === 'renew-qr'}
@@ -217,7 +309,7 @@ const WhatsApp = () => {
                 {actionBusy === 'renew-qr' ? (
                   <div className='w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin' />
                 ) : (
-                  <span>🔄 Renew QR Code</span>
+                  <span>🔄 Get New QR Now</span>
                 )}
               </button>
             </div>
@@ -241,10 +333,22 @@ const WhatsApp = () => {
             </div>
           )}
 
+          {/* Auto-preparing scanner: shown when disconnected but NOT intentionally stopped,
+              i.e. the session is auto-starting in the background to fetch a QR. */}
+          {!isRunning && !statusInfo?.isStopped && (
+            <div className='flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+              <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
+              <div>
+                <p className='text-sm text-blue-800 font-semibold'>Preparing WhatsApp scanner...</p>
+                <p className='text-xs text-blue-500'>Your QR code will appear here in a moment</p>
+              </div>
+            </div>
+          )}
+
           {/* ---- ACTION BUTTONS ---- */}
           <div className='flex flex-col gap-2 pt-2 border-t border-gray-100'>
-            {/* START: show when disconnected, stopped, auth_failure */}
-            {!isRunning && (
+            {/* START/RESUME: only when the user has intentionally stopped the session */}
+            {!isRunning && statusInfo?.isStopped && (
               <button
                 onClick={() => doAction('start', 'Session started! Wait for QR or connection...')}
                 disabled={actionBusy === 'start'}
@@ -253,7 +357,7 @@ const WhatsApp = () => {
                 {actionBusy === 'start' ? (
                   <><div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' /> Starting...</>
                 ) : (
-                  <>▶ Start WhatsApp Session</>
+                  <>▶ Resume WhatsApp Session</>
                 )}
               </button>
             )}
@@ -309,7 +413,7 @@ const WhatsApp = () => {
           {/* Sent Today Summary */}
           <div className='p-3 bg-gray-50 border border-gray-200 rounded-lg text-center'>
             <p className='text-xs text-gray-500'>Messages Sent Today</p>
-            <p className='text-2xl font-black text-gray-800'>{todaySentCount} <span className='text-sm font-normal text-gray-400'>/ 30</span></p>
+            <p className='text-2xl font-black text-gray-800'>{todaySentCount} <span className='text-sm font-normal text-gray-400'>/ {dailyLimit}</span></p>
           </div>
         </div>
 
