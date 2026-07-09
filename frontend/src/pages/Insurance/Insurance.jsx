@@ -35,6 +35,7 @@ const Insurance = () => {
   const [companies, setCompanies] = useState([]);
   const [productFilter, setProductFilter] = useState("");
   const [products, setProducts] = useState([]);
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -604,29 +605,78 @@ const Insurance = () => {
                       title="New Insurance Record"
                     />
 
-                    {/* Insurance Company Filter */}
-                    <select
-                      value={companyFilter}
-                      onChange={(e) => setCompanyFilter(e.target.value)}
-                      className='px-3 py-2.5 border border-gray-300 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
-                    >
-                      <option value=''>All Companies</option>
-                      {companies.map((company) => (
-                        <option key={company} value={company}>{company}</option>
-                      ))}
-                    </select>
+                    {/* Filter Button with Dropdown */}
+                    <div className="relative">
+                      <button
+                        onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                        className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                          companyFilter || productFilter
+                            ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                            : 'bg-white border-gray-300 text-gray-700 hover:border-indigo-300 hover:bg-indigo-50'
+                        }`}
+                      >
+                        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z' />
+                        </svg>
+                        Filters
+                        {(companyFilter || productFilter) && (
+                          <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] font-bold">
+                            {(companyFilter ? 1 : 0) + (productFilter ? 1 : 0)}
+                          </span>
+                        )}
+                      </button>
 
-                    {/* Product Type Filter */}
-                    <select
-                      value={productFilter}
-                      onChange={(e) => setProductFilter(e.target.value)}
-                      className='px-3 py-2.5 border border-gray-300 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
-                    >
-                      <option value=''>All Products</option>
-                      {products.map((product) => (
-                        <option key={product} value={product}>{product}</option>
-                      ))}
-                    </select>
+                      {showFilterDropdown && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setShowFilterDropdown(false)}></div>
+                          <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 p-4 space-y-4">
+                            <div className="flex items-center justify-between pb-2 border-b border-gray-100">
+                              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Filters</span>
+                              {(companyFilter || productFilter) && (
+                                <button
+                                  onClick={() => { setCompanyFilter(''); setProductFilter(''); }}
+                                  className="text-[10px] font-semibold text-red-500 hover:text-red-600 cursor-pointer"
+                                >
+                                  Clear All
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Company Filter */}
+                            <div>
+                              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Insurance Company</label>
+                              <select
+                                value={companyFilter}
+                                onChange={(e) => setCompanyFilter(e.target.value)}
+                                className='w-full px-3 py-2 border border-gray-300 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+                              >
+                                <option value=''>All Companies</option>
+                                {companies.map((company) => (
+                                  <option key={company} value={company}>{company}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Product Type Filter */}
+                            <div>
+                              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Product Type</label>
+                              <select
+                                value={productFilter}
+                                onChange={(e) => setProductFilter(e.target.value)}
+                                className='w-full px-3 py-2 border border-gray-200 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+                              >
+                                <option value=''>All Products</option>
+                                {products.map((product) => (
+                                  <option key={product} value={product}>{product}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            {/* Future filters can be added here */}
+                          </div>
+                        </>
+                      )}
+                    </div>
 
                     {/* Export Excel Button */}
                     <button
