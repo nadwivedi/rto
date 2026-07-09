@@ -906,7 +906,7 @@ const Insurance = () => {
                             {/* Client Info Column */}
                             <td className="px-4 2xl:px-6 py-3 2xl:py-5">
                               <div className='flex flex-col gap-1.5'>
-                                <span className='text-[11px] 2xl:text-[13px] font-bold text-gray-900 whitespace-nowrap'>
+                                <span className='text-[11px] 2xl:text-[13px] font-bold text-gray-900 truncate max-w-[200px] block'>
                                   {insurance.policyHolderName || 'N/A'}
                                 </span>
                                 {insurance.vehicleNumber && (
