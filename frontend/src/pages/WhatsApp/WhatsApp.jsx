@@ -41,6 +41,8 @@ const WhatsApp = () => {
   const [totalPages, setTotalPages] = useState(1)
   const [todaySentCount, setTodaySentCount] = useState(0)
   const [statusFilter, setStatusFilter] = useState('all')
+  const [selectedIds, setSelectedIds] = useState([])
+  const [bulkDeleting, setBulkDeleting] = useState(false)
 
   const fetchStatus = async () => {
     try {
@@ -57,6 +59,7 @@ const WhatsApp = () => {
       setLogs(res.data.logs || [])
       setTotalPages(res.data.totalPages || 1)
       setTodaySentCount(res.data.todaySentCount || 0)
+      setSelectedIds([])
     } catch (error) {
       console.error('[WhatsApp] Logs fetch error:', error)
     }
@@ -113,15 +116,52 @@ const WhatsApp = () => {
       await axios.delete(`${API_URL}/api/whatsapp/logs/${id}`, { withCredentials: true })
       toast.success('Log deleted')
       setLogs((prev) => prev.filter((log) => log._id !== id))
+      setSelectedIds((prev) => prev.filter((sid) => sid !== id))
     } catch (error) {
       toast.error(`Failed to delete: ${error?.response?.data?.message || error.message}`)
     }
+  }
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return
+    if (!window.confirm(`Delete ${selectedIds.length} selected message${selectedIds.length === 1 ? '' : 's'}? This cannot be undone.`)) return
+    setBulkDeleting(true)
+    try {
+      const res = await axios.post(
+        `${API_URL}/api/whatsapp/logs/bulk-delete`,
+        { ids: selectedIds },
+        { withCredentials: true }
+      )
+      toast.success(res.data.message || 'Selected logs deleted')
+      setLogs((prev) => prev.filter((log) => !selectedIds.includes(log._id)))
+      setSelectedIds([])
+    } catch (error) {
+      toast.error(`Failed to delete: ${error?.response?.data?.message || error.message}`)
+    } finally {
+      setBulkDeleting(false)
+    }
+  }
+
+  const toggleSelect = (id) => {
+    setSelectedIds((prev) => prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id])
   }
 
   const currentStatus = statusInfo?.status || 'disconnected'
   const config = statusConfig[currentStatus] || statusConfig.disconnected
   const isConnected = currentStatus === 'authenticated'
   const isRunning = ['authenticated', 'initializing', 'qr_ready'].includes(currentStatus)
+
+  const filteredLogs = logs.filter((log) => statusFilter === 'all' || log.status === statusFilter)
+  const allVisibleSelected = filteredLogs.length > 0 && filteredLogs.every((log) => selectedIds.includes(log._id))
+
+  const toggleSelectAll = () => {
+    if (allVisibleSelected) {
+      const visibleIds = filteredLogs.map((log) => log._id)
+      setSelectedIds((prev) => prev.filter((id) => !visibleIds.includes(id)))
+    } else {
+      setSelectedIds((prev) => [...new Set([...prev, ...filteredLogs.map((log) => log._id)])])
+    }
+  }
 
   return (
     <div className='p-4 md:p-6 lg:p-8 pt-4 lg:pt-6 max-w-[1400px] mx-auto'>
@@ -279,12 +319,27 @@ const WhatsApp = () => {
             <h2 className='text-base font-bold text-gray-800 flex items-center gap-2'>
               📋 Recent Message Logs
             </h2>
-            <button
-              onClick={() => { fetchLogs(page); toast.info('Logs refreshed') }}
-              className='px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-semibold text-gray-700 border border-gray-300 transition'
-            >
-              🔄 Refresh
-            </button>
+            <div className='flex items-center gap-2'>
+              {selectedIds.length > 0 && (
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={bulkDeleting}
+                  className='px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold border border-red-600 transition flex items-center gap-2 disabled:opacity-60'
+                >
+                  {bulkDeleting ? (
+                    <><div className='w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin' /> Deleting...</>
+                  ) : (
+                    <>🗑️ Delete Selected ({selectedIds.length})</>
+                  )}
+                </button>
+              )}
+              <button
+                onClick={() => { fetchLogs(page); toast.info('Logs refreshed') }}
+                className='px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-semibold text-gray-700 border border-gray-300 transition'
+              >
+                🔄 Refresh
+              </button>
+            </div>
           </div>
 
           {/* ---- STATUS FILTER TABS ---- */}
@@ -306,7 +361,7 @@ const WhatsApp = () => {
                 {tabs.map(tab => (
                   <button
                     key={tab.key}
-                    onClick={() => setStatusFilter(tab.key)}
+                    onClick={() => { setStatusFilter(tab.key); setSelectedIds([]) }}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition ${
                       statusFilter === tab.key ? tab.active : tab.inactive
                     }`}
@@ -328,6 +383,15 @@ const WhatsApp = () => {
             <table className='w-full text-left border-collapse'>
               <thead>
                 <tr className='bg-gray-50 border-y border-gray-200'>
+                  <th className='py-3 px-4 text-center'>
+                    <input
+                      type='checkbox'
+                      checked={allVisibleSelected}
+                      onChange={toggleSelectAll}
+                      className='w-4 h-4 cursor-pointer accent-red-600'
+                      title='Select all'
+                    />
+                  </th>
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Date & Time</th>
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Party / Mobile</th>
                   <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Document</th>
@@ -339,14 +403,14 @@ const WhatsApp = () => {
               </thead>
               <tbody className='divide-y divide-gray-100'>
                 {loading ? (
-                  <tr><td colSpan='7' className='py-8 text-center text-sm text-gray-400'>Loading...</td></tr>
+                  <tr><td colSpan='8' className='py-8 text-center text-sm text-gray-400'>Loading...</td></tr>
                 ) : logs.length === 0 ? (
-                  <tr><td colSpan='7' className='py-8 text-center text-sm text-gray-400'>No messages logged yet. They will appear here once alerts are triggered.</td></tr>
+                  <tr><td colSpan='8' className='py-8 text-center text-sm text-gray-400'>No messages logged yet. They will appear here once alerts are triggered.</td></tr>
                 ) : (
-                  logs.filter(log => statusFilter === 'all' || log.status === statusFilter).length === 0 ? (
-                    <tr><td colSpan='7' className='py-8 text-center text-sm text-gray-400'>No {statusFilter} messages found.</td></tr>
+                  filteredLogs.length === 0 ? (
+                    <tr><td colSpan='8' className='py-8 text-center text-sm text-gray-400'>No {statusFilter} messages found.</td></tr>
                   ) :
-                  logs.filter(log => statusFilter === 'all' || log.status === statusFilter).map((log) => {
+                  filteredLogs.map((log) => {
                     const d = new Date(log.createdAt);
                     const dateStr = d.toLocaleDateString('en-IN');
                     const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
@@ -354,7 +418,15 @@ const WhatsApp = () => {
                     const sentDateStr = sentD ? sentD.toLocaleDateString('en-IN') : null;
                     const sentTimeStr = sentD ? sentD.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : null;
                     return (
-                    <tr key={log._id} className='hover:bg-gray-50 transition'>
+                    <tr key={log._id} className={`transition ${selectedIds.includes(log._id) ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
+                      <td className='py-3 px-4 text-center'>
+                        <input
+                          type='checkbox'
+                          checked={selectedIds.includes(log._id)}
+                          onChange={() => toggleSelect(log._id)}
+                          className='w-4 h-4 cursor-pointer accent-red-600'
+                        />
+                      </td>
                       <td className='py-3 px-4 whitespace-nowrap'>
                         <div className='text-sm text-gray-800 font-medium'>{dateStr}</div>
                         <div className='text-xs text-gray-500'>{timeStr}</div>

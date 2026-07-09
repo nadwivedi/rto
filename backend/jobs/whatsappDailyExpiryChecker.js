@@ -484,6 +484,7 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
       })
 
       queuedCount++
+      const daysSinceIssue = Math.floor((today_ll - new Date(doc.learningLicenseIssueDate)) / (24 * 60 * 60 * 1000))
       console.log(`[WHATSAPP-CRON:${docUserId}] Queued: LL Eligible | ${doc.name} | ${mobileNumber} | Day ${daysSinceIssue}`)
     }
     // ── End LL Eligible scan ──────────────────────────────────────────────────

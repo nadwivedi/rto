@@ -20,14 +20,14 @@ const processPendingMessagesForUser = async (userId) => {
         const maxPerDay = setting ? setting.maxMessagesPerDay : 25
         const maxPerHour = setting ? setting.maxMessagesPerHour : 4
 
-        // 1. Check strict IST time window (9 AM to 8 PM)
+        // 1. Check strict IST time window (7 AM to 9 PM)
         const now = new Date()
         // Convert to IST (UTC + 5:30)
         const istTime = new Date(now.getTime() + (5.5 * 60 * 60 * 1000))
         const hourIST = istTime.getUTCHours()
 
-        if (hourIST < 9 || hourIST >= 20) {
-            console.log(`[WHATSAPP-SENDER:${uid}] Outside sending window (9 AM - 8 PM IST). Current IST hour: ${hourIST}. Skipping.`)
+        if (hourIST < 7 || hourIST >= 21) {
+            console.log(`[WHATSAPP-SENDER:${uid}] Outside sending window (7 AM - 9 PM IST). Current IST hour: ${hourIST}. Skipping.`)
             return
         }
 

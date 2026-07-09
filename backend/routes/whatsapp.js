@@ -153,6 +153,23 @@ router.get('/logs', async (req, res) => {
   }
 })
 
+// POST bulk-delete multiple logs at once
+router.post('/logs/bulk-delete', async (req, res) => {
+  try {
+    const userId = req.user.id
+    const { ids } = req.body
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ message: 'Please provide an array of log ids to delete' })
+    }
+
+    const result = await MessageLog.deleteMany({ _id: { $in: ids }, userId })
+    res.json({ message: `${result.deletedCount} message log(s) deleted successfully`, deletedCount: result.deletedCount })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
 // DELETE a specific log
 router.delete('/logs/:id', async (req, res) => {
   try {
