@@ -866,24 +866,15 @@ const Insurance = () => {
                           Insurance Company
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
-                          Valid From
-                        </th>
-                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
-                          Valid To
+                          Validity
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
                           Product
                         </th>
-                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-right text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider bg-white/10 pl-12 2xl:pl-16">
-                          Total Fee
+                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-center text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider bg-white/10">
+                          Payment
                         </th>
-                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-right text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider bg-white/10">
-                          Paid
-                        </th>
-                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-right text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider bg-white/10">
-                          Balance
-                        </th>
-                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-center text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider pl-20 2xl:pl-32">
+                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-center text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
                           Status
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-center text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
@@ -958,24 +949,18 @@ const Insurance = () => {
                               </div>
                             </td>
 
-                            {/* Valid From */}
-                            <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 pl-4 2xl:pl-6 whitespace-nowrap">
-                              <div className="flex items-center text-[11px] 2xl:text-[13.8px]">
-                                <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-green-100 text-green-700 font-semibold border border-green-200 whitespace-nowrap">
-                                  <svg className="w-3 h-3 2xl:w-4 2xl:h-4 mr-1 2xl:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            {/* Validity (Valid From green top / Valid To red bottom) */}
+                            <td className="px-4 2xl:px-6 py-3 2xl:py-5 whitespace-nowrap">
+                              <div className="flex flex-col text-[11px] 2xl:text-[13px]">
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-t-lg bg-green-50 text-green-700 font-semibold border border-green-200 whitespace-nowrap">
+                                  <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
                                   </svg>
                                   {insurance.validFrom}
                                 </span>
-                              </div>
-                            </td>
-
-                            {/* Valid To */}
-                            <td className="px-0.5 2xl:px-1 py-3 2xl:py-5 whitespace-nowrap pr-4 2xl:pr-6">
-                              <div className="flex items-center text-[11px] 2xl:text-[13.8px]">
-                                <span className="inline-flex items-center px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-lg bg-red-100 text-red-700 font-semibold border border-red-200 whitespace-nowrap">
-                                  <svg className="w-3 h-3 2xl:w-4 2xl:h-4 mr-1 2xl:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-b-lg bg-red-50 text-red-700 font-semibold border border-red-200 whitespace-nowrap -mt-px">
+                                  <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                   </svg>
                                   {insurance.validTo}
                                 </span>
@@ -987,34 +972,30 @@ const Insurance = () => {
                                 {insurance.productType || 'N/A'}
                               </span>
                             </td>
-                            {/* Total Fee */}
-                            <td className="px-4 py-4 bg-gray-50/50 group-hover:bg-purple-50/30 pl-12 2xl:pl-16">
-                              <div className="text-right">
-                                <div className="text-[11px] 2xl:text-sm font-bold text-gray-900">₹{(insurance.totalFee || 0).toLocaleString("en-IN")}</div>
-                                <div className="text-[10px] 2xl:text-xs text-gray-500 mt-0.5">Total Amount</div>
-                              </div>
-                            </td>
-
-                            {/* Paid */}
-                            <td className="px-4 py-4 bg-gray-50/50 group-hover:bg-emerald-50/30">
-                              <div className="text-right">
-                                <div className="text-[11px] 2xl:text-sm font-bold text-emerald-600">₹{(insurance.paid || 0).toLocaleString("en-IN")}</div>
-                                <div className="text-[10px] 2xl:text-xs text-emerald-600 mt-0.5">Paid Amount</div>
-                              </div>
-                            </td>
-
-                            {/* Balance */}
-                            <td className={`px-4 py-4 bg-gray-50/50 ${(insurance.balance || 0) > 0 ? 'group-hover:bg-amber-50/30' : 'group-hover:bg-gray-50'}`}>
-                              <div className="text-right">
-                                <div className={`text-[11px] 2xl:text-sm font-bold ${(insurance.balance || 0) > 0 ? 'text-orange-600' : 'text-gray-500'}`}>
-                                  ₹{(insurance.balance || 0).toLocaleString("en-IN")}
+                            {/* Payment (Total / Paid / Balance) */}
+                            <td className="px-4 py-3 2xl:py-4 bg-gray-50/50 group-hover:bg-purple-50/30">
+                              <div className="flex items-center justify-center gap-3 2xl:gap-4">
+                                <div className="text-center min-w-[60px]">
+                                  <div className="text-[11px] 2xl:text-sm font-bold text-gray-900">₹{(insurance.totalFee || 0).toLocaleString("en-IN")}</div>
+                                  <div className="text-[9px] 2xl:text-[10px] text-gray-500">Total</div>
                                 </div>
-                                <div className={`text-[10px] 2xl:text-xs mt-0.5 ${(insurance.balance || 0) > 0 ? 'text-orange-600' : 'text-gray-500'}`}>
-                                  {(insurance.balance || 0) > 0 ? 'Pending' : 'Cleared'}
+                                <div className="w-px h-8 bg-gray-200"></div>
+                                <div className="text-center min-w-[60px]">
+                                  <div className="text-[11px] 2xl:text-sm font-bold text-emerald-600">₹{(insurance.paid || 0).toLocaleString("en-IN")}</div>
+                                  <div className="text-[9px] 2xl:text-[10px] text-emerald-600">Paid</div>
+                                </div>
+                                <div className="w-px h-8 bg-gray-200"></div>
+                                <div className="text-center min-w-[60px]">
+                                  <div className={`text-[11px] 2xl:text-sm font-bold ${(insurance.balance || 0) > 0 ? 'text-orange-600' : 'text-gray-500'}`}>
+                                    ₹{(insurance.balance || 0).toLocaleString("en-IN")}
+                                  </div>
+                                  <div className={`text-[9px] 2xl:text-[10px] ${(insurance.balance || 0) > 0 ? 'text-orange-600' : 'text-gray-500'}`}>
+                                    {(insurance.balance || 0) > 0 ? 'Due' : 'Cleared'}
+                                  </div>
                                 </div>
                               </div>
                             </td>
-                            <td className="px-4 2xl:px-6 py-3 2xl:py-5 pl-20 2xl:pl-32">
+                            <td className="px-4 2xl:px-6 py-3 2xl:py-5">
                               <div className="flex items-center justify-center">
                                 <span
                                   className={`px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-full text-[10px] 2xl:text-xs font-bold ${getStatusColor(
@@ -1084,7 +1065,7 @@ const Insurance = () => {
                         ))
                       ) : (
                         <tr>
-                          <td colSpan="10" className="px-6 py-16">
+                          <td colSpan="8" className="px-6 py-16">
                             <div className="flex flex-col items-center justify-center">
                               <div className="w-24 h-24 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-6 shadow-lg">
                                 <svg
