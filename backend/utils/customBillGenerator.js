@@ -116,15 +116,18 @@ async function generateCustomBillPDF(customBill, userInfo) {
       yPos += 40
 
       // Company name (use billName if available, otherwise fall back to name)
-      doc.fontSize(36)
+      const companyName = (userInfo && userInfo.billName ? userInfo.billName.toUpperCase() : (userInfo && userInfo.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR'))
+      doc.fontSize(24)
         .fillColor('#000000')
         .font('Helvetica-BoldOblique')
-        .text((userInfo && userInfo.billName ? userInfo.billName.toUpperCase() : (userInfo && userInfo.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')), 0, yPos, {
-          width: pageWidth,
-          align: 'center'
-        })
 
-      yPos += 42
+      const nameHeight = doc.heightOfString(companyName, { width: pageWidth, align: 'center' })
+      doc.text(companyName, 0, yPos, {
+        width: pageWidth,
+        align: 'center'
+      })
+
+      yPos += nameHeight + 6
 
       // Address (below bill name)
       doc.fontSize(11)
