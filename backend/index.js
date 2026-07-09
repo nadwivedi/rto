@@ -53,7 +53,10 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 }))
 
 // MongoDB Connection
-connectDB()
+connectDB().then(() => {
+  const whatsappService = require('./services/whatsappService')
+  whatsappService.restoreSessionsOnStartup()
+})
 
 // Initialize Cron Jobs
 const { initTemporaryPermitStatusCron } = require('./jobs/updateTemporaryPermitStatus')

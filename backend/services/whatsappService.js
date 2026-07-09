@@ -304,6 +304,50 @@ class WhatsappServiceManager {
   logoutClient(userId) { return this.getInstance(userId).logoutSession() }
   getStatus(userId) { return this.getInstance(userId).getSessionStatus() }
   sendMessage(userId, num, txt) { return this.sendWhatsAppMessage(userId, num, txt) }
+
+  // On server restart: reconcile DB session status with what's actually saved on disk.
+  // - Was fully authenticated + auth folder still present -> silently restore it (no QR).
+  // - Was fully authenticated but auth folder missing -> mark logged out (was misleading otherwise).
+  // - Was stuck mid-handshake (qr_ready/initializing) when the process died -> mark logged out,
+  //   since that in-memory client no longer exists and the stale QR/state is useless.
+  async restoreSessionsOnStartup() {
+    try {
+      const sessions = await WaSession.find({
+        status: { $in: ['authenticated', 'qr_ready', 'initializing'] }
+      })
+
+      if (sessions.length === 0) return
+      console.log(`[WHATSAPP] Reconciling ${sessions.length} session(s) found from before restart...`)
+
+      for (const session of sessions) {
+        const userId = session.userId.toString()
+        const authDir = path.resolve(AUTH_DATA_PATH, `session-user_${userId}`)
+        const hasSavedAuth = session.status === 'authenticated' && fs.existsSync(authDir)
+
+        if (hasSavedAuth) {
+          console.log(`[WHATSAPP:${userId}] Saved auth found on disk. Restoring session in background...`)
+          this.initializeSession(userId).catch(err => {
+            console.error(`[WHATSAPP:${userId}] Auto-restore failed:`, err.message)
+          })
+          // Stagger browser launches so a restart with many logged-in users doesn't spike RAM/CPU
+          await new Promise(r => setTimeout(r, 8000))
+        } else {
+          console.log(`[WHATSAPP:${userId}] No valid saved session on disk. Marking as logged out.`)
+          await WaSession.findOneAndUpdate(
+            { userId },
+            {
+              status: 'disconnected',
+              qrCodeDataUrl: null,
+              phoneNumber: null,
+              lastError: 'Session not found after server restart. Please login again.'
+            }
+          )
+        }
+      }
+    } catch (error) {
+      console.error('[WHATSAPP] Error reconciling sessions on startup:', error)
+    }
+  }
 }
 
 module.exports = new WhatsappServiceManager()
