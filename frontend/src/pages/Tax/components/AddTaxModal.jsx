@@ -5,6 +5,7 @@ import { handleDateBlur as utilHandleDateBlur, handleSmartDateInput, normalizeAI
 import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck'
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 import DocumentScannerPreview from '../../../components/DocumentScannerPreview'
+import { pdfToImages } from '../../../utils/pdfToImages'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -551,8 +552,63 @@ const AddTaxModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
           }
         } catch (err) {
             console.error(err);
-            toast.dismiss(updateToast);
-            toast.error('Server error during OCR processing.', { position: 'top-right', autoClose: 3000 });
+
+            // Handle scanned/image-only PDFs (HTTP 422)
+            if (err.response?.status === 422 && err.response?.data?.isScannedPdf && fileToProcess?.type === 'application/pdf') {
+              toast.dismiss(updateToast);
+              const fallbackToast = toast.info('Scanned PDF detected. Converting to images for visual analysis...', { autoClose: false, isLoading: true });
+              try {
+                const pageImages = await pdfToImages(fileToProcess, 2, 1.2, 0.7);
+
+                if (pageImages && pageImages.length > 0) {
+                  toast.update(fallbackToast, { render: 'Analyzing scanned document with Vision AI...', isLoading: true });
+
+                  const visionResponse = await axios.post(
+                    `${API_URL}/api/ocr/tax`,
+                    { imageBase64: pageImages[0] },
+                    { withCredentials: true }
+                  );
+
+                  if (visionResponse.data.success && visionResponse.data.data) {
+                    const resultData = visionResponse.data.data;
+
+                    setFormData(prev => {
+                      const updated = { ...prev };
+                      Object.keys(resultData).forEach(key => {
+                        if (resultData[key] && Object.prototype.hasOwnProperty.call(updated, key)) {
+                          if (key === 'taxFrom' || key === 'taxTo') {
+                            const normalizedStr = normalizeAIExtractedDate(resultData[key]);
+                            const formatted = handleSmartDateInput(normalizedStr, '');
+                            if (formatted) updated[key] = formatted;
+                          } else {
+                            updated[key] = resultData[key].toUpperCase();
+                          }
+                        }
+                      });
+
+                      if (resultData.vehicleNumber) {
+                        const validation = validateVehicleNumberRealtime(resultData.vehicleNumber);
+                        setVehicleValidation(validation);
+                      }
+
+                      return updated;
+                    });
+
+                    toast.dismiss(fallbackToast);
+                    toast.success('Tax Details Extracted Successfully!', { position: 'top-right', autoClose: 3000 });
+                    return; // Success!
+                  }
+                }
+              } catch (visionErr) {
+                console.error('Vision fallback error:', visionErr);
+              }
+
+              toast.dismiss(fallbackToast);
+              toast.error('Could not analyze the scanned PDF. Please fill details manually.', { position: 'top-right', autoClose: 4000 });
+            } else {
+              toast.dismiss(updateToast);
+              toast.error('Server error during OCR processing.', { position: 'top-right', autoClose: 3000 });
+            }
         } finally {
             setIsExtractingTax(false);
         }
