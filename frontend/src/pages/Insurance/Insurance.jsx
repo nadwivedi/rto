@@ -220,6 +220,17 @@ const Insurance = () => {
 
   useEffect(() => { fetchCompanies(); fetchProducts(); }, []);
 
+  // Close filter dropdown on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setShowFilterDropdown(false);
+    };
+    if (showFilterDropdown) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showFilterDropdown]);
+
   // Page change handler
   const handlePageChange = (newPage) => {
     fetchInsurances(newPage);
