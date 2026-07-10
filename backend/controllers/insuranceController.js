@@ -255,6 +255,7 @@ exports.getAllInsurance = async (req, res) => {
       search,
       company,
       product,
+      validity,
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query
@@ -280,6 +281,38 @@ exports.getAllInsurance = async (req, res) => {
         { policyHolderName: { $regex: search, $options: 'i' } },
         { mobileNumber: { $regex: search, $options: 'i' } }
       ]
+    }
+
+    // Filter by validity period (days until expiry)
+    if (validity) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+
+      const dateFromValidTo = {
+        year: { $toInt: { $substrCP: ['$validTo', 6, 4] } },
+        month: { $toInt: { $substrCP: ['$validTo', 3, 2] } },
+        day: { $toInt: { $substrCP: ['$validTo', 0, 2] } }
+      };
+
+      if (validity === 'expired') {
+        query.$expr = {
+          $lt: [{ $dateFromParts: dateFromValidTo }, todayStart]
+        };
+      } else {
+        const days = parseInt(validity);
+        if (!isNaN(days) && days > 0) {
+          const future = new Date(today);
+          future.setDate(today.getDate() + days);
+          const futureEnd = new Date(future.getFullYear(), future.getMonth(), future.getDate(), 23, 59, 59, 999);
+          query.$expr = {
+            $and: [
+              { $gte: [{ $dateFromParts: dateFromValidTo }, todayStart] },
+              { $lte: [{ $dateFromParts: dateFromValidTo }, futureEnd] }
+            ]
+          };
+        }
+      }
     }
 
     // Calculate pagination

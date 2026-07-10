@@ -35,6 +35,7 @@ const Insurance = () => {
   const [companies, setCompanies] = useState([]);
   const [productFilter, setProductFilter] = useState("");
   const [products, setProducts] = useState([]);
+  const [validityFilter, setValidityFilter] = useState("");
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -153,6 +154,7 @@ const Insurance = () => {
         search: debouncedSearchQuery,
         ...(companyFilter ? { company: companyFilter } : {}),
         ...(productFilter ? { product: productFilter } : {}),
+        ...(validityFilter ? { validity: validityFilter } : {}),
       };
 
       if (statusFilter !== "all") {
@@ -205,7 +207,7 @@ const Insurance = () => {
       fetchInsurances(1);
       fetchStatistics();
     }
-  }, [debouncedSearchQuery, statusFilter, companyFilter, productFilter]);
+  }, [debouncedSearchQuery, statusFilter, companyFilter, productFilter, validityFilter]);
 
   const fetchProducts = async () => {
     try {
@@ -464,7 +466,7 @@ const Insurance = () => {
                 value={stats.total}
                 color="blue"
                 isActive={statusFilter === "all"}
-                onClick={() => setStatusFilter("all")}
+                onClick={() => { setStatusFilter("all"); setValidityFilter(''); }}
                 icon={
                   <svg
                     className="w-4 h-4 lg:w-6 lg:h-6 text-white"
@@ -487,11 +489,12 @@ const Insurance = () => {
                 subtext="Within 30 days"
                 color="orange"
                 isActive={statusFilter === "expiring_soon"}
-                onClick={() =>
+                onClick={() => {
+                  setValidityFilter('');
                   setStatusFilter(
                     statusFilter === "expiring_soon" ? "all" : "expiring_soon"
-                  )
-                }
+                  );
+                }}
                 icon={
                   <svg
                     className="w-4 h-4 lg:w-6 lg:h-6 text-white"
@@ -514,11 +517,12 @@ const Insurance = () => {
                 subtext="expired insurance"
                 color="red"
                 isActive={statusFilter === "expired"}
-                onClick={() =>
+                onClick={() => {
+                  setValidityFilter('');
                   setStatusFilter(
                     statusFilter === "expired" ? "all" : "expired"
-                  )
-                }
+                  );
+                }}
                 icon={
                   <svg
                     className="w-4 h-4 lg:w-6 lg:h-6 text-white"
@@ -541,11 +545,12 @@ const Insurance = () => {
                 extraValue={`₹${stats.pendingPaymentAmount.toLocaleString('en-IN')}`}
                 color="amber"
                 isActive={statusFilter === "pending"}
-                onClick={() =>
+                onClick={() => {
+                  setValidityFilter('');
                   setStatusFilter(
                     statusFilter === "pending" ? "all" : "pending"
-                  )
-                }
+                  );
+                }}
                 icon={
                   <svg
                     className="w-4 h-4 lg:w-6 lg:h-6 text-white"
@@ -610,7 +615,7 @@ const Insurance = () => {
                       <button
                         onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                         className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          companyFilter || productFilter
+                          companyFilter || productFilter || validityFilter
                             ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
                             : 'bg-white border-gray-300 text-gray-700 hover:border-indigo-300 hover:bg-indigo-50'
                         }`}
@@ -619,9 +624,9 @@ const Insurance = () => {
                           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z' />
                         </svg>
                         Filters
-                        {(companyFilter || productFilter) && (
+                        {(companyFilter || productFilter || validityFilter) && (
                           <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] font-bold">
-                            {(companyFilter ? 1 : 0) + (productFilter ? 1 : 0)}
+                            {(companyFilter ? 1 : 0) + (productFilter ? 1 : 0) + (validityFilter ? 1 : 0)}
                           </span>
                         )}
                       </button>
@@ -632,9 +637,9 @@ const Insurance = () => {
                           <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 p-4 space-y-4">
                             <div className="flex items-center justify-between pb-2 border-b border-gray-100">
                               <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Filters</span>
-                              {(companyFilter || productFilter) && (
+                              {(companyFilter || productFilter || validityFilter) && (
                                 <button
-                                  onClick={() => { setCompanyFilter(''); setProductFilter(''); }}
+                                  onClick={() => { setCompanyFilter(''); setProductFilter(''); setValidityFilter(''); }}
                                   className="text-[10px] font-semibold text-red-500 hover:text-red-600 cursor-pointer"
                                 >
                                   Clear All
@@ -669,6 +674,23 @@ const Insurance = () => {
                                 {products.map((product) => (
                                   <option key={product} value={product}>{product}</option>
                                 ))}
+                              </select>
+                            </div>
+
+                            {/* Validity Period Filter */}
+                            <div>
+                              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Validity Period</label>
+                              <select
+                                value={validityFilter}
+                                onChange={(e) => { setValidityFilter(e.target.value); setStatusFilter('all'); }}
+                                className='w-full px-3 py-2 border border-gray-200 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+                              >
+                                <option value=''>All</option>
+                                <option value='7'>Expires in 7 Days</option>
+                                <option value='30'>Expires in 30 Days</option>
+                                <option value='45'>Expires in 45 Days</option>
+                                <option value='60'>Expires in 60 Days</option>
+                                <option value='expired'>Expired</option>
                               </select>
                             </div>
 
