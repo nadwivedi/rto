@@ -52,7 +52,7 @@ const CgPermit = () => {
     pendingPaymentAmount: 0
   })
 
-  // Fetch CG permit statistics from API
+  // Fetch State permit statistics from API
   const fetchStatistics = async () => {
     try {
       const response = await axios.get(`${API_URL}/api/cg-permits/statistics`, { withCredentials: true })
@@ -68,7 +68,7 @@ const CgPermit = () => {
         
       }
     } catch (error) {
-      console.error('Error fetching CG permit statistics:', error)
+      console.error('Error fetching State permit statistics:', error)
     }
   }
 
@@ -167,8 +167,8 @@ const CgPermit = () => {
         })
       }
     } catch (error) {
-      console.error('Error fetching CG permits:', error)
-      toast.error('Failed to fetch CG permits. Please check if the backend server is running.', {
+      console.error('Error fetching State permits:', error)
+      toast.error('Failed to fetch State permits. Please check if the backend server is running.', {
         position: 'top-right',
         autoClose: 3000
       })
@@ -184,7 +184,7 @@ const CgPermit = () => {
   const handleDeletePermit = async (permit) => {
     // Show confirmation dialog
     const confirmDelete = window.confirm(
-      `Are you sure you want to delete this CG permit?\n\n` +
+      `Are you sure you want to delete this State permit?\n\n` +
       `Permit Number: ${permit.permitNumber}\n` +
       `Vehicle Number: ${permit.vehicleNo}\n` +
       `Permit Holder: ${permit.permitHolder}\n` +
@@ -201,11 +201,11 @@ const CgPermit = () => {
       const response = await axios.delete(`${API_URL}/api/cg-permits/${permit.id}`, { withCredentials: true })
 
       if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to delete CG permit')
+        throw new Error(response.data.message || 'Failed to delete State permit')
       }
 
       // Show success message
-      toast.success('CG Permit deleted successfully!', {
+      toast.success('State Permit deleted successfully!', {
         position: 'top-right',
         autoClose: 3000
       })
@@ -213,15 +213,15 @@ const CgPermit = () => {
       // Refresh the permits list
       await fetchPermits()
     } catch (error) {
-      console.error('Error deleting CG permit:', error)
-      toast.error(`Failed to delete CG permit: ${error.message}`, {
+      console.error('Error deleting State permit:', error)
+      toast.error(`Failed to delete State permit: ${error.message}`, {
         position: 'top-right',
         autoClose: 3000
       })
     }
   }
 
-  // Mark CG permit as paid
+  // Mark State permit as paid
   const handleMarkAsPaid = async (permit) => {
     // Show confirmation dialog
     const confirmPaid = window.confirm(
@@ -311,14 +311,14 @@ const CgPermit = () => {
     let message = `Hello ${permit.permitHolder},\n\n`
 
     if ((permit.balance || 0) > 0) {
-      message += `Your payment of ₹${(permit.balance || 0).toLocaleString('en-IN')} is pending for CG Permit.\n`
+      message += `Your payment of ₹${(permit.balance || 0).toLocaleString('en-IN')} is pending for State Permit.\n`
       message += `Permit Number: ${permit.permitNumber}\n`
       message += `Vehicle Number: ${permit.vehicleNo}\n\n`
     }
 
     if (permit.status === 'expiring_soon' || permit.status === 'expired') {
       const statusText = permit.status === 'expired' ? 'has expired' : 'is going to expire'
-      message += `Your CG permit ${statusText} on ${permit.validTill}.\n`
+      message += `Your State permit ${statusText} on ${permit.validTill}.\n`
       message += `Permit Number: ${permit.permitNumber}\n`
       message += `Vehicle Number: ${permit.vehicleNo}\n`
       message += `Please renew your permit at the earliest.\n\n`
@@ -385,11 +385,11 @@ const CgPermit = () => {
       const response = await axios.put(`${API_URL}/api/cg-permits/${editingPermit.id}`, permitData, { withCredentials: true })
 
       if (!response.data.success) {
-        throw new Error(response.data.message || 'Failed to update CG permit')
+        throw new Error(response.data.message || 'Failed to update State permit')
       }
 
       // Show success message
-      toast.success('CG Permit updated successfully!', { position: 'top-right', autoClose: 3000 })
+      toast.success('State Permit updated successfully!', { position: 'top-right', autoClose: 3000 })
 
       // Refresh the permits list and statistics
       await fetchPermits()
@@ -399,7 +399,7 @@ const CgPermit = () => {
       setShowEditPermitModal(false)
       setEditingPermit(null)
     } catch (error) {
-      console.error('Error updating CG permit:', error)
+      console.error('Error updating State permit:', error)
 
       // Handle detailed error response from backend
       if (error.response?.data) {
@@ -408,7 +408,7 @@ const CgPermit = () => {
         // Show main error message
         const mainMessage = errorData.errorCount > 1
           ? `${errorData.message} (${errorData.errorCount} errors)`
-          : (errorData.message || 'Failed to update CG permit')
+          : (errorData.message || 'Failed to update State permit')
 
         toast.error(mainMessage, { position: 'top-right', autoClose: 5000 })
 
@@ -422,7 +422,7 @@ const CgPermit = () => {
         }
       } else {
         // Network or other errors
-        toast.error(`Failed to update CG permit: ${error.message}`, { position: 'top-right', autoClose: 5000 })
+        toast.error(`Failed to update State permit: ${error.message}`, { position: 'top-right', autoClose: 5000 })
       }
     }
   }
@@ -446,7 +446,7 @@ const CgPermit = () => {
               </button>
               <div className='grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-3 flex-1'>
               <StatisticsCard
-                title='Total CG Permits'
+                title='Total State Permits'
                 value={statistics.total}
                 color='blue'
                 isActive={statusFilter === 'all'}
@@ -514,7 +514,7 @@ const CgPermit = () => {
             />
 
             {/* New Permit Button */}
-            <AddButton onClick={() => setShowIssuePermitModal(true)} title='New CG Permit' />
+            <AddButton onClick={() => setShowIssuePermitModal(true)} title='New State Permit' />
           </div>
         </div>
 
@@ -523,8 +523,8 @@ const CgPermit = () => {
           loading={loading}
           records={filteredPermits}
           emptyMessage={{
-            title: 'No CG Permits Found',
-            description: 'Get started by adding your first CG permit.',
+            title: 'No State Permits Found',
+            description: 'Get started by adding your first State permit.',
           }}
           loadingMessage='Loading permits...'
           headerGradient='from-indigo-50 via-purple-50 to-pink-50'
@@ -710,7 +710,7 @@ const CgPermit = () => {
                         <div className='w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl animate-pulse shadow-lg'></div>
                         <div className='absolute inset-0 w-16 h-16 border-4 border-indigo-600 border-t-transparent rounded-2xl animate-spin'></div>
                       </div>
-                      <p className='text-gray-600 mt-6'>Loading CG permits...</p>
+                      <p className='text-gray-600 mt-6'>Loading State permits...</p>
                     </div>
                   </td>
                 </tr>
@@ -887,9 +887,9 @@ const CgPermit = () => {
                           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
                         </svg>
                       </div>
-                      <h3 className='text-xl font-black text-gray-700 mb-2'>No CG Permits Found</h3>
+                      <h3 className='text-xl font-black text-gray-700 mb-2'>No State Permits Found</h3>
                       <p className='text-sm text-gray-500 mb-6 max-w-md text-center'>
-                        {searchQuery ? 'No permits match your search criteria. Try adjusting your search terms.' : 'Get started by adding your first CG permit.'}
+                        {searchQuery ? 'No permits match your search criteria. Try adjusting your search terms.' : 'Get started by adding your first State permit.'}
                       </p>
                     </div>
                   </td>
@@ -911,7 +911,7 @@ const CgPermit = () => {
         )}
       </div>
 
-      {/* Add New CG Permit Modal - Lazy Loaded */}
+      {/* Add New State Permit Modal - Lazy Loaded */}
       {showIssuePermitModal && (
                   <IssueCgPermitModal
             isOpen={showIssuePermitModal}
@@ -922,7 +922,7 @@ const CgPermit = () => {
           />
       )}
 
-      {/* Edit CG Permit Modal - Lazy Loaded */}
+      {/* Edit State Permit Modal - Lazy Loaded */}
       {showEditPermitModal && (
                   <EditCgPermitModal
             isOpen={showEditPermitModal}
@@ -935,7 +935,7 @@ const CgPermit = () => {
           />
       )}
 
-      {/* CG Permit Details Modal */}
+      {/* State Permit Details Modal */}
       {showDetailsModal && (
         <CgPermitDetailsModal
           isOpen={showDetailsModal}

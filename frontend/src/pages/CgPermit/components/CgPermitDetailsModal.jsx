@@ -33,7 +33,7 @@ const CgPermitDetailsModal = ({ isOpen, onClose, permit }) => {
         <div className='bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-6 text-white'>
           <div className='flex justify-between items-center'>
             <div>
-              <h2 className='text-2xl font-black mb-1'>CG Permit Details</h2>
+              <h2 className='text-2xl font-black mb-1'>State Permit Details</h2>
               <p className='text-blue-100 text-sm'>Permit: {permit.permitNumber || 'N/A'} | Vehicle: {permit.vehicleNo}</p>
             </div>
             <button
@@ -160,7 +160,7 @@ const CgPermitDetailsModal = ({ isOpen, onClose, permit }) => {
                 <svg className='w-6 h-6 text-amber-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z' />
                 </svg>
-                CG Permit Document
+                State Permit Document
               </h3>
               <div className='bg-gradient-to-br from-amber-50 to-yellow-50 rounded-2xl p-4 border border-amber-200'>
                 {isPDF ? (
@@ -168,7 +168,7 @@ const CgPermitDetailsModal = ({ isOpen, onClose, permit }) => {
                     <iframe
                       src={documentUrl}
                       className='w-full h-[500px] rounded-xl border border-amber-300'
-                      title='CG Permit Document'
+                      title='State Permit Document'
                     />
                     <div className='mt-3 flex justify-center'>
                       <a
@@ -188,7 +188,7 @@ const CgPermitDetailsModal = ({ isOpen, onClose, permit }) => {
                   <div className='flex flex-col items-center'>
                     <img
                       src={documentUrl}
-                      alt='CG Permit Document'
+                      alt='State Permit Document'
                       className='max-w-full max-h-[500px] rounded-xl border border-amber-300 object-contain'
                     />
                     <a

@@ -41,10 +41,10 @@ const Navbar = () => {
       description: "National Permits",
     },
     {
-      name: "CG Permit",
+      name: "State Permit",
       icon: "📄",
-      path: "/cg-permit",
-      description: "CG State Permits",
+      path: "/state-permit",
+      description: "State Permits",
     },
     {
       name: "Bus Permit",

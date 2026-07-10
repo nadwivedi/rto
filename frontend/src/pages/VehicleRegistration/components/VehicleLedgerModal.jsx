@@ -120,8 +120,8 @@ const SECTION_CONFIG = [
   },
   {
     key: 'cgPermit',
-    label: 'CG Permit',
-    shortLabel: 'CG Permit',
+    label: 'State Permit',
+    shortLabel: 'State Permit',
     color: 'rose',
     bgFrom: 'from-rose-500',
     bgTo: 'to-pink-600',

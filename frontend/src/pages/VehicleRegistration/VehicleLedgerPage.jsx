@@ -169,7 +169,7 @@ const VehicleLedgerPage = () => {
     sec.insurance?.records?.forEach(item => allWork.push(normalizeWorkItem(item, 'Insurance', 'purple')))
     sec.puc?.records?.forEach(item => allWork.push(normalizeWorkItem(item, 'PUC', 'orange')))
     sec.gps?.records?.forEach(item => allWork.push(normalizeWorkItem(item, 'GPS', 'cyan')))
-    sec.cgPermit?.records?.forEach(item => allWork.push(normalizeWorkItem(item, 'CG Permit', 'red')))
+    sec.cgPermit?.records?.forEach(item => allWork.push(normalizeWorkItem(item, 'State Permit', 'red')))
     sec.nationalPermit?.records?.forEach(item => allWork.push(normalizeWorkItem(item, 'National Permit', 'indigo')))
     sec.busPermit?.records?.forEach(item => allWork.push(normalizeWorkItem(item, 'Bus Permit', 'pink')))
     sec.temporaryPermit?.records?.forEach(item => allWork.push(normalizeWorkItem(item, 'Temporary Permit', 'amber')))

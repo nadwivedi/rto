@@ -88,7 +88,7 @@ function ProtectedLayout() {
           '/vehicle-registration',
           '/vehicle-registartion',
           '/national-permit',
-          '/cg-permit',
+          '/state-permit',
           '/bus-permit',
           '/temporary-permit',
           '/temporary-permit-other-state',
@@ -134,7 +134,7 @@ function ProtectedLayout() {
                 <Route path='/driving' element={<DrivingLicence />} />
                 <Route path='/setting' element={<Setting />} />
                 <Route path='/national-permit' element={<NationalPermit />} />
-                <Route path='/cg-permit' element={<CgPermit />} />
+                <Route path='/state-permit' element={<CgPermit />} />
                 <Route path='/bus-permit' element={<BusPermit />} />
                 <Route path='/temporary-permit' element={<TemporaryPermit />} />
                 <Route path='/temporary-permit-other-state' element={<TemporaryPermitOtherState />} />

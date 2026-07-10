@@ -10,7 +10,7 @@ const ImportModal = ({ isOpen, onClose }) => {
     { value: 'insurance', label: 'Insurance' },
     { value: 'tax', label: 'Tax Records' },
     { value: 'fitness', label: 'Fitness Certificates' },
-    { value: 'cg-permit', label: 'CG Permits' },
+    { value: 'cg-permit', label: 'State Permits' },
     { value: 'national-permit', label: 'National Permits' },
     { value: 'temporary-permit', label: 'Temporary Permits' },
     { value: 'vehicle-registration', label: 'Vehicle Registrations' }

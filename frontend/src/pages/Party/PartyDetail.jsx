@@ -145,7 +145,7 @@ const PartyDetail = () => {
     })
 
     data.work.cgPermit?.forEach(item => {
-      allWork.push(normalizeWorkItem(item, 'CG Permit', 'red'))
+      allWork.push(normalizeWorkItem(item, 'State Permit', 'red'))
     })
 
     data.work.nationalPermit?.forEach(item => {
@@ -215,7 +215,7 @@ const PartyDetail = () => {
     })
 
     data.work.cgPermit?.forEach(item => {
-      const norm = normalizeWorkItem(item, 'CG Permit', 'red')
+      const norm = normalizeWorkItem(item, 'State Permit', 'red')
       if (norm.balanceAmount > 0) pending.push(norm)
     })
 

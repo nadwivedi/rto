@@ -390,7 +390,7 @@ const EditCgPermitModal = ({ isOpen, onClose, onSubmit, permit }) => {
         <div className='bg-gradient-to-r from-blue-600 to-indigo-600 p-3 md:p-4 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>
             <div>
-              <h2 className='text-lg md:text-2xl font-bold'>Edit CG Permit</h2>
+              <h2 className='text-lg md:text-2xl font-bold'>Edit State Permit</h2>
             </div>
             <button
               onClick={onClose}

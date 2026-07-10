@@ -561,7 +561,7 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
       })
 
       if (response.data.success) {
-        toast.success('CG Permit added successfully!')
+        toast.success('State Permit added successfully!')
 
         // Call onSubmit callback to notify parent (for refresh)
         if (onSubmit) {
@@ -572,8 +572,8 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
         onClose()
       }
     } catch (error) {
-      console.error('Error adding CG Permit:', error)
-      toast.error(error.response?.data?.message || 'Failed to add CG Permit')
+      console.error('Error adding State Permit:', error)
+      toast.error(error.response?.data?.message || 'Failed to add State Permit')
     } finally {
       setIsSubmitting(false)
     }
@@ -588,7 +588,7 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
         <div className='bg-gradient-to-r from-blue-600 to-indigo-600 p-3 md:p-4 text-white flex-shrink-0'>
           <div className='flex justify-between items-center'>
             <div>
-              <h2 className='text-lg md:text-2xl font-bold'>Add New CG Permit</h2>
+              <h2 className='text-lg md:text-2xl font-bold'>Add New State Permit</h2>
             </div>
             <div className='flex items-center gap-2 shrink-0'>
               <div className='relative overflow-hidden rounded-lg'>
@@ -850,7 +850,7 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
                   </svg>
                 </span>
-                CG Permit Document
+                State Permit Document
               </h3>
 
               <div className='space-y-3'>
@@ -891,7 +891,7 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
                       </svg>
                       <p className='text-xs md:text-sm text-amber-700 font-semibold'>
-                        Click to upload CG Permit document
+                        Click to upload State Permit document
                       </p>
                       <p className='text-xs text-amber-500 mt-1'>
                         Image or PDF (max 12MB)
@@ -1011,7 +1011,7 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
                     <svg className='w-4 h-4 md:w-5 md:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
                     </svg>
-                    Add CG Permit
+                    Add State Permit
                   </>
                 )}
               </button>

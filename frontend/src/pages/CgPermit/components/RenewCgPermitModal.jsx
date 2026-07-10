@@ -251,7 +251,7 @@ const RenewCgPermitModal = ({ isOpen, onClose, onSubmit, permitData }) => {
           <div className='flex justify-between items-center'>
             <div>
               <h2 className='text-lg md:text-2xl font-bold'>
-                Renew CG Permit
+                Renew State Permit
               </h2>
               <p className='text-green-100 text-xs md:text-sm mt-1'>
                 Renew CG permit for {permitData?.vehicleNo || permitData?.vehicleNumber}
@@ -279,7 +279,7 @@ const RenewCgPermitModal = ({ isOpen, onClose, onSubmit, permitData }) => {
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
                   </svg>
                   <div>
-                    <p className='text-sm md:text-base font-semibold text-amber-800'>Renewing Existing CG Permit</p>
+                    <p className='text-sm md:text-base font-semibold text-amber-800'>Renewing Existing State Permit</p>
                     <p className='text-xs md:text-sm text-amber-700 mt-1'>
                       Vehicle: <span className='font-mono font-bold'>{permitData.vehicleNo || permitData.vehicleNumber}</span> |
                       Previous Validity: {permitData.validFrom} to {permitData.validTo || permitData.validTill}
