@@ -42,10 +42,10 @@ const quickButtons = [
   { title: 'Insurance', shortLabel: 'Insurance', tone: 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' },
   { title: 'Add Fitness', shortLabel: 'Fitness', tone: 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100' },
   { title: 'Add Tax', shortLabel: 'Road Tax', tone: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100' },
-  { title: 'PUC', shortLabel: 'PUC', tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' },
-  { title: 'Add GPS', shortLabel: 'GPS', tone: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100' },
   { title: 'Green Tax', shortLabel: 'Green Tax', tone: 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100', path: '/green-tax' },
   { title: 'Professional Tax', shortLabel: 'Prof. Tax', tone: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100', path: '/professional-tax' },
+  { title: 'PUC', shortLabel: 'PUC', tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' },
+  { title: 'Add GPS', shortLabel: 'GPS', tone: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100' },
   { title: 'Bill', shortLabel: 'Bill', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100', path: '/dealer-bill' },
   { title: 'Speed Governor', shortLabel: 'Speed Gov.', tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100', path: '/speed-governor' }
 ]
