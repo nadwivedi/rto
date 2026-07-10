@@ -3,7 +3,6 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import { handleDateBlur, handleSmartDateInput } from '../../../utils/dateFormatter'
 import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck'
-import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -88,6 +87,16 @@ const AddGreenTaxModal = ({ isOpen, onClose, onSubmit, initialData, isEditMode =
   }, [isOpen, prefilledVehicleNumber, prefilledOwnerName, prefilledMobileNumber])
 
   useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose()
+    }
+    if (isOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [isOpen, onClose])
+
+  useEffect(() => {
     const fetchVehicleDetails = async () => {
       const searchInput = formData.vehicleNumber.trim()
       if (searchInput.length < 4) {
@@ -136,13 +145,13 @@ const AddGreenTaxModal = ({ isOpen, onClose, onSubmit, initialData, isEditMode =
   }
 
   const handlePaymentChange = (field, value) => {
-    const newFormData = { ...formData, [field]: value }
-    const updated = handlePaymentCalculation(newFormData, field, value)
-    setFormData(prev => ({ ...prev, ...updated }))
-    if (parseFloat(updated.paidAmount || 0) > 0 && parseFloat(updated.totalAmount || 0) > 0) {
-      if (parseFloat(updated.paidAmount) > parseFloat(updated.totalAmount)) setPaidExceedsTotal(true)
-      else setPaidExceedsTotal(false)
-    }
+    const total = field === 'totalAmount' ? parseFloat(value) || 0 : parseFloat(formData.totalAmount) || 0
+    let paid = field === 'paidAmount' ? parseFloat(value) || 0 : parseFloat(formData.paidAmount) || 0
+    if (field === 'paidAmount' && paid > total && total > 0) paid = total
+    const balance = total - paid
+    setFormData(prev => ({ ...prev, totalAmount: String(total), paidAmount: String(paid), balance: String(balance) }))
+    if (paid > total && total > 0) setPaidExceedsTotal(true)
+    else setPaidExceedsTotal(false)
   }
 
   const handleDateInput = (field, value) => {
