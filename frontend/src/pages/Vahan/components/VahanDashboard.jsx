@@ -74,7 +74,7 @@ const VahanDashboard = () => {
       ;(data.expiringRecords.tax || []).forEach(r => {
         records.push({
           ...r,
-          docType: 'Tax',
+          docType: 'Road Tax',
           validFrom: r.taxFrom,
           validTo: r.taxTo
         })
@@ -192,7 +192,7 @@ const VahanDashboard = () => {
   }
 
   const docTypeOrder = {
-    'Tax': 1,
+    'Road Tax': 1,
     'Fitness': 2,
     'PUC': 3,
     'GPS': 4,
@@ -212,7 +212,7 @@ const VahanDashboard = () => {
     if (filter !== 'all') {
       const filterMap = {
         'fitness': 'Fitness',
-        'tax': 'Tax',
+        'tax': 'Road Tax',
         'puc': 'PUC',
         'gps': 'GPS',
         'insurance': 'Insurance',
@@ -243,7 +243,7 @@ const VahanDashboard = () => {
 
   const getDocTypeBadge = (docType) => {
     const styles = {
-      'Tax': 'bg-violet-100 text-violet-700',
+      'Road Tax': 'bg-violet-100 text-violet-700',
       'Fitness': 'bg-red-100 text-red-700',
       'PUC': 'bg-teal-100 text-teal-700',
       'GPS': 'bg-purple-100 text-purple-700',
@@ -261,7 +261,7 @@ const VahanDashboard = () => {
 
   const filterButtons = [
     { key: 'all', label: 'All' },
-    { key: 'tax', label: 'Tax' },
+    { key: 'tax', label: 'Road Tax' },
     { key: 'fitness', label: 'Fitness' },
     { key: 'puc', label: 'PUC' },
     { key: 'gps', label: 'GPS' },
@@ -271,7 +271,7 @@ const VahanDashboard = () => {
 
   const counts = {
     all: allRecords.length,
-    tax: allRecords.filter(r => r.docType === 'Tax').length,
+    tax: allRecords.filter(r => r.docType === 'Road Tax').length,
     fitness: allRecords.filter(r => r.docType === 'Fitness').length,
     puc: allRecords.filter(r => r.docType === 'PUC').length,
     gps: allRecords.filter(r => r.docType === 'GPS').length,

@@ -72,7 +72,7 @@ const Navbar = () => {
       description: "Fitness Certificate",
     },
     {
-      name: "Tax",
+      name: "Road Tax",
       icon: "💰",
       path: "/tax",
       description: "Tax Management",

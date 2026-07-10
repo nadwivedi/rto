@@ -19,7 +19,7 @@ import IssueBusPermitModal from './BusPermit/components/IssueBusPermitModal'
 const vahanOptions = [
   { title: 'Manage Vehicle', path: '/vehicle-registration', note: 'Vehicle registration and master details', image: '/buttons/add vehicle.png', category: 'vehicle', badgeTone: 'bg-sky-100 text-sky-700' },
   { title: 'Add Permit', path: '/national-permit', note: 'National, state, and temporary permits', image: '/buttons/add permit.png', category: 'permit', badgeTone: 'bg-emerald-100 text-emerald-700' },
-  { title: 'Add Tax', path: '/tax', note: 'Tax records and renewals', image: '/buttons/add tax.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
+  { title: 'Add Tax', path: '/tax', note: 'Road Tax records and renewals', image: '/buttons/add tax.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
   { title: 'Add Fitness', path: '/fitness', note: 'Fitness certificate work', image: '/buttons/add fitness.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
   { title: 'PUC', path: '/puc', note: 'Pollution certificate records', image: '/buttons/add puc.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
   { title: 'Add GPS', path: '/gps', note: 'GPS device and renewal work', image: '/buttons/add gps.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
@@ -39,7 +39,7 @@ const quickButtons = [
   { title: 'Add Temp Other State', shortLabel: 'Temp Other State', tone: 'border-lime-200 bg-lime-50 text-lime-700 hover:bg-lime-100', path: '/temporary-permit-other-state' },
   { title: 'Insurance', shortLabel: 'Insurance', tone: 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100' },
   { title: 'Add Fitness', shortLabel: 'Fitness', tone: 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100' },
-  { title: 'Add Tax', shortLabel: 'Tax', tone: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100' },
+  { title: 'Add Tax', shortLabel: 'Road Tax', tone: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100' },
   { title: 'PUC', shortLabel: 'PUC', tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' },
   { title: 'Add GPS', shortLabel: 'GPS', tone: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100' },
   { title: 'Bill', shortLabel: 'Bill', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100', path: '/dealer-bill' },

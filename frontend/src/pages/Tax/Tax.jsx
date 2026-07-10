@@ -542,7 +542,7 @@ const Tax = () => {
                 <AddButton
                   onClick={() => setIsAddModalOpen(true)}
 
-                  title="Add New Tax Record"
+                  title="Add New Road Tax Record"
                 />
 
                 {/* Export Excel Button */}
@@ -1050,7 +1050,7 @@ const Tax = () => {
                             No tax records found
                           </p>
                           <p className="text-xs text-gray-500 mt-1">
-                            Click &quot;Add New Tax Record&quot; to add your
+                            Click &quot;Add New Road Tax Record&quot; to add your
                             first record
                           </p>
                         </div>
