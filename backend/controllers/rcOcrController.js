@@ -146,6 +146,45 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
 };
 
 /**
+ * Custom pdf-parse page renderer that reconstructs text in visual reading order
+ * (row by row, left to right) using each text item's actual (x, y) position,
+ * instead of pdf-parse's default content-stream order.
+ *
+ * Some government-issued certificates (e.g. Learner's Licence PDFs) render static
+ * labels ("Name", "Guardian Name", ...) and their dynamically-filled values as two
+ * separate groups of drawing commands. pdf-parse's default linear text() then dumps
+ * all labels first, followed by all values — completely decoupling a label from the
+ * value actually printed next to it on the page, and silently misassigning fields
+ * like the licence holder's name vs. the guardian/father's name. Grouping items by
+ * shared y-coordinate (i.e. same visual row) keeps a label next to its value.
+ */
+const renderPageWithLayout = (pageData) => {
+  return pageData.getTextContent().then((textContent) => {
+    const items = textContent.items
+      .filter(it => it.str && it.str.trim().length > 0)
+      .map(it => ({ str: it.str, x: it.transform[4], y: it.transform[5] }));
+
+    items.sort((a, b) => b.y - a.y || a.x - b.x);
+
+    const LINE_TOLERANCE = 4;
+    const rows = [];
+    for (const item of items) {
+      let row = rows.find(r => Math.abs(r.y - item.y) <= LINE_TOLERANCE);
+      if (!row) {
+        row = { y: item.y, items: [] };
+        rows.push(row);
+      }
+      row.items.push(item);
+    }
+
+    rows.sort((a, b) => b.y - a.y);
+    return rows
+      .map(row => row.items.sort((a, b) => a.x - b.x).map(it => it.str).join('   '))
+      .join('\n');
+  });
+};
+
+/**
  * Smartly extracts the most relevant portions of PDF text for OCR.
  * Pipeline:
  *   1. Strip Hindi/Devanagari script (bilingual PDFs like NIC/TATA AIG — saves 30-45% tokens)
@@ -216,7 +255,7 @@ const extractRelevantPdfText = (fullText, maxPages = 0) => {
   return result.slice(0, 7000);
 };
 
-const processOcrRequest = async (req, res, promptText, jsonTemplate, maxPages = 0) => {
+const processOcrRequest = async (req, res, promptText, jsonTemplate, maxPages = 0, useLayoutAwareExtraction = false) => {
   try {
     const { imageBase64, backImageBase64 } = req.body;
 
@@ -232,7 +271,9 @@ const processOcrRequest = async (req, res, promptText, jsonTemplate, maxPages = 
         const base64Data = imageBase64.replace(/^data:application\/pdf;base64,/, "");
         const buffer = Buffer.from(base64Data, 'base64');
         // Always parse ALL pages — vehicle schedule data can appear on page 4+ in multi-page PDFs
-        const pdfData = await pdfParse(buffer);
+        const pdfData = useLayoutAwareExtraction
+          ? await pdfParse(buffer, { pagerender: renderPageWithLayout })
+          : await pdfParse(buffer);
         const extractedText = extractRelevantPdfText(pdfData.text, maxPages);
 
         // Detect scanned/image-only PDFs — pdf-parse returns near-empty text for these
@@ -377,7 +418,14 @@ exports.gpsOcr = async (req, res) => {
 };
 
 exports.llOcr = async (req, res) => {
-  const prompt = "Extract the details from this learning license/driving license document. Map the tracking number or application no to learningLicenseApplicationNumber if present. Map the license number or LL number to learningLicenseNumber. Map the issue date/from date to learningLicenseIssueDate. Map the expiry/valid till date to learningLicenseExpiryDate.";
+  const prompt = `Extract the details from this learning license/driving license document. The text below is laid out line by line as it visually appears on the document, so each field's label and its printed value are on the same line, in this order: a serial number (e.g. "1.", "2."), then the field label, then the field's value.
+- name: the value on the line whose label is "Name" (the licence HOLDER/applicant/learner's own name). Do NOT use the value from the "Guardian Name" or "Father's Name" line for this field, even if that line appears earlier or looks more prominent.
+- fatherName: the value on the line whose label is "Guardian Name", "Father's Name", "Father Name", "Guardian's Name", "S/O", "D/O", or "W/O" — whichever of these labels is present. This is always a different person from "name" above.
+- Map the tracking number or application no to learningLicenseApplicationNumber if present.
+- Map the license number or LL number to learningLicenseNumber.
+- Map the issue date/from date to learningLicenseIssueDate.
+- Map the expiry/valid till date to learningLicenseExpiryDate.
+- If only a guardian/father name line is present and there is no separate "Name" line, leave "name" empty rather than copying the guardian's name into it.`;
   const template = `{
   "name": "",
   "dateOfBirth": "",
@@ -388,7 +436,7 @@ exports.llOcr = async (req, res) => {
   "learningLicenseIssueDate": "",
   "learningLicenseExpiryDate": ""
 }`;
-  return processOcrRequest(req, res, prompt, template);
+  return processOcrRequest(req, res, prompt, template, 0, true);
 };
 
 exports.insuranceOcr = async (req, res) => {
