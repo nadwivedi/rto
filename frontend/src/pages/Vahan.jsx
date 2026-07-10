@@ -24,6 +24,7 @@ const vahanOptions = [
   { title: 'PUC', path: '/puc', note: 'Pollution certificate records', image: '/buttons/add puc.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
   { title: 'Add GPS', path: '/gps', note: 'GPS device and renewal work', image: '/buttons/add gps.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
   { title: 'Green Tax', path: '/green-tax', note: 'Green tax records', image: '/buttons/add tax.png', category: 'compliance', badgeTone: 'bg-green-100 text-green-700' },
+  { title: 'Professional Tax', path: '/professional-tax', note: 'Professional tax records', image: '/buttons/add tax.png', category: 'compliance', badgeTone: 'bg-indigo-100 text-indigo-700' },
   { title: 'Money Received', note: 'Party-wise money received entries', image: '/buttons/money received.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
   { title: 'Insurance', path: '/insurance', note: 'Insurance details and renewals', image: '/buttons/addinsurance.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
   { title: 'Bill', path: '/dealer-bill', note: 'Billing and dealer bills', image: '/buttons/add bill.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
@@ -44,6 +45,7 @@ const quickButtons = [
   { title: 'PUC', shortLabel: 'PUC', tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' },
   { title: 'Add GPS', shortLabel: 'GPS', tone: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100' },
   { title: 'Green Tax', shortLabel: 'Green Tax', tone: 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100', path: '/green-tax' },
+  { title: 'Professional Tax', shortLabel: 'Prof. Tax', tone: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100', path: '/professional-tax' },
   { title: 'Bill', shortLabel: 'Bill', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100', path: '/dealer-bill' },
   { title: 'Speed Governor', shortLabel: 'Speed Gov.', tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100', path: '/speed-governor' }
 ]
@@ -66,6 +68,7 @@ const buttonIcons = {
   Bill: FileText,
   'Speed Governor': Gauge,
   'Green Tax': Leaf,
+  'Professional Tax': FileText,
 }
 
 const PermitTypeSelectModal = ({ onClose, openModal }) => {

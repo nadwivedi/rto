@@ -39,4 +39,7 @@ router.post('/additional-document', uploadController.uploadAdditionalDocument)
 // POST upload Green Tax Document (base64, max 12MB)
 router.post('/green-tax-document', uploadController.uploadGreenTaxDocument)
 
+// POST upload Professional Tax Document (base64, max 12MB)
+router.post('/professional-tax-document', uploadController.uploadProfessionalTaxDocument)
+
 module.exports = router

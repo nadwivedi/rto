@@ -16,6 +16,7 @@ const npPartAUploadsDir = path.join(__dirname, '..', 'uploads', 'np-part-a-docum
 const npPartBUploadsDir = path.join(__dirname, '..', 'uploads', 'np-part-b-documents')
 const additionalDocsUploadsDir = path.join(__dirname, '..', 'uploads', 'additional-documents')
 const greenTaxUploadsDir = path.join(__dirname, '..', 'uploads', 'green-tax-documents')
+const professionalTaxUploadsDir = path.join(__dirname, '..', 'uploads', 'professional-tax-documents')
 
 if (!fs.existsSync(additionalDocsUploadsDir)) {
   fs.mkdirSync(additionalDocsUploadsDir, { recursive: true })
@@ -25,6 +26,9 @@ if (!fs.existsSync(kycUploadsDir)) {
 }
 if (!fs.existsSync(greenTaxUploadsDir)) {
   fs.mkdirSync(greenTaxUploadsDir, { recursive: true })
+}
+if (!fs.existsSync(professionalTaxUploadsDir)) {
+  fs.mkdirSync(professionalTaxUploadsDir, { recursive: true })
 }
 if (!fs.existsSync(npPartAUploadsDir)) {
   fs.mkdirSync(npPartAUploadsDir, { recursive: true })
@@ -584,6 +588,68 @@ exports.uploadGreenTaxDocument = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Green tax document uploaded successfully',
+      data: { filename, path: relativePath, size: buffer.length, sizeInMB: fileSizeInMB.toFixed(2), format: fileFormat.toUpperCase() }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({ success: false, message: userError.message, errors: userError.details, errorCount: userError.errorCount, timestamp: new Date().toISOString() })
+  }
+}
+
+// Upload Professional Tax Document (accepts base64 image or PDF)
+exports.uploadProfessionalTaxDocument = async (req, res) => {
+  try {
+    const { imageData, professionalTaxId } = req.body
+
+    if (!imageData) {
+      return res.status(400).json({ success: false, message: 'Document data is required' })
+    }
+
+    if (professionalTaxId) {
+      const ProfessionalTax = require('../models/ProfessionalTax')
+      const existing = await ProfessionalTax.findOne({ _id: professionalTaxId, userId: req.user.id })
+      if (existing && existing.professionalTaxDocument) {
+        try {
+          const filename = path.basename(existing.professionalTaxDocument)
+          const filePath = path.join(professionalTaxUploadsDir, filename)
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+        } catch (err) { console.error('Error deleting old professional tax document:', err) }
+      }
+    }
+
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp);base64,/
+    const pdfFormatRegex = /^data:application\/pdf;base64,/
+    let fileFormat = null
+    let fileExtension = null
+    const imageMatch = imageData.match(imageFormatRegex)
+    const pdfMatch = imageData.match(pdfFormatRegex)
+
+    if (imageMatch) {
+      fileFormat = imageMatch[1]
+      fileExtension = fileFormat === 'jpeg' ? 'jpg' : fileFormat
+    } else if (pdfMatch) {
+      fileFormat = 'pdf'
+      fileExtension = 'pdf'
+    } else {
+      return res.status(400).json({ success: false, message: 'Only JPG, JPEG, PNG, WebP, and PDF formats are accepted' })
+    }
+
+    const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
+    const buffer = Buffer.from(base64Data, 'base64')
+    const fileSizeInMB = buffer.length / (1024 * 1024)
+    if (fileSizeInMB > 12) {
+      return res.status(400).json({ success: false, message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit` })
+    }
+
+    const filename = `professional-tax-${Date.now()}.${fileExtension}`
+    const filePath = path.join(professionalTaxUploadsDir, filename)
+    fs.writeFileSync(filePath, buffer)
+    const relativePath = `/uploads/professional-tax-documents/${filename}`
+
+    res.status(200).json({
+      success: true,
+      message: 'Professional tax document uploaded successfully',
       data: { filename, path: relativePath, size: buffer.length, sizeInMB: fileSizeInMB.toFixed(2), format: fileFormat.toUpperCase() }
     })
   } catch (error) {

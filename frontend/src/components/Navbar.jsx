@@ -84,6 +84,12 @@ const Navbar = () => {
       description: "Green Tax Records",
     },
     {
+      name: "Professional Tax",
+      icon: "📋",
+      path: "/professional-tax",
+      description: "Professional Tax Records",
+    },
+    {
       name: "PUC",
       icon: "💨",
       path: "/puc",
