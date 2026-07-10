@@ -633,10 +633,17 @@ const Insurance = () => {
 
                       {showFilterDropdown && (
                         <>
-                          <div className="fixed inset-0 z-40" onClick={() => setShowFilterDropdown(false)}></div>
+                          <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setShowFilterDropdown(false)}></div>
                           <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl border border-gray-200 z-50 p-4 space-y-4">
                             <div className="flex items-center justify-between pb-2 border-b border-gray-100">
-                              <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Filters</span>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold text-gray-700 uppercase tracking-wider">Filters</span>
+                              </div>
+                              <button onClick={() => setShowFilterDropdown(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-gray-600 transition-all cursor-pointer">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
                               {(companyFilter || productFilter || validityFilter) && (
                                 <button
                                   onClick={() => { setCompanyFilter(''); setProductFilter(''); setValidityFilter(''); }}
