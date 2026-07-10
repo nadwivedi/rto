@@ -116,6 +116,14 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
                 <span className='block text-gray-500 font-medium'>Valid To</span>
                 <span className='block font-bold text-red-700 mt-0.5'>{insurance.validTo || 'N/A'}</span>
               </div>
+              <div>
+                <span className='block text-gray-500 font-medium'>3rd Party Valid From</span>
+                <span className='block font-bold text-green-700 mt-0.5'>{insurance.thirdPartyValidFrom || 'N/A'}</span>
+              </div>
+              <div>
+                <span className='block text-gray-500 font-medium'>3rd Party Valid To</span>
+                <span className='block font-bold text-red-700 mt-0.5'>{insurance.thirdPartyValidTo || 'N/A'}</span>
+              </div>
             </div>
           </div>
 
