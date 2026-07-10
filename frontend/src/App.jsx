@@ -95,6 +95,7 @@ function ProtectedLayout() {
           '/insurance/reports',
           '/fitness',
           '/tax',
+          '/green-tax',
           '/puc',
           '/gps',
           '/dealer-bill',
