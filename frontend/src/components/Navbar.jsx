@@ -240,13 +240,24 @@ const Navbar = () => {
   let filteredMenuItems = menuItems;
   let filteredDropdownItems = dropdownItems;
   
+  const enabledFeatures = user?.features || {};
+
+  const featureFilter = (item) => {
+    if (item.path === '/green-tax') return enabledFeatures.greenTax === true;
+    if (item.path === '/professional-tax') return enabledFeatures.professionalTax === true;
+    return true;
+  };
+
   if (user?.type === 'staff') {
     filteredMenuItems = menuItems.filter(item => 
       !['Forms', 'whatsapp'].includes(item.name) && !['/forms', '/whatsapp'].includes(item.path)
-    );
+    ).filter(featureFilter);
     filteredDropdownItems = dropdownItems.filter(item => 
       !['Forms', 'whatsapp'].includes(item.name) && !['/forms', '/whatsapp'].includes(item.path)
-    );
+    ).filter(featureFilter);
+  } else {
+    filteredMenuItems = menuItems.filter(featureFilter);
+    filteredDropdownItems = dropdownItems.filter(featureFilter);
   }
 
   // Desktop menu items (all except Dashboard, Forms and Settings)

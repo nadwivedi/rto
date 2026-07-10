@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
 import RegisterVehicleModal from './VehicleRegistration/components/RegisterVehicleModal'
 import IssueNewPermitModal from './NationalPermit/components/IssueNewPermitModal'
 import IssueCgPermitModal from './CgPermit/components/IssueCgPermitModal'
@@ -150,12 +151,33 @@ const PermitTypeSelectModal = ({ onClose, openModal }) => {
 };
 const Vahan = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
   const [activeModal, setActiveModal] = useState(null)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
 
+  const enabledFeatures = user?.features || {}
+
+  const filteredVahanOptions = useMemo(() =>
+    vahanOptions.filter(o => {
+      if (o.title === 'Green Tax') return enabledFeatures.greenTax === true
+      if (o.title === 'Professional Tax') return enabledFeatures.professionalTax === true
+      return true
+    }),
+    [enabledFeatures.greenTax, enabledFeatures.professionalTax]
+  )
+
+  const filteredQuickButtons = useMemo(() =>
+    quickButtons.filter(b => {
+      if (b.title === 'Green Tax') return enabledFeatures.greenTax === true
+      if (b.title === 'Professional Tax') return enabledFeatures.professionalTax === true
+      return true
+    }),
+    [enabledFeatures.greenTax, enabledFeatures.professionalTax]
+  )
+
   const openModal = (title) => {
-    const option = vahanOptions.find((o) => o.title === title)
+    const option = filteredVahanOptions.find((o) => o.title === title)
     if (option && option.path) {
       navigate(option.path)
       return
@@ -184,6 +206,7 @@ const Vahan = () => {
     'Bill': 'Bill',
     'Speed Governor': null,
     'Green Tax': null,
+    'Professional Tax': null,
   }
 
   const handleQuickAdd = (title, e) => {
@@ -210,8 +233,8 @@ const Vahan = () => {
               {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
             <div className='hidden lg:flex flex-wrap items-center gap-2 lg:gap-3 xl:gap-4 2xl:gap-5'>
-              {quickButtons.map((button) => {
-                const option = vahanOptions.find((item) => item.title === button.title)
+              {filteredQuickButtons.map((button) => {
+                const option = filteredVahanOptions.find((item) => item.title === button.title)
                 const targetPath = button.path || option?.path
                 const Icon = buttonIcons[button.title]
 
@@ -334,8 +357,8 @@ const Vahan = () => {
           </div>
           <div className="flex-1 overflow-y-auto p-3">
             <div className="grid grid-cols-2 gap-2">
-              {quickButtons.map((button) => {
-                const option = vahanOptions.find((item) => item.title === button.title)
+              {filteredQuickButtons.map((button) => {
+                const option = filteredVahanOptions.find((item) => item.title === button.title)
                 const targetPath = button.path || option?.path
                 const Icon = buttonIcons[button.title]
                 const btnClass = 'flex flex-col items-center justify-center aspect-[2/1] border border-white/10 bg-white/5 hover:bg-white/10 hover:scale-[1.04] transition-all duration-200 text-white'
@@ -379,8 +402,8 @@ const Vahan = () => {
           <aside className='hidden lg:block lg:w-96 lg:shrink-0 lg:self-start lg:sticky lg:top-4'>
             <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4'>
               <div className='grid grid-cols-2 gap-3'>
-              {quickButtons.map((button) => {
-                const option = vahanOptions.find((item) => item.title === button.title)
+              {filteredQuickButtons.map((button) => {
+                const option = filteredVahanOptions.find((item) => item.title === button.title)
                 const targetPath = button.path || option?.path
                 const Icon = buttonIcons[button.title]
                 const btnClass = `flex flex-col items-center justify-center aspect-[2/1] border transition-all duration-200 hover:scale-[1.04] hover:shadow-md ${button.tone}`

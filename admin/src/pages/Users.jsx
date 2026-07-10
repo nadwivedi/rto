@@ -89,7 +89,9 @@ const Users = () => {
     billDescription: '',
     subscriptionExpiresAt: '',
     monthlyPrice: '',
-    password: ''
+    password: '',
+    features_greenTax: false,
+    features_professionalTax: false
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -148,9 +150,10 @@ const Users = () => {
   }
 
   const handleChange = (e) => {
+    const { name, type, value, checked } = e.target
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: type === 'checkbox' ? checked : value
     })
     setError('')
   }
@@ -183,8 +186,15 @@ const Users = () => {
 
       const method = isEditMode ? 'PUT' : 'POST'
 
-      // Only include password if it's provided
-      const bodyData = { ...formData }
+      const bodyData = {
+        ...formData,
+        features: {
+          greenTax: formData.features_greenTax,
+          professionalTax: formData.features_professionalTax
+        }
+      }
+      delete bodyData.features_greenTax
+      delete bodyData.features_professionalTax
       if (isEditMode && !formData.password) {
         delete bodyData.password
       }
@@ -203,8 +213,8 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', password: '' })
-        fetchUsers()
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false })
+    fetchUsers()
       } else {
         setError(data.message || `Failed to ${isEditMode ? 'update' : 'create'} user`)
       }
@@ -228,7 +238,9 @@ const Users = () => {
       billDescription: user.billDescription || '',
       subscriptionExpiresAt: user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString().split('T')[0] : '',
       monthlyPrice: user.monthlyPrice ?? '',
-      password: '' // Don't populate password for security
+      password: '',
+      features_greenTax: user.features?.greenTax ?? false,
+      features_professionalTax: user.features?.professionalTax ?? false
     })
     setShowModal(true)
     setError('')
@@ -239,7 +251,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', password: '' })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false })
   }
 
   const handleDelete = async (id) => {
@@ -895,6 +907,34 @@ const Users = () => {
                     step='0.01'
                     className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
                   />
+                </div>
+              </div>
+
+              <div className='border-t border-gray-200 pt-3'>
+                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-2'>
+                  Feature Access
+                </label>
+                <div className='flex gap-6'>
+                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      name='features_greenTax'
+                      checked={formData.features_greenTax}
+                      onChange={handleChange}
+                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                    />
+                    Green Tax
+                  </label>
+                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      name='features_professionalTax'
+                      checked={formData.features_professionalTax}
+                      onChange={handleChange}
+                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                    />
+                    Professional Tax
+                  </label>
                 </div>
               </div>
 

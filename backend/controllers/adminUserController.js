@@ -95,7 +95,7 @@ exports.getUserById = async (req, res) => {
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -225,7 +225,8 @@ exports.createUser = async (req, res) => {
       billName: billName && billName.trim() ? billName.trim() : undefined,
       billDescription: billDescription && billDescription.trim() ? billDescription.trim() : undefined,
       password: hashedPassword,
-      isActive: true
+      isActive: true,
+      features: features || { greenTax: false, professionalTax: false }
     })
 
     await newUser.save()
@@ -267,7 +268,7 @@ exports.createUser = async (req, res) => {
 // Update user
 exports.updateUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, subscriptionExpiresAt, monthlyPrice } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, subscriptionExpiresAt, monthlyPrice, features } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -346,6 +347,12 @@ exports.updateUser = async (req, res) => {
       user.billDescription = billDescription.trim() ? billDescription.trim() : undefined
     }
     if (isActive !== undefined) user.isActive = isActive
+    if (features !== undefined) {
+      user.features = {
+        greenTax: features.greenTax === true,
+        professionalTax: features.professionalTax === true
+      }
+    }
     if (subscriptionExpiresAt !== undefined) {
       const d = new Date(subscriptionExpiresAt)
       if (!Number.isNaN(d.getTime())) {
@@ -387,6 +394,7 @@ exports.updateUser = async (req, res) => {
         billName: user.billName,
         billDescription: user.billDescription,
         isActive: user.isActive,
+        features: user.features,
         subscriptionExpiresAt: user.subscriptionExpiresAt,
         monthlyPrice: user.monthlyPrice
       }

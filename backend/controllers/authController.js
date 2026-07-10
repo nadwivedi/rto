@@ -130,6 +130,7 @@ exports.login = async (req, res) => {
           state: user.state,
           rto: user.rto,
           isActive: user.isActive,
+          features: user.features || {},
           lastLogin: user.lastLogin,
           lastActivity: user.lastActivity
         }
@@ -326,6 +327,7 @@ exports.adminAccessLogin = async (req, res) => {
           billDescription: user.billDescription,
           type: 'user',
           isActive: user.isActive,
+          features: user.features || {},
           lastLogin: user.lastLogin,
           lastActivity: user.lastActivity
         }
@@ -364,6 +366,7 @@ exports.getProfile = async (req, res) => {
       const activityAt = new Date()
       await Employee.updateOne({ _id: employee._id }, { lastActivity: activityAt })
       employee.lastActivity = activityAt
+      const adminUser = await User.findById(employee.adminId || req.user.adminId).select('features').lean()
       return res.json({
         success: true,
         data: {
@@ -373,6 +376,7 @@ exports.getProfile = async (req, res) => {
             mobile: employee.mobile,
             type: 'staff',
             permissions: employee.permissions,
+            features: adminUser?.features || {},
             isActive: employee.isActive,
             lastLogin: employee.lastLogin,
             lastActivity: employee.lastActivity
@@ -412,6 +416,7 @@ exports.getProfile = async (req, res) => {
           monthlyPrice: user.monthlyPrice,
           type: 'user',
           isActive: user.isActive,
+          features: user.features || {},
           lastLogin: user.lastLogin,
           lastActivity: user.lastActivity
         }
