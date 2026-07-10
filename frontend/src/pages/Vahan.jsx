@@ -13,7 +13,7 @@ import AddInsuranceModal from './Insurance/components/AddInsuranceModal'
 import AddDealerBillModal from '../components/AddDealerBillModal'
 import AddMoneyReceivedModal from './Party/components/AddMoneyReceivedModal'
 import VahanDashboard from './Vahan/components/VahanDashboard'
-import { Menu, X, FileText, Users, Truck, Globe, ScrollText, Bus, Clock, FilePlus, Shield, Activity, Receipt, Wind, MapPin, Gauge } from 'lucide-react'
+import { Menu, X, FileText, Users, Truck, Globe, ScrollText, Bus, Clock, FilePlus, Shield, Activity, Receipt, Wind, MapPin, Gauge, Leaf } from 'lucide-react'
 import IssueBusPermitModal from './BusPermit/components/IssueBusPermitModal'
 
 const vahanOptions = [
@@ -23,6 +23,7 @@ const vahanOptions = [
   { title: 'Add Fitness', path: '/fitness', note: 'Fitness certificate work', image: '/buttons/add fitness.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
   { title: 'PUC', path: '/puc', note: 'Pollution certificate records', image: '/buttons/add puc.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
   { title: 'Add GPS', path: '/gps', note: 'GPS device and renewal work', image: '/buttons/add gps.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
+  { title: 'Green Tax', path: '/green-tax', note: 'Green tax records', image: '/buttons/add tax.png', category: 'compliance', badgeTone: 'bg-green-100 text-green-700' },
   { title: 'Money Received', note: 'Party-wise money received entries', image: '/buttons/money received.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
   { title: 'Insurance', path: '/insurance', note: 'Insurance details and renewals', image: '/buttons/addinsurance.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
   { title: 'Bill', path: '/dealer-bill', note: 'Billing and dealer bills', image: '/buttons/add bill.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
@@ -42,6 +43,7 @@ const quickButtons = [
   { title: 'Add Tax', shortLabel: 'Road Tax', tone: 'border-fuchsia-200 bg-fuchsia-50 text-fuchsia-700 hover:bg-fuchsia-100' },
   { title: 'PUC', shortLabel: 'PUC', tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' },
   { title: 'Add GPS', shortLabel: 'GPS', tone: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100' },
+  { title: 'Green Tax', shortLabel: 'Green Tax', tone: 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100', path: '/green-tax' },
   { title: 'Bill', shortLabel: 'Bill', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100', path: '/dealer-bill' },
   { title: 'Speed Governor', shortLabel: 'Speed Gov.', tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100', path: '/speed-governor' }
 ]
@@ -63,6 +65,7 @@ const buttonIcons = {
   'Add GPS': MapPin,
   Bill: FileText,
   'Speed Governor': Gauge,
+  'Green Tax': Leaf,
 }
 
 const PermitTypeSelectModal = ({ onClose, openModal }) => {
@@ -177,6 +180,7 @@ const Vahan = () => {
     'Add GPS': 'Add GPS',
     'Bill': 'Bill',
     'Speed Governor': null,
+    'Green Tax': null,
   }
 
   const handleQuickAdd = (title, e) => {

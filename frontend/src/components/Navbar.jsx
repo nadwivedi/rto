@@ -78,6 +78,12 @@ const Navbar = () => {
       description: "Tax Management",
     },
     {
+      name: "Green Tax",
+      icon: "🌿",
+      path: "/green-tax",
+      description: "Green Tax Records",
+    },
+    {
       name: "PUC",
       icon: "💨",
       path: "/puc",

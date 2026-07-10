@@ -24,6 +24,7 @@ import VehicleTransfer from './pages/VehicleTransfer/VehicleTransfer'
 import RegistrationRenewal from './pages/RegistrationRenewal/RegistrationRenewal'
 import DealerBill from './pages/DealerBill'
 import Tax from './pages/Tax/Tax'
+import GreenTax from './pages/GreenTax/GreenTax'
 import Forms from './pages/forms/Forms'
 import Form20 from './pages/Form20'
 import Puc from './pages/Puc/Puc'
@@ -142,6 +143,7 @@ function ProtectedLayout() {
                 <Route path='/fitness' element={<Fitness />} />
                 <Route path='/hpa-hpt' element={<HpaHpt />} />
                 <Route path='/tax' element={<Tax />} />
+                <Route path='/green-tax' element={<GreenTax />} />
                 <Route path='/vehicle-transfer' element={<VehicleTransfer />} />
                 <Route path='/noc' element={<Noc />} />
                 <Route path='/registration-renewal' element={<RegistrationRenewal />} />

@@ -36,4 +36,7 @@ router.post('/np-part-b-document', uploadController.uploadNationalPermitPartBDoc
 // POST upload Additional Vehicle Document (base64, max 12MB)
 router.post('/additional-document', uploadController.uploadAdditionalDocument)
 
+// POST upload Green Tax Document (base64, max 12MB)
+router.post('/green-tax-document', uploadController.uploadGreenTaxDocument)
+
 module.exports = router

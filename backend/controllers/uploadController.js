@@ -15,12 +15,16 @@ const busPermitUploadsDir = path.join(__dirname, '..', 'uploads', 'bus-permit-do
 const npPartAUploadsDir = path.join(__dirname, '..', 'uploads', 'np-part-a-documents')
 const npPartBUploadsDir = path.join(__dirname, '..', 'uploads', 'np-part-b-documents')
 const additionalDocsUploadsDir = path.join(__dirname, '..', 'uploads', 'additional-documents')
+const greenTaxUploadsDir = path.join(__dirname, '..', 'uploads', 'green-tax-documents')
 
 if (!fs.existsSync(additionalDocsUploadsDir)) {
   fs.mkdirSync(additionalDocsUploadsDir, { recursive: true })
 }
 if (!fs.existsSync(kycUploadsDir)) {
   fs.mkdirSync(kycUploadsDir, { recursive: true })
+}
+if (!fs.existsSync(greenTaxUploadsDir)) {
+  fs.mkdirSync(greenTaxUploadsDir, { recursive: true })
 }
 if (!fs.existsSync(npPartAUploadsDir)) {
   fs.mkdirSync(npPartAUploadsDir, { recursive: true })
@@ -523,6 +527,69 @@ exports.uploadInsuranceDocument = async (req, res) => {
       errorCount: userError.errorCount,
       timestamp: new Date().toISOString()
     })
+  }
+}
+
+// Upload Green Tax Document (accepts base64 image or PDF)
+exports.uploadGreenTaxDocument = async (req, res) => {
+  try {
+    const { imageData, greenTaxId, vehicleNumber } = req.body
+
+    if (!imageData) {
+      return res.status(400).json({ success: false, message: 'Document data is required' })
+    }
+
+    if (greenTaxId) {
+      const GreenTax = require('../models/GreenTax')
+      const existing = await GreenTax.findOne({ _id: greenTaxId, userId: req.user.id })
+      if (existing && existing.greenTaxDocument) {
+        try {
+          const filename = path.basename(existing.greenTaxDocument)
+          const filePath = path.join(greenTaxUploadsDir, filename)
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+        } catch (err) { console.error('Error deleting old green tax document:', err) }
+      }
+    }
+
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp);base64,/
+    const pdfFormatRegex = /^data:application\/pdf;base64,/
+    let fileFormat = null
+    let fileExtension = null
+    const imageMatch = imageData.match(imageFormatRegex)
+    const pdfMatch = imageData.match(pdfFormatRegex)
+
+    if (imageMatch) {
+      fileFormat = imageMatch[1]
+      fileExtension = fileFormat === 'jpeg' ? 'jpg' : fileFormat
+    } else if (pdfMatch) {
+      fileFormat = 'pdf'
+      fileExtension = 'pdf'
+    } else {
+      return res.status(400).json({ success: false, message: 'Only JPG, JPEG, PNG, WebP, and PDF formats are accepted' })
+    }
+
+    const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
+    const buffer = Buffer.from(base64Data, 'base64')
+    const fileSizeInMB = buffer.length / (1024 * 1024)
+    if (fileSizeInMB > 12) {
+      return res.status(400).json({ success: false, message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit` })
+    }
+
+    const sanitizedVehicleNumber = vehicleNumber ? vehicleNumber.replace(/[^a-zA-Z0-9]/g, '') : 'UNKNOWN'
+    const filename = `greentax-${sanitizedVehicleNumber}-${Date.now()}.${fileExtension}`
+    const filePath = path.join(greenTaxUploadsDir, filename)
+    fs.writeFileSync(filePath, buffer)
+    const relativePath = `/uploads/green-tax-documents/${filename}`
+
+    res.status(200).json({
+      success: true,
+      message: 'Green tax document uploaded successfully',
+      data: { filename, path: relativePath, size: buffer.length, sizeInMB: fileSizeInMB.toFixed(2), format: fileFormat.toUpperCase() }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({ success: false, message: userError.message, errors: userError.details, errorCount: userError.errorCount, timestamp: new Date().toISOString() })
   }
 }
 
