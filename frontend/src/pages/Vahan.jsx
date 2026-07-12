@@ -16,6 +16,7 @@ import AddMoneyReceivedModal from './Party/components/AddMoneyReceivedModal'
 import VahanDashboard from './Vahan/components/VahanDashboard'
 import { Menu, X, FileText, Users, Truck, Globe, ScrollText, Bus, Clock, FilePlus, Shield, Activity, Receipt, Wind, MapPin, Gauge, Leaf } from 'lucide-react'
 import IssueBusPermitModal from './BusPermit/components/IssueBusPermitModal'
+import { routeToSectionKey } from '../utils/sectionConfig'
 
 const vahanOptions = [
   { title: 'Manage Vehicle', path: '/vehicle-registration', note: 'Vehicle registration and master details', image: '/buttons/add vehicle.png', category: 'vehicle', badgeTone: 'bg-sky-100 text-sky-700' },
@@ -157,23 +158,34 @@ const Vahan = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
 
   const enabledFeatures = user?.features || {}
+  const enabledSections = user?.sections || {}
+  const isStaff = user?.type === 'staff'
+
+  const canAccessSection = (title) => {
+    if (!isStaff) return true
+    const path = vahanOptions.find(o => o.title === title)?.path || quickButtons.find(b => b.title === title)?.path
+    if (!path) return true
+    const sectionKey = routeToSectionKey[path]
+    if (!sectionKey) return true
+    return enabledSections[sectionKey] !== false
+  }
 
   const filteredVahanOptions = useMemo(() =>
     vahanOptions.filter(o => {
       if (o.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (o.title === 'Professional Tax') return enabledFeatures.professionalTax === true
-      return true
+      return canAccessSection(o.title)
     }),
-    [enabledFeatures.greenTax, enabledFeatures.professionalTax]
+    [enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledSections, isStaff]
   )
 
   const filteredQuickButtons = useMemo(() =>
     quickButtons.filter(b => {
       if (b.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (b.title === 'Professional Tax') return enabledFeatures.professionalTax === true
-      return true
+      return canAccessSection(b.title)
     }),
-    [enabledFeatures.greenTax, enabledFeatures.professionalTax]
+    [enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledSections, isStaff]
   )
 
   const openModal = (title) => {
@@ -292,8 +304,8 @@ const Vahan = () => {
                     <X size={20} />
                  </button>
               </div>
-              <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[70vh] overflow-y-auto">
-                  {quickButtons.map((button) => {
+               <div className="p-4 grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-[70vh] overflow-y-auto">
+                  {filteredQuickButtons.map((button) => {
                     const option = vahanOptions.find((item) => item.title === button.title)
                     const targetPath = button.path || option?.path
                     const Icon = buttonIcons[button.title]

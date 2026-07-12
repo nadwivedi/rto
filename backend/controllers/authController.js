@@ -198,11 +198,16 @@ exports.staffLogin = async (req, res) => {
 
     // Resolve adminId - use the stored one or find the first admin in the DB
     let adminId = employee.adminId ? employee.adminId.toString() : null
+    let adminFeatures = {}
     if (!adminId) {
-      const adminUser = await User.findOne({}).select('_id').lean()
+      const adminUser = await User.findOne({}).select('_id features').lean()
       adminId = adminUser ? adminUser._id.toString() : null
+      adminFeatures = adminUser?.features || {}
       // Save for future logins so subsequent logins are instant
       if (adminId) await Employee.updateOne({ _id: employee._id }, { adminId })
+    } else {
+      const adminUser = await User.findById(adminId).select('features').lean()
+      adminFeatures = adminUser?.features || {}
     }
 
     const token = jwt.sign(
@@ -212,7 +217,8 @@ exports.staffLogin = async (req, res) => {
         mobile: employee.mobile,
         name: employee.name,
         type: 'staff',
-        permissions: employee.permissions
+        permissions: employee.permissions,
+        sections: employee.sections
       },
       process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
       { expiresIn: '30d' }
@@ -235,6 +241,8 @@ exports.staffLogin = async (req, res) => {
           mobile: employee.mobile,
           type: 'staff',
           permissions: employee.permissions,
+          sections: employee.sections,
+          features: adminFeatures,
           isActive: employee.isActive,
           lastLogin: employee.lastLogin,
           lastActivity: employee.lastActivity
@@ -376,6 +384,7 @@ exports.getProfile = async (req, res) => {
             mobile: employee.mobile,
             type: 'staff',
             permissions: employee.permissions,
+            sections: employee.sections,
             features: adminUser?.features || {},
             isActive: employee.isActive,
             lastLogin: employee.lastLogin,

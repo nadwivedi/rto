@@ -37,6 +37,32 @@ const employeeSchema = new mongoose.Schema({
       default: false
     }
   },
+  sections: {
+    vehicleRegistration: { type: Boolean, default: true },
+    insurance: { type: Boolean, default: true },
+    fitness: { type: Boolean, default: true },
+    tax: { type: Boolean, default: true },
+    greenTax: { type: Boolean, default: true },
+    professionalTax: { type: Boolean, default: true },
+    puc: { type: Boolean, default: true },
+    gps: { type: Boolean, default: true },
+    speedGovernor: { type: Boolean, default: true },
+    dealerBill: { type: Boolean, default: true },
+    party: { type: Boolean, default: true },
+    nationalPermit: { type: Boolean, default: true },
+    statePermit: { type: Boolean, default: true },
+    busPermit: { type: Boolean, default: true },
+    temporaryPermit: { type: Boolean, default: true },
+    tempPermitOtherState: { type: Boolean, default: true },
+    drivingLicense: { type: Boolean, default: true },
+    vehicleTransfer: { type: Boolean, default: true },
+    noc: { type: Boolean, default: true },
+    registrationRenewal: { type: Boolean, default: true },
+    hpaHpt: { type: Boolean, default: true },
+    kyc: { type: Boolean, default: true },
+    javak: { type: Boolean, default: true },
+    cashflow: { type: Boolean, default: true }
+  },
   isActive: {
     type: Boolean,
     default: true

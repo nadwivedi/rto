@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, useNavigate, useLocation, useParams, Navigate } from 'react-router-dom'
+import { routeToSectionKey } from './utils/sectionConfig'
 import { useEffect } from 'react'
 import { ToastContainer } from 'react-toastify'
 import 'react-toastify/dist/ReactToastify.css'
@@ -56,6 +57,16 @@ function ProtectedLayout() {
 
   const isDeactivated = user && !user.isActive
 
+  const staffRouteGuard = () => {
+    if (user?.type !== 'staff') return null
+    const enabledSections = user?.sections || {}
+    const sectionKey = routeToSectionKey[location.pathname]
+    if (sectionKey && enabledSections[sectionKey] === false) {
+      return true
+    }
+    return null
+  }
+
   useEffect(() => {
     if (user?.type === 'staff') {
       document.body.classList.add('is-staff');
@@ -73,6 +84,12 @@ function ProtectedLayout() {
       document.body.classList.remove('is-staff', 'no-edit-permissions', 'no-add-permissions');
     }
   }, [user]);
+
+  useEffect(() => {
+    if (staffRouteGuard()) {
+      navigate('/')
+    }
+  }, [location.pathname, user]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {

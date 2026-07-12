@@ -1,14 +1,32 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import sectionGroups from '../../utils/sectionConfig'
+import { useAuth } from '../../context/AuthContext'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
 const EmployeeManagement = () => {
+  const { user } = useAuth()
   const [employees, setEmployees] = useState([])
   const [loading, setLoading] = useState(false)
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState(null)
+
+  const enabledFeatures = user?.features || {}
+  const visibleGroups = useMemo(() =>
+    sectionGroups.map(group => ({
+      ...group,
+      sections: group.sections.filter(s => {
+        if (s.key === 'greenTax') return enabledFeatures.greenTax === true
+        if (s.key === 'professionalTax') return enabledFeatures.professionalTax === true
+        return true
+      })
+    })).filter(group => group.sections.length > 0),
+    [enabledFeatures.greenTax, enabledFeatures.professionalTax]
+  )
+  const visibleSectionKeys = useMemo(() => visibleGroups.flatMap(g => g.sections.map(s => s.key)), [visibleGroups])
+  const visibleDefaultSections = useMemo(() => Object.fromEntries(visibleSectionKeys.map(k => [k, true])), [visibleSectionKeys])
   
   const [formData, setFormData] = useState({
     name: '',
@@ -19,7 +37,8 @@ const EmployeeManagement = () => {
       view: true,
       add: false,
       edit: false
-    }
+    },
+    sections: { ...visibleDefaultSections }
   })
 
   // Fetch all employees
@@ -53,6 +72,15 @@ const EmployeeManagement = () => {
           [permName]: checked
         }
       })
+    } else if (name.startsWith('sec_')) {
+      const secKey = name.replace('sec_', '')
+      setFormData({
+        ...formData,
+        sections: {
+          ...formData.sections,
+          [secKey]: checked
+        }
+      })
     } else {
       setFormData({
         ...formData,
@@ -61,13 +89,22 @@ const EmployeeManagement = () => {
     }
   }
 
+  const handleGroupToggle = (groupId, checked) => {
+    const group = visibleGroups.find(g => g.id === groupId)
+    if (!group) return
+    const updated = { ...formData.sections }
+    group.sections.forEach(s => { updated[s.key] = checked })
+    setFormData({ ...formData, sections: updated })
+  }
+
   const resetForm = () => {
     setFormData({
       name: '',
       mobile: '',
       password: '',
       isActive: true,
-      permissions: { view: true, add: false, edit: false }
+      permissions: { view: true, add: false, edit: false },
+      sections: { ...visibleDefaultSections }
     })
     setEditingId(null)
   }
@@ -106,7 +143,10 @@ const EmployeeManagement = () => {
       mobile: emp.mobile,
       password: '', // leave blank unless they want to change
       isActive: emp.isActive,
-      permissions: emp.permissions || { view: true, add: false, edit: false }
+      permissions: emp.permissions || { view: true, add: false, edit: false },
+      sections: emp.sections
+        ? { ...visibleDefaultSections, ...Object.fromEntries(Object.entries(emp.sections).filter(([k]) => visibleSectionKeys.includes(k))) }
+        : { ...visibleDefaultSections }
     })
     setEditingId(emp._id)
     setShowModal(true)
@@ -122,6 +162,11 @@ const EmployeeManagement = () => {
         toast.error('Failed to delete employee')
       }
     }
+  }
+  
+  const enabledSectionCount = (sections) => {
+    if (!sections) return visibleSectionKeys.length
+    return visibleSectionKeys.filter(k => sections[k] !== false).length
   }
 
   return (
@@ -157,38 +202,44 @@ const EmployeeManagement = () => {
                   <th className='px-4 py-3'>Mobile</th>
                   <th className='px-4 py-3'>Status</th>
                   <th className='px-4 py-3'>Permissions</th>
+                  <th className='px-4 py-3'>Sections</th>
                   <th className='px-4 py-3 text-right'>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {employees.length === 0 ? (
-                  <tr>
-                    <td colSpan="5" className='text-center py-4 text-gray-500'>No employees found.</td>
-                  </tr>
-                ) : (
-                  employees.map(emp => (
-                    <tr key={emp._id} className='border-b hover:bg-gray-50 transition-colors'>
-                      <td className='px-4 py-3 font-medium text-gray-900'>{emp.name}</td>
-                      <td className='px-4 py-3'>{emp.mobile}</td>
-                      <td className='px-4 py-3'>
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${emp.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                          {emp.isActive ? 'Active' : 'Inactive'}
-                        </span>
-                      </td>
-                      <td className='px-4 py-3'>
-                        <div className='flex gap-1 text-xs'>
-                          <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.view ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>View</span>
-                          <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.add ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>Add</span>
-                          <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.edit ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400'}`}>Edit</span>
-                        </div>
-                      </td>
-                      <td className='px-4 py-3 text-right'>
-                        <button onClick={() => handleEdit(emp)} className='text-blue-600 hover:text-blue-800 mr-3 font-semibold transition-colors'>Edit</button>
-                        <button onClick={() => handleDelete(emp._id)} className='text-red-500 hover:text-red-700 font-semibold transition-colors'>Delete</button>
-                      </td>
+                  {employees.length === 0 ? (
+                    <tr>
+                      <td colSpan="6" className='text-center py-4 text-gray-500'>No employees found.</td>
                     </tr>
-                  ))
-                )}
+                  ) : (
+                    employees.map(emp => (
+                      <tr key={emp._id} className='border-b hover:bg-gray-50 transition-colors'>
+                        <td className='px-4 py-3 font-medium text-gray-900'>{emp.name}</td>
+                        <td className='px-4 py-3'>{emp.mobile}</td>
+                        <td className='px-4 py-3'>
+                          <span className={`px-2 py-1 rounded-full text-xs font-semibold ${emp.isActive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                            {emp.isActive ? 'Active' : 'Inactive'}
+                          </span>
+                        </td>
+                        <td className='px-4 py-3'>
+                          <div className='flex gap-1 text-xs'>
+                            <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.view ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-400'}`}>View</span>
+                            <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.add ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'}`}>Add</span>
+                            <span className={`px-1.5 py-0.5 rounded ${emp.permissions?.edit ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-400'}`}>Edit</span>
+                          </div>
+                        </td>
+                        <td className='px-4 py-3'>
+                          <span className='text-xs font-medium text-gray-600'>
+                            {enabledSectionCount(emp.sections)}/{visibleSectionKeys.length}
+                          </span>
+                        </td>
+                        <td className='px-4 py-3 text-right'>
+                          <button onClick={() => handleEdit(emp)} className='text-blue-600 hover:text-blue-800 mr-3 font-semibold transition-colors'>Edit</button>
+                          <button onClick={() => handleDelete(emp._id)} className='text-red-500 hover:text-red-700 font-semibold transition-colors'>Delete</button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
               </tbody>
             </table>
           </div>
@@ -223,6 +274,11 @@ const EmployeeManagement = () => {
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight ${emp.permissions?.add ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-400'}`}>Add</span>
                       <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-tight ${emp.permissions?.edit ? 'bg-violet-100 text-violet-700' : 'bg-slate-100 text-slate-400'}`}>Edit</span>
                     </div>
+                  </div>
+                  <div className='flex items-center justify-between mt-2'>
+                    <span className='text-[10px] font-medium text-slate-500'>
+                      Sections: {enabledSectionCount(emp.sections)}/{visibleSectionKeys.length}
+                    </span>
                     <div className='flex gap-4'>
                       <button onClick={() => handleEdit(emp)} className='text-xs font-bold text-blue-600 active:scale-95 transition-transform'>Edit</button>
                       <button onClick={() => handleDelete(emp._id)} className='text-xs font-bold text-rose-500 active:scale-95 transition-transform'>Delete</button>
@@ -238,13 +294,13 @@ const EmployeeManagement = () => {
       {/* Modal for Add/Edit */}
       {showModal && (
         <div className='fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-4 backdrop-blur-sm'>
-          <div className='bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl'>
-            <div className='bg-gradient-to-r from-teal-600 to-green-600 p-4 text-white flex justify-between items-center'>
+          <div className='bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[90vh]'>
+            <div className='bg-gradient-to-r from-teal-600 to-green-600 p-4 text-white flex justify-between items-center shrink-0'>
               <h3 className='font-bold text-lg'>{editingId ? 'Edit Employee' : 'Add New Employee'}</h3>
               <button onClick={() => setShowModal(false)} className='text-white/80 hover:text-white'>✕</button>
             </div>
-            <div className='p-6'>
-              <form onSubmit={handleSubmit} className='space-y-4'>
+            <div className='p-6 overflow-y-auto flex-1'>
+              <form id='employee-form' onSubmit={handleSubmit} className='space-y-4'>
                 <div>
                   <label className='block text-sm font-semibold text-gray-700 mb-1'>Name *</label>
                   <input type='text' name='name' value={formData.name} onChange={handleInputChange} required className='w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 text-sm' />
@@ -283,11 +339,54 @@ const EmployeeManagement = () => {
                   </label>
                 </div>
 
-                <div className='flex gap-3 pt-4 border-t mt-4'>
-                  <button type='button' onClick={() => setShowModal(false)} className='flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold text-sm'>Cancel</button>
-                  <button type='submit' className='flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold text-sm'>Save Employee</button>
+                <div className='pt-2 border-t mt-4'>
+                  <div className='flex items-center justify-between mb-3'>
+                    <label className='text-sm font-semibold text-gray-700'>Accessible Sections</label>
+                    <span className='text-xs text-gray-400'>
+                      {visibleSectionKeys.filter(k => formData.sections[k] !== false).length}/{visibleSectionKeys.length} enabled
+                    </span>
+                  </div>
+                  <div className='space-y-3 pr-1'>
+                    {visibleGroups.map(group => {
+                      const allChecked = group.sections.every(s => formData.sections[s.key] !== false)
+                      const someChecked = group.sections.some(s => formData.sections[s.key] !== false)
+                      return (
+                        <div key={group.id} className='bg-gray-50 rounded-lg p-3'>
+                          <label className='flex items-center gap-2 text-xs font-bold text-gray-600 uppercase tracking-wider mb-2 cursor-pointer'>
+                            <input
+                              type='checkbox'
+                              checked={allChecked}
+                              ref={el => { if (el) el.indeterminate = someChecked && !allChecked }}
+                              onChange={(e) => handleGroupToggle(group.id, e.target.checked)}
+                              className='rounded text-teal-600 focus:ring-teal-500'
+                            />
+                            {group.label}
+                          </label>
+                          <div className='grid grid-cols-2 gap-1.5'>
+                            {group.sections.map(s => (
+                              <label key={s.key} className='flex items-center gap-1.5 text-xs cursor-pointer'>
+                                <input
+                                  type='checkbox'
+                                  name={`sec_${s.key}`}
+                                  checked={formData.sections[s.key] !== false}
+                                  onChange={handleInputChange}
+                                  className='rounded text-teal-500 focus:ring-teal-500'
+                                />
+                                <span>{s.icon}</span>
+                                <span>{s.label}</span>
+                              </label>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })}
+                  </div>
                 </div>
               </form>
+            </div>
+            <div className='flex gap-3 shrink-0 border-t p-4 bg-white'>
+              <button type='button' onClick={() => setShowModal(false)} className='flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-semibold text-sm'>Cancel</button>
+              <button type='submit' form='employee-form' className='flex-1 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition font-semibold text-sm'>Save Employee</button>
             </div>
           </div>
         </div>

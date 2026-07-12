@@ -64,10 +64,21 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { Plus, X, Globe, ExternalLink } from 'lucide-react'
 
+const vahanSectionKeys = ['vehicleRegistration', 'insurance', 'fitness', 'tax', 'greenTax', 'professionalTax', 'puc', 'gps', 'speedGovernor', 'dealerBill', 'party', 'nationalPermit', 'statePermit', 'busPermit', 'temporaryPermit', 'tempPermitOtherState']
+const sarthiSectionKeys = ['drivingLicense', 'vehicleTransfer', 'noc', 'registrationRenewal', 'hpaHpt']
+
 const Home2 = () => {
   const navigate = useNavigate()
   const { user } = useAuth()
   const [isWhatsAppConnected, setIsWhatsAppConnected] = useState(true)
+
+  const enabledSections = user?.sections || {}
+  const isStaff = user?.type === 'staff'
+
+  const canAccessHub = (hubKeys) => {
+    if (!isStaff) return true
+    return hubKeys.some(k => enabledSections[k] !== false)
+  }
 
   useEffect(() => {
     const checkWhatsAppStatus = async () => {
@@ -189,13 +200,15 @@ const Home2 = () => {
                 {isWhatsAppConnected ? 'WhatsApp' : 'Connect WA'}
               </button>
             )}
-          <button
-            onClick={() => navigate('/javak')}
-            className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-indigo-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold text-xs sm:text-base'
-          >
-            <span className='text-base sm:text-xl'>📋</span>
-            Javak(notes)
-          </button>
+          {(!isStaff || enabledSections.javak !== false) && (
+            <button
+              onClick={() => navigate('/javak')}
+              className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-indigo-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold text-xs sm:text-base'
+            >
+              <span className='text-base sm:text-xl'>📋</span>
+              Javak(notes)
+            </button>
+          )}
           <button
             onClick={() => navigate('/setting')}
             className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-slate-700 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-slate-800 transition-all duration-300 font-bold text-xs sm:text-base'
@@ -203,65 +216,72 @@ const Home2 = () => {
             <span className='text-base sm:text-xl'>⚙️</span>
             Setting
           </button>
-          <button
-            onClick={() => navigate('/cashflow-report')}
-            className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-emerald-700 transition-all duration-300 font-bold text-xs sm:text-base'
-          >
-            <span className='text-base sm:text-xl'>💰</span>
-            Cashflow
-          </button>
+          {(!isStaff || enabledSections.cashflow !== false) && (
+            <button
+              onClick={() => navigate('/cashflow-report')}
+              className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-emerald-700 transition-all duration-300 font-bold text-xs sm:text-base'
+            >
+              <span className='text-base sm:text-xl'>💰</span>
+              Cashflow
+            </button>
+          )}
         </div>
       </div>
 
         <div className='grid gap-4 lg:gap-5 md:grid-cols-2 lg:grid-cols-3'>
-          <button
-            onClick={() => navigate('/vahan')}
-            className='group overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl text-left'
-          >
-            <HeaderSection
-              title='RTO Vahan'
-              subtitle='Vehicle registration & transport services'
-              gradient='bg-gradient-to-r from-sky-600 via-cyan-600 to-teal-600'
-              icon='🚚'
-            />
-            <div className='p-1.5 sm:p-2'>
-              <div className='grid grid-cols-3 gap-1.5 sm:gap-2'>
-                {vahanServices.map((service) => (
-                  <ServiceCard key={service.name} service={service} color={vahanColors} />
-                ))}
+          {canAccessHub(vahanSectionKeys) && (
+            <button
+              onClick={() => navigate('/vahan')}
+              className='group overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl text-left'
+            >
+              <HeaderSection
+                title='RTO Vahan'
+                subtitle='Vehicle registration & transport services'
+                gradient='bg-gradient-to-r from-sky-600 via-cyan-600 to-teal-600'
+                icon='🚚'
+              />
+              <div className='p-1.5 sm:p-2'>
+                <div className='grid grid-cols-3 gap-1.5 sm:gap-2'>
+                  {vahanServices.map((service) => (
+                    <ServiceCard key={service.name} service={service} color={vahanColors} />
+                  ))}
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+          )}
 
-          <button
-            onClick={() => navigate('/sarthi')}
-            className='group overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl text-left'
-          >
-            <HeaderSection
-              title='RTO Sarthi'
-              subtitle='Driving licence & learning services'
-              gradient='bg-gradient-to-r from-orange-600 via-amber-600 to-rose-600'
-              icon='🚗'
-            />
-            <div className='p-1.5 sm:p-2'>
-              <div className='grid grid-cols-3 gap-1.5 sm:gap-2'>
-                {sarthiServices.map((service) => (
-                  <ServiceCard key={service.name} service={service} color={sarthiColors} />
-                ))}
+          {canAccessHub(sarthiSectionKeys) && (
+            <button
+              onClick={() => navigate('/sarthi')}
+              className='group overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl text-left'
+            >
+              <HeaderSection
+                title='RTO Sarthi'
+                subtitle='Driving licence & learning services'
+                gradient='bg-gradient-to-r from-orange-600 via-amber-600 to-rose-600'
+                icon='🚗'
+              />
+              <div className='p-1.5 sm:p-2'>
+                <div className='grid grid-cols-3 gap-1.5 sm:gap-2'>
+                  {sarthiServices.map((service) => (
+                    <ServiceCard key={service.name} service={service} color={sarthiColors} />
+                  ))}
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+          )}
 
-          <button
-            onClick={() => navigate('/kyc')}
-            className='group overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl text-left'
-          >
-            <HeaderSection
-              title='KYC Zone'
-              subtitle='Store & search client KYC documents'
-              gradient='bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600'
-              icon='🛡️'
-            />
+          {canAccessHub(['kyc']) && (
+            <button
+              onClick={() => navigate('/kyc')}
+              className='group overflow-hidden rounded-2xl sm:rounded-3xl bg-white shadow-lg ring-1 ring-slate-200 transition duration-300 hover:-translate-y-1 hover:shadow-xl text-left'
+            >
+              <HeaderSection
+                title='KYC Zone'
+                subtitle='Store & search client KYC documents'
+                gradient='bg-gradient-to-r from-purple-600 via-indigo-600 to-violet-600'
+                icon='🛡️'
+              />
             <div className='p-1.5 sm:p-2'>
               <div className='grid grid-cols-3 gap-2 sm:gap-3'>
                 {kycServices.map((service) => (
@@ -270,6 +290,7 @@ const Home2 = () => {
               </div>
             </div>
           </button>
+          )}
         </div>
 
         {/* ── Bookmark Strip ── */}

@@ -3,7 +3,7 @@ const Employee = require('../models/Employee')
 // Create a new employee
 exports.createEmployee = async (req, res) => {
   try {
-    const { name, mobile, password, permissions } = req.body
+    const { name, mobile, password, permissions, sections } = req.body
 
     // Basic validation
     if (!name || !mobile || !password) {
@@ -27,6 +27,7 @@ exports.createEmployee = async (req, res) => {
       mobile,
       password,
       permissions: permissions || { view: true, add: false, edit: false },
+      sections: sections || undefined,
       adminId: req.user.id
     })
 
@@ -39,7 +40,8 @@ exports.createEmployee = async (req, res) => {
         id: newEmployee._id,
         name: newEmployee.name,
         mobile: newEmployee.mobile,
-        permissions: newEmployee.permissions
+        permissions: newEmployee.permissions,
+        sections: newEmployee.sections
       }
     })
   } catch (error) {
@@ -74,7 +76,7 @@ exports.getAllEmployees = async (req, res) => {
 exports.updateEmployee = async (req, res) => {
   try {
     const { id } = req.params
-    const { name, mobile, password, permissions, isActive } = req.body
+    const { name, mobile, password, permissions, sections, isActive } = req.body
 
     const employee = await Employee.findOne({ _id: id, adminId: req.user.id })
     if (!employee) {
@@ -88,6 +90,7 @@ exports.updateEmployee = async (req, res) => {
     if (mobile) employee.mobile = mobile
     if (password) employee.password = password // Will be hashed by pre-save hook
     if (permissions) employee.permissions = permissions
+    if (sections) employee.sections = sections
     if (isActive !== undefined) employee.isActive = isActive
 
     await employee.save()
@@ -100,6 +103,7 @@ exports.updateEmployee = async (req, res) => {
         name: employee.name,
         mobile: employee.mobile,
         permissions: employee.permissions,
+        sections: employee.sections,
         isActive: employee.isActive
       }
     })
