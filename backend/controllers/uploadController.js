@@ -17,6 +17,7 @@ const npPartBUploadsDir = path.join(__dirname, '..', 'uploads', 'np-part-b-docum
 const additionalDocsUploadsDir = path.join(__dirname, '..', 'uploads', 'additional-documents')
 const greenTaxUploadsDir = path.join(__dirname, '..', 'uploads', 'green-tax-documents')
 const professionalTaxUploadsDir = path.join(__dirname, '..', 'uploads', 'professional-tax-documents')
+const roadTaxUploadsDir = path.join(__dirname, '..', 'uploads', 'road-tax-documents')
 
 if (!fs.existsSync(additionalDocsUploadsDir)) {
   fs.mkdirSync(additionalDocsUploadsDir, { recursive: true })
@@ -29,6 +30,9 @@ if (!fs.existsSync(greenTaxUploadsDir)) {
 }
 if (!fs.existsSync(professionalTaxUploadsDir)) {
   fs.mkdirSync(professionalTaxUploadsDir, { recursive: true })
+}
+if (!fs.existsSync(roadTaxUploadsDir)) {
+  fs.mkdirSync(roadTaxUploadsDir, { recursive: true })
 }
 if (!fs.existsSync(npPartAUploadsDir)) {
   fs.mkdirSync(npPartAUploadsDir, { recursive: true })
@@ -1298,3 +1302,65 @@ exports.uploadKycDocument = async (req, res) => {
   }
 }
 
+
+// Upload Road Tax Document (accepts base64 image or PDF)
+exports.uploadRoadTaxDocument = async (req, res) => {
+  try {
+    const { imageData, roadTaxId, vehicleNumber } = req.body
+
+    if (!imageData) {
+      return res.status(400).json({ success: false, message: 'Document data is required' })
+    }
+
+    if (roadTaxId) {
+      const Tax = require('../models/Tax')
+      const existing = await Tax.findOne({ _id: roadTaxId, userId: req.user.id })
+      if (existing && existing.roadTaxDocument) {
+        try {
+          const filename = path.basename(existing.roadTaxDocument)
+          const filePath = path.join(roadTaxUploadsDir, filename)
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+        } catch (err) { console.error('Error deleting old road tax document:', err) }
+      }
+    }
+
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp);base64,/
+    const pdfFormatRegex = /^data:application\/pdf;base64,/
+    let fileFormat = null
+    let fileExtension = null
+    const imageMatch = imageData.match(imageFormatRegex)
+    const pdfMatch = imageData.match(pdfFormatRegex)
+
+    if (imageMatch) {
+      fileFormat = imageMatch[1]
+      fileExtension = fileFormat === 'jpeg' ? 'jpg' : fileFormat
+    } else if (pdfMatch) {
+      fileFormat = 'pdf'
+      fileExtension = 'pdf'
+    } else {
+      return res.status(400).json({ success: false, message: 'Only JPG, JPEG, PNG, WebP, and PDF formats are accepted' })
+    }
+
+    const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
+    const buffer = Buffer.from(base64Data, 'base64')
+    const fileSizeInMB = buffer.length / (1024 * 1024)
+    if (fileSizeInMB > 12) {
+      return res.status(400).json({ success: false, message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit` })
+    }
+
+    const sanitizedVehicleNumber = vehicleNumber ? vehicleNumber.replace(/[^a-zA-Z0-9]/g, '') : 'UNKNOWN'
+    const filename = `roadtax-${sanitizedVehicleNumber}-${Date.now()}.${fileExtension}`
+    const filePath = path.join(roadTaxUploadsDir, filename)
+    fs.writeFileSync(filePath, buffer)
+    const relativePath = `/uploads/road-tax-documents/${filename}`
+    res.status(200).json({
+      success: true,
+      message: 'Road tax document uploaded successfully',
+      data: { filename, path: relativePath, size: buffer.length, sizeInMB: fileSizeInMB.toFixed(2), format: fileFormat.toUpperCase() }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({ success: false, message: userError.message, errors: userError.details, errorCount: userError.errorCount, timestamp: new Date().toISOString() })
+  }
+}

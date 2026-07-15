@@ -144,7 +144,7 @@ exports.getTaxById = async (req, res) => {
 // Create new tax record
 exports.createTax = async (req, res) => {
   try {
-    const { receiptNo, vehicleNumber, ownerName, mobileNumber, date, totalAmount, paidAmount, balanceAmount, taxAmount, taxFrom, taxTo, partyId: reqPartyId } = req.body
+    const { receiptNo, vehicleNumber, ownerName, mobileNumber, date, totalAmount, paidAmount, balanceAmount, taxAmount, taxFrom, taxTo, partyId: reqPartyId, roadTaxDocument } = req.body
 
     // Validate required fields
     if (!vehicleNumber || !taxFrom || !taxTo) {
@@ -213,7 +213,8 @@ exports.createTax = async (req, res) => {
       taxTo,
       status,
       userId: req.user.id,
-      partyId
+      partyId,
+      roadTaxDocument
     })
 
     await tax.save()
@@ -239,7 +240,7 @@ exports.createTax = async (req, res) => {
 // Update tax record
 exports.updateTax = async (req, res) => {
   try {
-    const { receiptNo, vehicleNumber, ownerName, mobileNumber, date, totalAmount, paidAmount, balanceAmount, taxAmount, taxFrom, taxTo, partyId } = req.body
+    const { receiptNo, vehicleNumber, ownerName, mobileNumber, date, totalAmount, paidAmount, balanceAmount, taxAmount, taxFrom, taxTo, partyId, roadTaxDocument } = req.body
 
     const tax = await Tax.findOne({ _id: req.params.id, userId: req.user.id })
 
@@ -288,6 +289,7 @@ exports.updateTax = async (req, res) => {
     if (balanceAmount !== undefined) tax.balanceAmount = balanceAmount
     if (taxAmount !== undefined) tax.taxAmount = taxAmount
     if (partyId !== undefined) tax.partyId = partyId
+    if (roadTaxDocument !== undefined) tax.roadTaxDocument = roadTaxDocument
 
     await tax.save()
 

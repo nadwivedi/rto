@@ -7,6 +7,7 @@ import Pagination from '../../components/Pagination'
 import AddGreenTaxModal from './components/AddGreenTaxModal'
 import GreenTaxDetailModal from './components/GreenTaxDetailModal'
 import AddButton from '../../components/AddButton'
+import DocumentPreviewModal from '../../components/DocumentPreviewModal'
 import SearchBar from '../../components/SearchBar'
 import StatisticsCard from '../../components/StatisticsCard'
 import MobileCardView from '../../components/MobileCardView'
@@ -27,6 +28,7 @@ const GreenTax = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [selectedRecord, setSelectedRecord] = useState(null)
+  const [previewDoc, setPreviewDoc] = useState(null)
   const [loading, setLoading] = useState(false)
   const [statusFilter, setStatusFilter] = useState('all')
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalRecords: 0, limit: 20 })
@@ -86,6 +88,8 @@ const GreenTax = () => {
   const handleEditClick = (record) => { setSelectedRecord(record); setIsEditModalOpen(true) }
 
   const handleViewClick = (record) => { setSelectedRecord(record); setIsDetailModalOpen(true) }
+
+  const handlePreviewDoc = (record) => { setPreviewDoc(record.greenTaxDocument) }
 
   const handleEditRecord = async () => { await fetchRecords(); await fetchStatistics(); setIsEditModalOpen(false); setSelectedRecord(null) }
 
@@ -263,6 +267,11 @@ const GreenTax = () => {
                       icon: <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' /></svg>,
                     },
                     {
+                      title: 'View Document', condition: (record) => !!record.greenTaxDocument, onClick: (record) => handlePreviewDoc(record),
+                      bgColor: 'bg-sky-100', textColor: 'text-sky-600', hoverBgColor: 'bg-sky-200',
+                      icon: <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' /><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' /></svg>,
+                    },
+                    {
                       title: 'Edit Record', onClick: handleEditClick, bgColor: 'bg-amber-100', textColor: 'text-amber-600', hoverBgColor: 'bg-amber-200',
                       icon: <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' /></svg>,
                     },
@@ -371,6 +380,11 @@ const GreenTax = () => {
                                 <button onClick={() => handleViewClick(record)} className='p-1.5 2xl:p-2 text-green-600 hover:bg-green-100 rounded-lg transition-all group-hover:scale-110 duration-200' title='View Details'>
                                   <svg className='w-4 h-4 2xl:w-5 2xl:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' /><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z' /></svg>
                                 </button>
+                                {record.greenTaxDocument && (
+                                  <button onClick={() => handlePreviewDoc(record)} className='p-1.5 2xl:p-2 text-sky-600 hover:bg-sky-100 rounded-lg transition-all group-hover:scale-110 duration-200' title='View Document'>
+                                    <svg className='w-4 h-4 2xl:w-5 2xl:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 14l-7 7m0 0l-7-7m7 7V3' /></svg>
+                                  </button>
+                                )}
                                 <button onClick={() => handleEditClick(record)} className='p-1.5 2xl:p-2 text-amber-600 hover:bg-amber-100 rounded-lg transition-all group-hover:scale-110 duration-200' title='Edit Record'>
                                   <svg className='w-4 h-4 2xl:w-5 2xl:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'><path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' /></svg>
                                 </button>
@@ -410,6 +424,7 @@ const GreenTax = () => {
           {isAddModalOpen && <AddGreenTaxModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSubmit={handleAddRecord} />}
           {isEditModalOpen && <AddGreenTaxModal isOpen={isEditModalOpen} onClose={() => { setIsEditModalOpen(false); setSelectedRecord(null) }} onSubmit={handleEditRecord} initialData={selectedRecord} isEditMode={true} />}
           {isDetailModalOpen && <GreenTaxDetailModal isOpen={isDetailModalOpen} onClose={() => { setIsDetailModalOpen(false); setSelectedRecord(null) }} record={selectedRecord} />}
+          {previewDoc && <DocumentPreviewModal isOpen={!!previewDoc} onClose={() => setPreviewDoc(null)} docField={previewDoc} title='Green Tax Document' />}
         </div>
       </div>
     </>

@@ -7,6 +7,9 @@ import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
 const EditTaxModal = ({ isOpen, onClose, onSubmit, tax }) => {
+  const [roadTaxDocument, setRoadTaxDocument] = useState('')
+  const [docPreview, setDocPreview] = useState(null)
+  const [uploadingDoc, setUploadingDoc] = useState(false)
   const [fetchingVehicle, setFetchingVehicle] = useState(false)
   const [vehicleError, setVehicleError] = useState('')
   const [dateError, setDateError] = useState({ taxFrom: '', taxTo: '' })
@@ -45,6 +48,14 @@ const EditTaxModal = ({ isOpen, onClose, onSubmit, tax }) => {
     return day <= daysInMonth
   }
 
+  // Reset doc state when modal opens/closes
+  useEffect(() => {
+    if (!isOpen) {
+      setRoadTaxDocument('')
+      setDocPreview(null)
+    }
+  }, [isOpen])
+
   // Populate form when tax prop changes
   useEffect(() => {
     if (tax) {
@@ -63,6 +74,11 @@ const EditTaxModal = ({ isOpen, onClose, onSubmit, tax }) => {
         taxFrom: tax.taxFrom || '',
         taxTo: tax.taxTo || ''
       })
+
+      // Pre-fill document
+      if (tax.roadTaxDocument) {
+        setRoadTaxDocument(tax.roadTaxDocument)
+      }
 
       // Validate the vehicle number if it exists
       if (vehicleNum) {
@@ -332,6 +348,44 @@ const EditTaxModal = ({ isOpen, onClose, onSubmit, tax }) => {
     utilHandleDateBlur(e, setFormData)
   }
 
+  const handleDocUpload = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const maxSize = 12 * 1024 * 1024
+    if (file.size > maxSize) {
+      alert('File size exceeds 12MB limit')
+      return
+    }
+    if (!['image/jpeg', 'image/png', 'image/webp', 'application/pdf'].includes(file.type)) {
+      alert('Only JPG, PNG, WebP, and PDF formats are accepted')
+      return
+    }
+    const reader = new FileReader()
+    reader.onload = async (event) => {
+      const base64Data = event.target.result
+      setDocPreview(base64Data)
+      setUploadingDoc(true)
+      try {
+        const response = await axios.post(`${API_URL}/api/upload/road-tax-document`,
+          { imageData: base64Data, vehicleNumber: formData.vehicleNumber },
+          { withCredentials: true }
+        )
+        if (response.data.success) {
+          setRoadTaxDocument(response.data.data.path)
+        }
+      } catch (error) {
+        console.error('Failed to upload document:', error)
+        setDocPreview(null)
+      } finally { setUploadingDoc(false) }
+    }
+    reader.readAsDataURL(file)
+  }
+
+  const handleRemoveDoc = () => {
+    setRoadTaxDocument('')
+    setDocPreview(null)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
 
@@ -342,7 +396,7 @@ const EditTaxModal = ({ isOpen, onClose, onSubmit, tax }) => {
     }
 
     if (onSubmit) {
-      onSubmit({ ...formData, date: formData.date || undefined })
+      onSubmit({ ...formData, date: formData.date || undefined, roadTaxDocument: roadTaxDocument || undefined })
     }
     onClose()
   }
@@ -701,6 +755,52 @@ const EditTaxModal = ({ isOpen, onClose, onSubmit, tax }) => {
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent font-semibold'
                   />
                 </div>
+              </div>
+            </div>
+
+            {/* Section 4: Document Upload */}
+            <div className='bg-gradient-to-r from-sky-50 to-blue-50 border-2 border-sky-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <span className='bg-sky-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>4</span>
+                Document Upload
+              </h3>
+              <div className='text-xs md:text-sm'>
+                {!roadTaxDocument ? (
+                  <div className='flex items-center gap-3'>
+                    <label className='flex items-center gap-2 px-4 py-2.5 bg-white border-2 border-dashed border-sky-300 rounded-xl text-sky-700 font-semibold hover:bg-sky-50 hover:border-sky-400 transition-all cursor-pointer'>
+                      <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
+                      </svg>
+                      {uploadingDoc ? 'Uploading...' : 'Upload Document'}
+                      <input type='file' accept='image/*,application/pdf' onChange={handleDocUpload} className='hidden' disabled={uploadingDoc} />
+                    </label>
+                    <span className='text-[10px] text-gray-400'>JPG, PNG, PDF (max 12MB)</span>
+                  </div>
+                ) : (
+                  <div className='flex items-center gap-3'>
+                    <span className='inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-100 text-green-700 rounded-lg text-xs font-semibold'>
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
+                      </svg>
+                      Document uploaded
+                    </span>
+                    <button type='button' onClick={handleRemoveDoc} className='text-red-500 hover:text-red-600 text-xs font-semibold cursor-pointer'>Remove</button>
+                  </div>
+                )}
+                {docPreview && (
+                  <div className='mt-3 max-h-48 overflow-hidden rounded-lg border border-sky-200'>
+                    {docPreview.startsWith('data:image') ? (
+                      <img src={docPreview} alt='Preview' className='w-full h-48 object-contain bg-white' />
+                    ) : (
+                      <div className='flex items-center justify-center h-32 bg-white'>
+                        <svg className='w-10 h-10 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
+                          <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
+                        </svg>
+                        <span className='ml-2 text-xs text-gray-500 font-semibold'>PDF Document</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

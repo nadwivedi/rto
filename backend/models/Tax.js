@@ -79,6 +79,12 @@ const taxSchema = new mongoose.Schema({
     default: false
   },
 
+  // Road Tax Document
+  roadTaxDocument: {
+    type: String,
+    trim: true
+  },
+
   // WhatsApp message tracking
   whatsappMessageCount: {
     type: Number,
