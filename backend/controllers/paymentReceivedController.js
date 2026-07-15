@@ -12,9 +12,9 @@ const getPaymentsByWork = async (req, res) => {
 
 const createPayment = async (req, res) => {
   try {
-    const { workType, workId, date, amount, paymentMode, remark } = req.body
+    const { workType, workId, date, amount, paymentMode, remark, receivedBy } = req.body
     const payment = await PaymentReceived.create({
-      userId: req.user.id, workType, workId, date, amount, paymentMode, remark
+      userId: req.user.id, workType, workId, date, amount, paymentMode, remark, receivedBy
     })
     res.status(201).json(payment)
   } catch (error) {
@@ -35,7 +35,8 @@ const bulkCreatePayments = async (req, res) => {
       date: p.date,
       amount: p.amount,
       paymentMode: p.paymentMode || 'Cash',
-      remark: p.remark || ''
+      remark: p.remark || '',
+      receivedBy: p.receivedBy || ''
     }))
     const created = await PaymentReceived.insertMany(docs)
     res.status(201).json(created)
@@ -57,7 +58,8 @@ const replacePaymentsForWork = async (req, res) => {
         date: p.date,
         amount: p.amount,
         paymentMode: p.paymentMode || 'Cash',
-        remark: p.remark || ''
+        remark: p.remark || '',
+        receivedBy: p.receivedBy || ''
       }))
       const created = await PaymentReceived.insertMany(docs)
       return res.json(created)
@@ -78,4 +80,21 @@ const deletePayment = async (req, res) => {
   }
 }
 
-module.exports = { getPaymentsByWork, createPayment, bulkCreatePayments, replacePaymentsForWork, deletePayment }
+const getPaymentsReport = async (req, res) => {
+  try {
+    const { employee, fromDate, toDate } = req.query
+    const filter = { userId: req.user.id }
+    if (employee) filter.receivedBy = employee
+    if (fromDate || toDate) {
+      filter.date = {}
+      if (fromDate) filter.date.$gte = fromDate
+      if (toDate) filter.date.$lte = toDate
+    }
+    const payments = await PaymentReceived.find(filter).sort({ date: -1 })
+    res.json(payments)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+
+module.exports = { getPaymentsByWork, createPayment, bulkCreatePayments, replacePaymentsForWork, deletePayment, getPaymentsReport }

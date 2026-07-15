@@ -14,6 +14,14 @@ const CashflowReport = () => {
   const [loading, setLoading] = useState(true)
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
+  const [employees, setEmployees] = useState([])
+  const [employeeFilter, setEmployeeFilter] = useState('')
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/employees`, { withCredentials: true })
+      .then(res => setEmployees(res.data.data || []))
+      .catch(() => {})
+  }, [])
 
   const fetchData = async () => {
     setLoading(true)
@@ -21,6 +29,7 @@ const CashflowReport = () => {
       const params = {}
       if (fromDate) params.fromDate = fromDate
       if (toDate) params.toDate = toDate
+      if (employeeFilter) params.employee = employeeFilter
 
       const [expensesRes, incomeRes] = await Promise.all([
         axios.get(`${API_URL}/api/reports/expenses`, { params, withCredentials: true }),
@@ -134,6 +143,7 @@ const CashflowReport = () => {
                         <th className='text-left px-3 py-1.5 text-green-800 font-bold'>Work</th>
                         <th className='text-left px-3 py-1.5 text-green-800 font-bold'>Customer</th>
                         <th className='text-left px-3 py-1.5 text-green-800 font-bold'>Payment</th>
+                        <th className='text-left px-3 py-1.5 text-green-800 font-bold'>Received By</th>
                         <th className='text-right px-3 py-1.5 text-green-800 font-bold'>Amount</th>
                         <th className='text-left px-3 py-1.5 text-green-800 font-bold'>Remarks</th>
                       </tr>
@@ -152,6 +162,7 @@ const CashflowReport = () => {
                               'bg-purple-100 text-purple-700'
                             }`}>{item.paymentMode || 'Cash'}</span>
                           </td>
+                          <td className='px-3 py-2 text-gray-700 font-medium'>{item.receivedBy || '-'}</td>
                           <td className='px-3 py-2 text-right font-bold text-green-700'>₹{(item.amount || 0).toLocaleString('en-IN')}</td>
                           <td className='px-3 py-2 text-gray-500 max-w-[120px] truncate' title={item.remark || ''}>{item.remark || '-'}</td>
                         </tr>
@@ -286,15 +297,26 @@ const CashflowReport = () => {
             onChange={e => setToDate(e.target.value)}
             className='px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none'
           />
+          <span className='text-xs font-bold text-gray-700 ml-2'>Employee:</span>
+          <select
+            value={employeeFilter}
+            onChange={e => setEmployeeFilter(e.target.value)}
+            className='px-2 py-1.5 text-xs border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white'
+          >
+            <option value=''>All</option>
+            {employees.filter(e => e.isActive !== false).map(emp => (
+              <option key={emp._id} value={emp.name}>{emp.name}</option>
+            ))}
+          </select>
           <button
             onClick={handleFilter}
             className='px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold hover:bg-indigo-700 transition-all cursor-pointer shadow-sm'
           >
             Apply Filter
           </button>
-          {(fromDate || toDate) && (
+          {(fromDate || toDate || employeeFilter) && (
             <button
-              onClick={() => { setFromDate(''); setToDate(''); handleFilter() }}
+              onClick={() => { setFromDate(''); setToDate(''); setEmployeeFilter(''); handleFilter() }}
               className='px-3 py-1.5 bg-gray-200 text-gray-700 rounded-lg text-xs font-bold hover:bg-gray-300 transition-all cursor-pointer'
             >
               Clear

@@ -1,6 +1,7 @@
 const router = require('express').Router()
 const paymentReceivedController = require('../controllers/paymentReceivedController')
 
+router.get('/report', paymentReceivedController.getPaymentsReport)
 router.get('/:workType/:workId', paymentReceivedController.getPaymentsByWork)
 router.post('/', paymentReceivedController.createPayment)
 router.post('/bulk', paymentReceivedController.bulkCreatePayments)

@@ -44,9 +44,10 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
   const [uploadingDoc, setUploadingDoc] = useState(false)
   const [temporaryPermitDocumentBase64, setTemporaryPermitDocumentBase64] = useState('')
   const [docPreview, setDocPreview] = useState(null)
-  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
   const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
+  const [employees, setEmployees] = useState([])
   const dropdownItemRefs = useRef([])
   const isOcrUpdate = useRef(false)
 
@@ -318,6 +319,12 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
       return () => document.removeEventListener('keydown', handleKeyDown)
     }
   }, [isOpen, onClose, showVehicleDropdown, vehicleMatches, selectedDropdownIndex])
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/employees`, { withCredentials: true })
+      .then(res => setEmployees(res.data.data || []))
+      .catch(() => {})
+  }, [])
 
   // Handle vehicle selection from dropdown
   const handleVehicleSelect = (vehicle) => {
@@ -603,7 +610,7 @@ const IssueTemporaryPermitModal = ({ isOpen, onClose, onSubmit, initialData = nu
   }
 
   const addPaymentReceivedItem = () => {
-    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
   }
 
   const removePaymentReceivedItem = (index) => {
@@ -1248,15 +1255,27 @@ className={`w-full px-3 py-2 border rounded-lg focus:ring-2 font-semibold ${
                               <option value='UPI'>UPI</option>
                             </select>
                           </div>
-                          <div className='md:col-span-4'>
-                            <input
-                              type='text'
-                              placeholder='Notes (optional)'
-                              value={item.remark || ''}
-                              onChange={(e) => handlePaymentReceivedChange(index, 'remark', e.target.value)}
-                              className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm'
-                            />
+                          <div className='md:col-span-2'>
+                            <select
+                              value={item.receivedBy}
+                              onChange={(e) => handlePaymentReceivedChange(index, 'receivedBy', e.target.value)}
+                              className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-semibold bg-white'
+                            >
+                              <option value=''>Admin</option>
+                              {employees?.filter(e => e.isActive !== false).map(emp => (
+                                <option key={emp._id} value={emp.name}>{emp.name}</option>
+                              ))}
+                            </select>
                           </div>
+                            <div className='md:col-span-2'>
+                              <input
+                                type='text'
+                                placeholder='Notes (optional)'
+                                value={item.remark || ''}
+                                onChange={(e) => handlePaymentReceivedChange(index, 'remark', e.target.value)}
+                                className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm'
+                              />
+                            </div>
                           <div className='md:col-span-2 flex items-center justify-center'>
                             <button
                               type='button'

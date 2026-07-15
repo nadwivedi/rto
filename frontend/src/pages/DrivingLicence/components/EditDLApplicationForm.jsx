@@ -7,6 +7,8 @@ import { replacePaymentsForWork, getPaymentsByWork } from '../../../utils/paymen
 import { replaceExpensesForWork, getExpensesByWork } from '../../../utils/expenseBreakdownApi'
 import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
 import LicenseClassDropdown from '../../../components/LicenseClassDropdown'
+import axios from 'axios'
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
 
 const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   // Get current date in DD-MM-YYYY format
@@ -91,7 +93,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   })
 
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
-  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
   const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
@@ -104,6 +106,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   const [dobDay, setDobDay] = useState('')
   const [dobMonth, setDobMonth] = useState('')
   const [dobYear, setDobYear] = useState('2000')
+  const [employees, setEmployees] = useState([])
 
   // Pre-populate form with application data
   useEffect(() => {
@@ -352,6 +355,12 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     }
   }, [expenseItems, formData.totalAmount])
 
+  useEffect(() => {
+    axios.get(`${API_URL}/api/employees`, { withCredentials: true })
+      .then(res => setEmployees(res.data.data || []))
+      .catch(() => {})
+  }, [])
+
   const handleChange = (e) => {
     const { name, value } = e.target
 
@@ -529,7 +538,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
   }
 
   const addPaymentReceivedItem = () => {
-    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
   }
 
   const removePaymentReceivedItem = (index) => {
@@ -1195,7 +1204,19 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
                                 <option value='UPI'>UPI</option>
                               </select>
                             </div>
-                            <div className='md:col-span-4'>
+                            <div className='md:col-span-2'>
+                              <select
+                                value={item.receivedBy}
+                                onChange={(e) => handlePaymentReceivedChange(index, 'receivedBy', e.target.value)}
+                                className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-semibold bg-white'
+                              >
+                                <option value=''>Admin</option>
+                                {employees?.filter(e => e.isActive !== false).map(emp => (
+                                  <option key={emp._id} value={emp.name}>{emp.name}</option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className='md:col-span-2'>
                               <input
                                 type='text'
                                 placeholder='Notes (optional)'

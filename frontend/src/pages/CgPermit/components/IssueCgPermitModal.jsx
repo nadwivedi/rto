@@ -7,7 +7,7 @@ import { handleSmartDateInput } from '../../../utils/dateFormatter'
 import { replacePaymentsForWork } from '../../../utils/paymentReceivedApi'
 import { replaceExpensesForWork } from '../../../utils/expenseBreakdownApi'
 
-const API_URL = import.meta.env.VITE_BACKEND_URL
+const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
 
 const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, prefilledVehicleNumber = '', prefilledOwnerName = '', prefilledMobileNumber = '' }) => {
   const [formData, setFormData] = useState({
@@ -37,9 +37,10 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
   const [selectedDropdownIndex, setSelectedDropdownIndex] = useState(0)
   const dropdownItemRefs = useRef([])
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
   const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
+  const [employees, setEmployees] = useState([])
 
   // File upload state
   const [selectedFile, setSelectedFile] = useState(null)
@@ -352,6 +353,12 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
     }
   }, [isOpen, onClose, showVehicleDropdown, vehicleMatches, selectedDropdownIndex])
 
+  useEffect(() => {
+    axios.get(`${API_URL}/api/employees`, { withCredentials: true })
+      .then(res => setEmployees(res.data.data || []))
+      .catch(() => {})
+  }, [])
+
   // Handle vehicle selection from dropdown
   const handleVehicleSelect = (vehicle) => {
     setFormData(prev => ({
@@ -526,7 +533,7 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
   }
 
   const addPaymentReceivedItem = () => {
-    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
   }
 
   const removePaymentReceivedItem = (index) => {
@@ -1204,15 +1211,27 @@ const IssueCgPermitModal = ({ isOpen, onClose, onSubmit, initialData = null, pre
                               <option value='UPI'>UPI</option>
                             </select>
                           </div>
-                          <div className='md:col-span-4'>
-                            <input
-                              type='text'
-                              placeholder='Notes (optional)'
-                              value={item.remark || ''}
-                              onChange={(e) => handlePaymentReceivedChange(index, 'remark', e.target.value)}
-                              className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm'
-                            />
+                          <div className='md:col-span-2'>
+                            <select
+                              value={item.receivedBy}
+                              onChange={(e) => handlePaymentReceivedChange(index, 'receivedBy', e.target.value)}
+                              className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-semibold bg-white'
+                            >
+                              <option value=''>Admin</option>
+                              {employees?.filter(e => e.isActive !== false).map(emp => (
+                                <option key={emp._id} value={emp.name}>{emp.name}</option>
+                              ))}
+                            </select>
                           </div>
+                            <div className='md:col-span-2'>
+                              <input
+                                type='text'
+                                placeholder='Notes (optional)'
+                                value={item.remark || ''}
+                                onChange={(e) => handlePaymentReceivedChange(index, 'remark', e.target.value)}
+                                className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm'
+                              />
+                            </div>
                           <div className='md:col-span-2 flex items-center justify-center'>
                             <button
                               type='button'

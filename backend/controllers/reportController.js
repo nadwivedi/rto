@@ -115,9 +115,10 @@ const getExpenses = async (req, res) => {
 
 const getIncome = async (req, res) => {
   try {
-    const { fromDate, toDate } = req.query
+    const { fromDate, toDate, employee } = req.query
     const filter = { userId: req.user.id }
 
+    if (employee) filter.receivedBy = employee
     if (fromDate || toDate) {
       filter.date = {}
       if (fromDate) filter.date.$gte = fromDate

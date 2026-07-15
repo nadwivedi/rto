@@ -21,7 +21,7 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
   const [existingPermitStatus, setExistingPermitStatus] = useState(null)
   const [permitCheckError, setPermitCheckError] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+  const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
   const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
 
@@ -36,6 +36,7 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
   const [partBDocumentBase64, setPartBDocumentBase64] = useState('')
   const [uploadedPartBPath, setUploadedPartBPath] = useState('')
   const [uploadingPartB, setUploadingPartB] = useState(false)
+  const [employees, setEmployees] = useState([])
 
   // Helper function to format date as DD-MM-YYYY
   const formatDate = (date) => {
@@ -430,6 +431,12 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
     }
   }, [isOpen, onClose, showVehicleDropdown, vehicleMatches, selectedDropdownIndex])
 
+  useEffect(() => {
+    axios.get(`${API_URL}/api/employees`, { withCredentials: true })
+      .then(res => setEmployees(res.data.data || []))
+      .catch(() => {})
+  }, [])
+
   const handleChange = (e) => {
     const { name, value } = e.target
 
@@ -682,7 +689,7 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
   }
 
   const addPaymentReceivedItem = () => {
-    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash', remark: '' }])
+    setPaymentReceived(prev => [...prev, { date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
   }
 
   const removePaymentReceivedItem = (index) => {
@@ -1652,15 +1659,27 @@ const IssueNewPermitModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber
                               <option value='UPI'>UPI</option>
                             </select>
                           </div>
-                          <div className='md:col-span-4'>
-                            <input
-                              type='text'
-                              placeholder='Notes (optional)'
-                              value={item.remark || ''}
-                              onChange={(e) => handlePaymentReceivedChange(index, 'remark', e.target.value)}
-                              className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm'
-                            />
+                          <div className='md:col-span-2'>
+                            <select
+                              value={item.receivedBy}
+                              onChange={(e) => handlePaymentReceivedChange(index, 'receivedBy', e.target.value)}
+                              className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-semibold bg-white'
+                            >
+                              <option value=''>Admin</option>
+                              {employees?.filter(e => e.isActive !== false).map(emp => (
+                                <option key={emp._id} value={emp.name}>{emp.name}</option>
+                              ))}
+                            </select>
                           </div>
+                            <div className='md:col-span-2'>
+                              <input
+                                type='text'
+                                placeholder='Notes (optional)'
+                                value={item.remark || ''}
+                                onChange={(e) => handlePaymentReceivedChange(index, 'remark', e.target.value)}
+                                className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm'
+                              />
+                            </div>
                           <div className='md:col-span-2 flex items-center justify-center'>
                             <button
                               type='button'

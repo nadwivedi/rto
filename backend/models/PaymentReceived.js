@@ -8,7 +8,8 @@ const paymentReceivedSchema = new Schema({
   date: { type: String, required: true },
   amount: { type: Number, required: true, min: 0 },
   paymentMode: { type: String, enum: ['Cash', 'Bank', 'UPI'], default: 'Cash' },
-  remark: { type: String, trim: true }
+  remark: { type: String, trim: true },
+  receivedBy: { type: String, trim: true, default: '' }
 }, { timestamps: true })
 
 paymentReceivedSchema.index({ workType: 1, workId: 1 })

@@ -10,3 +10,6 @@ export const replacePaymentsForWork = (workType, workId, payments) =>
 
 export const deletePayment = (id) =>
   axios.delete(`${API}/api/payment-received/${id}`, { withCredentials: true })
+
+export const getPaymentsReport = (params) =>
+  axios.get(`${API}/api/payment-received/report`, { params, withCredentials: true })
