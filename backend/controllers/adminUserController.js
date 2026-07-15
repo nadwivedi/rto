@@ -35,7 +35,7 @@ exports.getAllUsers = async (req, res) => {
     // Get users
     const users = await User.find(query)
       .select('-password')
-      .sort({ createdAt: -1 })
+      .sort({ isActive: -1, createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
 
