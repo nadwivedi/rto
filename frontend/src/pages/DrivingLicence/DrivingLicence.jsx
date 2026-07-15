@@ -415,7 +415,7 @@ const DrivingLicence = () => {
       }
     } catch (error) {
       console.error('Error submitting application:', error)
-      toast.error('Failed to submit application. Please try again.', { autoClose: 700 })
+      toast.error(error.response?.data?.message || 'Failed to submit application. Please try again.', { autoClose: 700 })
     }
   }
 
@@ -475,7 +475,7 @@ const DrivingLicence = () => {
       }
     } catch (error) {
       console.error('Error updating application:', error)
-      toast.error('Failed to update application. Please try again.', { autoClose: 700 })
+      toast.error(error.response?.data?.message || 'Failed to update application. Please try again.', { autoClose: 700 })
     }
   }
 

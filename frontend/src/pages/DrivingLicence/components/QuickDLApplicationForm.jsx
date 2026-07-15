@@ -759,7 +759,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
       }
     } catch (error) {
       console.error('Error submitting application:', error)
-      toast.error('Failed to save application. Please try again.')
+      toast.error(error.response?.data?.message || 'Failed to save application. Please try again.')
       return
     }
 

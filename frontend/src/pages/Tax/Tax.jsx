@@ -255,7 +255,7 @@ const Tax = () => {
       }
     } catch (error) {
       console.error("Error updating tax record:", error);
-      toast.error("Failed to update tax record.", {
+      toast.error(error.response?.data?.message || "Failed to update tax record.", {
         position: "top-right",
         autoClose: 3000,
       });
