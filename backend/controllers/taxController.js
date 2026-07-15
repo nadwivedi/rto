@@ -159,12 +159,12 @@ exports.createTax = async (req, res) => {
     }
 
     // Validate that paid amount can't be greater than total amount
-    if(paidAmount > totalAmount){
+    if(Number(paidAmount) > Number(totalAmount)){
       return res.status(400).json({success:false , message:'paid amount cannot be greater than total amount'})
     }
 
     // Validate that balance amount can't be negative
-    if(balanceAmount < 0){
+    if(Number(balanceAmount) < 0){
       return res.status(400).json({success:false , message:'balance amount cannot be negative'})
     }
 
@@ -256,7 +256,7 @@ exports.updateTax = async (req, res) => {
     const updatedBalanceAmount = balanceAmount !== undefined ? balanceAmount : tax.balanceAmount
 
     // Validate that paid amount can't be greater than total amount
-    if (updatedPaidAmount > updatedTotalAmount) {
+    if (Number(updatedPaidAmount) > Number(updatedTotalAmount)) {
       return res.status(400).json({
         success: false,
         message: 'Paid amount cannot be greater than total amount'
@@ -264,7 +264,7 @@ exports.updateTax = async (req, res) => {
     }
 
     // Validate that balance amount can't be negative
-    if (updatedBalanceAmount < 0) {
+    if (Number(updatedBalanceAmount) < 0) {
       return res.status(400).json({
         success: false,
         message: 'Balance amount cannot be negative'
