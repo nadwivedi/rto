@@ -53,7 +53,7 @@ exports.createInsurance = async (req, res) => {
     }
 
     // Validate that paid amount can't be greater than total amount
-    if (paid > totalFee) {
+    if (Number(paid) > Number(totalFee)) {
       return res.status(400).json({
         success: false,
         message: 'Paid amount cannot be greater than total fee'
@@ -61,7 +61,7 @@ exports.createInsurance = async (req, res) => {
     }
 
     // Validate that balance amount can't be negative
-    if (balance < 0) {
+    if (Number(balance) < 0) {
       return res.status(400).json({
         success: false,
         message: 'Balance amount cannot be negative'
@@ -694,7 +694,7 @@ exports.updateInsurance = async (req, res) => {
     const updatedBalance = balance !== undefined ? balance : insurance.balance
 
     // Validate that paid amount can't be greater than total amount
-    if (updatedPaid > updatedTotalFee) {
+    if (Number(updatedPaid) > Number(updatedTotalFee)) {
       return res.status(400).json({
         success: false,
         message: 'Paid amount cannot be greater than total fee'
@@ -702,7 +702,7 @@ exports.updateInsurance = async (req, res) => {
     }
 
     // Validate that balance amount can't be negative
-    if (updatedBalance < 0) {
+    if (Number(updatedBalance) < 0) {
       return res.status(400).json({
         success: false,
         message: 'Balance amount cannot be negative'

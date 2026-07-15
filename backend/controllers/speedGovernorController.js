@@ -59,11 +59,11 @@ exports.create = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Total fee, paid amount, and balance are required' })
     }
 
-    if (paid > totalFee) {
+    if (Number(paid) > Number(totalFee)) {
       return res.status(400).json({ success: false, message: 'Paid amount cannot be greater than total fee' })
     }
 
-    if (balance < 0) {
+    if (Number(balance) < 0) {
       return res.status(400).json({ success: false, message: 'Balance amount cannot be negative' })
     }
 
@@ -117,14 +117,14 @@ exports.update = async (req, res) => {
     const updatedPaid = paid !== undefined ? paid : record.paid
     const updatedBalance = balance !== undefined ? balance : record.balance
 
-    if (updatedPaid > updatedTotalFee) {
+    if (Number(updatedPaid) > Number(updatedTotalFee)) {
       return res.status(400).json({
         success: false,
         message: 'Paid amount cannot be greater than total fee'
       })
     }
 
-    if (updatedBalance < 0) {
+    if (Number(updatedBalance) < 0) {
       return res.status(400).json({
         success: false,
         message: 'Balance amount cannot be negative'
