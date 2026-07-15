@@ -5,6 +5,8 @@ import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import Pagination from "../../components/Pagination";
 import IssueTemporaryPermitModal from "./components/IssueTemporaryPermitModal";
+import { replacePaymentsForWork } from "../../utils/paymentReceivedApi";
+import { replaceExpensesForWork } from "../../utils/expenseBreakdownApi";
 import EditTemporaryPermitModal from "./components/EditTemporaryPermitModal";
 import AddButton from "../../components/AddButton";
 import SearchBar from "../../components/SearchBar";
@@ -540,6 +542,31 @@ const TemporaryPermit = () => {
         permitData,
         { withCredentials: true }
       );
+
+      // Save payment and expense breakdowns
+      const recordId = response.data.data?._id;
+      const paymentReceived = formData._paymentReceived || [];
+      const expenseItems = formData._expenseItems || [];
+
+      const validPayments = paymentReceived.filter(p => p.date && p.amount && parseFloat(p.amount) > 0);
+      if (validPayments.length > 0 && recordId) {
+        try {
+          await replacePaymentsForWork('TP', recordId, validPayments);
+        } catch (paymentErr) {
+          console.error('Failed to save payment received entries:', paymentErr);
+          toast.warn('Temporary Permit saved, but payment breakdown could not be saved.');
+        }
+      }
+
+      const validExpenses = expenseItems.filter(e => e.date && e.name && e.amount && parseFloat(e.amount) > 0);
+      if (recordId) {
+        try {
+          await replaceExpensesForWork('TP', recordId, validExpenses);
+        } catch (expErr) {
+          console.error('Failed to save expense entries:', expErr);
+          toast.warn('Temporary Permit saved, but expense breakdown could not be saved.');
+        }
+      }
 
       // Show success message
       toast.success("Temporary Permit added successfully!", {

@@ -3,7 +3,7 @@ const { Schema } = mongoose
 
 const expenseBreakdownSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  workType: { type: String, enum: ['DL', 'VT', 'NOC', 'RR', 'FITNESS', 'TAX', 'GPS', 'NP', 'CG', 'BP', 'TP', 'TPOS', 'PUC', 'HPA'], required: true },
+  workType: { type: String, enum: ['DL', 'VT', 'NOC', 'RR', 'FITNESS', 'TAX', 'GPS', 'NP', 'CG', 'BP', 'TP', 'TPOS', 'PUC', 'HPA', 'SPEED_GOVERNOR'], required: true },
   workId: { type: Schema.Types.ObjectId, required: true },
   date: { type: String, required: true },
   name: { type: String, required: true, trim: true },

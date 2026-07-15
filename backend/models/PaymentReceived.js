@@ -3,7 +3,7 @@ const { Schema } = mongoose
 
 const paymentReceivedSchema = new Schema({
   userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
-  workType: { type: String, enum: ['DL', 'VT', 'NOC', 'RR', 'HPA'], required: true },
+  workType: { type: String, enum: ['DL', 'VT', 'NOC', 'RR', 'HPA', 'FITNESS', 'TAX', 'GPS', 'NP', 'CG', 'TP', 'TPOS', 'PUC', 'SPEED_GOVERNOR'], required: true },
   workId: { type: Schema.Types.ObjectId, required: true },
   date: { type: String, required: true },
   amount: { type: Number, required: true, min: 0 },
