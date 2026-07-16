@@ -34,7 +34,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails, createRC } = req.body
 
     // Validate required fields
 
@@ -149,9 +149,9 @@ exports.createInsurance = async (req, res) => {
     const newInsurance = new Insurance(insuranceData)
     await newInsurance.save()
 
-    // Auto-create VehicleRegistration if it doesn't already exist
+    // Auto-create VehicleRegistration if it doesn't already exist (only if createRC is true)
     let vehicleAutoCreated = false
-    if (vehicleNumber) {
+    if (createRC && vehicleNumber) {
       try {
         const normalizedVehicleNumber = vehicleNumber.toUpperCase().trim()
         const existingVehicle = await VehicleRegistration.findOne({

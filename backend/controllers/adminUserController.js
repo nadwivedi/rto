@@ -226,7 +226,7 @@ exports.createUser = async (req, res) => {
       billDescription: billDescription && billDescription.trim() ? billDescription.trim() : undefined,
       password: hashedPassword,
       isActive: true,
-      features: features || { greenTax: false, professionalTax: false }
+      features: features || { greenTax: false, professionalTax: false, autoCreateRC: false }
     })
 
     await newUser.save()
@@ -350,7 +350,8 @@ exports.updateUser = async (req, res) => {
     if (features !== undefined) {
       user.features = {
         greenTax: features.greenTax === true,
-        professionalTax: features.professionalTax === true
+        professionalTax: features.professionalTax === true,
+        autoCreateRC: features.autoCreateRC === true
       }
     }
     if (subscriptionExpiresAt !== undefined) {

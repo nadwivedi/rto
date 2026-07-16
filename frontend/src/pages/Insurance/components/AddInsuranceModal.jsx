@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { useAuth } from '../../../context/AuthContext'
 import { getTodayDate as utilGetTodayDate, handleSmartDateInput } from '../../../utils/dateFormatter'
 import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck'
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
@@ -13,6 +14,10 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
   const getTodayDate = () => {
     return utilGetTodayDate()
   }
+
+  const { user } = useAuth()
+
+  const [createRC, setCreateRC] = useState(user?.features?.autoCreateRC === true)
 
   const [formData, setFormData] = useState({
     vehicleNumber: prefilledVehicleNumber,
@@ -145,8 +150,9 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       setIsManualValidTo(false)
       setActiveInsuranceCheck(null)
       setPolicyNumberCheck(null)
+      setCreateRC(user?.features?.autoCreateRC === true)
     }
-  }, [initialData, isOpen, prefilledVehicleNumber, prefilledOwnerName, prefilledMobileNumber])
+  }, [initialData, isOpen, prefilledVehicleNumber, prefilledOwnerName, prefilledMobileNumber, user])
 
   // Set prefilled values when modal opens (for quick add from vehicle registration)
   useEffect(() => {
@@ -1011,6 +1017,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       renewPremium: parseFloat(formData.renewPremium) || 0,
       commission: parseFloat(formData.commission) || 0,
       status: 'Active',
+      createRC,
       // RC details extracted from insurance document (used for auto-creating vehicle record)
       rcDetails: {
         chassisNumber: formData.chassisNumber || '',
@@ -1762,6 +1769,23 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
                     </svg>
                   </button>
+                </div>
+              )}
+
+              {/* Create RC Checkbox — only show for new insurance, not edit */}
+              {!isEditMode && (
+                <div className='mt-4 flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200'>
+                  <input
+                    type='checkbox'
+                    id='createRC'
+                    checked={createRC}
+                    onChange={(e) => setCreateRC(e.target.checked)}
+                    className='mt-0.5 w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer'
+                  />
+                  <label htmlFor='createRC' className='cursor-pointer'>
+                    <p className='text-sm font-semibold text-gray-800'>Create RC (Vehicle Registration) record</p>
+                    <p className='text-xs text-gray-500'>Auto-create a vehicle registration record from insurance RC details if vehicle does not exist</p>
+                  </label>
                 </div>
               )}
             </div>

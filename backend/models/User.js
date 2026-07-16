@@ -90,7 +90,8 @@ const userSchema = new mongoose.Schema({
   },
   features: {
     greenTax: { type: Boolean, default: false },
-    professionalTax: { type: Boolean, default: false }
+    professionalTax: { type: Boolean, default: false },
+    autoCreateRC: { type: Boolean, default: false }
   }
 }, {
   timestamps: true

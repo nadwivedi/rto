@@ -91,7 +91,8 @@ const Users = () => {
     monthlyPrice: '',
     password: '',
     features_greenTax: false,
-    features_professionalTax: false
+    features_professionalTax: false,
+    features_autoCreateRC: false
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -190,11 +191,13 @@ const Users = () => {
         ...formData,
         features: {
           greenTax: formData.features_greenTax,
-          professionalTax: formData.features_professionalTax
+          professionalTax: formData.features_professionalTax,
+          autoCreateRC: formData.features_autoCreateRC
         }
       }
       delete bodyData.features_greenTax
       delete bodyData.features_professionalTax
+      delete bodyData.features_autoCreateRC
       if (isEditMode && !formData.password) {
         delete bodyData.password
       }
@@ -213,7 +216,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false })
     fetchUsers()
       } else {
         setError(data.message || `Failed to ${isEditMode ? 'update' : 'create'} user`)
@@ -240,7 +243,8 @@ const Users = () => {
       monthlyPrice: user.monthlyPrice ?? '',
       password: '',
       features_greenTax: user.features?.greenTax ?? false,
-      features_professionalTax: user.features?.professionalTax ?? false
+      features_professionalTax: user.features?.professionalTax ?? false,
+      features_autoCreateRC: user.features?.autoCreateRC ?? false
     })
     setShowModal(true)
     setError('')
@@ -251,7 +255,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false })
   }
 
   const handleDelete = async (id) => {
@@ -934,6 +938,16 @@ const Users = () => {
                       className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
                     />
                     Professional Tax
+                  </label>
+                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      name='features_autoCreateRC'
+                      checked={formData.features_autoCreateRC}
+                      onChange={handleChange}
+                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                    />
+                    Auto Create RC
                   </label>
                 </div>
               </div>

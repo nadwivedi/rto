@@ -499,3 +499,36 @@ exports.changePassword = async (req, res) => {
     res.status(500).json({ success: false, message: 'An error occurred while changing password' })
   }
 }
+
+// Update user settings (features the user can control themselves)
+exports.updateSettings = async (req, res) => {
+  try {
+    const { features } = req.body
+
+    if (!features || typeof features !== 'object') {
+      return res.status(400).json({ success: false, message: 'Features object is required' })
+    }
+
+    const user = await User.findById(req.user.id)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    // Only allow updating user-controllable features
+    if (features.autoCreateRC !== undefined) {
+      user.features = user.features || {}
+      user.features.autoCreateRC = features.autoCreateRC === true
+    }
+
+    await user.save()
+
+    res.json({
+      success: true,
+      message: 'Settings updated successfully',
+      data: { features: user.features }
+    })
+  } catch (error) {
+    console.error('Update settings error:', error)
+    res.status(500).json({ success: false, message: 'An error occurred while updating settings' })
+  }
+}
