@@ -1392,6 +1392,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     <option value='PCV'>PCV</option>
                     <option value='PCV-3W'>PCV-3W</option>
                     <option value='Health'>Health</option>
+                    <option value='Hyva'>Hyva</option>
                     <option value='Life'>Life</option>
                     <option value='Fire'>Fire</option>
                     <option value='Burglary'>Burglary</option>
