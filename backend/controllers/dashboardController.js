@@ -120,6 +120,35 @@ exports.getDashboardData = async (req, res) => {
       TemporaryPermitOtherState.find({ userId, status: 'expiring_soon' }).sort({ validTo: 1 }),
     ]);
 
+    // Third-party insurance expiry — separate query because it's not based on status
+    const allInsuranceWithThirdParty = await Insurance.find({
+      userId,
+      thirdPartyValidTo: { $exists: true, $ne: '' }
+    }).lean()
+
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+
+    const thirtyDaysFromNow = new Date(today)
+    thirtyDaysFromNow.setDate(today.getDate() + 30)
+    thirtyDaysFromNow.setHours(23, 59, 59, 999)
+
+    const insuranceThirdPartyExpiring = allInsuranceWithThirdParty
+      .filter(r => {
+        if (!r.thirdPartyValidTo) return false
+        const parts = r.thirdPartyValidTo.split('-')
+        if (parts.length !== 3) return false
+        const expDate = new Date(parts[2], parts[1] - 1, parts[0])
+        return expDate >= today && expDate <= thirtyDaysFromNow
+      })
+      .sort((a, b) => {
+        const aParts = a.thirdPartyValidTo.split('-')
+        const bParts = b.thirdPartyValidTo.split('-')
+        const aDate = new Date(aParts[2], aParts[1] - 1, aParts[0])
+        const bDate = new Date(bParts[2], bParts[1] - 1, bParts[0])
+        return aDate - bDate
+      })
+
     const formatStats = (stats) => {
       const result = { total: 0, active: 0, expiringSoon: 0, expired: 0 };
       let total = 0;
@@ -159,6 +188,7 @@ exports.getDashboardData = async (req, res) => {
           nationalPermit: nationalPermitExpiring,
           cgPermit: cgPermitExpiring,
           insurance: insuranceExpiring,
+          insuranceThirdParty: insuranceThirdPartyExpiring,
           temporaryPermit: temporaryPermitExpiring,
           temporaryPermitOtherState: temporaryPermitOtherStateExpiring,
         },
