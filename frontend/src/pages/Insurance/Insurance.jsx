@@ -14,7 +14,7 @@ import { getTheme, getVehicleNumberDesign } from "../../context/ThemeContext";
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
-import { getStatusColor, getStatusText } from "../../utils/statusUtils";
+import { getStatusColor, getStatusText, getEffectiveStatus } from "../../utils/statusUtils";
 import { getVehicleNumberParts } from "../../utils/vehicleNoCheck";
 
 const Insurance = () => {
@@ -122,6 +122,8 @@ const Insurance = () => {
         "Mobile Number": item.mobileNumber,
         "Valid From": item.validFrom,
         "Valid To": item.validTo,
+        "TP Valid From": item.thirdPartyValidFrom || '',
+        "TP Valid To": item.thirdPartyValidTo || '',
         "Total Fee": item.totalFee || 0,
         "Paid": item.paid || 0,
         "Balance": item.balance || 0,
@@ -387,9 +389,13 @@ const Insurance = () => {
       message += `Policy Number: ${insurance.policyNumber}\n\n`;
     }
 
-    if (insurance.status === 'expiring_soon' || insurance.status === 'expired') {
-      const statusText = insurance.status === 'expired' ? 'has expired' : 'is going to expire';
-      message += `Your insurance ${statusText} on ${insurance.validTo}.\n`;
+    const effectiveStatus = getEffectiveStatus(insurance);
+    if (effectiveStatus === 'expiring_soon' || effectiveStatus === 'expired') {
+      const isThirdParty = effectiveStatus !== insurance.status;
+      const statusText = effectiveStatus === 'expired' ? 'has expired' : 'is going to expire';
+      const expiryField = isThirdParty ? 'Third Party Insurance' : 'Insurance';
+      const expiryDate = isThirdParty ? insurance.thirdPartyValidTo : insurance.validTo;
+      message += `Your ${expiryField} ${statusText} on ${expiryDate}.\n`;
       message += `Vehicle Number: ${insurance.vehicleNumber}\n`;
       message += `Policy Number: ${insurance.policyNumber}\n`;
       message += `Please renew your insurance at the earliest.\n\n`;
@@ -404,7 +410,8 @@ const Insurance = () => {
 
   // Determine if WhatsApp button should be shown
   const shouldShowWhatsAppButton = (insurance) => {
-    return (insurance.status === 'expiring_soon' || insurance.status === 'expired' || (insurance.balance || 0) > 0);
+    const effStatus = getEffectiveStatus(insurance);
+    return (effStatus === 'expiring_soon' || effStatus === 'expired' || (insurance.balance || 0) > 0);
   };
 
   // Handler to send insurance document via WhatsApp
@@ -783,10 +790,12 @@ const Insurance = () => {
                       showValidity: true,
                       customFields: [
                         {
-                          render: (record, { getStatusColor, getStatusText }) => (
+                          render: (record, { getStatusColor, getStatusText }) => {
+                            const effStatus = getEffectiveStatus(record);
+                            return (
                             <div className='flex items-center justify-between gap-2 pb-2.5 border-b border-gray-100'>
-                              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${getStatusColor(record.status)}`}>
-                                {getStatusText(record.status)}
+                              <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap ${getStatusColor(effStatus)}`}>
+                                {getStatusText(effStatus)}
                               </span>
                               <div className='flex items-center gap-1.5'>
                                 <svg className='w-3.5 h-3.5 text-indigo-600 flex-shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -795,13 +804,23 @@ const Insurance = () => {
                                 <span className='text-xs font-medium text-gray-700'>{record.policyNumber}</span>
                               </div>
                             </div>
-                          ),
+                            );
+                          },
                         },
                         {
                           render: (record) => record.productType ? (
                             <div className='flex items-center gap-2 pt-2'>
                               <span className='inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200'>
                                 {record.productType}
+                              </span>
+                            </div>
+                          ) : null,
+                        },
+                        {
+                          render: (record) => record.thirdPartyValidTo ? (
+                            <div className='flex items-center gap-2 pt-2'>
+                              <span className='inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-purple-100 text-purple-700 border border-purple-200'>
+                                TP: {record.thirdPartyValidFrom || '—'} → {record.thirdPartyValidTo}
                               </span>
                             </div>
                           ) : null,
@@ -958,8 +977,8 @@ const Insurance = () => {
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
                           Validity
                         </th>
-                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider">
-                          Product
+                        <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-left text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider bg-purple-900/30">
+                          TP Validity
                         </th>
                         <th className="px-4 2xl:px-6 py-3 2xl:py-4 text-center text-[10px] 2xl:text-xs font-bold text-white uppercase tracking-wider bg-white/10">
                           Payment
@@ -1032,15 +1051,22 @@ const Insurance = () => {
 
                             {/* Insurance Company Column */}
                             <td className='px-4 2xl:px-6 py-3 2xl:py-5'>
-                              <div className='flex items-center gap-1.5'>
-                                <div className='bg-blue-100 p-1 rounded-md'>
-                                  <svg className='w-3 h-3 text-blue-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' />
-                                  </svg>
+                              <div className='flex flex-col gap-1'>
+                                <div className='flex items-center gap-1.5'>
+                                  <div className='bg-blue-100 p-1 rounded-md'>
+                                    <svg className='w-3 h-3 text-blue-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4' />
+                                    </svg>
+                                  </div>
+                                  <span className='text-[10px] 2xl:text-[12px] font-medium text-gray-600 truncate max-w-[110px]'>
+                                    {insurance.insuranceCompany || 'N/A'}
+                                  </span>
                                 </div>
-                                <span className='text-[10px] 2xl:text-[12px] font-medium text-gray-600 truncate max-w-[110px]'>
-                                  {insurance.insuranceCompany || 'N/A'}
-                                </span>
+                                {insurance.productType && (
+                                  <span className='inline-flex items-center px-2 py-0.5 rounded-md text-[9px] 2xl:text-[10px] font-bold bg-indigo-100 text-indigo-700 border border-indigo-200 w-fit'>
+                                    {insurance.productType}
+                                  </span>
+                                )}
                               </div>
                             </td>
 
@@ -1061,11 +1087,26 @@ const Insurance = () => {
                                 </span>
                               </div>
                             </td>
-                            {/* Product Type */}
-                            <td className="px-4 2xl:px-6 py-3 2xl:py-5">
-                              <span className='inline-flex items-center px-2.5 py-1 rounded-full text-[10px] 2xl:text-xs font-bold bg-indigo-100 text-indigo-700 border border-indigo-200'>
-                                {insurance.productType || 'N/A'}
-                              </span>
+                            {/* TP Validity (purple) */}
+                            <td className="px-4 2xl:px-6 py-3 2xl:py-5 whitespace-nowrap">
+                              {insurance.thirdPartyValidTo ? (
+                                <div className="flex flex-col text-[11px] 2xl:text-[13px]">
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-t-lg bg-purple-50 text-purple-700 font-semibold border border-purple-200 whitespace-nowrap">
+                                    <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                                    </svg>
+                                    {insurance.thirdPartyValidFrom || '—'}
+                                  </span>
+                                  <span className="inline-flex items-center px-2 py-0.5 rounded-b-lg bg-purple-50 text-purple-700 font-semibold border border-purple-200 whitespace-nowrap -mt-px">
+                                    <svg className="w-3 h-3 2xl:w-3.5 2xl:h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                                    </svg>
+                                    {insurance.thirdPartyValidTo}
+                                  </span>
+                                </div>
+                              ) : (
+                                <span className="text-[11px] 2xl:text-[13px] text-gray-400">—</span>
+                              )}
                             </td>
                             {/* Payment (Total / Paid / Balance) */}
                             <td className="px-4 py-3 2xl:py-4 bg-gray-50/50 group-hover:bg-purple-50/30">
@@ -1094,10 +1135,10 @@ const Insurance = () => {
                               <div className="flex items-center justify-center">
                                 <span
                                   className={`px-2 py-1 2xl:px-3 2xl:py-1.5 rounded-full text-[10px] 2xl:text-xs font-bold ${getStatusColor(
-                                    insurance.status
+                                    getEffectiveStatus(insurance)
                                   )}`}
                                 >
-                                  {getStatusText(insurance.status)}
+                                  {getStatusText(getEffectiveStatus(insurance))}
                                 </span>
                               </div>
                             </td>

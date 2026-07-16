@@ -407,30 +407,47 @@ exports.getExpiringSoonInsurance = async (req, res) => {
     const vehiclesWithActiveInsurance = await Insurance.find({ status: 'active', userId: req.user.id })
       .distinct('vehicleNumber')
 
-    const query = {
-      status: 'expiring_soon',
-      vehicleNumber: { $nin: vehiclesWithActiveInsurance },
-      userId: req.user.id
-    }
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+
+    const thirtyDaysFromNow = new Date(today)
+    thirtyDaysFromNow.setUTCDate(today.getUTCDate() + 30)
+    thirtyDaysFromNow.setUTCHours(23, 59, 59, 999)
+
+    const conditions = [
+      { userId: req.user.id },
+      { vehicleNumber: { $nin: vehiclesWithActiveInsurance } },
+      {
+        $or: [
+          { status: 'expiring_soon' },
+          {
+            thirdPartyValidTo: { $ne: '' },
+            $expr: {
+              $and: [
+                { $gte: [{ $dateFromString: { dateString: '$thirdPartyValidTo', format: '%d-%m-%Y' } }, today] },
+                { $lte: [{ $dateFromString: { dateString: '$thirdPartyValidTo', format: '%d-%m-%Y' } }, thirtyDaysFromNow] }
+              ]
+            }
+          }
+        ]
+      }
+    ]
 
     if (product) {
-      query.productType = product
+      conditions.push({ productType: product })
     }
 
     if (search) {
-      query.$and = [
-        { vehicleNumber: { $nin: vehiclesWithActiveInsurance } },
-        {
-          $or: [
-            { policyNumber: { $regex: search, $options: 'i' } },
-            { vehicleNumber: { $regex: search, $options: 'i' } },
-            { mobileNumber: { $regex: search, $options: 'i' } }
-          ]
-        }
-      ]
-      delete query.vehicleNumber
+      conditions.push({
+        $or: [
+          { policyNumber: { $regex: search, $options: 'i' } },
+          { vehicleNumber: { $regex: search, $options: 'i' } },
+          { mobileNumber: { $regex: search, $options: 'i' } }
+        ]
+      })
     }
 
+    const query = { $and: conditions }
     const skip = (parseInt(page) - 1) * parseInt(limit)
 
     const sortOptions = {}
@@ -473,30 +490,40 @@ exports.getExpiredInsurance = async (req, res) => {
     const vehiclesWithActiveInsurance = await Insurance.find({ status: 'active', userId: req.user.id })
       .distinct('vehicleNumber')
 
-    const query = {
-      status: 'expired',
-      vehicleNumber: { $nin: vehiclesWithActiveInsurance },
-      userId: req.user.id
-    }
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+
+    const conditions = [
+      { userId: req.user.id },
+      { vehicleNumber: { $nin: vehiclesWithActiveInsurance } },
+      {
+        $or: [
+          { status: 'expired' },
+          {
+            thirdPartyValidTo: { $ne: '' },
+            $expr: {
+              $lt: [{ $dateFromString: { dateString: '$thirdPartyValidTo', format: '%d-%m-%Y' } }, today]
+            }
+          }
+        ]
+      }
+    ]
 
     if (product) {
-      query.productType = product
+      conditions.push({ productType: product })
     }
 
     if (search) {
-      query.$and = [
-        { vehicleNumber: { $nin: vehiclesWithActiveInsurance } },
-        {
-          $or: [
-            { policyNumber: { $regex: search, $options: 'i' } },
-            { vehicleNumber: { $regex: search, $options: 'i' } },
-            { mobileNumber: { $regex: search, $options: 'i' } }
-          ]
-        }
-      ]
-      delete query.vehicleNumber
+      conditions.push({
+        $or: [
+          { policyNumber: { $regex: search, $options: 'i' } },
+          { vehicleNumber: { $regex: search, $options: 'i' } },
+          { mobileNumber: { $regex: search, $options: 'i' } }
+        ]
+      })
     }
 
+    const query = { $and: conditions }
     const skip = (parseInt(page) - 1) * parseInt(limit)
 
     const sortOptions = {}
@@ -896,16 +923,42 @@ exports.getStatistics = async (req, res) => {
     const vehiclesWithActiveInsurance = await Insurance.find({ status: 'active', userId: req.user.id })
       .distinct('vehicleNumber')
 
+    const today = new Date()
+    today.setUTCHours(0, 0, 0, 0)
+
+    const thirtyDaysFromNow = new Date(today)
+    thirtyDaysFromNow.setUTCDate(today.getUTCDate() + 30)
+    thirtyDaysFromNow.setUTCHours(23, 59, 59, 999)
+
     const expiringSoonInsurance = await Insurance.countDocuments({
-      status: 'expiring_soon',
+      userId: req.user.id,
       vehicleNumber: { $nin: vehiclesWithActiveInsurance },
-      userId: req.user.id
+      $or: [
+        { status: 'expiring_soon' },
+        {
+          thirdPartyValidTo: { $ne: '' },
+          $expr: {
+            $and: [
+              { $gte: [{ $dateFromString: { dateString: '$thirdPartyValidTo', format: '%d-%m-%Y' } }, today] },
+              { $lte: [{ $dateFromString: { dateString: '$thirdPartyValidTo', format: '%d-%m-%Y' } }, thirtyDaysFromNow] }
+            ]
+          }
+        }
+      ]
     })
 
     const expiredInsurance = await Insurance.countDocuments({
-      status: 'expired',
+      userId: req.user.id,
       vehicleNumber: { $nin: vehiclesWithActiveInsurance },
-      userId: req.user.id
+      $or: [
+        { status: 'expired' },
+        {
+          thirdPartyValidTo: { $ne: '' },
+          $expr: {
+            $lt: [{ $dateFromString: { dateString: '$thirdPartyValidTo', format: '%d-%m-%Y' } }, today]
+          }
+        }
+      ]
     })
 
     const cancelledInsurance = await Insurance.countDocuments({ status: 'cancelled', userId: req.user.id })
