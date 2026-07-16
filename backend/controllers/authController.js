@@ -515,9 +515,12 @@ exports.updateSettings = async (req, res) => {
     }
 
     // Only allow updating user-controllable features
+    user.features = user.features || {}
     if (features.autoCreateRC !== undefined) {
-      user.features = user.features || {}
       user.features.autoCreateRC = features.autoCreateRC === true
+    }
+    if (features.expandAdditionalDetails !== undefined) {
+      user.features.expandAdditionalDetails = features.expandAdditionalDetails === true
     }
 
     await user.save()

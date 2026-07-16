@@ -8,10 +8,12 @@ import { replaceExpensesForWork, getExpensesByWork } from '../../../utils/expens
 import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
 import { getDefaultExpensesApi } from '../../../utils/defaultExpenseSettingsApi'
 import LicenseClassDropdown from '../../../components/LicenseClassDropdown'
+import { useAuth } from '../../../context/AuthContext'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
 const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
+  const { user } = useAuth()
   // Get current date in DD-MM-YYYY format
   const getCurrentDate = () => {
     const today = new Date()
@@ -83,7 +85,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
   const [scanningFile, setScanningFile] = useState(null)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
   const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }])
-  const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(user?.features?.expandAdditionalDetails === true)
 
   // Date of Birth state
   const [dobDay, setDobDay] = useState('')

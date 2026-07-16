@@ -17,6 +17,9 @@ const Setting = () => {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPasswords, setShowPasswords] = useState(false)
 
+  const [expandDetails, setExpandDetails] = useState(user?.features?.expandAdditionalDetails === true)
+  const [autoCreateRC, setAutoCreateRC] = useState(user?.features?.autoCreateRC === true)
+
   const themes = getAllThemes()
   const currentTheme = localStorage.getItem('theme') || 'theme1'
 
@@ -245,10 +248,19 @@ const Setting = () => {
                 <input
                   type='checkbox'
                   className='sr-only peer'
-                  checked={localStorage.getItem('expandAdditionalDetails') === 'yes'}
-                  onChange={(e) => {
-                    localStorage.setItem('expandAdditionalDetails', e.target.checked ? 'yes' : 'no')
-                    window.location.reload()
+                  checked={expandDetails}
+                  onChange={async (e) => {
+                    const next = e.target.checked
+                    setExpandDetails(next)
+                    try {
+                      await axios.patch(`${API_URL}/api/auth/settings`, {
+                        features: { expandAdditionalDetails: next }
+                      }, { withCredentials: true })
+                      toast.success(`Expand Details ${next ? 'enabled' : 'disabled'}`)
+                    } catch {
+                      setExpandDetails(!next)
+                      toast.error('Failed to update setting')
+                    }
                   }}
                 />
                 <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-orange-300 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-orange-600"></div>
@@ -264,16 +276,17 @@ const Setting = () => {
                 <input
                   type='checkbox'
                   className='sr-only peer'
-                  checked={user?.features?.autoCreateRC === true}
+                  checked={autoCreateRC}
                   onChange={async (e) => {
+                    const next = e.target.checked
+                    setAutoCreateRC(next)
                     try {
-                      const res = await axios.patch(`${API_URL}/api/auth/settings`, {
-                        features: { autoCreateRC: e.target.checked }
+                      await axios.patch(`${API_URL}/api/auth/settings`, {
+                        features: { autoCreateRC: next }
                       }, { withCredentials: true })
-                      if (res.data.success) {
-                        toast.success(`Auto Create RC ${e.target.checked ? 'enabled' : 'disabled'}`)
-                      }
-                    } catch (err) {
+                      toast.success(`Auto Create RC ${next ? 'enabled' : 'disabled'}`)
+                    } catch {
+                      setAutoCreateRC(!next)
                       toast.error('Failed to update setting')
                     }
                   }}

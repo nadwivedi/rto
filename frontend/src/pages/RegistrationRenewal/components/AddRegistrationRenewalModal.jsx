@@ -8,10 +8,12 @@ import { replacePaymentsForWork, getPaymentsByWork } from '../../../utils/paymen
 import { replaceExpensesForWork, getExpensesByWork } from '../../../utils/expenseBreakdownApi'
 import DefaultExpenseSettingsModal from '../../../components/DefaultExpenseSettingsModal'
 import { getDefaultExpensesApi } from '../../../utils/defaultExpenseSettingsApi'
+import { useAuth } from '../../../context/AuthContext'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
 
 const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) => {
+  const { user } = useAuth()
   const [formData, setFormData] = useState({
     vehicleNumber: '',
     ownerName: '',
@@ -38,7 +40,7 @@ const AddRegistrationRenewalModal = ({ isOpen, onClose, onSuccess, editData }) =
   const [vehicleValidation, setVehicleValidation] = useState({ isValid: false, message: '' })
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
-  const [showAdditionalDetails, setShowAdditionalDetails] = useState(localStorage.getItem('expandAdditionalDetails') === 'yes')
+  const [showAdditionalDetails, setShowAdditionalDetails] = useState(user?.features?.expandAdditionalDetails === true)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }])
   const [employees, setEmployees] = useState([])
