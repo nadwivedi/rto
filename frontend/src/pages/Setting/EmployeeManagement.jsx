@@ -81,6 +81,9 @@ const EmployeeManagement = () => {
           [secKey]: checked
         }
       })
+    } else if (name === 'mobile') {
+      const digits = value.replace(/\D/g, '').slice(0, 10)
+      setFormData({ ...formData, mobile: digits })
     } else {
       setFormData({
         ...formData,
@@ -307,7 +310,7 @@ const EmployeeManagement = () => {
                 </div>
                 <div>
                   <label className='block text-sm font-semibold text-gray-700 mb-1'>Mobile Number *</label>
-                  <input type='text' name='mobile' value={formData.mobile} onChange={handleInputChange} required className='w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 text-sm' />
+                  <input type='text' name='mobile' value={formData.mobile} onChange={handleInputChange} maxLength={10} required className='w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-teal-500 text-sm' />
                 </div>
                 <div>
                   <label className='block text-sm font-semibold text-gray-700 mb-1'>Password {editingId && '(Leave blank to keep current)'}</label>
