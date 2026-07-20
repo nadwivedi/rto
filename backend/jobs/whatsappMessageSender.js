@@ -34,13 +34,13 @@ const processPendingMessagesForUser = async (userId) => {
         const startOfDay = new Date()
         startOfDay.setHours(0, 0, 0, 0)
 
-        // Reset today's failed messages back to pending for retry on connection issues
+        // Reset today's failed messages back to pending for retry on transient connection issues
         const resetResult = await MessageLog.updateMany(
             {
                 userId: uid,
                 status: 'failed',
                 createdAt: { $gte: startOfDay },
-                errorReason: { $regex: /not initialized|paused|State: null|State: undefined|not found.*@lid|not found @lid/i }
+                errorReason: { $regex: /not initialized|paused|State: null|State: undefined|not found.*@lid|not found @lid|not ready|will retry|connection lost/i }
             },
             { $set: { status: 'pending', errorReason: null, scheduledFor: new Date() } }
         )
@@ -56,11 +56,10 @@ const processPendingMessagesForUser = async (userId) => {
         })
 
         if (sentTodayCount >= maxPerDay) {
-            console.log(`[WHATSAPP-SENDER:${uid}] Daily limit reached (${sentTodayCount}/${maxPerDay}). Closing session for the rest of the day.`)
-            // Terminate session gracefully & prevent any new spawns inherently
-            if (whatsappService.isClientConnected(uid)) {
-                await whatsappService.destroySession(uid, false) // false = don't set manual stop flag, just kill RAM
-            }
+            console.log(`[WHATSAPP-SENDER:${uid}] Daily limit reached (${sentTodayCount}/${maxPerDay}). Skipping until tomorrow.`)
+            // Don't destroy session here — if the user is actively connected, let the idle
+            // timer handle cleanup naturally. Forcing a destroy here causes unnecessary
+            // cold-starts on the next cron tick.
             return
         }
 
@@ -78,9 +77,7 @@ const processPendingMessagesForUser = async (userId) => {
 
         if (sentThisHourCount >= maxPerHour) {
             console.log(`[WHATSAPP-SENDER:${uid}] Hourly limit reached (${sentThisHourCount}/${maxPerHour}). Waiting for next hour.`)
-            if (whatsappService.isClientConnected(uid)) {
-                await whatsappService.destroySession(uid, false)
-            }
+            // Same as daily limit — let idle timer handle cleanup, don't force destroy.
             return
         }
 
@@ -120,11 +117,10 @@ const processPendingMessagesForUser = async (userId) => {
             }
         }
         
-        // Immediately close session to free RAM as requested
-        if (whatsappService.isClientConnected(uid)) {
-            console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. Closing session immediately to free RAM.`)
-            await whatsappService.destroySession(uid, false)
-        }
+        // Session stays alive after the batch — the 15-min idle timer in whatsappService
+        // will kill the browser when no more sends happen, preserving RAM without forcing
+        // cold-starts on every cron tick.
+        console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. Session kept warm — idle timer will clean up.`)
     } catch (error) {
         console.error(`[WHATSAPP-SENDER:${userId}] Error in message sender:`, error)
     }

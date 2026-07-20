@@ -1,11 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useCallback } from 'react'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
-// Real WhatsApp QR codes expire roughly every 20-60s. If ours hasn't changed within this
-// window, force a fresh one instead of waiting on the backend's 30-min idle cleanup.
+
+// Real WhatsApp QR codes expire roughly every 20-60s.
+// If ours hasn't changed within this window, force a fresh one.
 const QR_SAFETY_REFRESH_MS = 45000
+
+// If status stays "initializing" (no QR, no connected) for this long, show a warning + retry.
+const STUCK_INIT_WARN_MS = 60000
 
 const statusConfig = {
   authenticated: {
@@ -48,21 +52,25 @@ const WhatsApp = () => {
   const [bulkDeleting, setBulkDeleting] = useState(false)
   const [dailyLimit, setDailyLimit] = useState(25)
   const [qrSecondsLeft, setQrSecondsLeft] = useState(null)
+  const [initElapsed, setInitElapsed] = useState(0)  // seconds spent in initializing/preparing
+  const [initStuck, setInitStuck] = useState(false)  // true when init has taken too long
 
   // Guards a single auto-start attempt per disconnected episode so we don't spam /start.
   const autoStartRef = useRef(false)
   // Tracks the currently-shown QR image so we can detect when a new one arrives vs. going stale.
   const lastQrRef = useRef(null)
   const qrGeneratedAtRef = useRef(null)
+  // Tracks when the current "initializing/preparing" phase started
+  const initStartedAtRef = useRef(null)
 
-  const fetchStatus = async () => {
+  const fetchStatus = useCallback(async () => {
     try {
       const res = await axios.get(`${API_URL}/api/whatsapp/status`, { withCredentials: true })
       setStatusInfo(res.data)
     } catch (error) {
       console.error('[WhatsApp] Status fetch error:', error)
     }
-  }
+  }, [])
 
   const fetchLogs = async (currentPage = page) => {
     try {
@@ -98,7 +106,7 @@ const WhatsApp = () => {
     }
   }
 
-  // Dynamic polling: 400ms while connecting/scanning QR, 5s otherwise
+  // Initial load
   useEffect(() => {
     const init = async () => {
       await fetchStatus()
@@ -109,39 +117,41 @@ const WhatsApp = () => {
     init()
   }, [])
 
+  // Dynamic polling: fast while connecting/scanning, slow otherwise
   useEffect(() => {
     const currentStatus = statusInfo?.status || 'disconnected'
     const isActivelyConnecting = ['qr_ready', 'initializing'].includes(currentStatus)
-    const intervalMs = isActivelyConnecting ? 400 : 5000
+    // Also poll faster when DB says initializing but browser is actively launching
+    const browserLaunching = statusInfo?.isInitializing
+    const intervalMs = (isActivelyConnecting || browserLaunching) ? 1000 : 5000
 
     const interval = setInterval(fetchStatus, intervalMs)
     return () => clearInterval(interval)
-  }, [statusInfo?.status])
+  }, [statusInfo?.status, statusInfo?.isInitializing])
 
-  // Auto-start the session (and thus the QR scanner) the moment the page shows a
-  // disconnected/failed session — unless the user deliberately stopped or logged out.
-  // Also recovers automatically when a QR expires (backend flips it to disconnected).
+  // Auto-start the session when disconnected (unless user explicitly stopped it).
+  // Debounced by 1.2s so a previous destroy() has time to clean up Chrome lock files.
   useEffect(() => {
     if (!statusInfo) return
     const s = statusInfo.status
 
-    // Session is alive or coming up — nothing to do, and re-arm the guard so a future
-    // disconnect (e.g. expired QR) triggers a fresh auto-start.
     if (['authenticated', 'qr_ready', 'initializing'].includes(s)) {
       autoStartRef.current = false
       return
     }
 
-    // User intentionally stopped or logged out — respect that, don't reconnect on them.
     if (statusInfo.isStopped) return
-
     if (autoStartRef.current || actionBusy) return
     autoStartRef.current = true
 
-    axios
-      .post(`${API_URL}/api/whatsapp/start`, {}, { withCredentials: true })
-      .then(() => fetchStatus())
-      .catch((err) => console.error('[WhatsApp] Auto-start failed:', err))
+    const timer = setTimeout(() => {
+      axios
+        .post(`${API_URL}/api/whatsapp/start`, {}, { withCredentials: true })
+        .then(() => fetchStatus())
+        .catch((err) => console.error('[WhatsApp] Auto-start failed:', err))
+    }, 1200)
+
+    return () => clearTimeout(timer)
   }, [statusInfo?.status, statusInfo?.isStopped])
 
   const doAction = async (action, successMsg, silent = false) => {
@@ -157,15 +167,54 @@ const WhatsApp = () => {
     }
   }
 
-  // Live QR countdown + safety-net auto-renew: WhatsApp's real QR expires every ~20-60s.
-  // Normally whatsapp-web.js re-emits a fresh 'qr' and our fast polling picks it up for free.
-  // If that doesn't happen (known flakiness in headless mode), force a renew before the user notices.
+  // Track when initializing/preparing phase starts so we can show elapsed time + detect stuck
+  useEffect(() => {
+    const s = statusInfo?.status || 'disconnected'
+    const isConnecting = s === 'initializing' || (s === 'disconnected' && !statusInfo?.isStopped)
+
+    if (isConnecting) {
+      if (!initStartedAtRef.current) {
+        initStartedAtRef.current = Date.now()
+        setInitElapsed(0)
+        setInitStuck(false)
+      }
+    } else {
+      initStartedAtRef.current = null
+      setInitElapsed(0)
+      setInitStuck(false)
+    }
+  }, [statusInfo?.status, statusInfo?.isStopped])
+
+  // Elapsed timer tick — updates every second while in connecting/preparing phase
+  useEffect(() => {
+    const s = statusInfo?.status || 'disconnected'
+    const isConnecting = s === 'initializing' || (s === 'disconnected' && !statusInfo?.isStopped)
+
+    if (!isConnecting) return
+
+    const tick = setInterval(() => {
+      if (!initStartedAtRef.current) return
+      const elapsed = Math.floor((Date.now() - initStartedAtRef.current) / 1000)
+      setInitElapsed(elapsed)
+      if (elapsed * 1000 >= STUCK_INIT_WARN_MS) {
+        setInitStuck(true)
+      }
+    }, 1000)
+
+    return () => clearInterval(tick)
+  }, [statusInfo?.status, statusInfo?.isStopped])
+
+  // QR tracking — detect new vs. stale QR images
   useEffect(() => {
     const qr = statusInfo?.qrCodeDataUrl
     if (statusInfo?.status === 'qr_ready' && qr) {
       if (lastQrRef.current !== qr) {
         lastQrRef.current = qr
         qrGeneratedAtRef.current = Date.now()
+        // QR appeared — reset stuck/elapsed state since we're no longer stuck
+        setInitStuck(false)
+        initStartedAtRef.current = null
+        setInitElapsed(0)
       }
     } else {
       lastQrRef.current = null
@@ -174,13 +223,12 @@ const WhatsApp = () => {
     }
   }, [statusInfo?.status, statusInfo?.qrCodeDataUrl])
 
+  // Live QR countdown + safety-net auto-renew
   useEffect(() => {
     if (statusInfo?.status !== 'qr_ready') return
 
     const tick = () => {
       if (!qrGeneratedAtRef.current) return
-      // Don't force a Chrome relaunch for a QR nobody's looking at — freeze the countdown
-      // while the tab is backgrounded, and only judge staleness once it's visible again.
       if (document.hidden) return
       const elapsed = Date.now() - qrGeneratedAtRef.current
       const left = Math.max(0, Math.ceil((QR_SAFETY_REFRESH_MS - elapsed) / 1000))
@@ -236,6 +284,7 @@ const WhatsApp = () => {
   const config = statusConfig[currentStatus] || statusConfig.disconnected
   const isConnected = currentStatus === 'authenticated'
   const isRunning = ['authenticated', 'initializing', 'qr_ready'].includes(currentStatus)
+  const isPreparingScanner = !isRunning && !statusInfo?.isStopped  // disconnected but auto-starting
 
   const filteredLogs = logs.filter((log) => statusFilter === 'all' || log.status === statusFilter)
   const allVisibleSelected = filteredLogs.length > 0 && filteredLogs.every((log) => selectedIds.includes(log._id))
@@ -247,6 +296,12 @@ const WhatsApp = () => {
     } else {
       setSelectedIds((prev) => [...new Set([...prev, ...filteredLogs.map((log) => log._id)])])
     }
+  }
+
+  // Format elapsed seconds as "12s" or "1m 23s"
+  const formatElapsed = (secs) => {
+    if (secs < 60) return `${secs}s`
+    return `${Math.floor(secs / 60)}m ${secs % 60}s`
   }
 
   return (
@@ -315,33 +370,76 @@ const WhatsApp = () => {
             </div>
           )}
 
+          {/* Verifying session — after QR scan, before ready */}
+          {currentStatus === 'authenticated' && statusInfo?.isInitializing && (
+            <div className='flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg'>
+              <div className='w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
+              <div>
+                <p className='text-sm text-green-800 font-semibold'>Verifying session...</p>
+                <p className='text-xs text-green-500'>WhatsApp confirmed — loading your chats</p>
+              </div>
+            </div>
+          )}
+
           {/* Initializing spinner */}
-          {currentStatus === 'initializing' && (
+          {currentStatus === 'initializing' && !initStuck && (
             <div className='flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
               <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
               <div>
-                <p className='text-sm text-blue-800 font-semibold'>Connecting to WhatsApp...</p>
+                <p className='text-sm text-blue-800 font-semibold'>
+                  Connecting to WhatsApp...
+                  {initElapsed > 0 && (
+                    <span className='ml-1 text-blue-400 font-normal text-xs'>{formatElapsed(initElapsed)}</span>
+                  )}
+                </p>
                 <p className='text-xs text-blue-500'>If you scanned QR, please wait a moment</p>
               </div>
             </div>
           )}
 
-          {/* Error */}
-          {statusInfo?.lastError && !isConnected && (
-            <div className='p-3 bg-red-50 text-red-700 text-xs rounded-lg border border-red-200'>
-              <strong>Error:</strong> {statusInfo.lastError}
-            </div>
-          )}
-
-          {/* Auto-preparing scanner: shown when disconnected but NOT intentionally stopped,
-              i.e. the session is auto-starting in the background to fetch a QR. */}
-          {!isRunning && !statusInfo?.isStopped && (
+          {/* Preparing scanner spinner (disconnected, auto-starting) */}
+          {isPreparingScanner && !initStuck && (
             <div className='flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
               <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
               <div>
-                <p className='text-sm text-blue-800 font-semibold'>Preparing WhatsApp scanner...</p>
+                <p className='text-sm text-blue-800 font-semibold'>
+                  Preparing WhatsApp scanner...
+                  {initElapsed > 5 && (
+                    <span className='ml-1 text-blue-400 font-normal text-xs'>{formatElapsed(initElapsed)}</span>
+                  )}
+                </p>
                 <p className='text-xs text-blue-500'>Your QR code will appear here in a moment</p>
               </div>
+            </div>
+          )}
+
+          {/* Stuck init warning */}
+          {initStuck && (currentStatus === 'initializing' || isPreparingScanner) && (
+            <div className='p-3 bg-amber-50 border border-amber-200 rounded-lg'>
+              <p className='text-sm text-amber-800 font-semibold mb-1'>⚠️ Taking longer than expected</p>
+              <p className='text-xs text-amber-600 mb-2'>
+                Connection has been running for {formatElapsed(initElapsed)}. Chrome may need a restart.
+              </p>
+              <button
+                onClick={() => {
+                  setInitStuck(false)
+                  initStartedAtRef.current = null
+                  setInitElapsed(0)
+                  autoStartRef.current = false
+                  doAction('renew-qr', 'Retrying connection...', true).then(() => fetchStatus())
+                }}
+                disabled={!!actionBusy}
+                className='w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition'
+              >
+                🔄 Retry Connection
+              </button>
+            </div>
+          )}
+
+          {/* Error */}
+          {statusInfo?.lastError && !isConnected && currentStatus !== 'initializing' && !isPreparingScanner && (
+            <div className='p-3 bg-red-50 text-red-700 text-xs rounded-lg border border-red-200'>
+              <strong>Error:</strong> {statusInfo.lastError}
             </div>
           )}
 

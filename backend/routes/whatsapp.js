@@ -9,9 +9,6 @@ router.get('/status', async (req, res) => {
     const userId = req.user.id
     const session = await whatsappService.getSessionStatus(userId)
 
-    // With the new low-memory architecture, the client might purposely be null (sleeping)
-    // We do NOT auto-restore here to save RAM. It will auto-restore on the next send request.
-
     // Signals "someone is actually looking at the QR page right now" — keeps the pending
     // handshake alive while polled, so it only gets torn down after real inactivity.
     whatsappService.touchPoll(userId)
@@ -19,12 +16,14 @@ router.get('/status', async (req, res) => {
     res.json({
       ...(session ? session.toObject() : {}),
       isStopped: whatsappService.isClientStopped(userId),
-      clientActive: whatsappService.isClientConnected(userId)
+      clientActive: whatsappService.isClientConnected(userId),
+      isInitializing: whatsappService.getIsInitializing(userId) // true while browser is actually launching
     })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 })
+
 
 // POST Start/resume session (will use saved auth if available — no QR needed)
 router.post('/start', async (req, res) => {
