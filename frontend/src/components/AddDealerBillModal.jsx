@@ -18,18 +18,43 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [userInfo, setUserInfo] = useState(null)
+  const [parties, setParties] = useState([])
+  const [showPartySuggestions, setShowPartySuggestions] = useState(false)
+  const [highlightedPartyIndex, setHighlightedPartyIndex] = useState(-1)
 
   // Refs for navigation
   const customerNameRef = useRef(null)
   const descriptionRefs = useRef([])
   const amountRefs = useRef([])
 
-  // Fetch user profile when modal opens
+  // Fetch user profile and parties when modal opens
   useEffect(() => {
     if (isOpen) {
       fetchUserProfile()
+      fetchParties()
     }
   }, [isOpen])
+
+  const fetchParties = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/parties?all=true`, { withCredentials: true })
+      if (response.data.success) {
+        setParties(response.data.data)
+      }
+    } catch (err) {
+      console.error('Error fetching parties:', err)
+    }
+  }
+
+  const filteredParties = customerName.trim()
+    ? parties.filter(party => party.partyName.toUpperCase().includes(customerName.trim().toUpperCase()))
+    : parties
+
+  const handlePartySelect = (party) => {
+    setCustomerName(party.partyName)
+    setShowPartySuggestions(false)
+    setHighlightedPartyIndex(-1)
+  }
 
   // Autofocus on customer name when modal opens
   useEffect(() => {
@@ -117,10 +142,36 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
 
   // Handle Enter key navigation
   const handleKeyDown = (e, type, index) => {
+    if (type === 'customerName' && showPartySuggestions && filteredParties.length > 0) {
+      const visibleParties = filteredParties.slice(0, 8)
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setHighlightedPartyIndex(prev => (prev + 1) % visibleParties.length)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setHighlightedPartyIndex(prev => (prev - 1 + visibleParties.length) % visibleParties.length)
+        return
+      }
+      if (e.key === 'Enter' && highlightedPartyIndex >= 0) {
+        e.preventDefault()
+        handlePartySelect(visibleParties[highlightedPartyIndex])
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setShowPartySuggestions(false)
+        setHighlightedPartyIndex(-1)
+        return
+      }
+    }
+
     if (e.key === 'Enter') {
       e.preventDefault()
 
       if (type === 'customerName') {
+        setShowPartySuggestions(false)
         // Move to first description
         descriptionRefs.current[0]?.focus()
       } else if (type === 'description') {
@@ -325,18 +376,48 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
             </div>
 
             {/* Customer Name */}
-            <div className='mb-1 pb-1.5 2xl:pb-2 border-b border-black flex items-baseline gap-2'>
+            <div className='mb-1 pb-1.5 2xl:pb-2 border-b border-black flex items-baseline gap-2 relative'>
               <label className='text-[9.5px] 2xl:text-sm font-bold whitespace-nowrap'>M/s.</label>
               <input
                 ref={customerNameRef}
                 type='text'
                 value={customerName}
-                onChange={(e) => setCustomerName(e.target.value.toUpperCase())}
+                onChange={(e) => {
+                  setCustomerName(e.target.value.toUpperCase())
+                  setShowPartySuggestions(true)
+                  setHighlightedPartyIndex(-1)
+                }}
+                onFocus={() => setShowPartySuggestions(parties.length > 0)}
+                onBlur={() => setTimeout(() => setShowPartySuggestions(false), 150)}
                 onKeyDown={(e) => handleKeyDown(e, 'customerName')}
                 className='flex-1 border-none outline-none px-1.5 2xl:px-2 py-0.5 text-[9.5px] 2xl:text-sm uppercase'
                 placeholder='Customer Name'
+                autoComplete='off'
                 required
               />
+              {showPartySuggestions && filteredParties.length > 0 && (
+                <div className='absolute left-0 right-0 top-full mt-1 bg-white border-2 border-purple-200 rounded-lg shadow-xl z-20 max-h-40 overflow-y-auto'>
+                  {filteredParties.slice(0, 8).map((party, idx) => (
+                    <button
+                      type='button'
+                      key={party._id}
+                      onMouseEnter={() => setHighlightedPartyIndex(idx)}
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        handlePartySelect(party)
+                      }}
+                      className={`w-full text-left px-2.5 py-1.5 transition-colors cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                        idx === highlightedPartyIndex ? 'bg-purple-100' : 'hover:bg-purple-50'
+                      }`}
+                    >
+                      <div className='font-semibold text-gray-800 text-[10px] 2xl:text-xs'>{party.partyName}</div>
+                      {party.mobile && (
+                        <div className='text-[9px] 2xl:text-[10px] text-gray-500'>{party.mobile}</div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Items Table */}

@@ -13,6 +13,9 @@ const AddEditPartyModal = ({ isOpen, onClose, onSuccess, editData }) => {
     address: ''
   })
   const [loading, setLoading] = useState(false)
+  const [parties, setParties] = useState([])
+  const [showPartySuggestions, setShowPartySuggestions] = useState(false)
+  const [highlightedPartyIndex, setHighlightedPartyIndex] = useState(-1)
 
   // Refs for Enter key navigation
   const partyNameRef = useRef(null)
@@ -21,6 +24,39 @@ const AddEditPartyModal = ({ isOpen, onClose, onSuccess, editData }) => {
   const emailRef = useRef(null)
   const addressRef = useRef(null)
   const saveButtonRef = useRef(null)
+
+  // Fetch existing parties (for add-mode name suggestions) when modal opens
+  useEffect(() => {
+    if (isOpen && !editData) {
+      const fetchParties = async () => {
+        try {
+          const response = await axios.get(`${API_URL}/api/parties?all=true`, { withCredentials: true })
+          if (response.data.success) {
+            setParties(response.data.data)
+          }
+        } catch (err) {
+          console.error('Error fetching parties:', err)
+        }
+      }
+      fetchParties()
+    }
+  }, [isOpen, editData])
+
+  const filteredParties = formData.partyName.trim()
+    ? parties.filter(party => party.partyName.toUpperCase().includes(formData.partyName.trim().toUpperCase()))
+    : []
+
+  const handlePartySuggestionSelect = (party) => {
+    setFormData({
+      partyName: party.partyName || '',
+      sonWifeDaughterOf: party.sonWifeDaughterOf || '',
+      mobile: party.mobile || '',
+      email: party.email || '',
+      address: party.address || ''
+    })
+    setShowPartySuggestions(false)
+    setHighlightedPartyIndex(-1)
+  }
 
   useEffect(() => {
     if (editData) {
@@ -66,6 +102,34 @@ const AddEditPartyModal = ({ isOpen, onClose, onSuccess, editData }) => {
         nextRef.current.focus()
       }
     }
+  }
+
+  const handlePartyNameKeyDown = (e, nextRef) => {
+    if (!editData && showPartySuggestions && filteredParties.length > 0) {
+      const visibleParties = filteredParties.slice(0, 8)
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setHighlightedPartyIndex(prev => (prev + 1) % visibleParties.length)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setHighlightedPartyIndex(prev => (prev - 1 + visibleParties.length) % visibleParties.length)
+        return
+      }
+      if (e.key === 'Enter' && highlightedPartyIndex >= 0) {
+        e.preventDefault()
+        handlePartySuggestionSelect(visibleParties[highlightedPartyIndex])
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setShowPartySuggestions(false)
+        setHighlightedPartyIndex(-1)
+        return
+      }
+    }
+    handleKeyDown(e, nextRef)
   }
 
   const handleSubmit = async (e) => {
@@ -138,7 +202,7 @@ const AddEditPartyModal = ({ isOpen, onClose, onSuccess, editData }) => {
         <form onSubmit={handleSubmit}>
           <div className='p-4 space-y-3 max-h-[65vh] overflow-y-auto'>
             {/* Party Name */}
-            <div>
+            <div className='relative'>
               <label className='block text-sm font-semibold text-gray-700 mb-1'>
                 Party Name <span className='text-red-500'>*</span>
               </label>
@@ -147,11 +211,46 @@ const AddEditPartyModal = ({ isOpen, onClose, onSuccess, editData }) => {
                 name='partyName'
                 ref={partyNameRef}
                 value={formData.partyName}
-                onChange={handleChange}
-                onKeyDown={(e) => handleKeyDown(e, swdRef)}
+                onChange={(e) => {
+                  handleChange(e)
+                  if (!editData) {
+                    setShowPartySuggestions(true)
+                    setHighlightedPartyIndex(-1)
+                  }
+                }}
+                onFocus={() => { if (!editData) setShowPartySuggestions(true) }}
+                onBlur={() => setTimeout(() => setShowPartySuggestions(false), 150)}
+                onKeyDown={(e) => handlePartyNameKeyDown(e, swdRef)}
                 placeholder='Enter party/company name'
+                autoComplete='off'
                 className='w-full px-3 py-2 text-sm bg-white border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all uppercase font-semibold text-gray-800 placeholder:font-normal placeholder-gray-400'
               />
+              {!editData && showPartySuggestions && filteredParties.length > 0 && (
+                <div className='absolute left-0 right-0 top-full mt-1 bg-white border-2 border-purple-200 rounded-lg shadow-xl z-20 max-h-40 overflow-y-auto'>
+                  <div className='px-2.5 py-1 text-[10px] font-semibold text-amber-600 bg-amber-50 border-b border-gray-100'>
+                    Similar party already exists — select to reuse
+                  </div>
+                  {filteredParties.slice(0, 8).map((party, idx) => (
+                    <button
+                      type='button'
+                      key={party._id}
+                      onMouseEnter={() => setHighlightedPartyIndex(idx)}
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        handlePartySuggestionSelect(party)
+                      }}
+                      className={`w-full text-left px-2.5 py-1.5 transition-colors cursor-pointer border-b border-gray-100 last:border-b-0 ${
+                        idx === highlightedPartyIndex ? 'bg-purple-100' : 'hover:bg-purple-50'
+                      }`}
+                    >
+                      <div className='font-semibold text-gray-800 text-xs'>{party.partyName}</div>
+                      {party.mobile && (
+                        <div className='text-[10px] text-gray-500'>{party.mobile}</div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Son/Wife/Daughter of */}
