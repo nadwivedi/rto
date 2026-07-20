@@ -190,6 +190,10 @@ class WhatsappUserClient {
           }
         })
 
+        client.on('error', (err) => {
+          console.error(`[WHATSAPP:${this.userId}] Client error event:`, err)
+        })
+
         client.initialize().catch(err => reject(err))
       })
     } catch (error) {

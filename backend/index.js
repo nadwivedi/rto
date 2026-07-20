@@ -223,5 +223,13 @@ app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
 })
 
+// Handle uncaught exceptions and unhandled rejections to prevent third-party crashes (like Puppeteer target closed) from bringing down the server
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️ Unhandled Promise Rejection:', reason)
+})
+
+process.on('uncaughtException', (error) => {
+  console.error('⚠️ Uncaught Exception:', error)
+})
 
 // trigger restart
