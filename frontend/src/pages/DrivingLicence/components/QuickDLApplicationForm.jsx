@@ -1613,7 +1613,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
                                 onChange={(e) => handlePaymentReceivedChange(index, 'receivedBy', e.target.value)}
                                 className='w-full px-3 py-2 border border-cyan-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent text-sm font-semibold bg-white'
                               >
-                                <option value=''>Admin</option>
+                                <option value='' disabled>Payment Received By</option>
                                 {employees?.filter(e => e.isActive !== false).map(emp => (
                                   <option key={emp._id} value={emp.name}>{emp.name}</option>
                                 ))}
