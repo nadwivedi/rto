@@ -485,17 +485,20 @@ exports.getExpiredInsurance = async (req, res) => {
   try {
     const { search, page = 1, limit = 20, sortBy = 'validTo', sortOrder = 'desc', product } = req.query
 
-    // Find all vehicle numbers that have active insurance
-    // These vehicles have been renewed and should be excluded
-    const vehiclesWithActiveInsurance = await Insurance.find({ status: 'active', userId: req.user.id })
-      .distinct('vehicleNumber')
-
     const today = new Date()
     today.setUTCHours(0, 0, 0, 0)
 
+    // A vehicle is still "in force" if any of its records is currently active
+    // or expiring soon (i.e. status field says its validity range covers today/near future).
+    // Only show expired records for vehicles that have no such currently-valid record.
+    const vehiclesStillValid = await Insurance.find({
+      userId: req.user.id,
+      status: { $in: ['active', 'expiring_soon'] }
+    }).distinct('vehicleNumber')
+
     const conditions = [
       { userId: req.user.id },
-      { vehicleNumber: { $nin: vehiclesWithActiveInsurance } },
+      { vehicleNumber: { $nin: vehiclesStillValid } },
       {
         $or: [
           { status: 'expired' },
@@ -947,9 +950,14 @@ exports.getStatistics = async (req, res) => {
       ]
     })
 
+    const vehiclesStillValid = await Insurance.find({
+      userId: req.user.id,
+      status: { $in: ['active', 'expiring_soon'] }
+    }).distinct('vehicleNumber')
+
     const expiredInsurance = await Insurance.countDocuments({
       userId: req.user.id,
-      vehicleNumber: { $nin: vehiclesWithActiveInsurance },
+      vehicleNumber: { $nin: vehiclesStillValid },
       $or: [
         { status: 'expired' },
         {
