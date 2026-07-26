@@ -88,6 +88,10 @@ const userSchema = new mongoose.Schema({
     type: Number,
     min: 0
   },
+  yearlyPrice: {
+    type: Number,
+    min: 0
+  },
   features: {
     greenTax: { type: Boolean, default: false },
     professionalTax: { type: Boolean, default: false },

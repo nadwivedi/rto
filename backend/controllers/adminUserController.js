@@ -6,7 +6,7 @@ const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../u
 // Get all users
 exports.getAllUsers = async (req, res) => {
   try {
-    const { page = 1, limit = 20, search, isActive } = req.query
+    const { page = 1, limit = 20, search, isActive, state } = req.query
 
     // Build query
     const query = {}
@@ -21,6 +21,10 @@ exports.getAllUsers = async (req, res) => {
 
     if (isActive !== undefined) {
       query.isActive = isActive === 'true'
+    }
+
+    if (state) {
+      query.state = state
     }
 
     // Calculate pagination
@@ -95,7 +99,7 @@ exports.getUserById = async (req, res) => {
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -226,6 +230,8 @@ exports.createUser = async (req, res) => {
       billDescription: billDescription && billDescription.trim() ? billDescription.trim() : undefined,
       password: hashedPassword,
       isActive: true,
+      monthlyPrice: monthlyPrice !== undefined && !Number.isNaN(Number(monthlyPrice)) ? Number(monthlyPrice) : undefined,
+      yearlyPrice: yearlyPrice !== undefined && !Number.isNaN(Number(yearlyPrice)) ? Number(yearlyPrice) : undefined,
       features: features || { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false }
     })
 
@@ -244,6 +250,8 @@ exports.createUser = async (req, res) => {
       billName: newUser.billName,
       billDescription: newUser.billDescription,
       isActive: newUser.isActive,
+      monthlyPrice: newUser.monthlyPrice,
+      yearlyPrice: newUser.yearlyPrice,
       createdAt: newUser.createdAt
     }
 
@@ -268,7 +276,7 @@ exports.createUser = async (req, res) => {
 // Update user
 exports.updateUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, subscriptionExpiresAt, monthlyPrice, features } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, subscriptionExpiresAt, monthlyPrice, yearlyPrice, features } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -367,6 +375,12 @@ exports.updateUser = async (req, res) => {
         user.monthlyPrice = price
       }
     }
+    if (yearlyPrice !== undefined) {
+      const price = Number(yearlyPrice)
+      if (!Number.isNaN(price) && price >= 0) {
+        user.yearlyPrice = price
+      }
+    }
     if (password !== undefined && password.trim()) {
       if (password.length < 4) {
         return res.status(400).json({
@@ -398,7 +412,8 @@ exports.updateUser = async (req, res) => {
         isActive: user.isActive,
         features: user.features,
         subscriptionExpiresAt: user.subscriptionExpiresAt,
-        monthlyPrice: user.monthlyPrice
+        monthlyPrice: user.monthlyPrice,
+        yearlyPrice: user.yearlyPrice
       }
     })
   } catch (error) {
