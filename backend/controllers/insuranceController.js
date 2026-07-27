@@ -34,7 +34,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails, createRC } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails, createRC } = req.body
 
     // Validate required fields
 
@@ -124,6 +124,8 @@ exports.createInsurance = async (req, res) => {
       productType,
       vehicleNumber,
       mobileNumber,
+      agentName: agentName || '',
+      agentContact: agentContact || '',
       date,
       issueDate: issueDate || '',
       validFrom,
@@ -707,7 +709,7 @@ exports.checkVehicleActiveInsurance = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -748,6 +750,8 @@ exports.updateInsurance = async (req, res) => {
     if (productType !== undefined) insurance.productType = productType
     if (vehicleNumber !== undefined) insurance.vehicleNumber = vehicleNumber
     if (mobileNumber !== undefined) insurance.mobileNumber = mobileNumber
+    if (agentName !== undefined) insurance.agentName = agentName
+    if (agentContact !== undefined) insurance.agentContact = agentContact
     if (validFrom) insurance.validFrom = validFrom
     if (validTo) {
       insurance.validTo = validTo

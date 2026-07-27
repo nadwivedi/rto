@@ -159,11 +159,31 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
             </div>
           </div>
 
+          {/* Broker/Agent Details */}
+          {(insurance.agentName || insurance.agentContact) && (
+            <div className='bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-xl p-4 md:p-5'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 flex items-center gap-2'>
+                <span className='bg-amber-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>4</span>
+                Broker/Agent Details
+              </h3>
+              <div className='grid grid-cols-2 gap-3 md:gap-4 text-xs md:text-sm'>
+                <div>
+                  <span className='block text-gray-500 font-medium'>Name</span>
+                  <span className='block font-bold text-gray-800 mt-0.5'>{insurance.agentName || 'N/A'}</span>
+                </div>
+                <div>
+                  <span className='block text-gray-500 font-medium'>Mobile Number</span>
+                  <span className='block font-bold text-gray-800 mt-0.5'>{insurance.agentContact || 'N/A'}</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Insurance Document */}
           {docUrl && (
             <div className='bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-4 md:p-5'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 flex items-center gap-2'>
-                <span className='bg-purple-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>4</span>
+                <span className='bg-purple-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>5</span>
                 Insurance Document
               </h3>
               <div className='w-full max-h-96 rounded-lg overflow-hidden border border-purple-200 bg-white'>

@@ -61,6 +61,17 @@ const InsuranceSchema = new mongoose.Schema({
     trim: true
   },
 
+  // Broker / Agent Information
+  agentName: {
+    type: String,
+    trim: true,
+    default: ''
+  },
+  agentContact: {
+    type: String,
+    trim: true,
+    default: ''
+  },
 
   validFrom: {
     type: String,
