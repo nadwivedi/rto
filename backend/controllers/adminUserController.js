@@ -486,6 +486,32 @@ exports.getUserStatistics = async (req, res) => {
   }
 }
 
+// Get user counts grouped by state (only states that have at least one user)
+exports.getUserStateCounts = async (req, res) => {
+  try {
+    const counts = await User.aggregate([
+      { $match: { state: { $exists: true, $ne: null, $ne: '' } } },
+      { $group: { _id: '$state', count: { $sum: 1 } } },
+      { $sort: { _id: 1 } }
+    ])
+
+    res.json({
+      success: true,
+      data: counts.map((c) => ({ state: c._id, count: c.count }))
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: getSimplifiedTimestamp()
+    })
+  }
+}
+
 // Generate a short-lived token so an admin can open the frontend as a user for testing.
 exports.generateUserAccessToken = async (req, res) => {
   try {

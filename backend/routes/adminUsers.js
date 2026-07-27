@@ -8,6 +8,9 @@ router.use(adminAuthMiddleware)
 // Get user statistics
 router.get('/statistics', adminUserController.getUserStatistics)
 
+// Get user counts grouped by state
+router.get('/state-counts', adminUserController.getUserStateCounts)
+
 // Get all users
 router.get('/', adminUserController.getAllUsers)
 

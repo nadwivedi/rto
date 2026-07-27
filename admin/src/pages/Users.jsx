@@ -75,6 +75,7 @@ const Users = () => {
   const [statusFilter, setStatusFilter] = useState('all')
   const [stateFilter, setStateFilter] = useState('all')
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 })
+  const [stateCounts, setStateCounts] = useState([])
   const [showModal, setShowModal] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [editingUserId, setEditingUserId] = useState(null)
@@ -143,10 +144,26 @@ const Users = () => {
     }
   }, [])
 
+  const fetchStateCounts = useCallback(async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/admin/users/state-counts`, {
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      const data = await response.json()
+      if (data.success) {
+        setStateCounts(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching state counts:', error)
+    }
+  }, [])
+
   useEffect(() => {
     fetchUsers()
     fetchStats()
-  }, [fetchUsers, fetchStats])
+    fetchStateCounts()
+  }, [fetchUsers, fetchStats, fetchStateCounts])
 
   const copyToClipboard = (userId) => {
     navigator.clipboard.writeText(userId)
@@ -247,6 +264,7 @@ const Users = () => {
         setEditingUserId(null)
         setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false })
     fetchUsers()
+    fetchStateCounts()
       } else {
         setError(data.message || `Failed to ${isEditMode ? 'update' : 'create'} user`)
       }
@@ -304,6 +322,7 @@ const Users = () => {
       if (data.success || response.ok) {
         setSuccess('User deleted successfully!')
         fetchUsers()
+        fetchStateCounts()
       } else {
         setError('Failed to delete user')
       }
@@ -452,8 +471,8 @@ const Users = () => {
             className='px-3 py-2 text-sm font-semibold rounded-lg border border-gray-200 bg-gray-50 text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
           >
             <option value='all'>All States</option>
-            {INDIAN_STATES.map((s) => (
-              <option key={s} value={s}>{s}</option>
+            {stateCounts.map(({ state, count }) => (
+              <option key={state} value={state}>{`${state}  (${count})`}</option>
             ))}
           </select>
         </div>
