@@ -1120,7 +1120,6 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 </div>
               )}
             </div>
-            </div>
 
             {/* Additional Details (Collapsible) */}
             <div className='mt-4 pt-4 border-t border-rose-200'>
@@ -1344,6 +1343,7 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                   </div>
                 </div>
               )}
+            </div>
             </div>
 
             <div className='border-t border-gray-200 p-3 md:p-4 bg-gray-50 flex flex-col md:flex-row justify-between items-center gap-3 flex-shrink-0'>
