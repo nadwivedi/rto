@@ -105,7 +105,7 @@ const ViewVehicleRegistrationModal = ({ isOpen, onClose, selectedRegistration, o
 
         if (ok(pucRes)) pucRes.value.data.data.forEach(r => docs.push({
           type: 'puc', status: r.status || 'active', validFrom: r.validFrom, validTo: r.validTo,
-          documentUrl: null, _id: r._id,
+          documentUrl: buildUrl(r.pucDocument), _id: r._id,
         }))
 
         if (ok(insuranceRes)) insuranceRes.value.data.data.forEach(r => docs.push({
