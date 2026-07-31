@@ -4,12 +4,11 @@ import { toast } from 'react-toastify'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
-// Real WhatsApp QR codes expire roughly every 20-60s.
-// If ours hasn't changed within this window, force a fresh one.
-const QR_SAFETY_REFRESH_MS = 45000
-
 // If status stays "initializing" (no QR, no connected) for this long, show a warning + retry.
 const STUCK_INIT_WARN_MS = 60000
+
+// After the QR has been visible for this long without a scan, show a "Get New QR" prompt.
+const QR_SHOW_REFRESH_BTN_MS = 60000
 
 const statusConfig = {
   authenticated: {
@@ -55,9 +54,7 @@ const WhatsApp = () => {
   const [initElapsed, setInitElapsed] = useState(0)  // seconds spent in initializing/preparing
   const [initStuck, setInitStuck] = useState(false)  // true when init has taken too long
 
-  // Guards a single auto-start attempt per disconnected episode so we don't spam /start.
-  const autoStartRef = useRef(false)
-  // Tracks the currently-shown QR image so we can detect when a new one arrives vs. going stale.
+  // Tracks the currently-shown QR image so we can detect when a new one arrives.
   const lastQrRef = useRef(null)
   const qrGeneratedAtRef = useRef(null)
   // Tracks when the current "initializing/preparing" phase started
@@ -117,42 +114,24 @@ const WhatsApp = () => {
     init()
   }, [])
 
-  // Dynamic polling: fast while connecting/scanning, slow otherwise
+  // Dynamic polling: moderate while connecting/scanning, slow otherwise.
+  // We do NOT use 1-second polling — it hammers the server and can interfere with the
+  // QR handshake via touchPoll(). 3s is fast enough to feel responsive.
   useEffect(() => {
     const currentStatus = statusInfo?.status || 'disconnected'
     const isActivelyConnecting = ['qr_ready', 'initializing'].includes(currentStatus)
-    // Also poll faster when DB says initializing but browser is actively launching
     const browserLaunching = statusInfo?.isInitializing
-    const intervalMs = (isActivelyConnecting || browserLaunching) ? 1000 : 5000
+    const intervalMs = (isActivelyConnecting || browserLaunching) ? 3000 : 8000
 
     const interval = setInterval(fetchStatus, intervalMs)
     return () => clearInterval(interval)
   }, [statusInfo?.status, statusInfo?.isInitializing])
 
-  // Auto-start the session when disconnected (unless user explicitly stopped it).
-  // Debounced by 1.2s so a previous destroy() has time to clean up Chrome lock files.
-  useEffect(() => {
-    if (!statusInfo) return
-    const s = statusInfo.status
-
-    if (['authenticated', 'qr_ready', 'initializing'].includes(s)) {
-      autoStartRef.current = false
-      return
-    }
-
-    if (statusInfo.isStopped) return
-    if (autoStartRef.current || actionBusy) return
-    autoStartRef.current = true
-
-    const timer = setTimeout(() => {
-      axios
-        .post(`${API_URL}/api/whatsapp/start`, {}, { withCredentials: true })
-        .then(() => fetchStatus())
-        .catch((err) => console.error('[WhatsApp] Auto-start failed:', err))
-    }, 1200)
-
-    return () => clearTimeout(timer)
-  }, [statusInfo?.status, statusInfo?.isStopped])
+  // NOTE: Auto-start has been intentionally removed.
+  // Previously the page would call /start automatically on page load which caused a race
+  // condition — if Chrome was still cleaning up from a previous session, the new call
+  // would launch a second instance, leading to the "perpetually Connecting" spinner.
+  // The user must now click "Connect WhatsApp" explicitly to start the session.
 
   const doAction = async (action, successMsg, silent = false) => {
     setActionBusy(action)
@@ -223,26 +202,23 @@ const WhatsApp = () => {
     }
   }, [statusInfo?.status, statusInfo?.qrCodeDataUrl])
 
-  // Live QR countdown + safety-net auto-renew
+  // Live QR countdown — shows seconds since QR was generated.
+  // Auto-renew has been intentionally removed: silently destroying the session every 45s
+  // was killing active handshakes mid-scan. The user can manually click "Get New QR" instead.
   useEffect(() => {
     if (statusInfo?.status !== 'qr_ready') return
 
     const tick = () => {
       if (!qrGeneratedAtRef.current) return
-      if (document.hidden) return
       const elapsed = Date.now() - qrGeneratedAtRef.current
-      const left = Math.max(0, Math.ceil((QR_SAFETY_REFRESH_MS - elapsed) / 1000))
-      setQrSecondsLeft(left)
-
-      if (elapsed >= QR_SAFETY_REFRESH_MS && actionBusy !== 'renew-qr') {
-        doAction('renew-qr', null, true)
-      }
+      const secsElapsed = Math.floor(elapsed / 1000)
+      setQrSecondsLeft(secsElapsed)
     }
 
     tick()
     const t = setInterval(tick, 1000)
     return () => clearInterval(t)
-  }, [statusInfo?.status, actionBusy])
+  }, [statusInfo?.status])
 
   const handleDeleteLog = async (id) => {
     if (!window.confirm('Are you sure you want to delete this log?')) return
@@ -284,7 +260,8 @@ const WhatsApp = () => {
   const config = statusConfig[currentStatus] || statusConfig.disconnected
   const isConnected = currentStatus === 'authenticated'
   const isRunning = ['authenticated', 'initializing', 'qr_ready'].includes(currentStatus)
-  const isPreparingScanner = !isRunning && !statusInfo?.isStopped  // disconnected but auto-starting
+  // No longer auto-starts, so "isPreparingScanner" is only true when isInitializing flag is set
+  const isPreparingScanner = !isRunning && !statusInfo?.isStopped && statusInfo?.isInitializing
 
   const filteredLogs = logs.filter((log) => statusFilter === 'all' || log.status === statusFilter)
   const allVisibleSelected = filteredLogs.length > 0 && filteredLogs.every((log) => selectedIds.includes(log._id))
@@ -342,31 +319,35 @@ const WhatsApp = () => {
           {/* QR Code */}
           {currentStatus === 'qr_ready' && statusInfo?.qrCodeDataUrl && (
             <div className='flex flex-col items-center p-4 border-2 border-dashed border-orange-300 rounded-xl bg-orange-50'>
-              <p className='text-xs font-semibold text-orange-700 mb-2'>Open WhatsApp → Linked Devices → Link a Device</p>
+              <p className='text-xs font-semibold text-orange-700 mb-1 text-center'>Open WhatsApp → Linked Devices → Link a Device</p>
+              <p className='text-[11px] text-orange-500 mb-2 text-center'>Point your camera at the code below</p>
               <img
                 src={statusInfo.qrCodeDataUrl}
                 alt='WhatsApp QR Code'
                 className='w-52 h-52 rounded-xl border-4 border-white shadow-lg'
               />
-              <p className='text-[11px] text-orange-500 mt-2 mb-3'>
-                {actionBusy === 'renew-qr'
-                  ? 'Getting a fresh code...'
-                  : qrSecondsLeft !== null
-                    ? `Auto-refreshing in ${qrSecondsLeft}s if not scanned`
-                    : 'Waiting for scan...'}
-              </p>
-
-              <button
-                onClick={() => doAction('renew-qr', 'Refreshing QR code...')}
-                disabled={actionBusy === 'renew-qr'}
-                className='flex items-center gap-2 px-4 py-2 bg-white border border-orange-200 text-orange-700 rounded-lg text-xs font-bold hover:bg-orange-100 transition shadow-sm'
-              >
-                {actionBusy === 'renew-qr' ? (
-                  <div className='w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin' />
-                ) : (
-                  <span>🔄 Get New QR Now</span>
-                )}
-              </button>
+              {/* Show elapsed seconds — purely informational, no auto-renew */}
+              {qrSecondsLeft !== null && (
+                <p className='text-[11px] text-orange-400 mt-2'>
+                  {actionBusy === 'renew-qr'
+                    ? 'Getting a fresh code...'
+                    : `QR visible for ${qrSecondsLeft}s — scan now`}
+                </p>
+              )}
+              {/* Show manual refresh button after 60s */}
+              {(qrSecondsLeft === null || qrSecondsLeft >= QR_SHOW_REFRESH_BTN_MS / 1000) && (
+                <button
+                  onClick={() => doAction('renew-qr', 'Getting a fresh QR code...')}
+                  disabled={actionBusy === 'renew-qr'}
+                  className='mt-3 flex items-center gap-2 px-4 py-2 bg-white border border-orange-200 text-orange-700 rounded-lg text-xs font-bold hover:bg-orange-100 transition shadow-sm'
+                >
+                  {actionBusy === 'renew-qr' ? (
+                    <div className='w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin' />
+                  ) : (
+                    <span>🔄 Get New QR Code</span>
+                  )}
+                </button>
+              )}
             </div>
           )}
 
@@ -381,34 +362,34 @@ const WhatsApp = () => {
             </div>
           )}
 
-          {/* Initializing spinner */}
+          {/* Initializing spinner — Chrome is booting */}
           {currentStatus === 'initializing' && !initStuck && (
             <div className='flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
               <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
               <div>
                 <p className='text-sm text-blue-800 font-semibold'>
-                  Connecting to WhatsApp...
+                  🚀 Starting Chrome browser...
                   {initElapsed > 0 && (
                     <span className='ml-1 text-blue-400 font-normal text-xs'>{formatElapsed(initElapsed)}</span>
                   )}
                 </p>
-                <p className='text-xs text-blue-500'>If you scanned QR, please wait a moment</p>
+                <p className='text-xs text-blue-500'>QR code will appear in ~20-30 seconds</p>
               </div>
             </div>
           )}
 
-          {/* Preparing scanner spinner (disconnected, auto-starting) */}
+          {/* Preparing scanner spinner (Chrome booting after Connect click) */}
           {isPreparingScanner && !initStuck && (
             <div className='flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
               <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
               <div>
                 <p className='text-sm text-blue-800 font-semibold'>
-                  Preparing WhatsApp scanner...
+                  🚀 Starting Chrome browser...
                   {initElapsed > 5 && (
                     <span className='ml-1 text-blue-400 font-normal text-xs'>{formatElapsed(initElapsed)}</span>
                   )}
                 </p>
-                <p className='text-xs text-blue-500'>Your QR code will appear here in a moment</p>
+                <p className='text-xs text-blue-500'>QR code will appear in ~20-30 seconds</p>
               </div>
             </div>
           )}
@@ -445,10 +426,28 @@ const WhatsApp = () => {
 
           {/* ---- ACTION BUTTONS ---- */}
           <div className='flex flex-col gap-2 pt-2 border-t border-gray-100'>
-            {/* START/RESUME: only when the user has intentionally stopped the session */}
+
+            {/* CONNECT: show when disconnected and NOT intentionally stopped — user must click explicitly */}
+            {!isRunning && !statusInfo?.isStopped && !isPreparingScanner && (
+              <button
+                onClick={() => {
+                  doAction('start', 'Connecting... QR code will appear in ~20-30 seconds.')
+                }}
+                disabled={actionBusy === 'start'}
+                className='w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition shadow-md flex items-center justify-center gap-2'
+              >
+                {actionBusy === 'start' ? (
+                  <><div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' /> Starting...</>
+                ) : (
+                  <>📲 Connect WhatsApp</>
+                )}
+              </button>
+            )}
+
+            {/* RESUME: only when the user has intentionally stopped the session */}
             {!isRunning && statusInfo?.isStopped && (
               <button
-                onClick={() => doAction('start', 'Session started! Wait for QR or connection...')}
+                onClick={() => doAction('start', 'Resuming session... QR will appear if re-scan is needed.')}
                 disabled={actionBusy === 'start'}
                 className='w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition shadow-md flex items-center justify-center gap-2'
               >
