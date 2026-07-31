@@ -35,6 +35,14 @@ const gpsSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  gpsDocumentType: {
+    type: String,
+    trim: true
+  },
+  gpsDocumentName: {
+    type: String,
+    trim: true
+  },
   validFrom: {
     type: String,
     required: true

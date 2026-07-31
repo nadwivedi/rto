@@ -9,26 +9,16 @@ if (!fs.existsSync(gpsUploadsDir)) {
   fs.mkdirSync(gpsUploadsDir, { recursive: true })
 }
 
-const saveGpsDocument = (imageData, vehicleNumber) => {
-  if (!imageData || !vehicleNumber) return ''
+const saveGpsDocument = ({ imageBase64, vehicleNumber, userId, originalName }) => {
+  if (!imageBase64 || typeof imageBase64 !== 'string') return null
 
-  const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp);base64,/
-  const pdfFormatRegex = /^data:application\/pdf;base64,/
-
-  let fileExtension = null
-
-  const imageMatch = imageData.match(imageFormatRegex)
-  const pdfMatch = imageData.match(pdfFormatRegex)
-
-  if (imageMatch) {
-    fileExtension = imageMatch[1] === 'jpeg' ? 'jpg' : imageMatch[1]
-  } else if (pdfMatch) {
-    fileExtension = 'pdf'
-  } else {
+  const match = imageBase64.match(/^data:(image\/[a-zA-Z0-9.+-]+|application\/pdf);base64,(.+)$/)
+  if (!match) {
     throw new Error('Only JPG, JPEG, PNG, WebP, and PDF formats are accepted')
   }
 
-  const base64Data = imageData.replace(/^data:(image\/[a-z]+|application\/pdf);base64,/, '')
+  const mimeType = match[1]
+  const base64Data = match[2]
   const buffer = Buffer.from(base64Data, 'base64')
 
   const fileSizeInMB = buffer.length / (1024 * 1024)
@@ -36,13 +26,24 @@ const saveGpsDocument = (imageData, vehicleNumber) => {
     throw new Error(`File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 12MB limit`)
   }
 
-  const sanitizedVehicleNumber = vehicleNumber.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()
-  const filename = `gps-${sanitizedVehicleNumber}.${fileExtension}`
+  let extension = 'bin'
+  if (mimeType === 'application/pdf') extension = 'pdf'
+  else if (mimeType.includes('png')) extension = 'png'
+  else if (mimeType.includes('webp')) extension = 'webp'
+  else if (mimeType.includes('gif')) extension = 'gif'
+  else if (mimeType.includes('jpeg') || mimeType.includes('jpg')) extension = 'jpg'
+
+  const safeVehicleNumber = String(vehicleNumber || 'gps').replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || 'GPS'
+  const filename = `gps-${safeVehicleNumber}-${userId}-${Date.now()}.${extension}`
   const filePath = path.join(gpsUploadsDir, filename)
 
   fs.writeFileSync(filePath, buffer)
 
-  return `/uploads/gps-documents/${filename}`
+  return {
+    relativePath: `/uploads/gps-documents/${filename}`,
+    mimeType,
+    originalName: originalName || filename
+  }
 }
 
 const deleteGpsDocument = (documentPath) => {
@@ -378,7 +379,7 @@ exports.getGpsById = async (req, res) => {
 // Create new GPS record
 exports.createGps = async (req, res) => {
   try {
-    const { vehicleNumber, ownerName, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, partyId: reqPartyId, gpsDocumentData } = req.body
+    const { vehicleNumber, ownerName, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, partyId: reqPartyId, gpsDocumentBase64, gpsDocumentName } = req.body
 
     // Validate required fields
     if (!vehicleNumber ) {
@@ -438,7 +439,12 @@ exports.createGps = async (req, res) => {
       }
     )
 
-    const gpsDocument = gpsDocumentData ? saveGpsDocument(gpsDocumentData, normalizedVehicleNumber) : ''
+    const uploadedDocument = gpsDocumentBase64 ? saveGpsDocument({
+      imageBase64: gpsDocumentBase64,
+      vehicleNumber: normalizedVehicleNumber,
+      userId: req.user.id,
+      originalName: gpsDocumentName
+    }) : null
 
     // Create new GPS record
     const gps = new Gps({
@@ -446,7 +452,9 @@ exports.createGps = async (req, res) => {
       ownerName,
       mobileNumber,
       date,
-      gpsDocument,
+      gpsDocument: uploadedDocument?.relativePath || '',
+      gpsDocumentType: uploadedDocument?.mimeType || '',
+      gpsDocumentName: uploadedDocument?.originalName || '',
       validFrom,
       validTo,
       totalFee,
@@ -477,7 +485,7 @@ exports.createGps = async (req, res) => {
 // Update GPS record
 exports.updateGps = async (req, res) => {
   try {
-    const { vehicleNumber, ownerName, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, partyId, gpsDocumentData } = req.body
+    const { vehicleNumber, ownerName, mobileNumber, date, validFrom, validTo, totalFee, paid, balance, partyId, gpsDocumentBase64, gpsDocumentName, removeGpsDocument } = req.body
 
     const gps = await Gps.findOne({ _id: req.params.id, userId: req.user.id })
 
@@ -514,10 +522,6 @@ exports.updateGps = async (req, res) => {
     if (ownerName !== undefined) gps.ownerName = ownerName
     if (mobileNumber !== undefined) gps.mobileNumber = mobileNumber
     if (date !== undefined) gps.date = date
-    if (gpsDocumentData) {
-      deleteGpsDocument(gps.gpsDocument)
-      gps.gpsDocument = saveGpsDocument(gpsDocumentData, vehicleNumber || gps.vehicleNumber)
-    }
     if (validFrom) gps.validFrom = validFrom
     if (validTo) {
         gps.validTo = validTo
@@ -528,6 +532,25 @@ exports.updateGps = async (req, res) => {
     if (paid !== undefined) gps.paid = paid
     if (balance !== undefined) gps.balance = balance
     if (partyId !== undefined) gps.partyId = partyId
+
+    // Handle document update: replace, remove, or keep as-is
+    if (removeGpsDocument) {
+      deleteGpsDocument(gps.gpsDocument)
+      gps.gpsDocument = ''
+      gps.gpsDocumentType = ''
+      gps.gpsDocumentName = ''
+    } else if (gpsDocumentBase64) {
+      deleteGpsDocument(gps.gpsDocument)
+      const uploadedDocument = saveGpsDocument({
+        imageBase64: gpsDocumentBase64,
+        vehicleNumber: vehicleNumber || gps.vehicleNumber,
+        userId: req.user.id,
+        originalName: gpsDocumentName
+      })
+      gps.gpsDocument = uploadedDocument?.relativePath || ''
+      gps.gpsDocumentType = uploadedDocument?.mimeType || ''
+      gps.gpsDocumentName = uploadedDocument?.originalName || ''
+    }
 
     await gps.save()
 

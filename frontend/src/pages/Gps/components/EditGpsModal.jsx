@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import { toast } from 'react-toastify'
 import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck'
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 import { handleSmartDateInput } from '../../../utils/dateFormatter'
+import ImageViewer from '../../../components/ImageViewer'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
 
@@ -26,6 +28,14 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false)
   const [selectedDropdownIndex, setSelectedDropdownIndex] = useState(0)
   const dropdownItemRefs = useRef([])
+  const [gpsDocumentBase64, setGpsDocumentBase64] = useState('')
+  const [gpsDocumentName, setGpsDocumentName] = useState('')
+  const [existingDocumentUrl, setExistingDocumentUrl] = useState('')
+  const [existingDocumentType, setExistingDocumentType] = useState('')
+  const [existingDocumentName, setExistingDocumentName] = useState('')
+  const [removeGpsDocument, setRemoveGpsDocument] = useState(false)
+  const [showDocumentPreview, setShowDocumentPreview] = useState(false)
+  const documentInputRef = useRef(null)
 
   // Populate form when gps record changes
   useEffect(() => {
@@ -41,6 +51,18 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
         paid: gps.paid?.toString() || '0',
         balance: gps.balance?.toString() || '0'
       })
+
+      const docUrl = gps.gpsDocument
+        ? gps.gpsDocument.startsWith('data:')
+          ? gps.gpsDocument
+          : `${API_URL}${gps.gpsDocument}`
+        : ''
+      setExistingDocumentUrl(docUrl)
+      setExistingDocumentType(gps.gpsDocumentType || '')
+      setExistingDocumentName(gps.gpsDocumentName || '')
+      setGpsDocumentBase64('')
+      setGpsDocumentName('')
+      setRemoveGpsDocument(false)
 
       if (gps.vehicleNumber) {
         const validation = validateVehicleNumberRealtime(gps.vehicleNumber)
@@ -70,6 +92,13 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
       setVehicleMatches([])
       setShowVehicleDropdown(false)
       setSelectedDropdownIndex(0)
+      setGpsDocumentBase64('')
+      setGpsDocumentName('')
+      setExistingDocumentUrl('')
+      setExistingDocumentType('')
+      setExistingDocumentName('')
+      setRemoveGpsDocument(false)
+      setShowDocumentPreview(false)
     }
   }, [isOpen])
 
@@ -332,6 +361,34 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
     }
   }
 
+  const handleGpsDocumentUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setGpsDocumentBase64(reader.result)
+        setGpsDocumentName(file.name || '')
+        setRemoveGpsDocument(false)
+      }
+      reader.readAsDataURL(file)
+    } else {
+      toast.error('Please upload an image or PDF file.', { position: 'top-right', autoClose: 3000 })
+    }
+    e.target.value = ''
+  }
+
+  const handleRemoveDocument = () => {
+    setGpsDocumentBase64('')
+    setGpsDocumentName('')
+    setExistingDocumentUrl('')
+    setExistingDocumentType('')
+    setExistingDocumentName('')
+    setRemoveGpsDocument(true)
+    setShowDocumentPreview(false)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
 
@@ -346,7 +403,12 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
     }
 
     if (onSubmit) {
-      onSubmit(formData)
+      onSubmit({
+        ...formData,
+        gpsDocumentBase64: gpsDocumentBase64 || undefined,
+        gpsDocumentName: gpsDocumentName || undefined,
+        removeGpsDocument: removeGpsDocument || undefined
+      })
     }
     setFormData({
       date: '',
@@ -361,10 +423,22 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
     })
     setVehicleValidation({ isValid: false, message: '' })
     setPaidExceedsTotal(false)
+    setGpsDocumentBase64('')
+    setGpsDocumentName('')
+    setExistingDocumentUrl('')
+    setExistingDocumentType('')
+    setExistingDocumentName('')
+    setRemoveGpsDocument(false)
+    setShowDocumentPreview(false)
     onClose()
   }
 
   if (!isOpen) return null
+
+  const hasExistingDoc = Boolean(existingDocumentUrl)
+  const existingIsPdf = existingDocumentUrl.toLowerCase().includes('.pdf') || existingDocumentType.toLowerCase().includes('pdf')
+  const hasNewDoc = Boolean(gpsDocumentBase64)
+  const newIsPdf = gpsDocumentBase64.startsWith('data:application/pdf')
 
   return (
     <div className='fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-2 md:p-4'>
@@ -668,6 +742,123 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
                 </div>
               )}
             </div>
+
+            {/* Section 4: GPS Document */}
+            <div className='mt-4 bg-gradient-to-r from-slate-50 to-cyan-50 border-2 border-slate-200 rounded-xl p-3 md:p-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <span className='bg-slate-700 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>4</span>
+                GPS Document
+              </h3>
+
+              {removeGpsDocument ? (
+                <div className='bg-amber-50 border-2 border-dashed border-amber-300 rounded-lg p-4 text-center'>
+                  <p className='text-sm font-semibold text-amber-700'>Document will be removed on save.</p>
+                  <button
+                    type='button'
+                    onClick={() => setRemoveGpsDocument(false)}
+                    className='mt-3 px-4 py-2 rounded-lg bg-amber-100 text-amber-800 text-sm font-bold hover:bg-amber-200 transition-all duration-200'
+                  >
+                    Undo Remove
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {(hasExistingDoc || hasNewDoc) && (
+                    <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-white rounded-xl border-2 border-slate-200 p-3 md:p-4'>
+                      <div className='flex items-center gap-3'>
+                        {hasNewDoc ? (
+                          newIsPdf ? (
+                            <div className='flex h-20 w-20 items-center justify-center rounded-lg border-2 border-red-200 bg-red-50'>
+                              <svg className='h-10 w-10 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
+                                <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
+                              </svg>
+                            </div>
+                          ) : (
+                            <button
+                              type='button'
+                              onClick={() => setShowDocumentPreview(true)}
+                              className='overflow-hidden rounded-lg border-2 border-slate-200 bg-white shadow-sm transition hover:shadow-md'
+                            >
+                              <img src={gpsDocumentBase64} alt='New GPS document preview' className='h-20 w-20 object-cover' />
+                            </button>
+                          )
+                        ) : existingIsPdf ? (
+                          <div className='flex h-20 w-20 items-center justify-center rounded-lg border-2 border-red-200 bg-red-50'>
+                            <svg className='h-10 w-10 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
+                              <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
+                            </svg>
+                          </div>
+                        ) : (
+                          <button
+                            type='button'
+                            onClick={() => setShowDocumentPreview(true)}
+                            className='overflow-hidden rounded-lg border-2 border-slate-200 bg-white shadow-sm transition hover:shadow-md'
+                          >
+                            <img src={existingDocumentUrl} alt='GPS document preview' className='h-20 w-20 object-cover' />
+                          </button>
+                        )}
+                        <div>
+                          <p className='text-xs font-semibold uppercase tracking-wide text-slate-600'>
+                            {hasNewDoc ? 'New Upload' : existingIsPdf ? 'Uploaded PDF' : 'Uploaded Image'}
+                          </p>
+                          <p className='mt-1 text-sm font-bold text-slate-900 break-all'>
+                            {hasNewDoc ? (gpsDocumentName || 'GPS Document') : (existingDocumentName || 'GPS Document')}
+                          </p>
+                          <p className='mt-1 text-xs text-gray-600'>
+                            {hasNewDoc
+                              ? 'This document will replace the current one on save.'
+                              : 'Click the preview or View to open the full document.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <button
+                          type='button'
+                          onClick={() => {
+                            if (hasNewDoc ? newIsPdf : existingIsPdf) {
+                              window.open(hasNewDoc ? gpsDocumentBase64 : existingDocumentUrl, '_blank', 'noopener,noreferrer')
+                              return
+                            }
+                            setShowDocumentPreview(true)
+                          }}
+                          className='px-4 py-2 rounded-lg bg-cyan-600 text-white text-sm font-bold hover:bg-cyan-700 transition-all duration-200'
+                        >
+                          View
+                        </button>
+                        <button
+                          type='button'
+                          onClick={handleRemoveDocument}
+                          className='px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm font-bold border border-red-200 hover:bg-red-100 transition-all duration-200'
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className='mt-3'>
+                    <input
+                      type='file'
+                      accept='image/*, application/pdf'
+                      className='hidden'
+                      ref={documentInputRef}
+                      onChange={handleGpsDocumentUpload}
+                    />
+                    <button
+                      type='button'
+                      onClick={() => documentInputRef.current?.click()}
+                      className='flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-50 text-slate-700 text-sm font-bold border-2 border-dashed border-slate-300 hover:bg-slate-100 transition-all duration-200'
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
+                      </svg>
+                      {hasExistingDoc || hasNewDoc ? 'Replace Document' : 'Upload Document'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Footer Actions */}
@@ -698,6 +889,12 @@ const EditGpsModal = ({ isOpen, onClose, onSubmit, gps }) => {
           </div>
         </form>
       </div>
+      <ImageViewer
+        isOpen={showDocumentPreview}
+        onClose={() => setShowDocumentPreview(false)}
+        imageUrl={gpsDocumentBase64 || existingDocumentUrl}
+        title='GPS Document Preview'
+      />
     </div>
   )
 }

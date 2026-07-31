@@ -416,10 +416,10 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
 
     setIsSubmitting(true)
     try {
-      let gpsDocumentData = ''
+      let gpsDocumentBase64 = ''
 
       if (uploadedGpsFile) {
-        gpsDocumentData = await new Promise((resolve, reject) => {
+        gpsDocumentBase64 = await new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onloadend = () => resolve(reader.result)
           reader.onerror = reject
@@ -437,7 +437,8 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
         totalFee: parseFloat(formData.totalFee) || 0,
         paid: parseFloat(formData.paid) || 0,
         balance: parseFloat(formData.balance) || 0,
-        gpsDocumentData
+        gpsDocumentBase64: gpsDocumentBase64 || undefined,
+        gpsDocumentName: uploadedGpsFile?.name || undefined
       }
 
       const response = await axios.post(`${API_URL}/api/gps`, dataToSubmit, {
