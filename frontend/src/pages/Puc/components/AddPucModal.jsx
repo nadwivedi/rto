@@ -33,6 +33,7 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false)
   const [selectedDropdownIndex, setSelectedDropdownIndex] = useState(0)
   const dropdownItemRefs = useRef([])
+  const pucManualInputRef = useRef(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [scanningFile, setScanningFile] = useState(null)
   const [isExtractingPuc, setIsExtractingPuc] = useState(false)
@@ -581,6 +582,24 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
     }
   }
 
+  const handlePucManualUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPucDocumentBase64(reader.result)
+        setPucDocumentName(file.name || '')
+      }
+      reader.readAsDataURL(file)
+      toast.success('Document uploaded successfully.', { position: 'top-right', autoClose: 3000 })
+    } else {
+      toast.error('Please upload an image or PDF file.', { position: 'top-right', autoClose: 3000 })
+    }
+    e.target.value = ''
+  }
+
   if (!isOpen) return null
 
   return (
@@ -1052,6 +1071,36 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 </div>
               </div>
             )}
+
+            {/* Manual Document Upload */}
+            <div className='mt-4 bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <svg className='w-5 h-5 text-emerald-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
+                </svg>
+                Manual Document Upload
+              </h3>
+              <p className='text-xs text-gray-600 mb-3'>
+                Upload the PUC document manually without AI extraction.
+              </p>
+              <input
+                type='file'
+                accept='image/*, application/pdf'
+                className='hidden'
+                ref={pucManualInputRef}
+                onChange={handlePucManualUpload}
+              />
+              <button
+                type='button'
+                onClick={() => pucManualInputRef.current?.click()}
+                className='flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-sm font-bold border-2 border-dashed border-emerald-300 hover:bg-emerald-100 transition-all duration-200'
+              >
+                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
+                </svg>
+                {pucDocumentBase64 ? 'Replace Document' : 'Manual Upload'}
+              </button>
+            </div>
             </div>
 
             {/* Additional Details (Collapsible) */}

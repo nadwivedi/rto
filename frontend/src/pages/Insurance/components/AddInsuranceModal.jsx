@@ -940,6 +940,60 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     }
   }
 
+  // Handle manual insurance document upload (no OCR extraction)
+  const handleInsuranceManualUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const isImage = file.type.startsWith('image/')
+    const isPDF = file.type === 'application/pdf'
+
+    if (!isImage && !isPDF) {
+      toast.error('Please select a valid image or PDF file', { position: 'top-right', autoClose: 3000 })
+      return
+    }
+
+    if (file.size > 12 * 1024 * 1024) {
+      toast.error('File size should be less than 12MB', { position: 'top-right', autoClose: 3000 })
+      return
+    }
+
+    setUploadingInsuranceDoc(true)
+
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        try {
+          const base64String = reader.result
+
+          const response = await axios.post(
+            `${API_URL}/api/upload/insurance-document`,
+            {
+              imageData: base64String,
+              insuranceId: initialData?._id || null,
+              vehicleNumber: formData.vehicleNumber || 'EXTRACTED'
+            },
+            { withCredentials: true }
+          )
+
+          if (response.data.success) {
+            setFormData(prev => ({ ...prev, insuranceDocument: response.data.data.path }))
+            setInsuranceDocPreview(`${API_URL}${response.data.data.path}`)
+            setUploadingInsuranceDoc(false)
+            toast.success(`Insurance document uploaded successfully!`, { position: 'top-right', autoClose: 2000 })
+          }
+        } catch (uploadError) {
+          setUploadingInsuranceDoc(false)
+          toast.error('Failed to upload insurance document', { position: 'top-right', autoClose: 3000 })
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch (error) {
+      setUploadingInsuranceDoc(false)
+      toast.error('Error processing insurance document', { position: 'top-right', autoClose: 3000 })
+    }
+  }
+
   // Remove insurance document
   const handleRemoveInsuranceDoc = () => {
     setInsuranceDocPreview(null)
@@ -1760,7 +1814,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                   <input
                     type='file'
                     accept='image/*,application/pdf'
-                    onChange={handleInsuranceDocUpload}
+                    onChange={handleInsuranceManualUpload}
                     disabled={uploadingInsuranceDoc}
                     className='hidden'
                     id='insuranceDocInput'
@@ -1786,8 +1840,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                         <svg className='w-10 h-10 md:w-12 md:h-12 text-purple-400 mb-2' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12' />
                         </svg>
-                        <p className='text-xs md:text-sm text-gray-600 font-semibold mb-1'>Upload Insurance Document</p>
-                        <p className='text-[10px] md:text-xs text-gray-500'>Image or PDF (Optional)</p>
+                        <p className='text-xs md:text-sm text-gray-600 font-semibold mb-1'>Manual Upload</p>
+                        <p className='text-[10px] md:text-xs text-gray-500'>Image or PDF — no auto-fill</p>
                         <p className='text-[10px] text-purple-600 font-semibold mt-1'>Max 12MB</p>
                       </>
                     )}
