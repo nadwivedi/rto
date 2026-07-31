@@ -23,6 +23,9 @@ router.get('/active', fitnessController.getActiveFitness)
 // Get pending fitness records
 router.get('/pending', fitnessController.getPendingFitness)
 
+// Check if vehicle has active fitness (must be before any param routes)
+router.get('/check-vehicle/:vehicleNumber', fitnessController.checkVehicleActiveFitness)
+
 // Get single fitness record by ID
 router.get('/id/:id', fitnessController.getFitnessById)
 

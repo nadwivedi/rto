@@ -51,6 +51,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
   const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }]);
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false);
   const [employees, setEmployees] = useState([])
+  const [activeFitnessCheck, setActiveFitnessCheck] = useState(null); // { loading } | { loading:false, exists:false } | { loading:false, exists:true, validFrom, validTo } | null
   const isOcrUpdate = useRef(false);
 
   // Reset form when modal closes or when prefilled values change
@@ -87,6 +88,7 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
       setFitnessDocumentBase64('');
       setFitnessDocumentName('');
       setShowDocumentPreview(false);
+      setActiveFitnessCheck(null);
     }
   }, [isOpen, prefilledVehicleNumber, prefilledOwnerName, prefilledMobileNumber]);
 
@@ -210,6 +212,37 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
         fetchVehicleDetails();
       }
     }, 500); // Wait 500ms after user stops typing
+
+    return () => clearTimeout(timeoutId);
+  }, [formData.vehicleNumber]);
+
+  // Check if vehicle already has an active fitness certificate
+  useEffect(() => {
+    const vehicleNum = formData.vehicleNumber.trim();
+    if (vehicleNum.length < 4) {
+      setActiveFitnessCheck(null);
+      return;
+    }
+
+    setActiveFitnessCheck({ loading: true });
+
+    const timeoutId = setTimeout(async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/fitness/check-vehicle/${encodeURIComponent(vehicleNum)}`, {
+          withCredentials: true
+        });
+        if (res.data.success) {
+          setActiveFitnessCheck(res.data.data.hasActiveFitness
+            ? { loading: false, exists: true, validFrom: res.data.data.validFrom, validTo: res.data.data.validTo }
+            : { loading: false, exists: false }
+          );
+        } else {
+          setActiveFitnessCheck(null);
+        }
+      } catch {
+        setActiveFitnessCheck(null);
+      }
+    }, 500);
 
     return () => clearTimeout(timeoutId);
   }, [formData.vehicleNumber]);
@@ -705,6 +738,15 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
       return;
     }
 
+    // Block if an active fitness already exists for this vehicle
+    if (activeFitnessCheck?.exists) {
+      toast.error(
+        `Cannot save — vehicle already has an active fitness certificate (valid till ${activeFitnessCheck.validTo || 'N/A'}).`,
+        { autoClose: 5000 }
+      );
+      return;
+    }
+
     // Validate paid amount doesn't exceed total fee
     if (paidExceedsTotal) {
       toast.error('Paid amount cannot be more than the total fee!');
@@ -976,6 +1018,32 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                 )}
                 {vehicleError && (
                   <p className='text-xs text-amber-600 mt-1'>{vehicleError}</p>
+                )}
+
+                {/* Active fitness warning */}
+                {activeFitnessCheck?.loading && formData.vehicleNumber.trim().length >= 4 && (
+                  <div className='mt-2 flex items-center gap-1.5 text-amber-700 bg-amber-50 border border-amber-300 rounded-md px-2.5 py-1.5'>
+                    <svg className='w-3.5 h-3.5 animate-spin' fill='none' viewBox='0 0 24 24'>
+                      <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' />
+                      <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z' />
+                    </svg>
+                    <span className='text-xs font-medium'>Checking active fitness...</span>
+                  </div>
+                )}
+                {activeFitnessCheck?.exists && (
+                  <div className='mt-2 flex items-start gap-1.5 bg-red-50 border border-red-300 rounded-md px-2.5 py-2'>
+                    <svg className='w-4 h-4 mt-0.5 shrink-0 text-red-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
+                    </svg>
+                    <div className='text-xs'>
+                      <span className='font-semibold text-red-700'>Fitness is Active Already</span>
+                      <br />
+                      <span className='text-red-600'>
+                        Valid from {activeFitnessCheck.validFrom || 'N/A'}
+                        {activeFitnessCheck.validTo ? ` · Valid till ${activeFitnessCheck.validTo}` : ''}
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
 

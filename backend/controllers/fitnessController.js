@@ -396,6 +396,42 @@ exports.getFitnessById = async (req, res) => {
   }
 }
 
+// Check if vehicle already has an active fitness certificate
+exports.checkVehicleActiveFitness = async (req, res) => {
+  try {
+    const { vehicleNumber } = req.params
+
+    const existingActive = await Fitness.findOne({
+      vehicleNumber: vehicleNumber.toUpperCase().trim(),
+      userId: req.user.id,
+      status: 'active'
+    }).select('validFrom validTo')
+
+    if (existingActive) {
+      return res.status(200).json({
+        success: true,
+        data: {
+          hasActiveFitness: true,
+          validFrom: existingActive.validFrom,
+          validTo: existingActive.validTo
+        }
+      })
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: { hasActiveFitness: false }
+    })
+  } catch (error) {
+    console.error('Error checking vehicle active fitness:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Failed to check fitness status',
+      error: error.message
+    })
+  }
+}
+
 // Create new fitness record
 exports.createFitness = async (req, res) => {
   try {
