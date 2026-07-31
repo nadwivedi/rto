@@ -35,6 +35,18 @@ const pucSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  pucDocument: {
+    type: String,
+    trim: true
+  },
+  pucDocumentType: {
+    type: String,
+    trim: true
+  },
+  pucDocumentName: {
+    type: String,
+    trim: true
+  },
   validFrom: {
     type: String,
     required: true

@@ -535,7 +535,8 @@ exports.updateFitness = async (req, res) => {
       feeBreakup,
       partyId,
       fitnessDocumentBase64,
-      fitnessDocumentName
+      fitnessDocumentName,
+      removeFitnessDocument
     } = req.body
 
     const fitness = await Fitness.findOne({ _id: req.params.id, userId: req.user.id })
@@ -584,7 +585,14 @@ exports.updateFitness = async (req, res) => {
     if (balance !== undefined) fitness.balance = balance
     if (feeBreakup !== undefined) fitness.feeBreakup = feeBreakup
     if (partyId !== undefined) fitness.partyId = partyId
-    if (fitnessDocumentBase64) {
+
+    // Handle document update: replace, remove, or keep as-is
+    if (removeFitnessDocument) {
+      deleteFitnessDocument(fitness.fitnessDocument)
+      fitness.fitnessDocument = ''
+      fitness.fitnessDocumentType = ''
+      fitness.fitnessDocumentName = ''
+    } else if (fitnessDocumentBase64) {
       deleteFitnessDocument(fitness.fitnessDocument)
       const uploadedDocument = saveFitnessDocument({
         imageBase64: fitnessDocumentBase64,

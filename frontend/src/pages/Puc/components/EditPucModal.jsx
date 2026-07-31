@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
+import { toast } from 'react-toastify'
 import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck'
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 import { handleSmartDateInput } from '../../../utils/dateFormatter'
+import ImageViewer from '../../../components/ImageViewer'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:8080'
 
@@ -27,6 +29,14 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false)
   const [selectedDropdownIndex, setSelectedDropdownIndex] = useState(0)
   const dropdownItemRefs = useRef([])
+  const [pucDocumentBase64, setPucDocumentBase64] = useState('')
+  const [pucDocumentName, setPucDocumentName] = useState('')
+  const [existingDocumentUrl, setExistingDocumentUrl] = useState('')
+  const [existingDocumentType, setExistingDocumentType] = useState('')
+  const [existingDocumentName, setExistingDocumentName] = useState('')
+  const [removePucDocument, setRemovePucDocument] = useState(false)
+  const [showDocumentPreview, setShowDocumentPreview] = useState(false)
+  const documentInputRef = useRef(null)
 
   // Populate form when puc record changes
   useEffect(() => {
@@ -43,6 +53,18 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
         paid: puc.paid?.toString() || '0',
         balance: puc.balance?.toString() || '0'
       })
+
+      const docUrl = puc.pucDocument
+        ? puc.pucDocument.startsWith('data:')
+          ? puc.pucDocument
+          : `${API_URL}${puc.pucDocument}`
+        : ''
+      setExistingDocumentUrl(docUrl)
+      setExistingDocumentType(puc.pucDocumentType || '')
+      setExistingDocumentName(puc.pucDocumentName || '')
+      setPucDocumentBase64('')
+      setPucDocumentName('')
+      setRemovePucDocument(false)
 
       if (puc.vehicleNumber) {
         const validation = validateVehicleNumberRealtime(puc.vehicleNumber)
@@ -72,6 +94,13 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
       setVehicleMatches([])
       setShowVehicleDropdown(false)
       setSelectedDropdownIndex(0)
+      setPucDocumentBase64('')
+      setPucDocumentName('')
+      setExistingDocumentUrl('')
+      setExistingDocumentType('')
+      setExistingDocumentName('')
+      setRemovePucDocument(false)
+      setShowDocumentPreview(false)
     }
   }, [isOpen])
 
@@ -336,6 +365,34 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
     }
   }
 
+  const handlePucDocumentUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setPucDocumentBase64(reader.result)
+        setPucDocumentName(file.name || '')
+        setRemovePucDocument(false)
+      }
+      reader.readAsDataURL(file)
+    } else {
+      toast.error('Please upload an image or PDF file.', { position: 'top-right', autoClose: 3000 })
+    }
+    e.target.value = ''
+  }
+
+  const handleRemoveDocument = () => {
+    setPucDocumentBase64('')
+    setPucDocumentName('')
+    setExistingDocumentUrl('')
+    setExistingDocumentType('')
+    setExistingDocumentName('')
+    setRemovePucDocument(true)
+    setShowDocumentPreview(false)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
 
@@ -350,7 +407,12 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
     }
 
     if (onSubmit) {
-      onSubmit(formData)
+      onSubmit({
+        ...formData,
+        pucDocumentBase64: pucDocumentBase64 || undefined,
+        pucDocumentName: pucDocumentName || undefined,
+        removePucDocument: removePucDocument || undefined
+      })
     }
     setFormData({
       date: '',
@@ -365,10 +427,22 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
     })
     setVehicleValidation({ isValid: false, message: '' })
     setPaidExceedsTotal(false)
+    setPucDocumentBase64('')
+    setPucDocumentName('')
+    setExistingDocumentUrl('')
+    setExistingDocumentType('')
+    setExistingDocumentName('')
+    setRemovePucDocument(false)
+    setShowDocumentPreview(false)
     onClose()
   }
 
   if (!isOpen) return null
+
+  const hasExistingDoc = Boolean(existingDocumentUrl)
+  const existingIsPdf = existingDocumentUrl.toLowerCase().includes('.pdf') || existingDocumentType.toLowerCase().includes('pdf')
+  const hasNewDoc = Boolean(pucDocumentBase64)
+  const newIsPdf = pucDocumentBase64.startsWith('data:application/pdf')
 
   return (
     <div className='fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-2 md:p-4'>
@@ -741,6 +815,123 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
                 </div>
               )}
             </div>
+
+            {/* Section 4: PUC Document */}
+            <div className='bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <span className='bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>4</span>
+                PUC Document
+              </h3>
+
+              {removePucDocument ? (
+                <div className='bg-amber-50 border-2 border-dashed border-amber-300 rounded-lg p-4 text-center'>
+                  <p className='text-sm font-semibold text-amber-700'>Document will be removed on save.</p>
+                  <button
+                    type='button'
+                    onClick={() => setRemovePucDocument(false)}
+                    className='mt-3 px-4 py-2 rounded-lg bg-amber-100 text-amber-800 text-sm font-bold hover:bg-amber-200 transition-all duration-200'
+                  >
+                    Undo Remove
+                  </button>
+                </div>
+              ) : (
+                <>
+                  {(hasExistingDoc || hasNewDoc) && (
+                    <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between bg-white rounded-xl border-2 border-emerald-200 p-3 md:p-4'>
+                      <div className='flex items-center gap-3'>
+                        {hasNewDoc ? (
+                          newIsPdf ? (
+                            <div className='flex h-20 w-20 items-center justify-center rounded-lg border-2 border-red-200 bg-red-50'>
+                              <svg className='h-10 w-10 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
+                                <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
+                              </svg>
+                            </div>
+                          ) : (
+                            <button
+                              type='button'
+                              onClick={() => setShowDocumentPreview(true)}
+                              className='overflow-hidden rounded-lg border-2 border-emerald-200 bg-white shadow-sm transition hover:shadow-md'
+                            >
+                              <img src={pucDocumentBase64} alt='New PUC document preview' className='h-20 w-20 object-cover' />
+                            </button>
+                          )
+                        ) : existingIsPdf ? (
+                          <div className='flex h-20 w-20 items-center justify-center rounded-lg border-2 border-red-200 bg-red-50'>
+                            <svg className='h-10 w-10 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
+                              <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
+                            </svg>
+                          </div>
+                        ) : (
+                          <button
+                            type='button'
+                            onClick={() => setShowDocumentPreview(true)}
+                            className='overflow-hidden rounded-lg border-2 border-emerald-200 bg-white shadow-sm transition hover:shadow-md'
+                          >
+                            <img src={existingDocumentUrl} alt='PUC document preview' className='h-20 w-20 object-cover' />
+                          </button>
+                        )}
+                        <div>
+                          <p className='text-xs font-semibold uppercase tracking-wide text-emerald-600'>
+                            {hasNewDoc ? 'New Upload' : existingIsPdf ? 'Uploaded PDF' : 'Uploaded Image'}
+                          </p>
+                          <p className='mt-1 text-sm font-bold text-emerald-900 break-all'>
+                            {hasNewDoc ? (pucDocumentName || 'PUC Document') : (existingDocumentName || 'PUC Document')}
+                          </p>
+                          <p className='mt-1 text-xs text-gray-600'>
+                            {hasNewDoc
+                              ? 'This document will replace the current one on save.'
+                              : 'Click the preview or View to open the full document.'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className='flex flex-wrap items-center gap-2'>
+                        <button
+                          type='button'
+                          onClick={() => {
+                            if (hasNewDoc ? newIsPdf : existingIsPdf) {
+                              window.open(hasNewDoc ? pucDocumentBase64 : existingDocumentUrl, '_blank', 'noopener,noreferrer')
+                              return
+                            }
+                            setShowDocumentPreview(true)
+                          }}
+                          className='px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-all duration-200'
+                        >
+                          View
+                        </button>
+                        <button
+                          type='button'
+                          onClick={handleRemoveDocument}
+                          className='px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm font-bold border border-red-200 hover:bg-red-100 transition-all duration-200'
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className='mt-3'>
+                    <input
+                      type='file'
+                      accept='image/*, application/pdf'
+                      className='hidden'
+                      ref={documentInputRef}
+                      onChange={handlePucDocumentUpload}
+                    />
+                    <button
+                      type='button'
+                      onClick={() => documentInputRef.current?.click()}
+                      className='flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-50 text-emerald-700 text-sm font-bold border-2 border-dashed border-emerald-300 hover:bg-emerald-100 transition-all duration-200'
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
+                      </svg>
+                      {hasExistingDoc || hasNewDoc ? 'Replace Document' : 'Upload Document'}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Footer Actions */}
@@ -771,6 +962,12 @@ const EditPucModal = ({ isOpen, onClose, onSubmit, puc }) => {
           </div>
         </form>
       </div>
+      <ImageViewer
+        isOpen={showDocumentPreview}
+        onClose={() => setShowDocumentPreview(false)}
+        imageUrl={pucDocumentBase64 || existingDocumentUrl}
+        title='PUC Document Preview'
+      />
     </div>
   )
 }

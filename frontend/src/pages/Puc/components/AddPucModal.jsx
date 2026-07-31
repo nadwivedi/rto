@@ -5,6 +5,7 @@ import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck'
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 import { handleSmartDateInput, normalizeAIExtractedDate } from '../../../utils/dateFormatter'
 import DocumentScannerPreview from '../../../components/DocumentScannerPreview'
+import ImageViewer from '../../../components/ImageViewer'
 import { replacePaymentsForWork } from '../../../utils/paymentReceivedApi'
 import { replaceExpensesForWork } from '../../../utils/expenseBreakdownApi'
 
@@ -35,6 +36,9 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [scanningFile, setScanningFile] = useState(null)
   const [isExtractingPuc, setIsExtractingPuc] = useState(false)
+  const [pucDocumentBase64, setPucDocumentBase64] = useState('')
+  const [pucDocumentName, setPucDocumentName] = useState('')
+  const [showDocumentPreview, setShowDocumentPreview] = useState(false)
   const [paymentReceived, setPaymentReceived] = useState([{ date: '', amount: '', paymentMode: 'Cash', remark: '', receivedBy: '' }])
   const [expenseItems, setExpenseItems] = useState([{ date: '', name: '', amount: '', remark: '' }])
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(false)
@@ -64,6 +68,9 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
       setSelectedDropdownIndex(0)
       setScanningFile(null)
       setIsExtractingPuc(false)
+      setPucDocumentBase64('')
+      setPucDocumentName('')
+      setShowDocumentPreview(false)
     }
   }, [isOpen, prefilledVehicleNumber, prefilledOwnerName, prefilledMobileNumber])
 
@@ -420,7 +427,9 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
       validTo: formData.validTo,
       totalFee: parseFloat(formData.totalFee) || 0,
       paid: parseFloat(formData.paid) || 0,
-      balance: parseFloat(formData.balance) || 0
+      balance: parseFloat(formData.balance) || 0,
+      pucDocumentBase64: pucDocumentBase64 || undefined,
+      pucDocumentName: pucDocumentName || undefined
     }
 
     setIsSubmitting(true)
@@ -501,6 +510,8 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
       reader.onloadend = async () => {
         try {
           const base64String = reader.result
+          setPucDocumentBase64(base64String)
+          setPucDocumentName(fileToProcess.name || '')
           const response = await axios.post(
             `${API_URL}/api/ocr/puc`,
             { imageBase64: base64String },
@@ -581,6 +592,12 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
           onConfirm={handleScannerConfirm}
         />
       )}
+      <ImageViewer
+        isOpen={showDocumentPreview}
+        onClose={() => setShowDocumentPreview(false)}
+        imageUrl={pucDocumentBase64}
+        title='PUC Document Preview'
+      />
 
       <div className='fixed inset-0 bg-black/60 z-[70] flex items-center justify-center p-2 md:p-4'>
         <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-5xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
@@ -981,6 +998,60 @@ const AddPucModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 </div>
               )}
             </div>
+
+            {pucDocumentBase64 && (
+              <div className='bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl border-2 border-emerald-200 p-3 md:p-4 mt-4'>
+                <h4 className='text-sm md:text-base font-bold text-gray-800 mb-4'>Uploaded PUC Document Preview</h4>
+                <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+                  <div className='flex items-center gap-3'>
+                    {pucDocumentBase64.startsWith('data:application/pdf') ? (
+                      <div className='flex h-20 w-20 items-center justify-center rounded-lg border-2 border-red-200 bg-red-50'>
+                        <svg className='h-10 w-10 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
+                          <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
+                        </svg>
+                      </div>
+                    ) : (
+                      <button
+                        type='button'
+                        onClick={() => setShowDocumentPreview(true)}
+                        className='overflow-hidden rounded-lg border-2 border-emerald-200 bg-white shadow-sm transition hover:shadow-md'
+                      >
+                        <img
+                          src={pucDocumentBase64}
+                          alt='PUC document preview'
+                          className='h-20 w-20 object-cover'
+                        />
+                      </button>
+                    )}
+                    <div>
+                      <p className='text-xs font-semibold uppercase tracking-wide text-emerald-600'>
+                        {pucDocumentBase64.startsWith('data:application/pdf') ? 'Uploaded PDF' : 'Uploaded Image'}
+                      </p>
+                      <p className='mt-1 text-sm font-bold text-emerald-900'>
+                        {pucDocumentName || (pucDocumentBase64.startsWith('data:application/pdf') ? 'PUC Document PDF' : 'PUC Document Image')}
+                      </p>
+                      <p className='mt-1 text-xs text-gray-600'>
+                        {pucDocumentBase64.startsWith('data:application/pdf') ? 'PDF preview is hidden here. Use View to open it.' : 'Click the preview or View to open the full image.'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <button
+                    type='button'
+                    onClick={() => {
+                      if (pucDocumentBase64.startsWith('data:application/pdf')) {
+                        window.open(pucDocumentBase64, '_blank', 'noopener,noreferrer')
+                        return
+                      }
+                      setShowDocumentPreview(true)
+                    }}
+                    className='px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition-all duration-200'
+                  >
+                    View
+                  </button>
+                </div>
+              </div>
+            )}
             </div>
 
             {/* Additional Details (Collapsible) */}

@@ -1,6 +1,57 @@
 const Puc = require('../models/Puc')
 const VehicleRegistration = require('../models/VehicleRegistration')
 const mongoose = require('mongoose')
+const fs = require('fs')
+const path = require('path')
+
+const pucUploadsDir = path.join(__dirname, '..', 'uploads', 'puc-documents')
+
+if (!fs.existsSync(pucUploadsDir)) {
+  fs.mkdirSync(pucUploadsDir, { recursive: true })
+}
+
+const savePucDocument = ({ imageBase64, vehicleNumber, userId, originalName }) => {
+  if (!imageBase64 || typeof imageBase64 !== 'string') return null
+
+  const match = imageBase64.match(/^data:(image\/[a-zA-Z0-9.+-]+|application\/pdf);base64,(.+)$/)
+  if (!match) return null
+
+  const mimeType = match[1]
+  const base64Data = match[2]
+  const buffer = Buffer.from(base64Data, 'base64')
+  const safeVehicleNumber = String(vehicleNumber || 'puc').replace(/[^a-zA-Z0-9]/g, '').toUpperCase() || 'PUC'
+
+  let extension = 'bin'
+  if (mimeType === 'application/pdf') extension = 'pdf'
+  else if (mimeType.includes('png')) extension = 'png'
+  else if (mimeType.includes('webp')) extension = 'webp'
+  else if (mimeType.includes('gif')) extension = 'gif'
+  else if (mimeType.includes('jpeg') || mimeType.includes('jpg')) extension = 'jpg'
+
+  const filename = `puc-${safeVehicleNumber}-${userId}-${Date.now()}.${extension}`
+  const filePath = path.join(pucUploadsDir, filename)
+  fs.writeFileSync(filePath, buffer)
+
+  return {
+    relativePath: `/uploads/puc-documents/${filename}`,
+    mimeType,
+    originalName: originalName || filename
+  }
+}
+
+const deletePucDocument = (documentPath) => {
+  if (!documentPath) return
+
+  try {
+    const filename = path.basename(documentPath)
+    const filePath = path.join(pucUploadsDir, filename)
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath)
+    }
+  } catch (error) {
+    console.error('Error deleting PUC document:', error)
+  }
+}
 
 // helper function to calculate status
 const getPucStatus = (validTo) => {
@@ -340,7 +391,7 @@ exports.getPucById = async (req, res) => {
 // Create new PUC record
 exports.createPuc = async (req, res) => {
   try {
-    const { vehicleNumber, ownerName, mobileNumber, date, vehicleModel, validFrom, validTo, totalFee, paid, balance, partyId: reqPartyId } = req.body
+    const { vehicleNumber, ownerName, mobileNumber, date, vehicleModel, validFrom, validTo, totalFee, paid, balance, partyId: reqPartyId, pucDocumentBase64, pucDocumentName } = req.body
 
     // Validate required fields
     if (!vehicleNumber ) {
@@ -399,6 +450,13 @@ exports.createPuc = async (req, res) => {
       }
     )
 
+    const uploadedDocument = savePucDocument({
+      imageBase64: pucDocumentBase64,
+      vehicleNumber,
+      userId: req.user.id,
+      originalName: pucDocumentName
+    })
+
     // Create new PUC record
     const puc = new Puc({
       vehicleNumber,
@@ -413,7 +471,10 @@ exports.createPuc = async (req, res) => {
       balance,
       status,
       userId: req.user.id,
-      partyId
+      partyId,
+      pucDocument: uploadedDocument?.relativePath || '',
+      pucDocumentType: uploadedDocument?.mimeType || '',
+      pucDocumentName: uploadedDocument?.originalName || ''
     })
 
     await puc.save()
@@ -436,7 +497,7 @@ exports.createPuc = async (req, res) => {
 // Update PUC record
 exports.updatePuc = async (req, res) => {
   try {
-    const { vehicleNumber, ownerName, mobileNumber, date, vehicleModel, validFrom, validTo, totalFee, paid, balance, partyId } = req.body
+    const { vehicleNumber, ownerName, mobileNumber, date, vehicleModel, validFrom, validTo, totalFee, paid, balance, partyId, pucDocumentBase64, pucDocumentName, removePucDocument } = req.body
 
     const puc = await Puc.findOne({ _id: req.params.id, userId: req.user.id })
 
@@ -485,6 +546,25 @@ exports.updatePuc = async (req, res) => {
     if (balance !== undefined) puc.balance = balance
     if (partyId !== undefined) puc.partyId = partyId
 
+    // Handle document update: replace, remove, or keep as-is
+    if (removePucDocument) {
+      deletePucDocument(puc.pucDocument)
+      puc.pucDocument = ''
+      puc.pucDocumentType = ''
+      puc.pucDocumentName = ''
+    } else if (pucDocumentBase64) {
+      deletePucDocument(puc.pucDocument)
+      const uploadedDocument = savePucDocument({
+        imageBase64: pucDocumentBase64,
+        vehicleNumber: vehicleNumber || puc.vehicleNumber,
+        userId: req.user.id,
+        originalName: pucDocumentName
+      })
+      puc.pucDocument = uploadedDocument?.relativePath || ''
+      puc.pucDocumentType = uploadedDocument?.mimeType || ''
+      puc.pucDocumentName = uploadedDocument?.originalName || ''
+    }
+
     await puc.save()
 
     res.json({
@@ -514,6 +594,7 @@ exports.deletePuc = async (req, res) => {
       })
     }
 
+    deletePucDocument(puc.pucDocument)
     await puc.deleteOne()
 
     res.json({
