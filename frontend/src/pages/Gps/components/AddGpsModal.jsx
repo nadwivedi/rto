@@ -632,6 +632,17 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
     e.target.value = ''
   }
 
+  const handleGpsRemoveDocument = () => {
+    setUploadedGpsDocument(prev => {
+      if (prev?.previewUrl) {
+        URL.revokeObjectURL(prev.previewUrl)
+      }
+      return null
+    })
+    setUploadedGpsFile(null)
+    toast.info('GPS document removed', { position: 'top-right', autoClose: 2000 })
+  }
+
   if (!isOpen) return null
 
   return (
@@ -977,50 +988,16 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
               )}
             </div>
 
-            {uploadedGpsDocument && (
-              <div className='bg-gradient-to-r from-slate-50 to-cyan-50 border-2 border-slate-200 rounded-xl p-3 md:p-6'>
-                <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
-                  <span className='bg-slate-700 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>4</span>
-                  Uploaded GPS Document
-                </h3>
-
-                <div className='mb-3 flex items-center justify-between gap-3 rounded-lg bg-white/80 px-3 py-2 border border-slate-200'>
-                  <div className='min-w-0'>
-                    <p className='text-sm font-semibold text-slate-800 truncate'>{uploadedGpsDocument.name}</p>
-                    <p className='text-xs text-slate-500'>
-                      {uploadedGpsDocument.type === 'pdf' ? 'PDF preview' : 'Image preview'}
-                    </p>
-                  </div>
-                </div>
-
-                {uploadedGpsDocument.type === 'pdf' ? (
-                  <iframe
-                    src={uploadedGpsDocument.previewUrl}
-                    title='Uploaded GPS PDF'
-                    className='w-full h-80 rounded-xl border border-slate-200 bg-white'
-                  />
-                ) : (
-                  <div className='rounded-xl border border-slate-200 bg-white p-2'>
-                    <img
-                      src={uploadedGpsDocument.previewUrl}
-                      alt='Uploaded GPS document'
-                      className='w-full max-h-80 object-contain rounded-lg'
-                    />
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Manual Document Upload */}
+            {/* Document Upload */}
             <div className='mt-4 bg-gradient-to-r from-slate-50 to-cyan-50 border-2 border-slate-200 rounded-xl p-3 md:p-6'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
                 <svg className='w-5 h-5 text-slate-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                   <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
                 </svg>
-                Manual Document Upload
+                Document Upload
               </h3>
               <p className='text-xs text-gray-600 mb-3'>
-                Upload the GPS document manually without AI extraction.
+                Upload the GPS document manually, or preview the document uploaded via AI.
               </p>
               <input
                 type='file'
@@ -1029,16 +1006,71 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
                 ref={gpsManualInputRef}
                 onChange={handleGpsManualUpload}
               />
-              <button
-                type='button'
-                onClick={() => gpsManualInputRef.current?.click()}
-                className='flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-50 text-slate-700 text-sm font-bold border-2 border-dashed border-slate-300 hover:bg-slate-100 transition-all duration-200'
-              >
-                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
-                </svg>
-                {uploadedGpsFile ? 'Replace Document' : 'Manual Upload'}
-              </button>
+              {!uploadedGpsDocument ? (
+                <button
+                  type='button'
+                  onClick={() => gpsManualInputRef.current?.click()}
+                  className='flex items-center gap-2 px-4 py-2 rounded-lg bg-slate-50 text-slate-700 text-sm font-bold border-2 border-dashed border-slate-300 hover:bg-slate-100 transition-all duration-200'
+                >
+                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
+                  </svg>
+                  Manual Upload
+                </button>
+              ) : (
+                <div>
+                  <div className='mb-3 flex flex-col gap-3 md:flex-row md:items-center md:justify-between rounded-lg bg-white/80 px-3 py-2 border border-slate-200'>
+                    <div className='min-w-0'>
+                      <p className='text-sm font-semibold text-slate-800 truncate'>{uploadedGpsDocument.name}</p>
+                      <p className='text-xs text-slate-500'>
+                        {uploadedGpsDocument.type === 'pdf' ? 'PDF preview' : 'Image preview'}
+                      </p>
+                    </div>
+                    <div className='flex items-center gap-2'>
+                      <button
+                        type='button'
+                        onClick={() => gpsManualInputRef.current?.click()}
+                        className='px-4 py-2 rounded-lg bg-slate-50 text-slate-700 text-sm font-bold border-2 border-dashed border-slate-300 hover:bg-slate-100 transition-all duration-200'
+                      >
+                        Replace
+                      </button>
+                      <button
+                        type='button'
+                        onClick={() => window.open(uploadedGpsDocument.previewUrl, '_blank', 'noopener,noreferrer')}
+                        className='px-4 py-2 rounded-lg bg-slate-700 text-white text-sm font-bold hover:bg-slate-800 transition-all duration-200'
+                      >
+                        View
+                      </button>
+                      <button
+                        type='button'
+                        onClick={handleGpsRemoveDocument}
+                        className='flex items-center gap-1 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm font-bold border-2 border-red-200 hover:bg-red-100 transition-all duration-200'
+                      >
+                        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                        </svg>
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+
+                  {uploadedGpsDocument.type === 'pdf' ? (
+                    <iframe
+                      src={uploadedGpsDocument.previewUrl}
+                      title='Uploaded GPS PDF'
+                      className='w-full h-80 rounded-xl border border-slate-200 bg-white'
+                    />
+                  ) : (
+                    <div className='rounded-xl border border-slate-200 bg-white p-2'>
+                      <img
+                        src={uploadedGpsDocument.previewUrl}
+                        alt='Uploaded GPS document'
+                        className='w-full max-h-80 object-contain rounded-lg'
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Additional Details (Collapsible) */}

@@ -662,6 +662,12 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
     e.target.value = '';
   }
 
+  const handleFitnessRemoveDocument = () => {
+    setFitnessDocumentBase64('');
+    setFitnessDocumentName('');
+    toast.info('Fitness document removed', { position: 'top-right', autoClose: 2000 });
+  }
+
   const addExpenseItem = () => {
     setExpenseItems(prev => [...prev, { date: '', name: '', amount: '', remark: '' }]);
   };
@@ -808,7 +814,6 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
 
   if (!isOpen) return null;
 
-  const hasUploadedDocument = Boolean(fitnessDocumentBase64);
   const isPdfDocument = fitnessDocumentBase64.startsWith('data:application/pdf');
 
   return (
@@ -1190,44 +1195,75 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
               </div>
             </div>
 
-            {hasUploadedDocument && (
-              <div className='mt-5 pt-5 border-t border-purple-200'>
-                <h4 className='text-sm md:text-base font-bold text-gray-800 mb-4'>Uploaded Fitness Document Preview</h4>
-                <div className='bg-gradient-to-r from-sky-50 to-blue-50 rounded-xl border-2 border-sky-200 p-4'>
-                  <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
-                    <div className='flex items-center gap-3'>
-                      {isPdfDocument ? (
-                        <div className='flex h-20 w-20 items-center justify-center rounded-lg border-2 border-red-200 bg-red-50'>
-                          <svg className='h-10 w-10 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
-                            <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
-                          </svg>
-                        </div>
-                      ) : (
-                        <button
-                          type='button'
-                          onClick={() => setShowDocumentPreview(true)}
-                          className='overflow-hidden rounded-lg border-2 border-sky-200 bg-white shadow-sm transition hover:shadow-md'
-                        >
-                          <img
-                            src={fitnessDocumentBase64}
-                            alt='Fitness document preview'
-                            className='h-20 w-20 object-cover'
-                          />
-                        </button>
-                      )}
-                      <div>
-                        <p className='text-xs font-semibold uppercase tracking-wide text-sky-600'>
-                          {isPdfDocument ? 'Uploaded PDF' : 'Uploaded Image'}
-                        </p>
-                        <p className='mt-1 text-sm font-bold text-sky-900'>
-                          {fitnessDocumentName || (isPdfDocument ? 'Fitness Document PDF' : 'Fitness Document Image')}
-                        </p>
-                        <p className='mt-1 text-xs text-gray-600'>
-                          {isPdfDocument ? 'PDF preview is hidden here. Use View to open it.' : 'Click the preview or View to open the full image.'}
-                        </p>
+            {/* Document Upload */}
+            <div className='mt-4 bg-gradient-to-r from-sky-50 to-blue-50 border-2 border-sky-200 rounded-xl p-3 md:p-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <svg className='w-5 h-5 text-sky-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
+                </svg>
+                Document Upload
+              </h3>
+              <p className='text-xs text-gray-600 mb-3'>
+                Upload the Fitness document manually, or preview the document uploaded via AI.
+              </p>
+              <input
+                type='file'
+                accept='image/*, application/pdf'
+                className='hidden'
+                ref={fitnessManualInputRef}
+                onChange={handleFitnessManualUpload}
+              />
+              {!fitnessDocumentBase64 ? (
+                <button
+                  type='button'
+                  onClick={() => fitnessManualInputRef.current?.click()}
+                  className='flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-50 text-sky-700 text-sm font-bold border-2 border-dashed border-sky-300 hover:bg-sky-100 transition-all duration-200'
+                >
+                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
+                  </svg>
+                  Manual Upload
+                </button>
+              ) : (
+                <div className='flex flex-col gap-3 md:flex-row md:items-center md:justify-between'>
+                  <div className='flex items-center gap-3'>
+                    {isPdfDocument ? (
+                      <div className='flex h-20 w-20 items-center justify-center rounded-lg border-2 border-red-200 bg-red-50'>
+                        <svg className='h-10 w-10 text-red-500' fill='currentColor' viewBox='0 0 20 20'>
+                          <path fillRule='evenodd' d='M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4z' clipRule='evenodd' />
+                        </svg>
                       </div>
+                    ) : (
+                      <button
+                        type='button'
+                        onClick={() => setShowDocumentPreview(true)}
+                        className='overflow-hidden rounded-lg border-2 border-sky-200 bg-white shadow-sm transition hover:shadow-md'
+                      >
+                        <img
+                          src={fitnessDocumentBase64}
+                          alt='Fitness document preview'
+                          className='h-20 w-20 object-cover'
+                        />
+                      </button>
+                    )}
+                    <div>
+                      <p className='text-xs font-semibold uppercase tracking-wide text-sky-600'>
+                        {isPdfDocument ? 'Uploaded PDF' : 'Uploaded Image'}
+                      </p>
+                      <p className='mt-1 text-sm font-bold text-sky-900'>
+                        {fitnessDocumentName || (isPdfDocument ? 'Fitness Document PDF' : 'Fitness Document Image')}
+                      </p>
                     </div>
+                  </div>
 
+                  <div className='flex items-center gap-2'>
+                    <button
+                      type='button'
+                      onClick={() => fitnessManualInputRef.current?.click()}
+                      className='px-4 py-2 rounded-lg bg-sky-50 text-sky-700 text-sm font-bold border-2 border-dashed border-sky-300 hover:bg-sky-100 transition-all duration-200'
+                    >
+                      Replace
+                    </button>
                     <button
                       type='button'
                       onClick={() => {
@@ -1241,41 +1277,21 @@ const AddFitnessModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '
                     >
                       View
                     </button>
+                    <button
+                      type='button'
+                      onClick={handleFitnessRemoveDocument}
+                      className='flex items-center gap-1 px-4 py-2 rounded-lg bg-red-50 text-red-600 text-sm font-bold border-2 border-red-200 hover:bg-red-100 transition-all duration-200'
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                      </svg>
+                      Remove
+                    </button>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-
-            {/* Manual Document Upload */}
-            <div className='mt-4 bg-gradient-to-r from-sky-50 to-blue-50 border-2 border-sky-200 rounded-xl p-3 md:p-6'>
-              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
-                <svg className='w-5 h-5 text-sky-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
-                </svg>
-                Manual Document Upload
-              </h3>
-              <p className='text-xs text-gray-600 mb-3'>
-                Upload the Fitness document manually without AI extraction.
-              </p>
-              <input
-                type='file'
-                accept='image/*, application/pdf'
-                className='hidden'
-                ref={fitnessManualInputRef}
-                onChange={handleFitnessManualUpload}
-              />
-              <button
-                type='button'
-                onClick={() => fitnessManualInputRef.current?.click()}
-                className='flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-50 text-sky-700 text-sm font-bold border-2 border-dashed border-sky-300 hover:bg-sky-100 transition-all duration-200'
-              >
-                <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
-                </svg>
-                {fitnessDocumentBase64 ? 'Replace Document' : 'Manual Upload'}
-              </button>
+              )}
             </div>
+          </div>
 
             {/* Additional Details (Collapsible) */}
             <div className='mt-4 pt-4 border-t border-rose-200'>
