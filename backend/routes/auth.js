@@ -11,5 +11,7 @@ router.get('/profile', userAuthMiddleware, authController.getProfile)
 router.post('/change-password', userAuthMiddleware, authController.changePassword)
 router.post('/logout', userAuthMiddleware, authController.logout)
 router.patch('/settings', userAuthMiddleware, authController.updateSettings)
+router.post('/profile-picture', userAuthMiddleware, authController.uploadProfilePicture)
+router.delete('/profile-picture', userAuthMiddleware, authController.removeProfilePicture)
 
 module.exports = router

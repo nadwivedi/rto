@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import { getAllThemes, getAllVehicleNumberDesigns } from '../context/ThemeContext'
 import EmployeeManagement from './Setting/EmployeeManagement'
 import WhatsAppSettings from './Setting/WhatsAppSettings'
+import Profile from './Setting/Profile'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -87,6 +88,9 @@ const Setting = () => {
 
       {/* Settings Cards */}
       <div className='space-y-4'>
+        {/* My Profile (main user accounts only) */}
+        {user?.type !== 'staff' && <Profile />}
+
         {/* Subscription Info */}
         <div className='bg-white rounded-xl p-6 shadow-lg border border-gray-200'>
           <div className='flex items-center gap-3 mb-4'>
