@@ -117,17 +117,50 @@ async function generateCustomBillPDF(customBill, userInfo) {
 
       // Company name (use billName if available, otherwise fall back to name)
       const companyName = (userInfo && userInfo.billName ? userInfo.billName.toUpperCase() : (userInfo && userInfo.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR'))
-      doc.fontSize(24)
-        .fillColor('#000000')
-        .font('Helvetica-BoldOblique')
 
-      const nameHeight = doc.heightOfString(companyName, { width: pageWidth, align: 'center' })
-      doc.text(companyName, 0, yPos, {
-        width: pageWidth,
-        align: 'center'
-      })
+      // Profile picture (only shown when the user has set one)
+      const profileImagePath = (userInfo && userInfo.profileImage)
+        ? path.join(__dirname, '..', userInfo.profileImage)
+        : null
+      const hasProfileImage = profileImagePath && fs.existsSync(profileImagePath)
 
-      yPos += nameHeight + 6
+      if (hasProfileImage) {
+        // Draw profile picture on the left with a thin border, and the bill name
+        // directly beside it, so the whole group is centered on the page.
+        const imageSize = 70
+        const gap = 15
+
+        doc.fontSize(24)
+          .fillColor('#000000')
+          .font('Helvetica-BoldOblique')
+
+        const nameWidth = doc.widthOfString(companyName)
+        const totalWidth = imageSize + gap + nameWidth
+        const xStart = Math.max(leftMargin, (pageWidth - totalWidth) / 2)
+        const imageX = xStart
+        const imageY = yPos
+
+        doc.image(profileImagePath, imageX, imageY, { width: imageSize, height: imageSize })
+
+        const nameHeight = doc.heightOfString(companyName, { width: nameWidth })
+        const textY = imageY + (imageSize - nameHeight) / 2
+        doc.text(companyName, imageX + imageSize + gap, textY, { width: nameWidth })
+
+        yPos += Math.max(imageSize, nameHeight) + 10
+      } else {
+        // Default centered layout when no profile picture is set
+        doc.fontSize(24)
+          .fillColor('#000000')
+          .font('Helvetica-BoldOblique')
+
+        const nameHeight = doc.heightOfString(companyName, { width: pageWidth, align: 'center' })
+        doc.text(companyName, 0, yPos, {
+          width: pageWidth,
+          align: 'center'
+        })
+
+        yPos += nameHeight + 6
+      }
 
       // Address (below bill name)
       doc.fontSize(11)
