@@ -152,6 +152,22 @@ const InsuranceSchema = new mongoose.Schema({
   commission: {
     type: Number,
     default: 0
+  },
+  odPremium: {
+    type: Number,
+    default: 0
+  },
+  tpPremium: {
+    type: Number,
+    default: 0
+  },
+  netPremium: {
+    type: Number,
+    default: 0
+  },
+  premium: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true // Automatically adds createdAt and updatedAt fields

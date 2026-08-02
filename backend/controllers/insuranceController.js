@@ -34,7 +34,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails, createRC } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails, createRC, odPremium, tpPremium, netPremium, premium } = req.body
 
     // Validate required fields
 
@@ -140,7 +140,11 @@ exports.createInsurance = async (req, res) => {
       userId: req.user.id,
       partyId,
       renewPremium: Number(renewPremium) || 0,
-      commission: Number(commission) || 0
+      commission: Number(commission) || 0,
+      odPremium: Number(odPremium) || 0,
+      tpPremium: Number(tpPremium) || 0,
+      netPremium: Number(netPremium) || 0,
+      premium: Number(premium) || 0
     }
 
     // Only add insuranceDocument if it's provided (optional field)
@@ -709,7 +713,7 @@ exports.checkVehicleActiveInsurance = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails, odPremium, tpPremium, netPremium, premium } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -771,6 +775,10 @@ exports.updateInsurance = async (req, res) => {
     if (partyId !== undefined) insurance.partyId = partyId
     if (renewPremium !== undefined) insurance.renewPremium = Number(renewPremium) || 0
     if (commission !== undefined) insurance.commission = Number(commission) || 0
+    if (odPremium !== undefined) insurance.odPremium = Number(odPremium) || 0
+    if (tpPremium !== undefined) insurance.tpPremium = Number(tpPremium) || 0
+    if (netPremium !== undefined) insurance.netPremium = Number(netPremium) || 0
+    if (premium !== undefined) insurance.premium = Number(premium) || 0
 
     const updatedInsurance = await insurance.save()
 

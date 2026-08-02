@@ -127,10 +127,36 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
             </div>
           </div>
 
+          {/* Premium Breakdown */}
+          <div className='bg-gradient-to-r from-emerald-50 to-lime-50 border-2 border-emerald-200 rounded-xl p-4 md:p-5'>
+            <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 flex items-center gap-2'>
+              <span className='bg-emerald-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>3</span>
+              Premium Breakdown
+            </h3>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-xs md:text-sm'>
+              <div>
+                <span className='block text-gray-500 font-medium'>OD Premium</span>
+                <span className='block font-bold text-gray-800 mt-0.5'>₹{(insurance.odPremium || 0).toLocaleString('en-IN')}</span>
+              </div>
+              <div>
+                <span className='block text-gray-500 font-medium'>TP Premium</span>
+                <span className='block font-bold text-gray-800 mt-0.5'>₹{(insurance.tpPremium || 0).toLocaleString('en-IN')}</span>
+              </div>
+              <div>
+                <span className='block text-gray-500 font-medium'>Net Premium</span>
+                <span className='block font-bold text-gray-800 mt-0.5'>₹{(insurance.netPremium || 0).toLocaleString('en-IN')}</span>
+              </div>
+              <div>
+                <span className='block text-gray-500 font-medium'>Gross Premium</span>
+                <span className='block font-bold text-emerald-600 mt-0.5'>₹{(insurance.premium || 0).toLocaleString('en-IN')}</span>
+              </div>
+            </div>
+          </div>
+
           {/* Payment Information */}
           <div className='bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-4 md:p-5'>
             <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 flex items-center gap-2'>
-              <span className='bg-emerald-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>3</span>
+              <span className='bg-emerald-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>4</span>
               Payment Information
             </h3>
             <div className='grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 text-xs md:text-sm'>
@@ -163,7 +189,7 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
           {(insurance.agentName || insurance.agentContact) && (
             <div className='bg-gradient-to-r from-amber-50 to-yellow-50 border-2 border-amber-200 rounded-xl p-4 md:p-5'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 flex items-center gap-2'>
-                <span className='bg-amber-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>4</span>
+                <span className='bg-amber-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>5</span>
                 Broker/Agent Details
               </h3>
               <div className='grid grid-cols-2 gap-3 md:gap-4 text-xs md:text-sm'>
@@ -183,7 +209,7 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
           {docUrl && (
             <div className='bg-gradient-to-r from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-4 md:p-5'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 flex items-center gap-2'>
-                <span className='bg-purple-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>5</span>
+                <span className='bg-purple-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>6</span>
                 Insurance Document
               </h3>
               <div className='w-full max-h-96 rounded-lg overflow-hidden border border-purple-200 bg-white'>

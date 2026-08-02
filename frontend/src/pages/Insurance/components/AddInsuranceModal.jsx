@@ -40,6 +40,10 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     insuranceDocument: '',
     renewPremium: '0',
     commission: '0',
+    odPremium: '0',
+    tpPremium: '0',
+    netPremium: '0',
+    premium: '0',
     // RC fields extracted from insurance document
     chassisNumber: '',
     engineNumber: '',
@@ -100,6 +104,10 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         insuranceDocument: initialData.insuranceDocument || '',
         renewPremium: initialData.renewPremium?.toString() || '0',
         commission: initialData.commission?.toString() || '0',
+        odPremium: initialData.odPremium?.toString() || '0',
+        tpPremium: initialData.tpPremium?.toString() || '0',
+        netPremium: initialData.netPremium?.toString() || '0',
+        premium: initialData.premium?.toString() || '0',
         address: ''
       })
 
@@ -138,6 +146,10 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         insuranceDocument: '',
         renewPremium: '0',
         commission: '0',
+        odPremium: '0',
+        tpPremium: '0',
+        netPremium: '0',
+        premium: '0',
         address: '',
         chassisNumber: '',
         engineNumber: '',
@@ -436,6 +448,52 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
   const handleChange = (e) => {
     const { name, value } = e.target
+
+    // Handle numeric fields to remove leading zeros
+    if (name === 'odPremium' || name === 'tpPremium' || name === 'netPremium' || name === 'premium' || name === 'renewPremium' || name === 'commission') {
+      let finalValue = value
+      if (value.length > 0) {
+        if (formData[name] === '0') {
+          finalValue = value.replace(/^0+/, '') || '0'
+        }
+      }
+      
+      // Auto-populate totalFee and paid when premium (Gross Premium) changes
+      if (name === 'premium') {
+        setFormData(prev => {
+          // If totalFee is currently equal to the old premium or is '0' or '', auto-sync totalFee and paid
+          const shouldSync = prev.totalFee === '0' || prev.totalFee === '' || prev.totalFee === prev.premium;
+          
+          if (shouldSync) {
+            const paymentResult = handlePaymentCalculation('totalFee', finalValue, {
+              ...prev,
+              totalFee: finalValue,
+              paid: prev.paid === prev.totalFee ? finalValue : prev.paid
+            });
+            setPaidExceedsTotal(paymentResult.paidExceedsTotal);
+            return {
+              ...prev,
+              premium: finalValue,
+              totalFee: finalValue,
+              paid: prev.paid === prev.totalFee ? finalValue : paymentResult.paid,
+              balance: paymentResult.balance
+            };
+          }
+          
+          return {
+            ...prev,
+            premium: finalValue
+          };
+        });
+        return;
+      }
+
+      setFormData(prev => ({
+        ...prev,
+        [name]: finalValue
+      }))
+      return
+    }
 
     // Handle vehicle number - convert to uppercase and validate only (no enforcement)
     if (name === 'vehicleNumber') {
@@ -745,11 +803,15 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           if (resultData.bodyType) updated.bodyType = resultData.bodyType.toUpperCase()
           if (resultData.address) updated.address = resultData.address.toUpperCase()
 
+          if (resultData.odPremium) updated.odPremium = String(resultData.odPremium).replace(/[^0-9.]/g, '')
+          if (resultData.tpPremium) updated.tpPremium = String(resultData.tpPremium).replace(/[^0-9.]/g, '')
+          if (resultData.netPremium) updated.netPremium = String(resultData.netPremium).replace(/[^0-9.]/g, '')
           if (resultData.totalPremium) {
             const numericPremium = resultData.totalPremium.replace(/[^0-9.]/g, '')
             if (numericPremium) {
               updated.totalFee = numericPremium
               updated.paid = numericPremium
+              updated.premium = numericPremium
             }
           }
 
@@ -835,11 +897,15 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 if (resultData.seatingCapacity) updated.seatingCapacity = resultData.seatingCapacity;
                 if (resultData.bodyType) updated.bodyType = resultData.bodyType.toUpperCase();
                 if (resultData.address) updated.address = resultData.address.toUpperCase();
+                if (resultData.odPremium) updated.odPremium = String(resultData.odPremium).replace(/[^0-9.]/g, '')
+                if (resultData.tpPremium) updated.tpPremium = String(resultData.tpPremium).replace(/[^0-9.]/g, '')
+                if (resultData.netPremium) updated.netPremium = String(resultData.netPremium).replace(/[^0-9.]/g, '')
                 if (resultData.totalPremium) {
                   const numericPremium = resultData.totalPremium.replace(/[^0-9.]/g, '');
                   if (numericPremium) {
                     updated.totalFee = numericPremium;
                     updated.paid = numericPremium;
+                    updated.premium = numericPremium;
                   }
                 }
                 if (resultData.productType) {
@@ -1012,8 +1078,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       // Get current tabIndex
       const currentTabIndex = parseInt(e.target.getAttribute('tabIndex'))
 
-      // If we're on the last field (commission = tabIndex 14), submit the form
-      if (currentTabIndex === 14) {
+      // If we're on the last field (commission = tabIndex 20), submit the form
+      if (currentTabIndex === 20) {
         document.querySelector('form')?.requestSubmit()
         return
       }
@@ -1076,6 +1142,10 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       insuranceDocument: formData.insuranceDocument || '',
       renewPremium: parseFloat(formData.renewPremium) || 0,
       commission: parseFloat(formData.commission) || 0,
+      odPremium: parseFloat(formData.odPremium) || 0,
+      tpPremium: parseFloat(formData.tpPremium) || 0,
+      netPremium: parseFloat(formData.netPremium) || 0,
+      premium: parseFloat(formData.premium) || 0,
       status: 'Active',
       createRC,
       // RC details extracted from insurance document (used for auto-creating vehicle record)
@@ -1622,10 +1692,99 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
               </div>
             </div>
 
-            {/* Section 3: Payment Information */}
-            <div className='bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+            {/* Section 3: Premium Breakdown */}
+            <div className='bg-gradient-to-r from-emerald-50 to-lime-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
                 <span className='bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>3</span>
+                Premium Breakdown
+              </h3>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4'>
+                {/* OD Premium */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>OD Premium (₹)</label>
+                  <div className='relative'>
+                    <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm'>₹</span>
+                    <input
+                      type='number'
+                      name='odPremium'
+                      value={formData.odPremium}
+                      onChange={handleChange}
+                      onKeyDown={handleInputKeyDown}
+                      placeholder='0'
+                      min='0'
+                      step='any'
+                      tabIndex="13"
+                      className='w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white font-semibold'
+                    />
+                  </div>
+                </div>
+                {/* TP Premium */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>TP Premium (₹)</label>
+                  <div className='relative'>
+                    <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm'>₹</span>
+                    <input
+                      type='number'
+                      name='tpPremium'
+                      value={formData.tpPremium}
+                      onChange={handleChange}
+                      onKeyDown={handleInputKeyDown}
+                      placeholder='0'
+                      min='0'
+                      step='any'
+                      tabIndex="14"
+                      className='w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white font-semibold'
+                    />
+                  </div>
+                </div>
+                {/* Net Premium */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>Net Premium (₹)</label>
+                  <div className='relative'>
+                    <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm'>₹</span>
+                    <input
+                      type='number'
+                      name='netPremium'
+                      value={formData.netPremium}
+                      onChange={handleChange}
+                      onKeyDown={handleInputKeyDown}
+                      placeholder='0'
+                      min='0'
+                      step='any'
+                      tabIndex="15"
+                      className='w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white font-semibold'
+                    />
+                  </div>
+                </div>
+                {/* Gross Premium */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Gross Premium (₹)
+                    <span className='ml-1 text-xs text-emerald-600 font-normal'>Total incl. GST</span>
+                  </label>
+                  <div className='relative'>
+                    <span className='absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-semibold text-sm'>₹</span>
+                    <input
+                      type='number'
+                      name='premium'
+                      value={formData.premium}
+                      onChange={handleChange}
+                      onKeyDown={handleInputKeyDown}
+                      placeholder='0'
+                      min='0'
+                      step='any'
+                      tabIndex="16"
+                      className='w-full pl-7 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white font-semibold'
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 4: Payment Information */}
+            <div className='bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <span className='bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>4</span>
                 Payment Information
               </h3>
 
@@ -1643,7 +1802,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="13"
+                    tabIndex="17"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                     required
                   />
@@ -1662,7 +1821,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder=''
-                    tabIndex="14"
+                    tabIndex="18"
                     className={`w-full px-3 py-2 border rounded-lg focus:ring-2 font-semibold ${
                       paidExceedsTotal
                         ? 'border-red-500 focus:ring-red-500 bg-red-50'
@@ -1704,7 +1863,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder='For next year'
-                    tabIndex="15"
+                    tabIndex="19"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>
@@ -1722,7 +1881,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder='Agent commission'
-                    tabIndex="16"
+                    tabIndex="20"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>
