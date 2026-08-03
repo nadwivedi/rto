@@ -35,7 +35,8 @@ router.put('/', async (req, res) => {
       gracePeriodDays,
       alertRules,
       maxMessagesPerDay,
-      maxMessagesPerHour
+      maxMessagesPerHour,
+      messageLanguage
     } = req.body
 
     let setting = await WhatsAppSetting.findOne({ userId: req.user.id })
@@ -50,6 +51,7 @@ router.put('/', async (req, res) => {
     if (alertRules !== undefined) setting.alertRules = normalizeAlertSettings({ ...setting.toObject(), alertRules }).alertRules
     if (maxMessagesPerDay !== undefined) setting.maxMessagesPerDay = maxMessagesPerDay
     if (maxMessagesPerHour !== undefined) setting.maxMessagesPerHour = maxMessagesPerHour
+    if (messageLanguage !== undefined && ['english', 'hindi', 'both'].includes(messageLanguage)) setting.messageLanguage = messageLanguage
 
     await setting.save()
     const normalized = normalizeAlertSettings(setting.toObject())

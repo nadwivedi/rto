@@ -34,6 +34,11 @@ const whatsappSettingSchema = new mongoose.Schema({
   maxMessagesPerHour: {
     type: Number,
     default: 5
+  },
+  messageLanguage: {
+    type: String,
+    enum: ['english', 'hindi', 'both'],
+    default: 'both'
   }
 }, {
   timestamps: true
