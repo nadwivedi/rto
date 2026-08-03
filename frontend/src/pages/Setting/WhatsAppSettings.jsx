@@ -13,7 +13,14 @@ const services = [
   { key: 'statePermit', label: 'State Permit' },
   { key: 'busPermit', label: 'Bus Permit' },
   { key: 'temporaryPermit', label: 'Temp Permit' },
-  { key: 'insurance', label: 'Insurance' }
+  { key: 'insurance', label: 'Insurance' },
+  { key: 'llEligible', label: 'LL Eligible for DL' }
+]
+
+const languageOptions = [
+  { value: 'both', label: 'Both (English + Hindi)' },
+  { value: 'english', label: 'English only' },
+  { value: 'hindi', label: 'Hindi only' }
 ]
 
 const defaultRule = {
@@ -75,7 +82,8 @@ const WhatsAppSettings = () => {
   const [settings, setSettings] = useState({
     alertRules: normalizeRules(),
     maxMessagesPerDay: 30,
-    maxMessagesPerHour: 5
+    maxMessagesPerHour: 5,
+    messageLanguage: 'both'
   })
   const [draftInputs, setDraftInputs] = useState({})
   const [focusedInputs, setFocusedInputs] = useState({})
@@ -182,6 +190,27 @@ const WhatsAppSettings = () => {
         >
           {saving ? 'Saving...' : 'Save WhatsApp Settings'}
         </button>
+      </div>
+
+      <div className='mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4'>
+        <label className='text-xs font-semibold text-gray-700 block mb-1'>Message Language</label>
+        <p className='text-[10px] text-gray-500 mb-2'>Choose the language in which WhatsApp alerts are sent. Custom message templates are always sent as written.</p>
+        <div className='flex flex-wrap gap-2'>
+          {languageOptions.map(option => (
+            <button
+              key={option.value}
+              type='button'
+              onClick={() => setSettings(prev => ({ ...prev, messageLanguage: option.value }))}
+              className={`rounded-lg border px-3 py-1.5 text-[11px] font-bold transition ${
+                settings.messageLanguage === option.value
+                  ? 'border-green-500 bg-green-50 text-green-700'
+                  : 'border-gray-200 bg-gray-50 text-gray-600 hover:border-green-300'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className='mb-4 grid grid-cols-1 md:grid-cols-2 gap-3 rounded-xl border border-gray-200 bg-gray-50 p-4'>

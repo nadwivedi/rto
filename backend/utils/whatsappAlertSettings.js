@@ -65,7 +65,8 @@ const normalizeAlertSettings = (setting = {}) => {
 
   return {
     alertRules,
-    services: WHATSAPP_ALERT_SERVICES
+    services: WHATSAPP_ALERT_SERVICES,
+    messageLanguage: ['english', 'hindi', 'both'].includes(setting.messageLanguage) ? setting.messageLanguage : 'both'
   }
 }
 
