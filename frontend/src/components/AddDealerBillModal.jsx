@@ -340,9 +340,22 @@ const AddDealerBillModal = ({ isOpen, onClose, onSuccess }) => {
                 </div>
               </div>
               <div>
-                <h1 className='text-lg md:text-xl 2xl:text-2xl font-bold italic mb-1 break-words leading-tight'>
-                  {userInfo?.billName ? userInfo.billName.toUpperCase() : (userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')}
-                </h1>
+                {userInfo?.profileImage ? (
+                  <div className='inline-flex items-center gap-2 2xl:gap-4 mb-1'>
+                    <img
+                      src={`${API_BASE_URL}${userInfo.profileImage}`}
+                      alt='Profile'
+                      className='w-12 h-12 md:w-16 md:h-16 2xl:w-20 2xl:h-20 object-cover rounded-md flex-shrink-0'
+                    />
+                    <h1 className='text-lg md:text-xl 2xl:text-2xl font-bold italic break-words leading-tight'>
+                      {userInfo?.billName ? userInfo.billName.toUpperCase() : (userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')}
+                    </h1>
+                  </div>
+                ) : (
+                  <h1 className='text-lg md:text-xl 2xl:text-2xl font-bold italic mb-1 break-words leading-tight'>
+                    {userInfo?.billName ? userInfo.billName.toUpperCase() : (userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')}
+                  </h1>
+                )}
                 <p className='text-[8.5px] 2xl:text-xs mb-0.5'>
                   {userInfo?.address || 'GF-17, Ground Floor, Shyam Plaza, Opp. Bus Stand, Pandri, RAIPUR'}
                 </p>

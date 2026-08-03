@@ -50,6 +50,96 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
   const [showAdditionalDetails, setShowAdditionalDetails] = useState(user?.features?.expandAdditionalDetails === true)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [employees, setEmployees] = useState([])
+  const [isScanningRc, setIsScanningRc] = useState(false)
+
+  // Handle AI Upload / Scanning of New RC (transient only, not saved)
+  const handleRcOcrUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setIsScanningRc(true)
+    const toastId = toast.info('Scanning New RC document with AI, please wait...', { autoClose: false, isLoading: true })
+
+    try {
+      const reader = new FileReader()
+      reader.onloadend = async () => {
+        try {
+          const base64String = reader.result
+          const response = await axios.post(
+            `${API_URL}/api/ocr/rc`,
+            { imageBase64: base64String },
+            { withCredentials: true }
+          )
+
+          if (response.data.success && response.data.data) {
+            const data = response.data.data
+
+            // Map extracted details to formData
+            setFormData(prev => {
+              const updated = { ...prev }
+
+              if (data.ownerName) {
+                updated.newOwnerName = data.ownerName.toUpperCase()
+              }
+              if (data.sonWifeDaughterOf) {
+                updated.newOwnerFatherName = data.sonWifeDaughterOf.toUpperCase()
+              }
+              if (data.address) {
+                updated.newOwnerAddress = data.address.toUpperCase()
+              }
+
+              const vehNum = data.registrationNumber || data.vehicleNumber
+              if (vehNum) {
+                const cleanedVehNum = vehNum.replace(/[\s-]/g, '').toUpperCase()
+                updated.vehicleNumber = cleanedVehNum
+                setVehicleValidation(validateVehicleNumberRealtime(cleanedVehNum))
+              }
+
+              return updated
+            })
+
+            // If a valid vehicle number was extracted, attempt to fetch current owner details if empty
+            const extractedVehNum = (data.registrationNumber || data.vehicleNumber || '').replace(/[\s-]/g, '').toUpperCase()
+            if (extractedVehNum && extractedVehNum.length >= 8) {
+              try {
+                const vehicleRes = await axios.get(`${API_URL}/api/vehicle-registrations/number/${extractedVehNum}`, { withCredentials: true })
+                if (vehicleRes.data?.success && vehicleRes.data?.data) {
+                  const existingVeh = vehicleRes.data.data
+                  setFormData(prev => ({
+                    ...prev,
+                    currentOwnerName: prev.currentOwnerName || existingVeh.ownerName?.toUpperCase() || '',
+                    currentOwnerFatherName: prev.currentOwnerFatherName || existingVeh.sonWifeDaughterOf?.toUpperCase() || '',
+                    currentOwnerAddress: prev.currentOwnerAddress || existingVeh.address?.toUpperCase() || '',
+                    currentOwnerMobile: prev.currentOwnerMobile || existingVeh.mobileNumber || ''
+                  }))
+                }
+              } catch (_) {
+                // If not found in vehicle-registrations DB, ignore
+              }
+            }
+
+            toast.dismiss(toastId)
+            toast.success('New RC details scanned & filled successfully!')
+          } else {
+            toast.dismiss(toastId)
+            toast.error('Could not extract details from document.')
+          }
+        } catch (err) {
+          toast.dismiss(toastId)
+          toast.error(err.response?.data?.message || 'Error processing document with AI')
+        } finally {
+          setIsScanningRc(false)
+          e.target.value = ''
+        }
+      }
+      reader.readAsDataURL(file)
+    } catch (err) {
+      setIsScanningRc(false)
+      toast.dismiss(toastId)
+      toast.error('Failed to read document file')
+      e.target.value = ''
+    }
+  }
 
   useEffect(() => {
     if (!isOpen) return undefined
@@ -416,14 +506,50 @@ const AddVehicleTransferModal = ({ isOpen, onClose, onSuccess, editData }) => {
               </h2>
               <p className='text-teal-100 text-xs md:text-sm mt-1'>Transfer vehicle ownership details</p>
             </div>
-            <button
-              onClick={onClose}
-              className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
-            >
-              <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-              </svg>
-            </button>
+            <div className='flex items-center gap-2 md:gap-3'>
+              {/* AI Upload (Scanning Only) */}
+              <div className='relative'>
+                <button
+                  type='button'
+                  disabled={isScanningRc}
+                  className='flex items-center gap-1.5 rounded-lg bg-white/20 px-3 py-1.5 text-xs font-semibold text-white shadow-sm ring-1 ring-white/30 transition hover:bg-white/30 disabled:opacity-60 md:px-3.5 md:py-2 md:text-sm cursor-pointer'
+                >
+                  {isScanningRc ? (
+                    <>
+                      <svg className='h-4 w-4 animate-spin text-white' fill='none' viewBox='0 0 24 24'>
+                        <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                        <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                      </svg>
+                      Scanning...
+                    </>
+                  ) : (
+                    <>
+                      <svg className='h-4 w-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M13 10V3L4 14h7v7l9-11h-7z' />
+                      </svg>
+                      AI Upload (New RC)
+                    </>
+                  )}
+                </button>
+                <input
+                  type='file'
+                  accept='image/*, application/pdf'
+                  disabled={isScanningRc}
+                  onChange={handleRcOcrUpload}
+                  className='absolute inset-0 h-full w-full cursor-pointer opacity-0 disabled:cursor-not-allowed'
+                  title='Upload New RC for AI scanning'
+                />
+              </div>
+
+              <button
+                onClick={onClose}
+                className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer'
+              >
+                <svg className='w-5 h-5 md:w-6 md:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                </svg>
+              </button>
+            </div>
           </div>
         </div>
 

@@ -2,6 +2,28 @@ const User = require('../models/User')
 const Employee = require('../models/Employee')
 const jwt = require('jsonwebtoken')
 const bcrypt = require('bcryptjs')
+const fs = require('fs')
+const path = require('path')
+
+// Directory where user profile pictures are stored
+const profilePicturesDir = path.join(__dirname, '..', 'uploads', 'profile-pictures')
+if (!fs.existsSync(profilePicturesDir)) {
+  fs.mkdirSync(profilePicturesDir, { recursive: true })
+}
+
+// Helper to delete a profile picture file for a user
+const deleteProfilePictureFile = (profileImage) => {
+  try {
+    if (!profileImage) return
+    const filename = path.basename(profileImage)
+    const filePath = path.join(profilePicturesDir, filename)
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath)
+    }
+  } catch (error) {
+    console.error('Error deleting profile picture:', error)
+  }
+}
 
 // Helper function to validate mobile number
 const isValidMobile = (mobile) => {
@@ -129,6 +151,7 @@ exports.login = async (req, res) => {
           address: user.address,
           state: user.state,
           rto: user.rto,
+          profileImage: user.profileImage || null,
           isActive: user.isActive,
           features: user.features || {},
           lastLogin: user.lastLogin,
@@ -333,6 +356,7 @@ exports.adminAccessLogin = async (req, res) => {
           rto: user.rto,
           billName: user.billName,
           billDescription: user.billDescription,
+          profileImage: user.profileImage || null,
           type: 'user',
           isActive: user.isActive,
           features: user.features || {},
@@ -421,6 +445,7 @@ exports.getProfile = async (req, res) => {
           rto: user.rto,
           billName: user.billName,
           billDescription: user.billDescription,
+          profileImage: user.profileImage || null,
           subscriptionExpiresAt: user.subscriptionExpiresAt,
           monthlyPrice: user.monthlyPrice,
           type: 'user',
@@ -533,5 +558,88 @@ exports.updateSettings = async (req, res) => {
   } catch (error) {
     console.error('Update settings error:', error)
     res.status(500).json({ success: false, message: 'An error occurred while updating settings' })
+  }
+}
+
+// Upload / change profile picture (base64 image, max 5MB)
+exports.uploadProfilePicture = async (req, res) => {
+  try {
+    const { imageData } = req.body
+
+    if (!imageData) {
+      return res.status(400).json({ success: false, message: 'Image data is required' })
+    }
+
+    // Validate base64 format - images only (no PDFs for profile pictures)
+    const imageFormatRegex = /^data:image\/(jpeg|jpg|png|webp);base64,/
+    const imageMatch = imageData.match(imageFormatRegex)
+
+    if (!imageMatch) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only JPG, JPEG, PNG and WebP image formats are accepted'
+      })
+    }
+
+    const fileFormat = imageMatch[1] === 'jpeg' ? 'jpg' : imageMatch[1]
+    const fileExtension = fileFormat
+
+    const base64Data = imageData.replace(/^data:image\/[a-z]+;base64,/, '')
+    const buffer = Buffer.from(base64Data, 'base64')
+
+    const fileSizeInMB = buffer.length / (1024 * 1024)
+    if (fileSizeInMB > 5) {
+      return res.status(400).json({
+        success: false,
+        message: `File size (${fileSizeInMB.toFixed(2)}MB) exceeds the 5MB limit`
+      })
+    }
+
+    const user = await User.findById(req.user.id)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    // Delete the old profile picture before saving the new one
+    deleteProfilePictureFile(user.profileImage)
+
+    const filename = `profile-${user._id}-${Date.now()}.${fileExtension}`
+    const filePath = path.join(profilePicturesDir, filename)
+    fs.writeFileSync(filePath, buffer)
+
+    user.profileImage = `/uploads/profile-pictures/${filename}`
+    await user.save()
+
+    res.json({
+      success: true,
+      message: 'Profile picture uploaded successfully',
+      data: { profileImage: user.profileImage }
+    })
+  } catch (error) {
+    console.error('Upload profile picture error:', error)
+    res.status(500).json({ success: false, message: 'An error occurred while uploading profile picture' })
+  }
+}
+
+// Remove profile picture
+exports.removeProfilePicture = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    deleteProfilePictureFile(user.profileImage)
+    user.profileImage = null
+    await user.save()
+
+    res.json({
+      success: true,
+      message: 'Profile picture removed successfully',
+      data: { profileImage: null }
+    })
+  } catch (error) {
+    console.error('Remove profile picture error:', error)
+    res.status(500).json({ success: false, message: 'An error occurred while removing profile picture' })
   }
 }

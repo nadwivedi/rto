@@ -238,9 +238,22 @@ const EditDealerBillModal = ({ isOpen, onClose, onSuccess, billData }) => {
                 </div>
               </div>
               <div>
-                <h1 className='text-lg md:text-4xl font-bold italic mb-1' style={{ whiteSpace: 'nowrap' }}>
-                  {userInfo?.billName ? userInfo.billName.toUpperCase() : (userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')}
-                </h1>
+                {userInfo?.profileImage ? (
+                  <div className='inline-flex items-center gap-3 md:gap-4 mb-2'>
+                    <img
+                      src={`${API_BASE_URL}${userInfo.profileImage}`}
+                      alt='Profile'
+                      className='w-12 h-12 md:w-16 md:h-16 2xl:w-20 2xl:h-20 object-cover rounded-md flex-shrink-0'
+                    />
+                    <h1 className='text-lg md:text-4xl font-bold italic' style={{ whiteSpace: 'nowrap' }}>
+                      {userInfo?.billName ? userInfo.billName.toUpperCase() : (userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')}
+                    </h1>
+                  </div>
+                ) : (
+                  <h1 className='text-lg md:text-4xl font-bold italic mb-1' style={{ whiteSpace: 'nowrap' }}>
+                    {userInfo?.billName ? userInfo.billName.toUpperCase() : (userInfo?.name ? userInfo.name.toUpperCase() : 'ASHOK KUMAR')}
+                  </h1>
+                )}
                 <p className='text-[9px] md:text-xs mb-1'>
                   {userInfo?.address || 'GF-17, Ground Floor, Shyam Plaza, Opp. Bus Stand, Pandri, RAIPUR'}
                 </p>

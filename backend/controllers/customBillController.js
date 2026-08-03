@@ -19,7 +19,7 @@ exports.createCustomBill = async (req, res) => {
     const billNumber = await generateCustomBillNumber(CustomBill, req.user.id)
 
     // Fetch user information
-    const user = await User.findById(req.user.id).select('name email mobile1 mobile2 address billName billDescription')
+    const user = await User.findById(req.user.id).select('name email mobile1 mobile2 address billName billDescription profileImage')
 
     // Create custom bill object
     const customBill = new CustomBill({
@@ -178,7 +178,7 @@ exports.updateCustomBill = async (req, res) => {
     }
 
     // Fetch user information
-    const user = await User.findById(req.user.id).select('name email mobile1 mobile2 address billName billDescription')
+    const user = await User.findById(req.user.id).select('name email mobile1 mobile2 address billName billDescription profileImage')
 
     // Update bill data
     existingBill.customerName = customerName
