@@ -100,7 +100,8 @@ const userSchema = new mongoose.Schema({
     greenTax: { type: Boolean, default: false },
     professionalTax: { type: Boolean, default: false },
     autoCreateRC: { type: Boolean, default: false },
-    expandAdditionalDetails: { type: Boolean, default: false }
+    expandAdditionalDetails: { type: Boolean, default: false },
+    moneyReceived: { type: Boolean, default: false }
   }
 }, {
   timestamps: true

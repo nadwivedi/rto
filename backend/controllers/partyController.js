@@ -479,6 +479,44 @@ exports.createMoneyReceived = async (req, res) => {
   }
 }
 
+// Get all money received entries for the logged-in user (view page)
+exports.getMoneyReceivedList = async (req, res) => {
+  try {
+    const records = await MoneyReceived.find({ userId: req.user.id })
+      .sort({ moneyReceivedDate: -1, createdAt: -1 })
+      .lean()
+
+    const partyIds = [...new Set(records.map(r => r.partyId?.toString()).filter(Boolean))]
+    const parties = partyIds.length
+      ? await Party.find({ _id: { $in: partyIds }, userId: req.user.id })
+          .select('_id partyName mobile')
+          .lean()
+      : []
+    const partyMap = Object.fromEntries(parties.map(p => [p._id.toString(), p]))
+
+    const data = records.map(r => ({
+      ...r,
+      party: r.partyId ? (partyMap[r.partyId.toString()] || null) : null
+    }))
+
+    res.json({
+      success: true,
+      count: data.length,
+      data
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: new Date().toISOString()
+    })
+  }
+}
+
 // Get all vehicles by party
 exports.getVehiclesByParty = async (req, res) => {
   try {

@@ -14,6 +14,9 @@ router.get('/pending-summary', partyController.getPartyWisePendingSummary)
 // POST add money received entry
 router.post('/money-received', partyController.createMoneyReceived)
 
+// GET all money received entries for the logged-in user
+router.get('/money-received', partyController.getMoneyReceivedList)
+
 // GET single party by ID
 router.get('/:id', partyController.getPartyById)
 

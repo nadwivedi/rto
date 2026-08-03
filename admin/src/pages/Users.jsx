@@ -96,7 +96,8 @@ const Users = () => {
     features_greenTax: false,
     features_professionalTax: false,
     features_autoCreateRC: false,
-    features_expandAdditionalDetails: false
+    features_expandAdditionalDetails: false,
+    features_moneyReceived: false
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -237,13 +238,15 @@ const Users = () => {
           greenTax: formData.features_greenTax,
           professionalTax: formData.features_professionalTax,
           autoCreateRC: formData.features_autoCreateRC,
-          expandAdditionalDetails: formData.features_expandAdditionalDetails
+          expandAdditionalDetails: formData.features_expandAdditionalDetails,
+          moneyReceived: formData.features_moneyReceived
         }
       }
       delete bodyData.features_greenTax
       delete bodyData.features_professionalTax
       delete bodyData.features_autoCreateRC
       delete bodyData.features_expandAdditionalDetails
+      delete bodyData.features_moneyReceived
       if (isEditMode && !formData.password) {
         delete bodyData.password
       }
@@ -262,7 +265,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -293,7 +296,8 @@ const Users = () => {
       features_greenTax: user.features?.greenTax ?? false,
       features_professionalTax: user.features?.professionalTax ?? false,
       features_autoCreateRC: user.features?.autoCreateRC ?? false,
-      features_expandAdditionalDetails: user.features?.expandAdditionalDetails ?? false
+      features_expandAdditionalDetails: user.features?.expandAdditionalDetails ?? false,
+      features_moneyReceived: user.features?.moneyReceived ?? false
     })
     setShowModal(true)
     setError('')
@@ -304,7 +308,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false })
   }
 
   const handleDelete = async (id) => {
@@ -1056,6 +1060,16 @@ const Users = () => {
                       className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
                     />
                     Expand Details
+                  </label>
+                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      name='features_moneyReceived'
+                      checked={formData.features_moneyReceived}
+                      onChange={handleChange}
+                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                    />
+                    Money Received
                   </label>
                 </div>
               </div>

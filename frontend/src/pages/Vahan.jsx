@@ -14,7 +14,7 @@ import AddInsuranceModal from './Insurance/components/AddInsuranceModal'
 import AddDealerBillModal from '../components/AddDealerBillModal'
 import AddMoneyReceivedModal from './Party/components/AddMoneyReceivedModal'
 import VahanDashboard from './Vahan/components/VahanDashboard'
-import { Menu, X, FileText, Users, Truck, Globe, ScrollText, Bus, Clock, FilePlus, Shield, Activity, Receipt, Wind, MapPin, Gauge, Leaf } from 'lucide-react'
+import { Menu, X, FileText, Users, Truck, Globe, ScrollText, Bus, Clock, FilePlus, Shield, Activity, Receipt, Wind, MapPin, Gauge, Leaf, Wallet } from 'lucide-react'
 import IssueBusPermitModal from './BusPermit/components/IssueBusPermitModal'
 import { routeToSectionKey } from '../utils/sectionConfig'
 
@@ -27,7 +27,7 @@ const vahanOptions = [
   { title: 'Add GPS', path: '/gps', note: 'GPS device and renewal work', image: '/buttons/add gps.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
   { title: 'Green Tax', path: '/green-tax', note: 'Green tax records', image: '/buttons/add tax.png', category: 'compliance', badgeTone: 'bg-green-100 text-green-700' },
   { title: 'Professional Tax', path: '/professional-tax', note: 'Professional tax records', image: '/buttons/add tax.png', category: 'compliance', badgeTone: 'bg-indigo-100 text-indigo-700' },
-  { title: 'Money Received', note: 'Party-wise money received entries', image: '/buttons/money received.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
+  { title: 'Money Received', path: '/money-received', note: 'Party-wise money received entries', image: '/buttons/money received.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
   { title: 'Insurance', path: '/insurance', note: 'Insurance details and renewals', image: '/buttons/addinsurance.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
   { title: 'Bill', path: '/dealer-bill', note: 'Billing and dealer bills', image: '/buttons/add bill.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
   { title: 'Speed Governor', path: '/speed-governor', note: 'Speed governor work records', image: '/buttons/speed governor.png', category: 'compliance', badgeTone: 'bg-orange-100 text-orange-700' }
@@ -49,6 +49,7 @@ const quickButtons = [
   { title: 'PUC', shortLabel: 'PUC', tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' },
   { title: 'Add GPS', shortLabel: 'GPS', tone: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100' },
   { title: 'Bill', shortLabel: 'Bill', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100', path: '/dealer-bill' },
+  { title: 'Money Received', shortLabel: 'Money Rec.', tone: 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100', path: '/money-received' },
   { title: 'Speed Governor', shortLabel: 'Speed Gov.', tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100', path: '/speed-governor' }
 ]
 
@@ -71,6 +72,7 @@ const buttonIcons = {
   'Speed Governor': Gauge,
   'Green Tax': Leaf,
   'Professional Tax': FileText,
+  'Money Received': Wallet,
 }
 
 const PermitTypeSelectModal = ({ onClose, openModal }) => {
@@ -174,6 +176,7 @@ const Vahan = () => {
     vahanOptions.filter(o => {
       if (o.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (o.title === 'Professional Tax') return enabledFeatures.professionalTax === true
+      if (o.title === 'Money Received') return enabledFeatures.moneyReceived === true
       return canAccessSection(o.title)
     }),
     [enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledSections, isStaff]
@@ -183,9 +186,10 @@ const Vahan = () => {
     quickButtons.filter(b => {
       if (b.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (b.title === 'Professional Tax') return enabledFeatures.professionalTax === true
+      if (b.title === 'Money Received') return enabledFeatures.moneyReceived === true
       return canAccessSection(b.title)
     }),
-    [enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledSections, isStaff]
+    [enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledSections, isStaff]
   )
 
   const openModal = (title) => {
@@ -216,6 +220,7 @@ const Vahan = () => {
     'PUC': 'PUC',
     'Add GPS': 'Add GPS',
     'Bill': 'Bill',
+    'Money Received': 'Money Received',
     'Speed Governor': null,
     'Green Tax': null,
     'Professional Tax': null,
