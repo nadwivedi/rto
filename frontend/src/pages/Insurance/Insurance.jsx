@@ -39,6 +39,10 @@ const Insurance = () => {
   const [agentFilter, setAgentFilter] = useState("");
   const [agents, setAgents] = useState([]);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [draftCompanyFilter, setDraftCompanyFilter] = useState("");
+  const [draftProductFilter, setDraftProductFilter] = useState("");
+  const [draftValidityFilter, setDraftValidityFilter] = useState("");
+  const [draftAgentFilter, setDraftAgentFilter] = useState("");
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -96,6 +100,27 @@ const Insurance = () => {
     } catch (e) {
       console.error('Error fetching agents:', e);
     }
+  };
+
+  // Toggle filter dropdown and seed drafts from applied filters when opening
+  const handleToggleFilterDropdown = () => {
+    if (!showFilterDropdown) {
+      setDraftCompanyFilter(companyFilter);
+      setDraftProductFilter(productFilter);
+      setDraftValidityFilter(validityFilter);
+      setDraftAgentFilter(agentFilter);
+    }
+    setShowFilterDropdown(!showFilterDropdown);
+  };
+
+  // Apply draft filters, then close the dropdown
+  const handleApplyFilters = () => {
+    setCompanyFilter(draftCompanyFilter);
+    setProductFilter(draftProductFilter);
+    setValidityFilter(draftValidityFilter);
+    setAgentFilter(draftAgentFilter);
+    if (draftValidityFilter) setStatusFilter('all');
+    setShowFilterDropdown(false);
   };
 
   const handleExportExcel = async () => {
@@ -221,7 +246,7 @@ const Insurance = () => {
       fetchInsurances(1);
       fetchStatistics();
     }
-  }, [debouncedSearchQuery, statusFilter, companyFilter, productFilter, validityFilter]);
+  }, [debouncedSearchQuery, statusFilter, companyFilter, productFilter, validityFilter, agentFilter]);
 
   const fetchProducts = async () => {
     try {
@@ -643,7 +668,7 @@ const Insurance = () => {
                     {/* Filter Button with Dropdown */}
                     <div className="relative">
                       <button
-                        onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                        onClick={handleToggleFilterDropdown}
                         className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
                           companyFilter || productFilter || validityFilter || agentFilter
                             ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
@@ -674,9 +699,9 @@ const Insurance = () => {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                               </button>
-                              {(companyFilter || productFilter || validityFilter || agentFilter) && (
+                              {(draftCompanyFilter || draftProductFilter || draftValidityFilter || draftAgentFilter) && (
                                 <button
-                                  onClick={() => { setCompanyFilter(''); setProductFilter(''); setValidityFilter(''); setAgentFilter(''); }}
+                                  onClick={() => { setDraftCompanyFilter(''); setDraftProductFilter(''); setDraftValidityFilter(''); setDraftAgentFilter(''); }}
                                   className="text-[10px] font-semibold text-red-500 hover:text-red-600 cursor-pointer"
                                 >
                                   Clear All
@@ -688,8 +713,8 @@ const Insurance = () => {
                             <div>
                               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Insurance Company</label>
                               <select
-                                value={companyFilter}
-                                onChange={(e) => setCompanyFilter(e.target.value)}
+                                value={draftCompanyFilter}
+                                onChange={(e) => setDraftCompanyFilter(e.target.value)}
                                 className='w-full px-3 py-2 border border-gray-300 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
                               >
                                 <option value=''>All Companies</option>
@@ -703,8 +728,8 @@ const Insurance = () => {
                             <div>
                               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Product Type</label>
                               <select
-                                value={productFilter}
-                                onChange={(e) => setProductFilter(e.target.value)}
+                                value={draftProductFilter}
+                                onChange={(e) => setDraftProductFilter(e.target.value)}
                                 className='w-full px-3 py-2 border border-gray-200 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
                               >
                                 <option value=''>All Products</option>
@@ -718,8 +743,8 @@ const Insurance = () => {
                             <div>
                               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Validity Period</label>
                               <select
-                                value={validityFilter}
-                                onChange={(e) => { setValidityFilter(e.target.value); setStatusFilter('all'); }}
+                                value={draftValidityFilter}
+                                onChange={(e) => setDraftValidityFilter(e.target.value)}
                                 className='w-full px-3 py-2 border border-gray-200 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
                               >
                                 <option value=''>All</option>
@@ -735,8 +760,8 @@ const Insurance = () => {
                             <div>
                               <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Broker/Agent</label>
                               <select
-                                value={agentFilter}
-                                onChange={(e) => setAgentFilter(e.target.value)}
+                                value={draftAgentFilter}
+                                onChange={(e) => setDraftAgentFilter(e.target.value)}
                                 className='w-full px-3 py-2 border border-gray-200 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
                               >
                                 <option value=''>All Agents</option>
@@ -744,6 +769,22 @@ const Insurance = () => {
                                   <option key={agent._id} value={agent._id}>{agent.name}</option>
                                 ))}
                               </select>
+                            </div>
+
+                            {/* Apply / Cancel */}
+                            <div className='flex gap-2 pt-2 border-t border-gray-100'>
+                              <button
+                                onClick={handleApplyFilters}
+                                className='flex-1 py-2 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-700 transition cursor-pointer'
+                              >
+                                Apply Filters
+                              </button>
+                              <button
+                                onClick={() => setShowFilterDropdown(false)}
+                                className='flex-1 py-2 rounded-xl border border-gray-300 text-gray-600 text-xs font-bold hover:bg-gray-50 transition cursor-pointer'
+                              >
+                                Cancel
+                              </button>
                             </div>
 
                             {/* Future filters can be added here */}
