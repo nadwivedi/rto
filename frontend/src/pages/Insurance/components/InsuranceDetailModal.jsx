@@ -159,7 +159,7 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
               <span className='bg-emerald-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>4</span>
               Payment Information
             </h3>
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-xs md:text-sm'>
+            <div className='grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 text-xs md:text-sm'>
               <div>
                 <span className='block text-gray-500 font-medium'>Total Premium</span>
                 <span className='block font-bold text-gray-800 mt-0.5'>₹{(insurance.totalFee || 0).toLocaleString('en-IN')}</span>
@@ -175,8 +175,18 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
                 </span>
               </div>
               <div>
-                <span className='block text-gray-500 font-medium'>Commission</span>
+                <span className='block text-gray-500 font-medium'>Profit</span>
+                <span className='block font-bold text-green-600 mt-0.5'>₹{(insurance.profit || 0).toLocaleString('en-IN')}</span>
+              </div>
+              <div>
+                <span className='block text-gray-500 font-medium'>Agent Commission</span>
                 <span className='block font-bold text-purple-600 mt-0.5'>₹{(insurance.commission || 0).toLocaleString('en-IN')}</span>
+                {(insurance.commissionBasis || insurance.commissionPercent) && (
+                  <span className='block text-xs text-gray-500 mt-0.5'>
+                    {insurance.commissionPercent || 0}% on{' '}
+                    {insurance.commissionBasis === 'od' ? 'OD' : insurance.commissionBasis === 'tp' ? 'TP' : insurance.commissionBasis === 'net' ? 'Net' : insurance.commissionBasis === 'gross' ? 'Gross' : insurance.commissionBasis || '—'} Premium
+                  </span>
+                )}
               </div>
             </div>
           </div>

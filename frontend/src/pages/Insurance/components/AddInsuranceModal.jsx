@@ -41,6 +41,9 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     customProductType: '',
     insuranceDocument: '',
     commission: '0',
+    commissionBasis: '',
+    commissionPercent: '',
+    profit: '0',
     odPremium: '0',
     tpPremium: '0',
     netPremium: '0',
@@ -141,6 +144,9 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         agentId: initialData.agentId || '',
         insuranceDocument: initialData.insuranceDocument || '',
         commission: initialData.commission?.toString() || '0',
+        commissionBasis: initialData.commissionBasis || '',
+        commissionPercent: initialData.commissionPercent?.toString() || '',
+        profit: initialData.profit?.toString() || '0',
         odPremium: initialData.odPremium?.toString() || '0',
         tpPremium: initialData.tpPremium?.toString() || '0',
         netPremium: initialData.netPremium?.toString() || '0',
@@ -183,6 +189,9 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         customProductType: '',
         insuranceDocument: '',
         commission: '0',
+        commissionBasis: '',
+        commissionPercent: '',
+        profit: '0',
         odPremium: '0',
         tpPremium: '0',
         netPremium: '0',
@@ -407,6 +416,15 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     }
   }, [isOpen, onClose, showVehicleDropdown, vehicleMatches, selectedDropdownIndex])
 
+  // Auto-calculate agent commission from basis + percent
+  useEffect(() => {
+    if (!formData.commissionBasis) return
+    const pct = parseFloat(formData.commissionPercent) || 0
+    const base = parseFloat(formData[formData.commissionBasis]) || 0
+    const amount = Math.round(base * pct / 100 * 100) / 100
+    setFormData(prev => (prev.commission === String(amount) ? prev : { ...prev, commission: String(amount) }))
+  }, [formData.odPremium, formData.tpPremium, formData.netPremium, formData.premium, formData.commissionBasis, formData.commissionPercent])
+
   // Check if vehicle already has active insurance
   useEffect(() => {
     if (isEditMode) return
@@ -487,7 +505,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     const { name, value } = e.target
 
     // Handle numeric fields to remove leading zeros
-    if (name === 'odPremium' || name === 'tpPremium' || name === 'netPremium' || name === 'premium' || name === 'commission') {
+    if (name === 'odPremium' || name === 'tpPremium' || name === 'netPremium' || name === 'premium' || name === 'commission' || name === 'commissionPercent' || name === 'profit') {
       let finalValue = value
       if (value.length > 0) {
         if (formData[name] === '0') {
@@ -1108,15 +1126,15 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       // Get current tabIndex
       const currentTabIndex = parseInt(e.target.getAttribute('tabIndex'))
 
-      // If we're on the last field (commission = tabIndex 19), submit the form
-      if (currentTabIndex === 19) {
+      // If we're on the last field (commission % = tabIndex 21), submit the form
+      if (currentTabIndex === 21) {
         document.querySelector('form')?.requestSubmit()
         return
       }
 
       // Find next input with tabIndex
       const nextTabIndex = currentTabIndex + 1
-      const nextInput = document.querySelector(`input[tabIndex="${nextTabIndex}"]`)
+      const nextInput = document.querySelector(`input[tabIndex="${nextTabIndex}"], select[tabIndex="${nextTabIndex}"]`)
 
       if (nextInput) {
         nextInput.focus()
@@ -1170,6 +1188,9 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       productType: formData.productType === 'Other' ? (formData.customProductType || 'Other') : formData.productType,
       insuranceDocument: formData.insuranceDocument || '',
       commission: parseFloat(formData.commission) || 0,
+      commissionBasis: formData.commissionBasis || '',
+      commissionPercent: parseFloat(formData.commissionPercent) || 0,
+      profit: parseFloat(formData.profit) || 0,
       odPremium: parseFloat(formData.odPremium) || 0,
       tpPremium: parseFloat(formData.tpPremium) || 0,
       netPremium: parseFloat(formData.netPremium) || 0,
@@ -1816,7 +1837,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                 Payment Information
               </h3>
 
-              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 md:gap-4'>
+              <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4'>
                 {/* Total Fee */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -1878,19 +1899,19 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                   />
                 </div>
 
-                {/* Commission */}
+                {/* Profit */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Commission (₹)
+                    Profit (₹)
                   </label>
                   <input
                     type='number'
-                    name='commission'
-                    value={formData.commission}
+                    name='profit'
+                    value={formData.profit}
                     onChange={handleChange}
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
-                    placeholder='Agent commission'
+                    placeholder='0'
                     tabIndex="19"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
@@ -1962,6 +1983,66 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                   {!agentsLoading && agents.length === 0 && (
                     <p className='text-xs mt-1 text-amber-600'>No agents yet. Click + to add one.</p>
                   )}
+                </div>
+              </div>
+
+              <div className='mt-4 md:mt-5'>
+                <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-2'>
+                  Agent Commission (Optional)
+                </label>
+                <div className='grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4'>
+                  {/* Agent Commission Basis */}
+                  <div>
+                    <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                      Commission Basis
+                    </label>
+                    <select
+                      name='commissionBasis'
+                      value={formData.commissionBasis}
+                      onChange={handleChange}
+                      tabIndex="20"
+                      className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white'
+                    >
+                      <option value=''>-- Basis --</option>
+                      <option value='od'>OD Premium</option>
+                      <option value='tp'>TP Premium</option>
+                      <option value='net'>Net Premium</option>
+                      <option value='gross'>Gross Premium</option>
+                    </select>
+                  </div>
+
+                  {/* Agent Commission Percent */}
+                  <div>
+                    <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                      Commission (%)
+                    </label>
+                    <input
+                      type='number'
+                      name='commissionPercent'
+                      value={formData.commissionPercent}
+                      onChange={handleChange}
+                      onFocus={(e) => e.target.select()}
+                      onKeyDown={handleInputKeyDown}
+                      placeholder='e.g. 10'
+                      tabIndex="21"
+                      className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent font-semibold bg-white'
+                    />
+                  </div>
+
+                  {/* Agent Commission (Auto-calculated) */}
+                  <div>
+                    <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                      Agent Commission (₹) <span className='text-xs text-gray-500'>(Auto)</span>
+                    </label>
+                    <input
+                      type='number'
+                      name='commission'
+                      value={formData.commission}
+                      readOnly
+                      tabIndex="22"
+                      className='w-full px-3 py-2 border border-gray-300 rounded-lg bg-amber-50 font-semibold text-gray-700'
+                    />
+                  </div>
                 </div>
               </div>
 

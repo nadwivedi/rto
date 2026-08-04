@@ -164,8 +164,11 @@ const Insurance = () => {
         "Total Fee": item.totalFee || 0,
         "Paid": item.paid || 0,
         "Balance": item.balance || 0,
+        "Profit": item.profit || 0,
         "Status": item.status,
         "Commission": item.commission || 0,
+        "Commission Basis": item.commissionBasis ? (item.commissionBasis === 'od' ? 'OD' : item.commissionBasis === 'tp' ? 'TP' : item.commissionBasis === 'net' ? 'Net' : item.commissionBasis === 'gross' ? 'Gross' : item.commissionBasis) : '',
+        "Commission %": item.commissionPercent || 0,
         "Remarks": item.remarks || "",
       }));
 

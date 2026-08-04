@@ -155,6 +155,19 @@ const InsuranceSchema = new mongoose.Schema({
     type: Number,
     default: 0
   },
+  commissionBasis: {
+    type: String,
+    enum: ['od', 'tp', 'net', 'gross', ''],
+    default: ''
+  },
+  commissionPercent: {
+    type: Number,
+    default: 0
+  },
+  profit: {
+    type: Number,
+    default: 0
+  },
   odPremium: {
     type: Number,
     default: 0

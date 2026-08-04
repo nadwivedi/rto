@@ -24,6 +24,17 @@ const resolveAgent = async (agentId, agentName, agentContact, userId) => {
   }
 }
 
+// Compute agent commission from basis + percent; fall back to passed value if no basis
+const computeCommission = (commissionBasis, commissionPercent, premiumValues, existingCommission = 0) => {
+  if (!commissionBasis || commissionPercent === undefined) {
+    return { commission: Number(existingCommission) || 0, commissionBasis: commissionBasis || '', commissionPercent: Number(commissionPercent) || 0 }
+  }
+  const pct = Number(commissionPercent) || 0
+  const base = Number(premiumValues[commissionBasis]) || 0
+  const commission = Math.round(base * pct / 100 * 100) / 100
+  return { commission, commissionBasis, commissionPercent: pct }
+}
+
 // helper function to calculate status
 const getInsuranceStatus = (validTo) => {
   const today = new Date();
@@ -54,7 +65,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, agentId, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, commission, partyId: reqPartyId, rcDetails, createRC, odPremium, tpPremium, netPremium, premium } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, agentId, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, commission, commissionBasis, commissionPercent, profit, partyId: reqPartyId, rcDetails, createRC, odPremium, tpPremium, netPremium, premium } = req.body
 
     // Validate required fields
 
@@ -139,6 +150,9 @@ exports.createInsurance = async (req, res) => {
     // Resolve broker/agent: agentId is the source of truth, name/contact are denormalized
     const { agentId: resolvedAgentId, agentName: resolvedAgentName, agentContact: resolvedAgentContact } = await resolveAgent(agentId, agentName, agentContact, req.user.id)
 
+    // Compute agent commission from basis + percent (basis premium drives the amount)
+    const computedCommission = computeCommission(commissionBasis, commissionPercent, { od: odPremium, tp: tpPremium, net: netPremium, gross: premium }, commission)
+
     // Create new insurance record
     const insuranceData = {
       policyNumber,
@@ -163,7 +177,10 @@ exports.createInsurance = async (req, res) => {
       remarks,
       userId: req.user.id,
       partyId,
-      commission: Number(commission) || 0,
+      commission: computedCommission.commission,
+      commissionBasis: computedCommission.commissionBasis,
+      commissionPercent: computedCommission.commissionPercent,
+      profit: Number(profit) || 0,
       odPremium: Number(odPremium) || 0,
       tpPremium: Number(tpPremium) || 0,
       netPremium: Number(netPremium) || 0,
@@ -746,7 +763,7 @@ exports.checkVehicleActiveInsurance = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, agentId, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, commission, partyId, rcDetails, odPremium, tpPremium, netPremium, premium } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, agentId, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, commission, commissionBasis, commissionPercent, profit, partyId, rcDetails, odPremium, tpPremium, netPremium, premium } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -819,11 +836,25 @@ exports.updateInsurance = async (req, res) => {
       insurance.insuranceDocument = insuranceDocument || undefined
     }
     if (partyId !== undefined) insurance.partyId = partyId
-    if (commission !== undefined) insurance.commission = Number(commission) || 0
+    if (profit !== undefined) insurance.profit = Number(profit) || 0
+    if (commissionBasis !== undefined) insurance.commissionBasis = commissionBasis || ''
+    if (commissionPercent !== undefined) insurance.commissionPercent = Number(commissionPercent) || 0
     if (odPremium !== undefined) insurance.odPremium = Number(odPremium) || 0
     if (tpPremium !== undefined) insurance.tpPremium = Number(tpPremium) || 0
     if (netPremium !== undefined) insurance.netPremium = Number(netPremium) || 0
     if (premium !== undefined) insurance.premium = Number(premium) || 0
+    // Recompute commission whenever basis/percent/premiums are present on the request
+    if (commissionBasis !== undefined || commissionPercent !== undefined || commission !== undefined) {
+      const computed = computeCommission(
+        insurance.commissionBasis,
+        insurance.commissionPercent,
+        { od: insurance.odPremium, tp: insurance.tpPremium, net: insurance.netPremium, gross: insurance.premium },
+        commission !== undefined ? commission : insurance.commission
+      )
+      insurance.commission = computed.commission
+      if (computed.commissionBasis) insurance.commissionBasis = computed.commissionBasis
+      if (computed.commissionPercent) insurance.commissionPercent = computed.commissionPercent
+    }
 
     const updatedInsurance = await insurance.save()
 
