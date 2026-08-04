@@ -82,7 +82,18 @@ const Setting = () => {
     <div className='p-4 md:p-6 lg:p-8 pt-4 lg:pt-6 max-w-[1400px] mx-auto'>
       {/* Header */}
       <div className='mb-6'>
-        <h1 className='text-2xl font-black text-gray-800 mb-1'>Settings</h1>
+        <div className='flex items-center gap-3 mb-2'>
+          <button
+            onClick={() => navigate('/')}
+            className='flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer flex-shrink-0'
+            title='Back to Home'
+          >
+            <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
+            </svg>
+          </button>
+          <h1 className='text-2xl font-black text-gray-800 mb-1'>Settings</h1>
+        </div>
         <p className='text-sm text-gray-600'>Manage your application preferences and configuration</p>
       </div>
 

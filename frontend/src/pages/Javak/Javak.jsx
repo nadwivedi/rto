@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import { enforceVehicleNumberFormat } from '../../utils/vehicleNoCheck'
@@ -30,6 +31,7 @@ const EditableCell = ({ value, onSave, onCancel, uppercase }) => {
 }
 
 const Javak = () => {
+  const navigate = useNavigate()
   const [javaks, setJavaks] = useState([])
   const [loading, setLoading] = useState(true)
   
@@ -271,11 +273,22 @@ const Javak = () => {
         {/* Combined Header & Quick Add Row */}
         <div className='bg-white/90 rounded-lg shadow-xl shadow-cyan-950/10 border border-white/80 overflow-hidden ring-1 ring-cyan-100/80 relative z-10 backdrop-blur'>
           <div className='bg-gradient-to-r from-indigo-600 via-sky-500 to-emerald-400 px-6 py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-white'>
-            <div>
-              <h1 className='text-2xl font-bold tracking-tight'>Javak Register</h1>
-              <div className='flex items-center gap-2 mt-0.5'>
-                <span className='w-2 h-2 bg-white rounded-full animate-pulse shadow-sm'></span>
-                <h2 className='text-[10px] font-bold text-white/90 uppercase tracking-widest'>Quick Add Task</h2>
+            <div className='flex items-center gap-3'>
+              <button
+                onClick={() => navigate('/')}
+                className='flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-white/40 shadow-sm hover:shadow-md hover:bg-white/90 transition-all cursor-pointer flex-shrink-0'
+                title='Back to Home'
+              >
+                <svg className='w-5 h-5 text-gray-700' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
+                </svg>
+              </button>
+              <div>
+                <h1 className='text-2xl font-bold tracking-tight'>Javak Register</h1>
+                <div className='flex items-center gap-2 mt-0.5'>
+                  <span className='w-2 h-2 bg-white rounded-full animate-pulse shadow-sm'></span>
+                  <h2 className='text-[10px] font-bold text-white/90 uppercase tracking-widest'>Quick Add Task</h2>
+                </div>
               </div>
             </div>
             <div className='text-xs text-white font-medium bg-white/20 px-3 py-2 rounded-lg border border-white/30 shadow-sm backdrop-blur'>
