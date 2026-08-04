@@ -420,7 +420,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
   useEffect(() => {
     if (!formData.commissionBasis) return
     const pct = parseFloat(formData.commissionPercent) || 0
-    const base = parseFloat(formData[formData.commissionBasis]) || 0
+    const basisFieldMap = { od: 'odPremium', tp: 'tpPremium', net: 'netPremium', gross: 'premium' }
+    const base = parseFloat(formData[basisFieldMap[formData.commissionBasis]]) || 0
     const amount = Math.round(base * pct / 100 * 100) / 100
     setFormData(prev => (prev.commission === String(amount) ? prev : { ...prev, commission: String(amount) }))
   }, [formData.odPremium, formData.tpPremium, formData.netPremium, formData.premium, formData.commissionBasis, formData.commissionPercent])
