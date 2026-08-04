@@ -6,6 +6,7 @@ import { getTodayDate as utilGetTodayDate, handleSmartDateInput } from '../../..
 import { validateVehicleNumberRealtime } from '../../../utils/vehicleNoCheck'
 import { handlePaymentCalculation } from '../../../utils/paymentValidation'
 import { pdfToImages } from '../../../utils/pdfToImages'
+import AddAgentModal from './AddAgentModal'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -26,6 +27,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     mobileNumber: prefilledMobileNumber,
     agentName: '',
     agentContact: '',
+    agentId: '',
     issueDate: '',
     validFrom: '',
     validTo: '',
@@ -38,7 +40,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     productType: '',
     customProductType: '',
     insuranceDocument: '',
-    renewPremium: '0',
     commission: '0',
     odPremium: '0',
     tpPremium: '0',
@@ -77,6 +78,42 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
   const [policyNumberCheck, setPolicyNumberCheck] = useState(null) // { loading, exists, productType, policyHolderName, validFrom, validTo } | null
   const isOcrUpdate = useRef(false)
 
+  // Broker/Agent dropdown states
+  const [agents, setAgents] = useState([])
+  const [agentsLoading, setAgentsLoading] = useState(false)
+  const [showAddAgentModal, setShowAddAgentModal] = useState(false)
+
+  // Fetch agents for the broker/agent dropdown
+  const fetchAgents = async () => {
+    setAgentsLoading(true)
+    try {
+      const res = await axios.get(`${API_URL}/api/agents?all=true`, { withCredentials: true })
+      if (res.data.success) setAgents(res.data.data)
+    } catch (e) {
+      console.error('Error fetching agents:', e)
+    } finally {
+      setAgentsLoading(false)
+    }
+  }
+
+  // Fetch agents when modal opens and after adding a new agent
+  useEffect(() => {
+    if (isOpen) {
+      fetchAgents()
+    }
+  }, [isOpen])
+
+  // Preselect agent for edit mode (by agentId) or legacy records (by agentName match)
+  useEffect(() => {
+    if (!initialData || !isOpen || agents.length === 0) return
+    if (initialData.agentId) return
+    if (!initialData.agentName) return
+    const match = agents.find(a => a.name?.toLowerCase() === initialData.agentName.toLowerCase())
+    if (match) {
+      setFormData(prev => ({ ...prev, agentId: match._id }))
+    }
+  }, [initialData, isOpen, agents])
+
   // Pre-fill form when initialData is provided (for edit/renewal) or reset on open
   useEffect(() => {
     if (initialData && isOpen) {
@@ -101,8 +138,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         mobileNumber: initialData.mobileNumber || '',
         agentName: initialData.agentName || '',
         agentContact: initialData.agentContact || '',
+        agentId: initialData.agentId || '',
         insuranceDocument: initialData.insuranceDocument || '',
-        renewPremium: initialData.renewPremium?.toString() || '0',
         commission: initialData.commission?.toString() || '0',
         odPremium: initialData.odPremium?.toString() || '0',
         tpPremium: initialData.tpPremium?.toString() || '0',
@@ -132,6 +169,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         mobileNumber: prefilledMobileNumber,
         agentName: '',
         agentContact: '',
+        agentId: '',
         issueDate: '',
         validFrom: '',
         validTo: '',
@@ -144,7 +182,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
         productType: '',
         customProductType: '',
         insuranceDocument: '',
-        renewPremium: '0',
         commission: '0',
         odPremium: '0',
         tpPremium: '0',
@@ -450,7 +487,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
     const { name, value } = e.target
 
     // Handle numeric fields to remove leading zeros
-    if (name === 'odPremium' || name === 'tpPremium' || name === 'netPremium' || name === 'premium' || name === 'renewPremium' || name === 'commission') {
+    if (name === 'odPremium' || name === 'tpPremium' || name === 'netPremium' || name === 'premium' || name === 'commission') {
       let finalValue = value
       if (value.length > 0) {
         if (formData[name] === '0') {
@@ -519,14 +556,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
           finalValue = value.replace(/^0+/, '') || '0'
         } else if (name === 'paid' && formData.paid === '0') {
           finalValue = value.replace(/^0+/, '') || '0'
-        } else if (name === 'renewPremium' && formData.renewPremium === '0') {
-          finalValue = value.replace(/^0+/, '') || '0'
         }
-      }
-
-      if (name === 'renewPremium') {
-        setFormData(prev => ({ ...prev, renewPremium: finalValue }))
-        return
       }
 
       setFormData(prev => {
@@ -1078,8 +1108,8 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       // Get current tabIndex
       const currentTabIndex = parseInt(e.target.getAttribute('tabIndex'))
 
-      // If we're on the last field (commission = tabIndex 20), submit the form
-      if (currentTabIndex === 20) {
+      // If we're on the last field (commission = tabIndex 19), submit the form
+      if (currentTabIndex === 19) {
         document.querySelector('form')?.requestSubmit()
         return
       }
@@ -1127,8 +1157,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       policyNumber: formData.policyNumber,
       policyHolderName: formData.policyHolderName,
       mobileNumber: formData.mobileNumber,
-      agentName: formData.agentName || '',
-      agentContact: formData.agentContact || '',
+      agentId: formData.agentId || '',
       issueDate: formData.issueDate || '',
       validFrom: formData.validFrom,
       validTo: formData.validTo,
@@ -1140,7 +1169,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       insuranceCompany: formData.insuranceCompany || '',
       productType: formData.productType === 'Other' ? (formData.customProductType || 'Other') : formData.productType,
       insuranceDocument: formData.insuranceDocument || '',
-      renewPremium: parseFloat(formData.renewPremium) || 0,
       commission: parseFloat(formData.commission) || 0,
       odPremium: parseFloat(formData.odPremium) || 0,
       tpPremium: parseFloat(formData.tpPremium) || 0,
@@ -1850,24 +1878,6 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                   />
                 </div>
 
-                {/* Renew Premium */}
-                <div>
-                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Renew Premium (₹)
-                  </label>
-                  <input
-                    type='number'
-                    name='renewPremium'
-                    value={formData.renewPremium}
-                    onChange={handleChange}
-                    onFocus={(e) => e.target.select()}
-                    onKeyDown={handleInputKeyDown}
-                    placeholder='For next year'
-                    tabIndex="19"
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
-                  />
-                </div>
-
                 {/* Commission */}
                 <div>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
@@ -1881,7 +1891,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
                     onFocus={(e) => e.target.select()}
                     onKeyDown={handleInputKeyDown}
                     placeholder='Agent commission'
-                    tabIndex="20"
+                    tabIndex="19"
                     className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent font-semibold bg-white'
                   />
                 </div>
@@ -1918,36 +1928,40 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
               </h3>
 
               <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
-                {/* Broker/Agent Name */}
-                <div>
+                {/* Broker/Agent Select */}
+                <div className='md:col-span-2'>
                   <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Name
+                    Broker/Agent
                   </label>
-                  <input
-                    type='text'
-                    name='agentName'
-                    value={formData.agentName}
-                    onChange={handleChange}
-                    placeholder='Enter broker/agent name'
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white'
-                  />
-                </div>
-
-                {/* Broker/Agent Mobile Number */}
-                <div>
-                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
-                    Mobile Number
-                  </label>
-                  <input
-                    type='tel'
-                    name='agentContact'
-                    value={formData.agentContact}
-                    onChange={handleChange}
-                    placeholder='10-digit mobile number'
-                    pattern='[0-9]{10}'
-                    maxLength='10'
-                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white'
-                  />
+                  <div className='flex items-center gap-2'>
+                    <select
+                      name='agentId'
+                      value={formData.agentId}
+                      onChange={handleChange}
+                      className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white'
+                    >
+                      <option value=''>-- Select Broker/Agent --</option>
+                      {agents.map((agent) => (
+                        <option key={agent._id} value={agent._id}>
+                          {agent.name}{agent.contact ? ` — ${agent.contact}` : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type='button'
+                      onClick={() => setShowAddAgentModal(true)}
+                      title='Add new broker/agent'
+                      className='flex-shrink-0 w-10 h-10 flex items-center justify-center rounded-lg bg-amber-600 text-white text-xl font-bold hover:bg-amber-700 transition cursor-pointer'
+                    >
+                      +
+                    </button>
+                  </div>
+                  {agentsLoading && (
+                    <p className='text-xs mt-1 text-gray-400'>Loading agents...</p>
+                  )}
+                  {!agentsLoading && agents.length === 0 && (
+                    <p className='text-xs mt-1 text-amber-600'>No agents yet. Click + to add one.</p>
+                  )}
                 </div>
               </div>
 
@@ -2102,6 +2116,16 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
             </div>
           </div>
         </form>
+
+        {/* Add Broker/Agent Modal */}
+        <AddAgentModal
+          isOpen={showAddAgentModal}
+          onClose={() => setShowAddAgentModal(false)}
+          onSuccess={(newAgent) => {
+            setFormData(prev => ({ ...prev, agentId: newAgent._id }))
+            fetchAgents()
+          }}
+        />
       </div>
     </div>
   )

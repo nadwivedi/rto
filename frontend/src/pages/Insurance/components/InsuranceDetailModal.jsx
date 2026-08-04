@@ -159,7 +159,7 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
               <span className='bg-emerald-600 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs'>4</span>
               Payment Information
             </h3>
-            <div className='grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4 text-xs md:text-sm'>
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 text-xs md:text-sm'>
               <div>
                 <span className='block text-gray-500 font-medium'>Total Premium</span>
                 <span className='block font-bold text-gray-800 mt-0.5'>₹{(insurance.totalFee || 0).toLocaleString('en-IN')}</span>
@@ -177,10 +177,6 @@ const InsuranceDetailModal = ({ isOpen, onClose, insurance }) => {
               <div>
                 <span className='block text-gray-500 font-medium'>Commission</span>
                 <span className='block font-bold text-purple-600 mt-0.5'>₹{(insurance.commission || 0).toLocaleString('en-IN')}</span>
-              </div>
-              <div>
-                <span className='block text-gray-500 font-medium'>Renew Premium</span>
-                <span className='block font-bold text-gray-800 mt-0.5'>₹{(insurance.renewPremium || 0).toLocaleString('en-IN')}</span>
               </div>
             </div>
           </div>

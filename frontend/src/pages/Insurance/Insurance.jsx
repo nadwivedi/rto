@@ -36,6 +36,8 @@ const Insurance = () => {
   const [productFilter, setProductFilter] = useState("");
   const [products, setProducts] = useState([]);
   const [validityFilter, setValidityFilter] = useState("");
+  const [agentFilter, setAgentFilter] = useState("");
+  const [agents, setAgents] = useState([]);
   const [showFilterDropdown, setShowFilterDropdown] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
@@ -87,12 +89,22 @@ const Insurance = () => {
     }
   };
 
+  const fetchAgents = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/agents?all=true`, { withCredentials: true });
+      if (res.data.success) setAgents(res.data.data);
+    } catch (e) {
+      console.error('Error fetching agents:', e);
+    }
+  };
+
   const handleExportExcel = async () => {
     try {
       const params = {
         ...(statusFilter !== "all" ? { status: statusFilter } : {}),
         ...(companyFilter ? { company: companyFilter } : {}),
         ...(productFilter ? { product: productFilter } : {}),
+        ...(agentFilter ? { agentId: agentFilter } : {}),
         ...(debouncedSearchQuery ? { search: debouncedSearchQuery } : {}),
       };
 
@@ -129,7 +141,6 @@ const Insurance = () => {
         "Balance": item.balance || 0,
         "Status": item.status,
         "Commission": item.commission || 0,
-        "Renew Premium": item.renewPremium || 0,
         "Remarks": item.remarks || "",
       }));
 
@@ -156,6 +167,7 @@ const Insurance = () => {
         search: debouncedSearchQuery,
         ...(companyFilter ? { company: companyFilter } : {}),
         ...(productFilter ? { product: productFilter } : {}),
+        ...(agentFilter ? { agentId: agentFilter } : {}),
         ...(validityFilter ? { validity: validityFilter } : {}),
       };
 
@@ -220,7 +232,7 @@ const Insurance = () => {
     }
   };
 
-  useEffect(() => { fetchCompanies(); fetchProducts(); }, []);
+  useEffect(() => { fetchCompanies(); fetchProducts(); fetchAgents(); }, []);
 
   // Close filter dropdown on Escape key
   useEffect(() => {
@@ -633,7 +645,7 @@ const Insurance = () => {
                       <button
                         onClick={() => setShowFilterDropdown(!showFilterDropdown)}
                         className={`flex items-center gap-2 px-4 py-2.5 border rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                          companyFilter || productFilter || validityFilter
+                          companyFilter || productFilter || validityFilter || agentFilter
                             ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
                             : 'bg-white border-gray-300 text-gray-700 hover:border-indigo-300 hover:bg-indigo-50'
                         }`}
@@ -642,9 +654,9 @@ const Insurance = () => {
                           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z' />
                         </svg>
                         Filters
-                        {(companyFilter || productFilter || validityFilter) && (
+                        {(companyFilter || productFilter || validityFilter || agentFilter) && (
                           <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-500 text-white text-[9px] font-bold">
-                            {(companyFilter ? 1 : 0) + (productFilter ? 1 : 0) + (validityFilter ? 1 : 0)}
+                            {(companyFilter ? 1 : 0) + (productFilter ? 1 : 0) + (validityFilter ? 1 : 0) + (agentFilter ? 1 : 0)}
                           </span>
                         )}
                       </button>
@@ -662,9 +674,9 @@ const Insurance = () => {
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                                 </svg>
                               </button>
-                              {(companyFilter || productFilter || validityFilter) && (
+                              {(companyFilter || productFilter || validityFilter || agentFilter) && (
                                 <button
-                                  onClick={() => { setCompanyFilter(''); setProductFilter(''); setValidityFilter(''); }}
+                                  onClick={() => { setCompanyFilter(''); setProductFilter(''); setValidityFilter(''); setAgentFilter(''); }}
                                   className="text-[10px] font-semibold text-red-500 hover:text-red-600 cursor-pointer"
                                 >
                                   Clear All
@@ -716,6 +728,21 @@ const Insurance = () => {
                                 <option value='45'>Expires in 45 Days</option>
                                 <option value='60'>Expires in 60 Days</option>
                                 <option value='expired'>Expired</option>
+                              </select>
+                            </div>
+
+                            {/* Broker/Agent Filter */}
+                            <div>
+                              <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Broker/Agent</label>
+                              <select
+                                value={agentFilter}
+                                onChange={(e) => setAgentFilter(e.target.value)}
+                                className='w-full px-3 py-2 border border-gray-200 rounded-xl bg-white text-xs font-semibold text-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+                              >
+                                <option value=''>All Agents</option>
+                                {agents.map((agent) => (
+                                  <option key={agent._id} value={agent._id}>{agent.name}</option>
+                                ))}
                               </select>
                             </div>
 

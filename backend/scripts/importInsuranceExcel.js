@@ -129,7 +129,6 @@ const buildRecords = (rows) => {
       balance: 0,
       status: getStatus(validTo),
       isRenewed: false,
-      renewPremium: 0,
       commission: 0,
       remarks: businessType ? `Imported from Excel` : ''
     })

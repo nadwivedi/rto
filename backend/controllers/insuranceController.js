@@ -2,7 +2,27 @@ const Insurance = require('../models/Insurance')
 const { checkUserAndQueueAlerts } = require('../jobs/whatsappDailyExpiryChecker')
 const { processPendingMessagesForUser } = require('../jobs/whatsappMessageSender')
 const VehicleRegistration = require('../models/VehicleRegistration')
+const Agent = require('../models/Agent')
 const mongoose = require('mongoose')
+
+// Resolve broker/agent reference: prefer agentId (source of truth), fall back to plain text (legacy)
+const resolveAgent = async (agentId, agentName, agentContact, userId) => {
+  if (agentId) {
+    const agent = await Agent.findOne({ _id: agentId, userId }).select('name contact').lean()
+    if (agent) {
+      return {
+        agentId,
+        agentName: agent.name,
+        agentContact: agent.contact || ''
+      }
+    }
+  }
+  return {
+    agentId: null,
+    agentName: agentName || '',
+    agentContact: agentContact || ''
+  }
+}
 
 // helper function to calculate status
 const getInsuranceStatus = (validTo) => {
@@ -34,7 +54,7 @@ const getInsuranceStatus = (validTo) => {
 // Create new insurance record
 exports.createInsurance = async (req, res) => {
   try {
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId: reqPartyId, rcDetails, createRC, odPremium, tpPremium, netPremium, premium } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, agentId, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, commission, partyId: reqPartyId, rcDetails, createRC, odPremium, tpPremium, netPremium, premium } = req.body
 
     // Validate required fields
 
@@ -116,6 +136,9 @@ exports.createInsurance = async (req, res) => {
       )
     }
 
+    // Resolve broker/agent: agentId is the source of truth, name/contact are denormalized
+    const { agentId: resolvedAgentId, agentName: resolvedAgentName, agentContact: resolvedAgentContact } = await resolveAgent(agentId, agentName, agentContact, req.user.id)
+
     // Create new insurance record
     const insuranceData = {
       policyNumber,
@@ -124,8 +147,9 @@ exports.createInsurance = async (req, res) => {
       productType,
       vehicleNumber,
       mobileNumber,
-      agentName: agentName || '',
-      agentContact: agentContact || '',
+      agentName: resolvedAgentName,
+      agentContact: resolvedAgentContact,
+      agentId: resolvedAgentId,
       date,
       issueDate: issueDate || '',
       validFrom,
@@ -139,7 +163,6 @@ exports.createInsurance = async (req, res) => {
       remarks,
       userId: req.user.id,
       partyId,
-      renewPremium: Number(renewPremium) || 0,
       commission: Number(commission) || 0,
       odPremium: Number(odPremium) || 0,
       tpPremium: Number(tpPremium) || 0,
@@ -262,6 +285,7 @@ exports.getAllInsurance = async (req, res) => {
       company,
       product,
       validity,
+      agentId,
       sortBy = 'createdAt',
       sortOrder = 'desc'
     } = req.query
@@ -277,6 +301,11 @@ exports.getAllInsurance = async (req, res) => {
     // Filter by product type
     if (product) {
       query.productType = product
+    }
+
+    // Filter by broker/agent
+    if (agentId) {
+      query.agentId = agentId
     }
 
     // Search by policy number, vehicle number, owner name
@@ -357,7 +386,7 @@ exports.getAllInsurance = async (req, res) => {
 // Export all insurance records without pagination (with optional filters)
 exports.exportAllInsurance = async (req, res) => {
   try {
-    const { status, company, product, search } = req.query
+    const { status, company, product, search, agentId } = req.query
     const query = { userId: req.user.id }
 
     if (status && status !== 'all') {
@@ -374,6 +403,10 @@ exports.exportAllInsurance = async (req, res) => {
 
     if (product) {
       query.productType = product
+    }
+
+    if (agentId) {
+      query.agentId = agentId
     }
 
     if (search) {
@@ -713,7 +746,7 @@ exports.checkVehicleActiveInsurance = async (req, res) => {
 exports.updateInsurance = async (req, res) => {
   try {
     const { id } = req.params
-    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, renewPremium, commission, partyId, rcDetails, odPremium, tpPremium, netPremium, premium } = req.body
+    const { policyNumber, policyHolderName, insuranceCompany, productType, vehicleNumber, mobileNumber, agentName, agentContact, agentId, date, issueDate, validFrom, validTo, thirdPartyValidFrom, thirdPartyValidTo, totalFee, paid, balance, remarks, insuranceDocument, commission, partyId, rcDetails, odPremium, tpPremium, netPremium, premium } = req.body
 
     const insurance = await Insurance.findOne({ _id: id, userId: req.user.id })
 
@@ -754,6 +787,19 @@ exports.updateInsurance = async (req, res) => {
     if (productType !== undefined) insurance.productType = productType
     if (vehicleNumber !== undefined) insurance.vehicleNumber = vehicleNumber
     if (mobileNumber !== undefined) insurance.mobileNumber = mobileNumber
+    // Broker/agent: agentId is the source of truth, name/contact are denormalized
+    if (agentId !== undefined) {
+      if (!agentId) {
+        insurance.agentId = null
+        insurance.agentName = ''
+        insurance.agentContact = ''
+      } else {
+        const { agentId: resolvedAgentId, agentName: resolvedAgentName, agentContact: resolvedAgentContact } = await resolveAgent(agentId, undefined, undefined, req.user.id)
+        insurance.agentId = resolvedAgentId
+        insurance.agentName = resolvedAgentName
+        insurance.agentContact = resolvedAgentContact
+      }
+    }
     if (agentName !== undefined) insurance.agentName = agentName
     if (agentContact !== undefined) insurance.agentContact = agentContact
     if (validFrom) insurance.validFrom = validFrom
@@ -773,7 +819,6 @@ exports.updateInsurance = async (req, res) => {
       insurance.insuranceDocument = insuranceDocument || undefined
     }
     if (partyId !== undefined) insurance.partyId = partyId
-    if (renewPremium !== undefined) insurance.renewPremium = Number(renewPremium) || 0
     if (commission !== undefined) insurance.commission = Number(commission) || 0
     if (odPremium !== undefined) insurance.odPremium = Number(odPremium) || 0
     if (tpPremium !== undefined) insurance.tpPremium = Number(tpPremium) || 0

@@ -72,6 +72,12 @@ const InsuranceSchema = new mongoose.Schema({
     trim: true,
     default: ''
   },
+  agentId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Agent',
+    default: null,
+    index: true
+  },
 
   validFrom: {
     type: String,
@@ -144,10 +150,6 @@ const InsuranceSchema = new mongoose.Schema({
   },
   lastWhatsappSentAt: {
     type: Date
-  },
-  renewPremium: {
-    type: Number,
-    default: 0
   },
   commission: {
     type: Number,
