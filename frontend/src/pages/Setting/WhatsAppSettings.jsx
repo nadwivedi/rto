@@ -115,7 +115,12 @@ const WhatsAppSettings = () => {
     alertRules: normalizeRules(),
     maxMessagesPerDay: 30,
     maxMessagesPerHour: 5,
-    messageLanguage: 'both'
+    messageLanguage: 'both',
+    welcomeMessageEnabled: false,
+    welcomeMessageTemplate: 'Welcome to RTO Services! We are glad to serve you.',
+    welcomeMessageTemplateHi: 'आरटीओ सेवाओं में आपका स्वागत है! हम आपकी सेवा करने के लिए तत्पर हैं।',
+    autoSendInsurancePolicy: false,
+    insurancePolicyMessageTemplate: ''
   })
   const [draftInputs, setDraftInputs] = useState({})
   const [focusedInputs, setFocusedInputs] = useState({})
@@ -213,7 +218,7 @@ const WhatsAppSettings = () => {
           </div>
           <div>
             <h2 className='text-base font-bold text-gray-800'>WhatsApp Automated Settings</h2>
-            <p className='text-[11px] text-gray-500'>Choose which expiry alerts should be sent for each work type.</p>
+            <p className='text-[11px] text-gray-500'>Choose which expiry alerts and automated messages should be sent.</p>
           </div>
         </div>
         <button
@@ -223,6 +228,89 @@ const WhatsAppSettings = () => {
         >
           {saving ? 'Saving...' : 'Save WhatsApp Settings'}
         </button>
+      </div>
+
+      {/* Feature 1: Welcome Message Feature (Off by Default) */}
+      <div className='mb-4 rounded-xl border border-blue-200 bg-blue-50/50 p-4'>
+        <div className='flex items-center justify-between mb-2'>
+          <div>
+            <h3 className='text-sm font-bold text-blue-900'>1. Welcome WhatsApp Message to Client</h3>
+            <p className='text-[11px] text-blue-700'>Automatically sends 1 welcome message to new clients when created. Keeps record in DB so repeat messages are never sent.</p>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.welcomeMessageEnabled || false}
+              onChange={e => setSettings(prev => ({ ...prev, welcomeMessageEnabled: e.target.checked }))}
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
+          </label>
+        </div>
+
+        {settings.welcomeMessageEnabled && (
+          <div className='mt-3 space-y-3 pt-3 border-t border-blue-200'>
+            <div>
+              <label className='text-xs font-semibold text-gray-700 block mb-1'>Welcome Message Template (English)</label>
+              <textarea
+                value={settings.welcomeMessageTemplate || ''}
+                onChange={e => setSettings(prev => ({ ...prev, welcomeMessageTemplate: e.target.value }))}
+                rows={2}
+                placeholder="Dear {partyName}, welcome to RTO Services! We are glad to serve you."
+                className='w-full rounded-lg border border-gray-300 p-2 text-xs focus:ring-1 focus:ring-blue-500'
+              />
+              <span className='text-[10px] text-gray-500'>Available variables: {"{partyName}"}, {"{mobileNumber}"}</span>
+            </div>
+
+            <div>
+              <label className='text-xs font-semibold text-gray-700 block mb-1'>Welcome Message Template (Hindi Optional)</label>
+              <textarea
+                value={settings.welcomeMessageTemplateHi || ''}
+                onChange={e => setSettings(prev => ({ ...prev, welcomeMessageTemplateHi: e.target.value }))}
+                rows={2}
+                placeholder="प्रिय {partyName}, आरटीओ सेवाओं में आपका स्वागत है!"
+                className='w-full rounded-lg border border-gray-300 p-2 text-xs focus:ring-1 focus:ring-blue-500'
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Feature 2: Insurance Policy Document Auto-Send Feature (Off by Default) */}
+      <div className='mb-4 rounded-xl border border-emerald-200 bg-emerald-50/50 p-4'>
+        <div className='flex items-center justify-between mb-2'>
+          <div>
+            <h3 className='text-sm font-bold text-emerald-900'>2. Automated Insurance Policy PDF & Message Send</h3>
+            <p className='text-[11px] text-emerald-700'>Default setting for sending policy details and attached PDF document when creating an insurance policy record.</p>
+          </div>
+          <label className='relative inline-flex items-center cursor-pointer'>
+            <input
+              type='checkbox'
+              checked={settings.autoSendInsurancePolicy || false}
+              onChange={e => setSettings(prev => ({ ...prev, autoSendInsurancePolicy: e.target.checked }))}
+              className='sr-only peer'
+            />
+            <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+          </label>
+        </div>
+
+        {settings.autoSendInsurancePolicy && (
+          <div className='mt-3 space-y-2 pt-3 border-t border-emerald-200'>
+            <label className='text-xs font-semibold text-gray-700 block mb-1'>Policy Message Template</label>
+            <textarea
+              value={settings.insurancePolicyMessageTemplate || ''}
+              onChange={e => setSettings(prev => ({ ...prev, insurancePolicyMessageTemplate: e.target.value }))}
+              rows={4}
+              placeholder={`Dear {policyHolderName}, here is your Insurance Policy for Vehicle {vehicleNumber}.\nPolicy No: {policyNumber}, Valid From: {validFrom} To {validTo}.\n\n📄 Download PDF: {pdfLink}`}
+              className='w-full rounded-lg border border-gray-300 p-2 text-xs focus:ring-1 focus:ring-emerald-500'
+            />
+            <span className='text-[10px] text-gray-500'>
+              Available variables: {"{policyHolderName}"}, {"{vehicleNumber}"}, {"{policyNumber}"}, {"{insuranceCompany}"}, {"{validFrom}"}, {"{validTo}"}, {"{pdfLink}"} (auto PDF download link)
+              <br />
+              <span className='text-emerald-700 font-semibold'>💡 Tip: If template is left empty, a default message with the PDF link is sent automatically.</span>
+            </span>
+          </div>
+        )}
       </div>
 
       <div className='mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4'>

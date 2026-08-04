@@ -14,12 +14,16 @@ const messageLogSchema = new mongoose.Schema({
   },
   documentType: {
     type: String,
-    enum: ['Tax', 'Fitness', 'Puc', 'Gps', 'Insurance', 'NationalPermit', 'CgPermit', 'BusPermit', 'TemporaryPermit', 'Driving'],
+    enum: ['Tax', 'Fitness', 'Puc', 'Gps', 'Insurance', 'NationalPermit', 'CgPermit', 'BusPermit', 'TemporaryPermit', 'Driving', 'Welcome', 'InsurancePolicy'],
     required: true
   },
   targetNumber: {
     type: String,
     required: true,
+    trim: true
+  },
+  mediaPath: {
+    type: String,
     trim: true
   },
   ownerName: {

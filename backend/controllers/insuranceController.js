@@ -242,6 +242,76 @@ exports.createInsurance = async (req, res) => {
       }
     }
 
+    // Handle automated policy PDF WhatsApp sending if requested and not already sent
+    const autoSendPolicyPdf = req.body.autoSendPolicyPdf
+    if (autoSendPolicyPdf && mobileNumber && !newInsurance.policyMessageSent) {
+      try {
+        const WhatsAppSetting = require('../models/WhatsAppSetting')
+        const MessageLog = require('../models/MessageLog')
+        const settings = await WhatsAppSetting.findOne({ userId: req.user.id })
+
+        // Build public PDF URL to include in message text
+        const appBaseUrl = (process.env.APP_URL || '').replace(/\/$/, '')
+        const pdfPublicUrl = insuranceDocument && appBaseUrl
+          ? `${appBaseUrl}${insuranceDocument}`
+          : null
+
+        let msgText = settings?.insurancePolicyMessageTemplate || ''
+        if (!msgText.trim()) {
+          msgText = `Dear *${policyHolderName || 'Customer'}*,
+
+Here is your Insurance Policy for Vehicle *${vehicleNumber || ''}*
+📋 Policy No: *${policyNumber || 'N/A'}*
+🏢 Insurance Co: *${insuranceCompany || 'N/A'}*
+📅 Valid: *${validFrom}* to *${validTo}*`
+          if (pdfPublicUrl) {
+            msgText += `
+
+📄 *Download Policy PDF:*
+${pdfPublicUrl}`
+          }
+          msgText += `
+
+Thank you for choosing our service! 🙏`
+        } else {
+          msgText = msgText.replace(/\{policyHolderName\}/g, policyHolderName || '')
+            .replace(/\{vehicleNumber\}/g, vehicleNumber || '')
+            .replace(/\{policyNumber\}/g, policyNumber || '')
+            .replace(/\{insuranceCompany\}/g, insuranceCompany || '')
+            .replace(/\{validFrom\}/g, validFrom || '')
+            .replace(/\{validTo\}/g, validTo || '')
+            .replace(/\{pdfLink\}/g, pdfPublicUrl || '')
+          // Append PDF link at the end if template doesn't have {pdfLink} placeholder
+          if (pdfPublicUrl && !msgText.includes(pdfPublicUrl)) {
+            msgText += `
+
+📄 *Download Policy PDF:*
+${pdfPublicUrl}`
+          }
+        }
+
+        await MessageLog.create({
+          userId: req.user.id,
+          documentId: newInsurance._id,
+          documentType: 'InsurancePolicy',
+          targetNumber: mobileNumber,
+          ownerName: policyHolderName,
+          messageBody: msgText,
+          mediaPath: insuranceDocument || undefined,
+          scheduledFor: new Date(),
+          status: 'pending'
+        })
+
+        newInsurance.policyMessageSent = true
+        newInsurance.policyDocSent = !!insuranceDocument
+        newInsurance.policySentAt = new Date()
+        await newInsurance.save()
+        console.log(`[Insurance] Queued automated policy PDF message for policy ${newInsurance._id}`)
+      } catch (pdfErr) {
+        console.error('[Insurance] Failed to queue policy PDF message:', pdfErr.message)
+      }
+    }
+
     // Queue alerts then immediately try to send (uses existing limits + session logic)
     try {
       await checkUserAndQueueAlerts(req.user.id)
@@ -873,6 +943,69 @@ exports.updateInsurance = async (req, res) => {
         }
       } catch (vehicleErr) {
         console.error('[Insurance Update] Could not update vehicle address:', vehicleErr.message)
+      }
+    }
+
+    // Handle automated policy PDF WhatsApp sending on update if requested and not already sent
+    const autoSendPolicyPdf = req.body.autoSendPolicyPdf
+    const targetMobile = mobileNumber || updatedInsurance.mobileNumber
+    if (autoSendPolicyPdf && targetMobile && !updatedInsurance.policyMessageSent) {
+      try {
+        const WhatsAppSetting = require('../models/WhatsAppSetting')
+        const MessageLog = require('../models/MessageLog')
+        const settings = await WhatsAppSetting.findOne({ userId: req.user.id })
+
+        let msgText = settings?.insurancePolicyMessageTemplate || ''
+        const holder = updatedInsurance.policyHolderName || policyHolderName || 'Customer'
+        const veh = updatedInsurance.vehicleNumber || vehicleNumber || ''
+        const pol = updatedInsurance.policyNumber || policyNumber || 'N/A'
+        const comp = updatedInsurance.insuranceCompany || insuranceCompany || 'N/A'
+        const vFrom = updatedInsurance.validFrom || validFrom || ''
+        const vTo = updatedInsurance.validTo || validTo || ''
+        const docPath = updatedInsurance.insuranceDocument || insuranceDocument || null
+
+        // Build public PDF URL to include in message text
+        const appBaseUrl = (process.env.APP_URL || '').replace(/\/$/, '')
+        const pdfPublicUrl = docPath && appBaseUrl ? `${appBaseUrl}${docPath}` : null
+
+        if (!msgText.trim()) {
+          msgText = `Dear *${holder}*,\n\nHere is your Insurance Policy for Vehicle *${veh}*\n\u{1F4CB} Policy No: *${pol}*\n\u{1F3E2} Insurance Co: *${comp}*\n\u{1F4C5} Valid: *${vFrom}* to *${vTo}*`
+          if (pdfPublicUrl) {
+            msgText += `\n\n\u{1F4C4} *Download Policy PDF:*\n${pdfPublicUrl}`
+          }
+          msgText += `\n\nThank you for choosing our service! \u{1F64F}`
+        } else {
+          msgText = msgText.replace(/\{policyHolderName\}/g, holder)
+            .replace(/\{vehicleNumber\}/g, veh)
+            .replace(/\{policyNumber\}/g, pol)
+            .replace(/\{insuranceCompany\}/g, comp)
+            .replace(/\{validFrom\}/g, vFrom)
+            .replace(/\{validTo\}/g, vTo)
+            .replace(/\{pdfLink\}/g, pdfPublicUrl || '')
+          if (pdfPublicUrl && !msgText.includes(pdfPublicUrl)) {
+            msgText += `\n\n\u{1F4C4} *Download Policy PDF:*\n${pdfPublicUrl}`
+          }
+        }
+
+        await MessageLog.create({
+          userId: req.user.id,
+          documentId: updatedInsurance._id,
+          documentType: 'InsurancePolicy',
+          targetNumber: targetMobile,
+          ownerName: holder,
+          messageBody: msgText,
+          mediaPath: updatedInsurance.insuranceDocument || insuranceDocument || undefined,
+          scheduledFor: new Date(),
+          status: 'pending'
+        })
+
+        updatedInsurance.policyMessageSent = true
+        updatedInsurance.policyDocSent = !!(updatedInsurance.insuranceDocument || insuranceDocument)
+        updatedInsurance.policySentAt = new Date()
+        await updatedInsurance.save()
+        console.log(`[Insurance Update] Queued automated policy PDF message for policy ${updatedInsurance._id}`)
+      } catch (pdfErr) {
+        console.error('[Insurance Update] Failed to queue policy PDF message:', pdfErr.message)
       }
     }
 

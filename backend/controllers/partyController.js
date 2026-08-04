@@ -271,6 +271,49 @@ exports.createParty = async (req, res) => {
 
     const party = await Party.create(partyData)
 
+    // Trigger automated Welcome WhatsApp Message if enabled in settings and not sent before
+    try {
+      const WhatsAppSetting = require('../models/WhatsAppSetting')
+      const MessageLog = require('../models/MessageLog')
+      const { processPendingMessagesForUser } = require('../jobs/whatsappMessageSender')
+
+      const settings = await WhatsAppSetting.findOne({ userId: req.user.id })
+      if (settings && settings.welcomeMessageEnabled && party.mobile && !party.welcomeMessageSent) {
+        let welcomeText = settings.welcomeMessageTemplate || ''
+        if (settings.messageLanguage === 'hindi' && settings.welcomeMessageTemplateHi) {
+          welcomeText = settings.welcomeMessageTemplateHi
+        } else if (settings.messageLanguage === 'both' && settings.welcomeMessageTemplateHi) {
+          welcomeText = `${welcomeText}\n\n${settings.welcomeMessageTemplateHi}`
+        }
+
+        if (!welcomeText.trim()) {
+          welcomeText = `Dear *${party.partyName}*,\n\nWelcome to RTO Services! We are glad to have you as our client.\n\nThank you!`
+        } else {
+          welcomeText = welcomeText.replace(/\{partyName\}/g, party.partyName || '')
+            .replace(/\{mobileNumber\}/g, party.mobile || '')
+        }
+
+        await MessageLog.create({
+          userId: req.user.id,
+          documentId: party._id,
+          documentType: 'Welcome',
+          targetNumber: party.mobile,
+          ownerName: party.partyName,
+          messageBody: welcomeText,
+          scheduledFor: new Date(),
+          status: 'pending'
+        })
+
+        party.welcomeMessageSent = true
+        party.welcomeMessageSentAt = new Date()
+        await party.save()
+        console.log(`[Party] Queued welcome message for party ${party._id}`)
+        processPendingMessagesForUser(req.user.id)
+      }
+    } catch (welcomeErr) {
+      console.error('[Party] Error triggering welcome message:', welcomeErr.message)
+    }
+
     res.status(201).json({
       success: true,
       message: 'Party created successfully',

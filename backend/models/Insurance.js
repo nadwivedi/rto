@@ -151,6 +151,17 @@ const InsuranceSchema = new mongoose.Schema({
   lastWhatsappSentAt: {
     type: Date
   },
+  policyMessageSent: {
+    type: Boolean,
+    default: false
+  },
+  policyDocSent: {
+    type: Boolean,
+    default: false
+  },
+  policySentAt: {
+    type: Date
+  },
   commission: {
     type: Number,
     default: 0

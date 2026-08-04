@@ -61,6 +61,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
   })
 
   const [fetchingVehicle, setFetchingVehicle] = useState(false)
+  const [autoSendPolicyPdf, setAutoSendPolicyPdf] = useState(false)
   const [vehicleError, setVehicleError] = useState('')
   const [vehicleValidation, setVehicleValidation] = useState({ isValid: false, message: '' })
   const [paidExceedsTotal, setPaidExceedsTotal] = useState(false)
@@ -103,6 +104,16 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
   useEffect(() => {
     if (isOpen) {
       fetchAgents()
+      // Fetch WhatsApp settings to check if autoSendInsurancePolicy is enabled by default
+      axios.get(`${API_URL}/api/whatsapp-settings`, { withCredentials: true })
+        .then(res => {
+          if (res.data?.autoSendInsurancePolicy) {
+            setAutoSendPolicyPdf(true)
+          } else {
+            setAutoSendPolicyPdf(false)
+          }
+        })
+        .catch(err => console.error('Error fetching WhatsApp settings in modal:', err))
     }
   }, [isOpen])
 
@@ -1198,6 +1209,7 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
       premium: parseFloat(formData.premium) || 0,
       status: 'Active',
       createRC,
+      autoSendPolicyPdf,
       // RC details extracted from insurance document (used for auto-creating vehicle record)
       rcDetails: {
         chassisNumber: formData.chassisNumber || '',
@@ -2141,18 +2153,36 @@ const AddInsuranceModal = ({ isOpen, onClose, onSubmit, initialData = null, isEd
 
               {/* Create RC Checkbox — only show for new insurance, not edit */}
               {!isEditMode && (
-                <div className='mt-4 flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200'>
-                  <input
-                    type='checkbox'
-                    id='createRC'
-                    checked={createRC}
-                    onChange={(e) => setCreateRC(e.target.checked)}
-                    className='mt-0.5 w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer'
-                  />
-                  <label htmlFor='createRC' className='cursor-pointer'>
-                    <p className='text-sm font-semibold text-gray-800'>Create RC (Vehicle Registration) record</p>
-                    <p className='text-xs text-gray-500'>Auto-create a vehicle registration record from insurance RC details if vehicle does not exist</p>
-                  </label>
+                <div className='mt-4 space-y-3'>
+                  <div className='flex items-start gap-3 p-3 bg-white rounded-lg border border-gray-200'>
+                    <input
+                      type='checkbox'
+                      id='createRC'
+                      checked={createRC}
+                      onChange={(e) => setCreateRC(e.target.checked)}
+                      className='mt-0.5 w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer'
+                    />
+                    <label htmlFor='createRC' className='cursor-pointer'>
+                      <p className='text-sm font-semibold text-gray-800'>Create RC (Vehicle Registration) record</p>
+                      <p className='text-xs text-gray-500'>Auto-create a vehicle registration record from insurance RC details if vehicle does not exist</p>
+                    </label>
+                  </div>
+
+                  <div className='flex items-start gap-3 p-3 bg-white rounded-lg border border-emerald-300 bg-emerald-50/30'>
+                    <input
+                      type='checkbox'
+                      id='autoSendPolicyPdf'
+                      checked={autoSendPolicyPdf}
+                      onChange={(e) => setAutoSendPolicyPdf(e.target.checked)}
+                      className='mt-0.5 w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer'
+                    />
+                    <label htmlFor='autoSendPolicyPdf' className='cursor-pointer'>
+                      <p className='text-sm font-semibold text-emerald-900 flex items-center gap-1.5'>
+                        <span>📱 Send WhatsApp Policy & PDF Document to Client</span>
+                      </p>
+                      <p className='text-xs text-gray-600'>Sends 1-time policy details and attached PDF to client's WhatsApp number. Keeps record in DB so repeat messages are blocked.</p>
+                    </label>
+                  </div>
                 </div>
               )}
             </div>

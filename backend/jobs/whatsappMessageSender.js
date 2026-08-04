@@ -102,7 +102,7 @@ const processPendingMessagesForUser = async (userId) => {
         // The sendWhatsAppMessage call will internally queue them up one by one and cold-start browser if needed
         for (const msg of messages) {
             try {
-                const result = await whatsappService.sendWhatsAppMessage(uid, msg.targetNumber, msg.messageBody)
+                const result = await whatsappService.sendWhatsAppMessage(uid, msg.targetNumber, msg.messageBody, msg.mediaPath)
                 msg.status = 'sent'
                 msg.sentAt = new Date()
                 msg.whatsappMessageId = result.messageId

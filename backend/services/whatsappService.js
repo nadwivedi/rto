@@ -1,5 +1,5 @@
 const QRCode = require('qrcode')
-const { Client, LocalAuth } = require('whatsapp-web.js')
+const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js')
 const WaSession = require('../models/WaSession')
 const path = require('path')
 const fs = require('fs')
@@ -379,7 +379,7 @@ class WhatsappUserClient {
     console.log(`[WHATSAPP:${this.userId}] Forced logout during send: ${reason}`)
   }
 
-  sendWhatsAppMessage(targetNumber, text) {
+  sendWhatsAppMessage(targetNumber, text, mediaPath = null) {
     return this.enqueueTask(async () => {
       if (this.isStopped) throw new Error('Sending paused. Resume session first.')
 
@@ -392,15 +392,10 @@ class WhatsappUserClient {
       this.resetIdleTimeout()
 
       if (!this.authReceived) {
-        // Only wipe the saved auth credentials if a QR was explicitly shown during this
-        // lazy-connect attempt — that is definitive proof the WhatsApp session is invalid.
-        // For ALL other failures (timeout, browser crash, network blip), we preserve the
-        // auth files so the next send attempt can retry without forcing a full re-scan.
         if (wasClientNull && this.qrShownDuringInit) {
           console.warn(`[WHATSAPP:${this.userId}] QR was shown during lazy connect — saved session is expired. Clearing auth.`)
           await this._forceLoggedOut('WhatsApp session expired. Please scan the QR code again to reconnect.')
         } else {
-          // Auth might still be valid — just kill the browser and let next send retry
           console.warn(`[WHATSAPP:${this.userId}] Not authenticated after init (no QR shown). Keeping auth files — will retry next send.`)
           this.destroySession()
         }
@@ -410,8 +405,6 @@ class WhatsappUserClient {
       try {
         const state = await this.client.getState().catch(() => null)
         if (state !== 'CONNECTED') {
-          // Don't wipe auth on a bad state — WhatsApp may reconnect on its own.
-          // Just kill the current browser instance; next send will lazy-restart cleanly.
           console.warn(`[WHATSAPP:${this.userId}] State is ${state} (not CONNECTED). Killing browser but keeping auth.`)
           this.destroySession()
           throw new Error(`WhatsApp connection lost (state: ${state}). Will retry on next send cycle.`)
@@ -425,8 +418,43 @@ class WhatsappUserClient {
 
         const chatId = numberId._serialized
 
-        console.log(`[WHATSAPP:${this.userId}] Sending message to ${chatId}`)
-        const result = await this.client.sendMessage(chatId, text)
+        console.log(`[WHATSAPP:${this.userId}] Sending message to ${chatId}${mediaPath ? ' (with attachment: ' + mediaPath + ')' : ''}`)
+        
+        let result
+        if (mediaPath) {
+          let fullPath = mediaPath
+
+          // Normalize separators (mediaPath may use forward slashes on Windows)
+          const normalizedMedia = mediaPath.replace(/\\/g, '/')
+
+          if (!path.isAbsolute(fullPath)) {
+            // Strip leading slash from relative web path like "/uploads/insurance-documents/..."
+            const cleanPath = normalizedMedia.startsWith('/') ? normalizedMedia.substring(1) : normalizedMedia
+            // Resolve relative to the backend root (parent of this services/ folder)
+            const backendRoot = path.join(__dirname, '..')
+            fullPath = path.join(backendRoot, cleanPath)
+          }
+
+          console.log(`[WHATSAPP:${this.userId}] Resolved media path: ${fullPath}`)
+          console.log(`[WHATSAPP:${this.userId}] File exists: ${fs.existsSync(fullPath)}`)
+
+          if (fs.existsSync(fullPath)) {
+            try {
+              const media = MessageMedia.fromFilePath(fullPath)
+              console.log(`[WHATSAPP:${this.userId}] Media loaded: mimetype=${media.mimetype}, filename=${media.filename}`)
+              result = await this.client.sendMessage(chatId, media, { caption: text })
+              console.log(`[WHATSAPP:${this.userId}] Media message sent successfully`)
+            } catch (mediaErr) {
+              console.error(`[WHATSAPP:${this.userId}] Failed to send media, falling back to text only:`, mediaErr.message)
+              result = await this.client.sendMessage(chatId, text)
+            }
+          } else {
+            console.warn(`[WHATSAPP:${this.userId}] Attachment file not found at: ${fullPath}. Sending text only.`)
+            result = await this.client.sendMessage(chatId, text)
+          }
+        } else {
+          result = await this.client.sendMessage(chatId, text)
+        }
 
         this.resetIdleTimeout()
         return { success: true, messageId: result?.id?._serialized }
@@ -460,7 +488,7 @@ class WhatsappServiceManager {
 
   // Clean API methods
   initializeSession(userId) { return this.getInstance(userId).initializeSession() }
-  sendWhatsAppMessage(userId, targetNumber, text) { return this.getInstance(userId).sendWhatsAppMessage(targetNumber, text) }
+  sendWhatsAppMessage(userId, targetNumber, text, mediaPath = null) { return this.getInstance(userId).sendWhatsAppMessage(targetNumber, text, mediaPath) }
   destroySession(userId, manualStop = false) { return this.getInstance(userId).destroySession(manualStop) }
   getSessionStatus(userId) { return this.getInstance(userId).getSessionStatus() }
   logoutSession(userId) { return this.getInstance(userId).logoutSession() }

@@ -28,6 +28,13 @@ const partySchema = new mongoose.Schema({
   address: {
     type: String,
     trim: true
+  },
+  welcomeMessageSent: {
+    type: Boolean,
+    default: false
+  },
+  welcomeMessageSentAt: {
+    type: Date
   }
 }, {
   timestamps: true
