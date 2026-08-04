@@ -42,6 +42,7 @@ import WhatsApp from './pages/WhatsApp/WhatsApp'
 import Javak from './pages/Javak/Javak'
 import CashflowReport from './pages/Reports/CashflowReport'
 import SpeedGovernor from './pages/SpeedGovernor/SpeedGovernor'
+import MoneyReceived from './pages/MoneyReceived/MoneyReceived'
 import PWAPrompt from './components/PWAPrompt'
 // import { Agentation } from 'agentation'
 
@@ -119,6 +120,7 @@ function ProtectedLayout() {
           '/gps',
           '/dealer-bill',
           '/party',
+          '/money-received',
           '/speed-governor'
         ];
 
@@ -182,6 +184,7 @@ function ProtectedLayout() {
                 <Route path='/javak' element={<Javak />} />
                 <Route path='/cashflow-report' element={<CashflowReport />} />
                 <Route path='/speed-governor' element={<SpeedGovernor />} />
+                <Route path='/money-received' element={<MoneyReceived />} />
               </Routes>
             </main>
           </div>

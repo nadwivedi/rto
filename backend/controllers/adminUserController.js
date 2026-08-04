@@ -232,7 +232,7 @@ exports.createUser = async (req, res) => {
       isActive: true,
       monthlyPrice: monthlyPrice !== undefined && !Number.isNaN(Number(monthlyPrice)) ? Number(monthlyPrice) : undefined,
       yearlyPrice: yearlyPrice !== undefined && !Number.isNaN(Number(yearlyPrice)) ? Number(yearlyPrice) : undefined,
-      features: features || { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false }
+      features: features || { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false }
     })
 
     await newUser.save()
@@ -360,7 +360,8 @@ exports.updateUser = async (req, res) => {
         greenTax: features.greenTax === true,
         professionalTax: features.professionalTax === true,
         autoCreateRC: features.autoCreateRC === true,
-        expandAdditionalDetails: features.expandAdditionalDetails === true
+        expandAdditionalDetails: features.expandAdditionalDetails === true,
+        moneyReceived: features.moneyReceived === true
       }
     }
     if (subscriptionExpiresAt !== undefined) {
