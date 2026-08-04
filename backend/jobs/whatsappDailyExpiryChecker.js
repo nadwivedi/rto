@@ -126,25 +126,29 @@ const buildHindiMessage = ({ alert, serviceName, vehicleNo, expiryDate, signatur
   return `प्रिय ग्राहक,\n\n${docLine}\n❌ *${expiryDate}* को समाप्त हो चुका है _(${alert.label})_\n\n⚠️ कृपया भारी जुर्माने से बचने के लिए तुरंत नवीनीकरण करवाएं।${footer}`
 }
 
-const buildMessage = ({ alert, serviceName, vehicleNo, expiryDate, signature = 'RTO Services', address = '', customTemplate = null, language = 'both' }) => {
-  if (customTemplate) {
+const applyCustomTemplate = (template, { serviceName, vehicleNo, expiryDate, alertLabel, signature, address }) => {
+  let msg = template
+  msg = msg.replace(/\{serviceName\}/g, serviceName)
+  msg = msg.replace(/\{vehicleNo\}/g, vehicleNo)
+  msg = msg.replace(/\{expiryDate\}/g, expiryDate)
+  msg = msg.replace(/\{alertLabel\}/g, alertLabel)
+  msg = msg.replace(/\{signature\}/g, signature)
+  if (address && address.trim() !== '') {
+    msg = msg.replace(/\{address\}/g, `📍 ${address}`)
+  } else {
+    msg = msg.replace(/\{address\}/g, '')
+  }
+  return msg
+}
+
+const buildMessage = ({ alert, serviceName, vehicleNo, expiryDate, signature = 'RTO Services', address = '', customMessage = '', language = 'both' }) => {
+  if (customMessage && customMessage.trim() !== '') {
     let alertLabel = ''
     if (alert.type === 'upcoming') alertLabel = `Expires on *${expiryDate}* _(${alert.label})_`
     else if (alert.type === 'today') alertLabel = `🔴 *Expires TODAY*`
     else alertLabel = `❌ Expired on *${expiryDate}* _(${alert.label})_`
 
-    let msg = customTemplate
-    msg = msg.replace(/\{serviceName\}/g, serviceName)
-    msg = msg.replace(/\{vehicleNo\}/g, vehicleNo)
-    msg = msg.replace(/\{expiryDate\}/g, expiryDate)
-    msg = msg.replace(/\{alertLabel\}/g, alertLabel)
-    msg = msg.replace(/\{signature\}/g, signature)
-    if (address && address.trim() !== '') {
-      msg = msg.replace(/\{address\}/g, `📍 ${address}`)
-    } else {
-      msg = msg.replace(/\{address\}/g, '')
-    }
-    return msg
+    return applyCustomTemplate(customMessage, { serviceName, vehicleNo, expiryDate, alertLabel, signature, address })
   }
 
   const englishMessage = buildEnglishMessage({ alert, serviceName, vehicleNo, expiryDate, signature, address })
@@ -220,23 +224,19 @@ const buildHindiNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'R
   })
 }
 
-const buildNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'RTO Services', address = '', customTemplate = null, language = 'both' }) => {
-  if (customTemplate) {
-    const lines = partAlerts.map(getNationalPermitPartLine).join('\n')
-
+const buildNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'RTO Services', address = '', customMessage = '', language = 'both' }) => {
+  if (customMessage && customMessage.trim() !== '') {
     if (partAlerts.length > 1) {
-      let msg = customTemplate
-      msg = msg.replace(/\{serviceName\}/g, 'National Permit')
-      msg = msg.replace(/\{vehicleNo\}/g, vehicleNo)
-      msg = msg.replace(/\{expiryDate\}/g, '')
-      msg = msg.replace(/\{alertLabel\}/g, `Both *Part A* and *Part B* are due:\n${lines}`)
-      msg = msg.replace(/\{signature\}/g, signature)
-      if (address && address.trim() !== '') {
-        msg = msg.replace(/\{address\}/g, `📍 ${address}`)
-      } else {
-        msg = msg.replace(/\{address\}/g, '')
+      const enLines = partAlerts.map((partAlert) => getNationalPermitPartLine(partAlert, 'en')).join('\n')
+      const values = {
+        serviceName: 'National Permit',
+        vehicleNo: vehicleNo,
+        expiryDate: '',
+        alertLabel: `Both *Part A* and *Part B* are due:\n${enLines}`,
+        signature,
+        address
       }
-      return msg
+      return applyCustomTemplate(customMessage, values)
     }
 
     const part = partAlerts[0]
@@ -244,18 +244,18 @@ const buildNationalPermitMessage = ({ partAlerts, vehicleNo, signature = 'RTO Se
     return buildMessage({
       alert: part.alert,
       serviceName,
-      vehicleNo,
+      vehicleNo: vehicleNo,
       expiryDate: part.expiryText,
       signature,
       address,
-      customTemplate
+      customMessage
     })
   }
 
-  const englishMessage = buildEnglishNationalPermitMessage({ partAlerts, vehicleNo, signature, address })
+  const englishMessage = buildEnglishNationalPermitMessage({ partAlerts, vehicleNo: vehicleNo, signature, address })
   if (language === 'english') return englishMessage
 
-  const hindiMessage = buildHindiNationalPermitMessage({ partAlerts, vehicleNo, signature, address })
+  const hindiMessage = buildHindiNationalPermitMessage({ partAlerts, vehicleNo: vehicleNo, signature, address })
   if (language === 'hindi') return hindiMessage
 
   return `${englishMessage}\n\n${hindiMessage}`
@@ -377,7 +377,7 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
           expiryDate: doc[source.dateField],
           signature: userInfo.signature,
           address: userInfo.address,
-          customTemplate: rule.customMessage,
+          customMessage: rule.customMessage,
           language: setting.messageLanguage
         })
 
@@ -473,7 +473,7 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
         vehicleNo,
         signature: userInfo.signature,
         address: userInfo.address,
-        customTemplate: rule.customMessage,
+        customMessage: rule.customMessage,
         language: setting.messageLanguage
       })
 
@@ -551,11 +551,24 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
       const englishLL = `Dear *${doc.name || 'Customer'}*,\n\nYou are now eligible to apply for your *Driving Licence (DL)*.\nPlease visit us as soon as possible.\n${footer}`
       const hindiLL = `प्रिय *${doc.name || 'ग्राहक'}*,\n\nआप अब *Driving Licence (DL)* के लिए आवेदन करने के लिए तैयार हैं।\nकृपया जल्द से जल्द हमारे पास पहुँचें।\n${footer}`
       const language = setting.messageLanguage || 'both'
-      const messageBody = language === 'english'
-        ? englishLL
-        : language === 'hindi'
-          ? hindiLL
-          : `${englishLL}\n\n${hindiLL}`
+
+      let messageBody
+      if (rule.customMessage && rule.customMessage.trim() !== '') {
+        messageBody = applyCustomTemplate(rule.customMessage, {
+          serviceName: 'Driving Licence',
+          vehicleNo: doc.vehicleNumber || '',
+          expiryDate: '',
+          alertLabel: 'LL Eligible for DL',
+          signature: userInfo.signature,
+          address: userInfo.address
+        })
+      } else {
+        messageBody = language === 'english'
+          ? englishLL
+          : language === 'hindi'
+            ? hindiLL
+            : `${englishLL}\n\n${hindiLL}`
+      }
 
       await MessageLog.create({
         userId: docUserId,

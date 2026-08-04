@@ -29,7 +29,39 @@ const defaultRule = {
   sendOnExpiryDay: true,
   sendAfterExpiry: false,
   afterDays: [7, 10],
-  customMessage: `Dear Customer,\n\n📄 *{serviceName}* · 🚗 *{vehicleNo}*\n📅 {alertLabel} (*{expiryDate}*)\n\n⚠️ Please visit for renewal to avoid penalties.\n\n────────────────\n*{signature}*\n{address}`
+  customMessage: ''
+}
+
+const previewSample = {
+  serviceName: 'Fitness',
+  vehicleNo: 'CG04 AB 1234',
+  expiryDate: '15-08-2026',
+  alertLabel: 'expires in 7 days',
+  signature: 'RTO Services',
+  address: 'Shop No. 1, Main Road, Raipur'
+}
+
+const applySampleTemplate = (template) => {
+  let msg = template || ''
+  msg = msg.replace(/\{serviceName\}/g, previewSample.serviceName)
+  msg = msg.replace(/\{vehicleNo\}/g, previewSample.vehicleNo)
+  msg = msg.replace(/\{expiryDate\}/g, previewSample.expiryDate)
+  msg = msg.replace(/\{alertLabel\}/g, previewSample.alertLabel)
+  msg = msg.replace(/\{signature\}/g, previewSample.signature)
+  msg = msg.replace(/\{address\}/g, `📍 ${previewSample.address}`)
+  return msg
+}
+
+const buildDefaultPreview = (language, serviceLabel) => {
+  const signature = previewSample.signature
+  const address = previewSample.address
+  const footer = `\n\n────────────────\n*${signature}*\n\n📍 ${address}`
+  const english = `Dear Customer,\n\n📄 *${serviceLabel}* · 🚗 *${previewSample.vehicleNo}*\n📅 Expires on *${previewSample.expiryDate}* _(${previewSample.alertLabel})_\n\n⚠️ Please visit for renewal to avoid penalties.${footer}`
+  const hindi = `प्रिय ग्राहक,\n\n📄 *${serviceLabel}* · 🚗 *${previewSample.vehicleNo}*\n📅 *${previewSample.expiryDate}* को समाप्त होगा _(${previewSample.alertLabel})_\n\n⚠️ कृपया जुर्माने से बचने के लिए नवीनीकरण करवाएं।${footer}`
+
+  if (language === 'english') return english
+  if (language === 'hindi') return hindi
+  return `${english}\n\n${hindi}`
 }
 
 const beforeDayOptions = [30, 15, 10, 7, 5, 3, 1]
@@ -87,6 +119,7 @@ const WhatsAppSettings = () => {
   })
   const [draftInputs, setDraftInputs] = useState({})
   const [focusedInputs, setFocusedInputs] = useState({})
+  const [previewFor, setPreviewFor] = useState(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -194,7 +227,7 @@ const WhatsAppSettings = () => {
 
       <div className='mb-4 rounded-xl border border-gray-200 bg-gray-50 p-4'>
         <label className='text-xs font-semibold text-gray-700 block mb-1'>Message Language</label>
-        <p className='text-[10px] text-gray-500 mb-2'>Choose the language in which WhatsApp alerts are sent. Custom message templates are always sent as written.</p>
+        <p className='text-[10px] text-gray-500 mb-2'>Choose the language for auto alerts. When "Both" is selected, English and Hindi are sent together in one message. A custom template, if written, is always sent as one message.</p>
         <div className='flex flex-wrap gap-2'>
           {languageOptions.map(option => (
             <button
@@ -365,8 +398,19 @@ const WhatsAppSettings = () => {
 
                 {/* Custom Message Editor */}
                 <div className={`flex flex-col lg:col-span-7 xl:col-span-8 ${!rule.enabled ? 'opacity-50 pointer-events-none' : ''}`}>
-                    <label className='block text-[10px] font-bold uppercase text-gray-600 mb-1'>Custom Message Template</label>
+                    <div className='mb-1 flex items-center justify-between'>
+                      <label className='block text-[10px] font-bold uppercase text-gray-600'>Custom Message Template (optional)</label>
+                      <button
+                        type='button'
+                        onClick={() => setPreviewFor(service.key)}
+                        className='inline-flex items-center gap-1 rounded-full border border-gray-200 bg-gray-50 px-2 py-0.5 text-[9px] font-bold text-gray-600 hover:border-green-300 hover:text-green-700'
+                      >
+                        <span className='inline-flex items-center justify-center w-3 h-3 rounded-full bg-green-100 text-green-700 text-[8px] font-black'>i</span>
+                        Preview Message
+                      </button>
+                    </div>
                     <div className='text-[9px] text-gray-500 font-medium mb-2 leading-tight'>
+                      Leave empty to send the auto alert in the selected language. Write your own message to send it exactly as written — you can include both English and Hindi in one message.
                       Variables: <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{serviceName}"}</code>, <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{vehicleNo}"}</code>, <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{expiryDate}"}</code>, <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{alertLabel}"}</code>, <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{signature}"}</code>, <code className='bg-gray-100 px-1 py-0.5 rounded'>{"{address}"}</code>
                     </div>
                     <textarea
@@ -376,9 +420,9 @@ const WhatsAppSettings = () => {
                         setDraftInputs(prev => ({ ...prev, [`${service.key}.customMessage`]: value }))
                         updateRule(service.key, { customMessage: value })
                       }}
-                      rows={4}
-                      className='w-full flex-1 rounded-lg border border-gray-300 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-green-500 font-mono resize-y min-h-[100px]'
-                      placeholder='Enter your custom WhatsApp message template here...'
+                      rows={5}
+                      className='w-full flex-1 rounded-lg border border-gray-300 px-3 py-2 text-[11px] focus:outline-none focus:ring-2 focus:ring-green-500 font-mono resize-y min-h-[110px]'
+                      placeholder='e.g. Dear Customer, ... 🚗 *{vehicleNo}* expires on *{expiryDate}* ... प्रिय ग्राहक, ... कृपया नवीनीकरण हेतु संपर्क करें ...'
                     />
                   </div>
                 </div>
@@ -387,6 +431,38 @@ const WhatsAppSettings = () => {
           )
         })}
       </div>
+
+      {previewFor && (() => {
+        const rule = settings.alertRules[previewFor] || defaultRule
+        const serviceLabel = services.find(s => s.key === previewFor)?.label || previewFor
+        const language = settings.messageLanguage
+        const text = rule.customMessage && rule.customMessage.trim() !== ''
+          ? applySampleTemplate(rule.customMessage)
+          : buildDefaultPreview(language, serviceLabel)
+        return (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4' onClick={() => setPreviewFor(null)}>
+            <div className='w-full max-w-md rounded-xl bg-white p-5 shadow-2xl' onClick={(e) => e.stopPropagation()}>
+              <div className='mb-3 flex items-center justify-between'>
+                <div>
+                  <h3 className='text-sm font-bold text-gray-800'>Message Preview</h3>
+                  <p className='text-[10px] text-gray-500'>{serviceLabel} · {language === 'both' ? 'English + Hindi' : language === 'hindi' ? 'Hindi only' : 'English only'} · {rule.customMessage && rule.customMessage.trim() !== '' ? 'Custom message' : 'Auto alert'}</p>
+                </div>
+                <button
+                  type='button'
+                  onClick={() => setPreviewFor(null)}
+                  className='inline-flex items-center justify-center w-6 h-6 rounded-full border border-gray-200 text-gray-500 hover:bg-gray-100'
+                >
+                  ✕
+                </button>
+              </div>
+              <div className='max-h-[55vh] overflow-y-auto rounded-lg bg-[#DCF8C6] p-3'>
+                <pre className='whitespace-pre-wrap font-sans text-[11px] leading-relaxed text-gray-800'>{text}</pre>
+                <div className='mt-1 text-right text-[8px] text-gray-500'>SAMPLE</div>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }
