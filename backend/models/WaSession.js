@@ -31,6 +31,10 @@ const waSessionSchema = new mongoose.Schema({
   lastError: {
     type: String,
     default: null
+  },
+  isStopped: {
+    type: Boolean,
+    default: false
   }
 }, {
   timestamps: true

@@ -13,6 +13,14 @@ router.get('/status', async (req, res) => {
     // handshake alive while polled, so it only gets torn down after real inactivity.
     whatsappService.touchPoll(userId)
 
+    // Restore in-memory isStopped from DB when the client has no active browser.
+    // This covers server restarts — e.g. if WhatsApp sent LOGOUT before restart,
+    // isStopped is persisted in DB but the new in-memory instance starts at false.
+    const instance = whatsappService.getInstance(userId)
+    if (!instance.client && !instance.isInitializing && session?.isStopped && !instance.isStopped) {
+      instance.isStopped = true
+    }
+
     res.json({
       ...(session ? session.toObject() : {}),
       isStopped: whatsappService.isClientStopped(userId),

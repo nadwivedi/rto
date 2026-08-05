@@ -157,7 +157,7 @@ class WhatsappUserClient {
     this.startInitTimeout()
 
     try {
-      await this.updateStatus('initializing', { qrCodeDataUrl: null, lastError: null })
+      await this.updateStatus('initializing', { qrCodeDataUrl: null, isStopped: false, lastError: null })
       console.log(`[WHATSAPP:${this.userId}] Instantiating browser...`)
 
       const client = new Client({
@@ -256,7 +256,16 @@ class WhatsappUserClient {
 
         client.on('disconnected', async (reason) => {
           console.log(`[WHATSAPP:${this.userId}] Disconnected reason:`, reason)
-          await this.updateStatus('disconnected', { qrCodeDataUrl: null, lastError: String(reason) })
+          // LOGOUT means WhatsApp itself ended the session (phone logged out linked device).
+          // Mark isStopped=true so the frontend shows a clean "Reconnect" prompt instead of
+          // a perpetual "Connecting..." spinner.
+          const isLogout = String(reason).toUpperCase() === 'LOGOUT'
+          if (isLogout) this.isStopped = true
+          await this.updateStatus('disconnected', {
+            qrCodeDataUrl: null,
+            isStopped: isLogout ? true : this.isStopped,
+            lastError: isLogout ? 'WhatsApp session was logged out from your phone. Click Connect to reconnect.' : String(reason)
+          })
           if (reason !== 'NAVIGATION') {
             this.destroySession()
           }
@@ -303,7 +312,7 @@ class WhatsappUserClient {
   async destroySession(manualStop = false) {
     if (manualStop) {
       this.isStopped = true
-      this.updateStatus('disconnected', { qrCodeDataUrl: null, lastError: 'Manually stopped' }).catch(() => {})
+      this.updateStatus('disconnected', { qrCodeDataUrl: null, isStopped: true, lastError: 'Manually stopped' }).catch(() => {})
     }
 
     this.isInitializing = false
@@ -348,7 +357,8 @@ class WhatsappUserClient {
         if (fs.existsSync(authDir)) fs.rmSync(authDir, { recursive: true, force: true })
       } catch (e) {}
 
-      await this.updateStatus('disconnected', { qrCodeDataUrl: null, phoneNumber: null, lastError: null })
+      // isStopped=false because user initiated the logout — they should see "Connect" (not "Resume")
+      await this.updateStatus('disconnected', { qrCodeDataUrl: null, phoneNumber: null, isStopped: false, lastError: null })
       this.clearChromeLock()
     })
   }

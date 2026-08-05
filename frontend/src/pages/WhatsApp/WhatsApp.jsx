@@ -151,7 +151,10 @@ const WhatsApp = () => {
   // Track when initializing/preparing phase starts so we can show elapsed time + detect stuck
   useEffect(() => {
     const s = statusInfo?.status || 'disconnected'
-    const isConnecting = s === 'initializing' || (s === 'disconnected' && !statusInfo?.isStopped)
+    // Compute inline — effectiveIsStopped is declared later in render scope
+    const _stopped = statusInfo?.isStopped || statusInfo?.lastError === 'LOGOUT'
+    // Only consider "connecting" when the browser is truly being launched
+    const isConnecting = s === 'initializing' || (s === 'disconnected' && !_stopped && !!statusInfo?.isInitializing)
 
     if (isConnecting) {
       if (!initStartedAtRef.current) {
@@ -164,12 +167,13 @@ const WhatsApp = () => {
       setInitElapsed(0)
       setInitStuck(false)
     }
-  }, [statusInfo?.status, statusInfo?.isStopped])
+  }, [statusInfo?.status, statusInfo?.isStopped, statusInfo?.lastError, statusInfo?.isInitializing])
 
   // Elapsed timer tick — updates every second while in connecting/preparing phase
   useEffect(() => {
     const s = statusInfo?.status || 'disconnected'
-    const isConnecting = s === 'initializing' || (s === 'disconnected' && !statusInfo?.isStopped)
+    const _stopped = statusInfo?.isStopped || statusInfo?.lastError === 'LOGOUT'
+    const isConnecting = s === 'initializing' || (s === 'disconnected' && !_stopped && !!statusInfo?.isInitializing)
 
     if (!isConnecting) return
 
@@ -183,7 +187,7 @@ const WhatsApp = () => {
     }, 1000)
 
     return () => clearInterval(tick)
-  }, [statusInfo?.status, statusInfo?.isStopped])
+  }, [statusInfo?.status, statusInfo?.isStopped, statusInfo?.lastError, statusInfo?.isInitializing])
 
   // QR tracking — detect new vs. stale QR images
   useEffect(() => {
@@ -262,8 +266,11 @@ const WhatsApp = () => {
   const config = statusConfig[currentStatus] || statusConfig.disconnected
   const isConnected = currentStatus === 'authenticated'
   const isRunning = ['authenticated', 'initializing', 'qr_ready'].includes(currentStatus)
+  // Treat raw LOGOUT lastError (old DB records before the fix) as isStopped
+  const wasLoggedOut = statusInfo?.lastError === 'LOGOUT'
+  const effectiveIsStopped = statusInfo?.isStopped || wasLoggedOut
   // No longer auto-starts, so "isPreparingScanner" is only true when isInitializing flag is set
-  const isPreparingScanner = !isRunning && !statusInfo?.isStopped && statusInfo?.isInitializing
+  const isPreparingScanner = !isRunning && !effectiveIsStopped && statusInfo?.isInitializing
 
   const filteredLogs = logs.filter((log) => statusFilter === 'all' || log.status === statusFilter)
   const allVisibleSelected = filteredLogs.length > 0 && filteredLogs.every((log) => selectedIds.includes(log._id))
@@ -419,7 +426,6 @@ const WhatsApp = () => {
                   setInitStuck(false)
                   initStartedAtRef.current = null
                   setInitElapsed(0)
-                  autoStartRef.current = false
                   doAction('renew-qr', 'Retrying connection...', true).then(() => fetchStatus())
                 }}
                 disabled={!!actionBusy}
@@ -433,7 +439,10 @@ const WhatsApp = () => {
           {/* Error */}
           {statusInfo?.lastError && !isConnected && currentStatus !== 'initializing' && !isPreparingScanner && (
             <div className='p-3 bg-red-50 text-red-700 text-xs rounded-lg border border-red-200'>
-              <strong>Error:</strong> {statusInfo.lastError}
+              <strong>Last event:</strong>{' '}
+              {statusInfo.lastError === 'LOGOUT'
+                ? 'WhatsApp session was logged out from your phone. Click Connect to reconnect.'
+                : statusInfo.lastError}
             </div>
           )}
 
@@ -441,7 +450,7 @@ const WhatsApp = () => {
           <div className='flex flex-col gap-2 pt-2 border-t border-gray-100'>
 
             {/* CONNECT: show when disconnected and NOT intentionally stopped — user must click explicitly */}
-            {!isRunning && !statusInfo?.isStopped && !isPreparingScanner && (
+            {!isRunning && !effectiveIsStopped && !isPreparingScanner && (
               <button
                 onClick={() => {
                   doAction('start', 'Connecting... QR code will appear in ~20-30 seconds.')
@@ -457,8 +466,8 @@ const WhatsApp = () => {
               </button>
             )}
 
-            {/* RESUME: only when the user has intentionally stopped the session */}
-            {!isRunning && statusInfo?.isStopped && (
+            {/* RESUME: only when the user has intentionally stopped the session (or LOGOUT) */}
+            {!isRunning && effectiveIsStopped && (
               <button
                 onClick={() => doAction('start', 'Resuming session... QR will appear if re-scan is needed.')}
                 disabled={actionBusy === 'start'}
@@ -467,7 +476,7 @@ const WhatsApp = () => {
                 {actionBusy === 'start' ? (
                   <><div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' /> Starting...</>
                 ) : (
-                  <>▶ Resume WhatsApp Session</>
+                  <>📲 Connect WhatsApp</>
                 )}
               </button>
             )}
