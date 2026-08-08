@@ -117,10 +117,16 @@ const processPendingMessagesForUser = async (userId) => {
             }
         }
         
-        // Session stays alive after the batch — the 15-min idle timer in whatsappService
-        // will kill the browser when no more sends happen, preserving RAM without forcing
-        // cold-starts on every cron tick.
-        console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. Session kept warm — idle timer will clean up.`)
+        // Session stays alive only if a UI user is actively on the WhatsApp page.
+        // If nobody has polled in 30+ seconds, destroy Chrome immediately to free RAM.
+        // If a UI user IS present, the 5-min idle timer will handle cleanup naturally.
+        const instance = whatsappService.getInstance(uid)
+        if (!instance.hasActiveUiUser()) {
+            console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. No active UI user — destroying Chrome immediately to free RAM.`)
+            whatsappService.destroySession(uid)
+        } else {
+            console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. UI user active — idle timer will clean up.`)
+        }
     } catch (error) {
         console.error(`[WHATSAPP-SENDER:${userId}] Error in message sender:`, error)
     }

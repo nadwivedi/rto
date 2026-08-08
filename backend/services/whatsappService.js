@@ -3,11 +3,13 @@ const { Client, LocalAuth, MessageMedia } = require('whatsapp-web.js')
 const WaSession = require('../models/WaSession')
 const path = require('path')
 const fs = require('fs')
+const { execSync } = require('child_process')
 
 const AUTH_DATA_PATH = process.env.WHATSAPP_AUTH_DIR || '.wwebjs_auth'
-const IDLE_TIMEOUT_MS = 15 * 60 * 1000      // 15 minutes — kill idle connected sessions to free RAM
-const QR_IDLE_TIMEOUT_MS = 5 * 60 * 1000   // 5 minutes — kill QR waiting sessions if nobody is polling
-const INIT_TIMEOUT_MS = 2 * 60 * 1000       // 2 minutes — if stuck in "initializing" (no QR, no ready), auto-reset
+const IDLE_TIMEOUT_MS = 5 * 60 * 1000       // 5 minutes (was 15) — kill idle connected sessions to free RAM
+const QR_IDLE_TIMEOUT_MS = 3 * 60 * 1000    // 3 minutes (was 5) — kill QR waiting sessions if nobody is polling
+const INIT_TIMEOUT_MS = 4 * 60 * 1000       // 4 minutes (was 2) — handles slow machines / high system load
+const INSTANCE_CLEANUP_DELAY_MS = 60 * 1000 // 1 minute grace before removing dead instance from Map
 
 // Errors from Puppeteer that we safely ignore — they happen when the browser is destroyed
 // while whatsapp-web.js is still running async page operations (inject, getWWebVersion, etc.)
@@ -26,6 +28,21 @@ function isPuppeteerNoise(err) {
   return PUPPETEER_NOISE.some(n => msg.includes(n))
 }
 
+// Kill the entire Chrome process tree on Windows so no zombie chrome.exe remains.
+// Falls back to a no-op on non-Windows or if PID is null.
+function killProcessTree(pid) {
+  if (!pid) return
+  try {
+    if (process.platform === 'win32') {
+      execSync(`taskkill /F /T /PID ${pid}`, { stdio: 'ignore', timeout: 5000 })
+    } else {
+      process.kill(-pid, 'SIGKILL')
+    }
+  } catch (_) {
+    // Process may already be dead — ignore
+  }
+}
+
 class WhatsappUserClient {
   constructor(userId) {
     this.userId = userId.toString()
@@ -39,6 +56,12 @@ class WhatsappUserClient {
     // Idle timeout tracking
     this.idleTimer = null
     this.initTimeoutTimer = null  // Guards against stuck "initializing" state
+
+    // Tracks the Chromium PID so we can force-kill on Windows
+    this._chromePid = null
+
+    // Tracks the last time the UI polled /status — used by cron to decide whether to keep Chrome alive
+    this.lastPollAt = null
 
     // Concurrency / Queue lock — reset to a fresh resolved promise when the chain breaks
     this.taskQueue = Promise.resolve()
@@ -70,6 +93,7 @@ class WhatsappUserClient {
       if (isQr && !this.authReceived) {
         await this.updateStatus('disconnected', {
           qrCodeDataUrl: null,
+          initStage: null,
           lastError: 'QR code expired. Reload the page to get a fresh code.'
         }).catch(() => {})
       }
@@ -94,6 +118,7 @@ class WhatsappUserClient {
         this.isInitializing = false
         await this.updateStatus('disconnected', {
           qrCodeDataUrl: null,
+          initStage: null,
           lastError: 'Connection timed out. Please try again.'
         }).catch(() => {})
         this.destroySession()
@@ -103,9 +128,15 @@ class WhatsappUserClient {
 
   // Called on every /status poll while a QR/handshake is pending.
   touchPoll() {
+    this.lastPollAt = Date.now()
     if (this.client && !this.authReceived) {
       this.resetIdleTimeout(true)
     }
+  }
+
+  // Returns true if a UI user has polled status within the last 30 seconds
+  hasActiveUiUser() {
+    return this.lastPollAt && (Date.now() - this.lastPollAt) < 30_000
   }
 
   async updateStatus(status, extra = {}) {
@@ -114,7 +145,7 @@ class WhatsappUserClient {
       { status, sessionId: this.sessionId, ...extra },
       { upsert: true, new: true }
     )
-    console.log(`[WHATSAPP:${this.userId}] Status -> ${status}`)
+    console.log(`[WHATSAPP:${this.userId}] Status -> ${status}${extra.initStage ? ` [${extra.initStage}]` : ''}`)
   }
 
   async getSessionStatus() {
@@ -123,13 +154,26 @@ class WhatsappUserClient {
     return session
   }
 
+  // Cleans up Chrome lock files so a new Chromium instance can start cleanly.
+  // Chrome puts SingletonLock in BOTH the session root AND the Default/ subdirectory.
   clearChromeLock() {
     try {
       const sessionDir = path.resolve(AUTH_DATA_PATH, `session-${this.sessionId}`)
-      for (const f of ['SingletonLock', 'SingletonSocket', 'SingletonCookie']) {
-        const p = path.join(sessionDir, f)
-        if (fs.existsSync(p)) {
-          fs.rmSync(p, { force: true })
+      // Chrome puts lock files in the root AND in the Default/ profile subfolder
+      const dirsToCheck = [
+        sessionDir,
+        path.join(sessionDir, 'Default')
+      ]
+      const lockFiles = ['SingletonLock', 'SingletonSocket', 'SingletonCookie']
+      for (const dir of dirsToCheck) {
+        for (const f of lockFiles) {
+          const p = path.join(dir, f)
+          try {
+            if (fs.existsSync(p)) {
+              fs.rmSync(p, { force: true })
+              console.log(`[WHATSAPP:${this.userId}] Removed lock file: ${p}`)
+            }
+          } catch (_) {}
         }
       }
     } catch (err) {
@@ -139,11 +183,23 @@ class WhatsappUserClient {
 
   // Internal initialization — MUST be called from within the queue or sendWhatsAppMessage.
   async _init() {
-    // Already running or already alive — nothing to do
+    // If already initializing, wait for it to complete instead of returning undefined
+    // (returning undefined would leave the enqueueTask promise hanging forever)
     if (this.isInitializing) {
-      console.log(`[WHATSAPP:${this.userId}] _init() skipped — already initializing`)
+      console.log(`[WHATSAPP:${this.userId}] _init() — already initializing, waiting for completion...`)
+      await new Promise((resolve) => {
+        const check = setInterval(() => {
+          if (!this.isInitializing) {
+            clearInterval(check)
+            resolve()
+          }
+        }, 500)
+        // Safety: don't wait longer than the init timeout
+        setTimeout(() => { clearInterval(check); resolve() }, INIT_TIMEOUT_MS)
+      })
       return
     }
+
     if (this.client) {
       this.resetIdleTimeout()
       return
@@ -153,11 +209,12 @@ class WhatsappUserClient {
     this.isStopped = false
     this.authReceived = false
     this.qrShownDuringInit = false  // Reset — will be set true only if QR appears
+    this._chromePid = null
     this.clearChromeLock()
     this.startInitTimeout()
 
     try {
-      await this.updateStatus('initializing', { qrCodeDataUrl: null, isStopped: false, lastError: null })
+      await this.updateStatus('initializing', { qrCodeDataUrl: null, initStage: 'launching_browser', isStopped: false, lastError: null })
       console.log(`[WHATSAPP:${this.userId}] Instantiating browser...`)
 
       const client = new Client({
@@ -184,10 +241,14 @@ class WhatsappUserClient {
             '--mute-audio',
             '--no-default-browser-check',
             '--safebrowsing-disable-auto-update',
+            // Memory reduction flags
+            '--js-flags=--max-old-space-size=256',
+            '--disk-cache-size=10000000',
+            '--disable-site-isolation-trials',
+            '--renderer-process-limit=2',
           ]
         },
         // Use disk-cached WhatsApp version so we don't hit the network on every cold start.
-        // This shaves several seconds off first-QR time.
         webVersionCache: {
           type: 'local',
           path: path.resolve(AUTH_DATA_PATH, 'wwebjs_cache')
@@ -196,23 +257,41 @@ class WhatsappUserClient {
 
       this.client = client
 
+      // Track PID once browser spawns so we can force-kill on Windows if needed
+      const trackPid = () => {
+        try {
+          const browser = client.pupPage?.browser?.()
+          const browserProcess = browser?.process?.()
+          if (browserProcess?.pid) {
+            this._chromePid = browserProcess.pid
+            console.log(`[WHATSAPP:${this.userId}] Chrome PID: ${this._chromePid}`)
+          }
+        } catch (_) {}
+      }
+
+      // Update stage to "loading WhatsApp Web" after a brief delay (browser has launched)
+      const loadingStageTimer = setTimeout(async () => {
+        if (this.isInitializing) {
+          trackPid()
+          await this.updateStatus('initializing', { initStage: 'loading_wweb' }).catch(() => {})
+        }
+      }, 5000)
+
       // Wait for ready (has saved auth) or QR (fresh scan needed).
-      // We do NOT wait for 'ready' before resolving — we resolve on QR so that the
-      // user sees the code immediately. 'ready' resolves the connection fully afterward.
       await new Promise((resolve, reject) => {
         let resolved = false
-        const safeResolve = () => { if (!resolved) { resolved = true; resolve() } }
-        const safeReject = (err) => { if (!resolved) { resolved = true; reject(err) } }
+        const safeResolve = () => { if (!resolved) { resolved = true; clearTimeout(loadingStageTimer); resolve() } }
+        const safeReject = (err) => { if (!resolved) { resolved = true; clearTimeout(loadingStageTimer); reject(err) } }
 
         client.on('qr', async (qr) => {
           if (this.authReceived) return
           // QR appearing means the saved session credentials on disk are NO LONGER VALID.
-          // Flag this so sendWhatsAppMessage knows it must wipe auth (not just fail silently).
           this.qrShownDuringInit = true
           this.clearInitTimeout()
+          trackPid()
           try {
             const qrCodeDataUrl = await QRCode.toDataURL(qr, { width: 300 })
-            await this.updateStatus('qr_ready', { qrCodeDataUrl, lastError: null })
+            await this.updateStatus('qr_ready', { qrCodeDataUrl, initStage: null, lastError: null })
             this.resetIdleTimeout(true)
             this.isInitializing = false
             safeResolve()
@@ -225,18 +304,21 @@ class WhatsappUserClient {
         client.on('authenticated', async () => {
           this.authReceived = true
           this.clearInitTimeout()
+          trackPid()
           console.log(`[WHATSAPP:${this.userId}] ✓ Authenticated — waiting for ready...`)
-          await this.updateStatus('authenticated', { qrCodeDataUrl: null, lastError: null })
+          await this.updateStatus('authenticated', { qrCodeDataUrl: null, initStage: null, lastError: null })
         })
 
         client.on('ready', async () => {
           this.authReceived = true
           this.isInitializing = false
           this.clearInitTimeout()
+          trackPid()
           const phoneNumber = client?.info?.wid?.user || null
           console.log(`[WHATSAPP:${this.userId}] ✅ READY! Phone: ${phoneNumber}`)
           await this.updateStatus('authenticated', {
             qrCodeDataUrl: null,
+            initStage: null,
             phoneNumber,
             lastConnectedAt: new Date(),
             lastError: null
@@ -249,20 +331,18 @@ class WhatsappUserClient {
           this.isInitializing = false
           this.clearInitTimeout()
           console.error(`[WHATSAPP:${this.userId}] Auth failure:`, msg)
-          await this.updateStatus('auth_failure', { lastError: String(msg) })
+          await this.updateStatus('auth_failure', { initStage: null, lastError: String(msg) })
           this.destroySession()
           safeReject(new Error('Auth failure: ' + msg))
         })
 
         client.on('disconnected', async (reason) => {
           console.log(`[WHATSAPP:${this.userId}] Disconnected reason:`, reason)
-          // LOGOUT means WhatsApp itself ended the session (phone logged out linked device).
-          // Mark isStopped=true so the frontend shows a clean "Reconnect" prompt instead of
-          // a perpetual "Connecting..." spinner.
           const isLogout = String(reason).toUpperCase() === 'LOGOUT'
           if (isLogout) this.isStopped = true
           await this.updateStatus('disconnected', {
             qrCodeDataUrl: null,
+            initStage: null,
             isStopped: isLogout ? true : this.isStopped,
             lastError: isLogout ? 'WhatsApp session was logged out from your phone. Click Connect to reconnect.' : String(reason)
           })
@@ -280,13 +360,11 @@ class WhatsappUserClient {
         // Initialize the browser — catch Puppeteer noise so it doesn't orphan the promise.
         client.initialize().catch(err => {
           if (isPuppeteerNoise(err)) {
-            // Browser was torn down mid-init (e.g. user logged out while QR was loading).
-            // This is expected — just clean up and don't propagate.
             console.log(`[WHATSAPP:${this.userId}] Browser closed mid-init (normal during logout). Cleaning up.`)
             this.isInitializing = false
             this.clearInitTimeout()
             this.destroySession()
-            safeResolve() // Resolve rather than reject — the caller doesn't need to see this
+            safeResolve()
           } else {
             safeReject(err)
           }
@@ -300,7 +378,7 @@ class WhatsappUserClient {
         console.error(`[WHATSAPP:${this.userId}] Init error:`, errMsg)
       }
       this.destroySession()
-      await this.updateStatus('disconnected', { lastError: isPuppeteerNoise(error) ? 'Connection interrupted. Please retry.' : errMsg })
+      await this.updateStatus('disconnected', { initStage: null, lastError: isPuppeteerNoise(error) ? 'Connection interrupted. Please retry.' : errMsg })
       throw error
     }
   }
@@ -312,7 +390,7 @@ class WhatsappUserClient {
   async destroySession(manualStop = false) {
     if (manualStop) {
       this.isStopped = true
-      this.updateStatus('disconnected', { qrCodeDataUrl: null, isStopped: true, lastError: 'Manually stopped' }).catch(() => {})
+      this.updateStatus('disconnected', { qrCodeDataUrl: null, initStage: null, isStopped: true, lastError: 'Manually stopped' }).catch(() => {})
     }
 
     this.isInitializing = false
@@ -320,7 +398,9 @@ class WhatsappUserClient {
     this.clearInitTimeout()
 
     const clientRef = this.client
+    const pidRef = this._chromePid
     this.client = null
+    this._chromePid = null
     this.authReceived = false
 
     if (clientRef) {
@@ -330,6 +410,8 @@ class WhatsappUserClient {
       } catch (err) {
         // Ignore — browser may already be dead
       } finally {
+        // Force-kill process tree on Windows to prevent zombie chrome.exe
+        killProcessTree(pidRef)
         this.clearChromeLock()
       }
     }
@@ -343,13 +425,16 @@ class WhatsappUserClient {
       this.clearInitTimeout()
 
       const clientRef = this.client
+      const pidRef = this._chromePid
       this.client = null
+      this._chromePid = null
       this.authReceived = false
 
       if (clientRef) {
         console.log(`[WHATSAPP:${this.userId}] Logging out...`)
         try { await clientRef.logout() } catch (_) {}
         try { await clientRef.destroy() } catch (_) {}
+        killProcessTree(pidRef)
       }
 
       try {
@@ -357,24 +442,25 @@ class WhatsappUserClient {
         if (fs.existsSync(authDir)) fs.rmSync(authDir, { recursive: true, force: true })
       } catch (e) {}
 
-      // isStopped=false because user initiated the logout — they should see "Connect" (not "Resume")
-      await this.updateStatus('disconnected', { qrCodeDataUrl: null, phoneNumber: null, isStopped: false, lastError: null })
+      await this.updateStatus('disconnected', { qrCodeDataUrl: null, initStage: null, phoneNumber: null, isStopped: false, lastError: null })
       this.clearChromeLock()
     })
   }
 
   // Tear down + wipe auth without setting isStopped, so the WhatsApp page auto-restarts.
-  // Used when a lazy connect during send fails.
   async _forceLoggedOut(reason) {
     if (this.idleTimer) clearTimeout(this.idleTimer)
     this.clearInitTimeout()
     const clientRef = this.client
+    const pidRef = this._chromePid
     this.client = null
+    this._chromePid = null
     this.authReceived = false
     this.isInitializing = false
     if (clientRef) {
       try { await clientRef.logout() } catch (_) {}
       try { await clientRef.destroy() } catch (_) {}
+      killProcessTree(pidRef)
     }
     try {
       const authDir = path.resolve(AUTH_DATA_PATH, `session-${this.sessionId}`)
@@ -383,6 +469,7 @@ class WhatsappUserClient {
     this.clearChromeLock()
     await this.updateStatus('disconnected', {
       qrCodeDataUrl: null,
+      initStage: null,
       phoneNumber: null,
       lastError: reason
     }).catch(() => {})
@@ -433,14 +520,9 @@ class WhatsappUserClient {
         let result
         if (mediaPath) {
           let fullPath = mediaPath
-
-          // Normalize separators (mediaPath may use forward slashes on Windows)
           const normalizedMedia = mediaPath.replace(/\\/g, '/')
-
           if (!path.isAbsolute(fullPath)) {
-            // Strip leading slash from relative web path like "/uploads/insurance-documents/..."
             const cleanPath = normalizedMedia.startsWith('/') ? normalizedMedia.substring(1) : normalizedMedia
-            // Resolve relative to the backend root (parent of this services/ folder)
             const backendRoot = path.join(__dirname, '..')
             fullPath = path.join(backendRoot, cleanPath)
           }
@@ -496,20 +578,40 @@ class WhatsappServiceManager {
     return this.instances.get(id)
   }
 
+  // Schedule removal of an instance from Map after a grace period.
+  // This frees memory when a user's session is fully destroyed with no active UI.
+  scheduleInstanceCleanup(userId) {
+    const id = userId.toString()
+    setTimeout(() => {
+      const instance = this.instances.get(id)
+      if (instance && !instance.client && !instance.isInitializing) {
+        this.instances.delete(id)
+        console.log(`[WHATSAPP] Instance for user ${id} removed from memory (idle cleanup)`)
+      }
+    }, INSTANCE_CLEANUP_DELAY_MS)
+  }
+
   // Clean API methods
   initializeSession(userId) { return this.getInstance(userId).initializeSession() }
   sendWhatsAppMessage(userId, targetNumber, text, mediaPath = null) { return this.getInstance(userId).sendWhatsAppMessage(targetNumber, text, mediaPath) }
-  destroySession(userId, manualStop = false) { return this.getInstance(userId).destroySession(manualStop) }
-  getSessionStatus(userId) { return this.getInstance(userId).getSessionStatus() }
   logoutSession(userId) { return this.getInstance(userId).logoutSession() }
+  getSessionStatus(userId) { return this.getInstance(userId).getSessionStatus() }
   touchPoll(userId) { return this.getInstance(userId).touchPoll() }
   getIsInitializing(userId) { return this.getInstance(userId).isInitializing }
+  hasActiveUiUser(userId) { return this.getInstance(userId).hasActiveUiUser() }
+
+  // destroySession schedules instance cleanup after Chrome is fully dead
+  destroySession(userId, manualStop = false) {
+    const result = this.getInstance(userId).destroySession(manualStop)
+    this.scheduleInstanceCleanup(userId)
+    return result
+  }
 
   // Backwards compatibility
   isClientConnected(userId) { return this.getInstance(userId).isClientConnected() }
   isClientStopped(userId) { return this.getInstance(userId).isStopped }
   startClient(userId) { return this.getInstance(userId).initializeSession() }
-  stopClient(userId) { return this.getInstance(userId).destroySession(true) }
+  stopClient(userId) { return this.destroySession(userId, true) }
   logoutClient(userId) { return this.getInstance(userId).logoutSession() }
   getStatus(userId) { return this.getInstance(userId).getSessionStatus() }
   sendMessage(userId, num, txt) { return this.sendWhatsAppMessage(userId, num, txt) }
@@ -522,6 +624,7 @@ class WhatsappServiceManager {
         {
           status: 'disconnected',
           qrCodeDataUrl: null,
+          initStage: null,
           lastError: 'Session interrupted by server restart. Please reconnect.'
         }
       )

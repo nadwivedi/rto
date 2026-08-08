@@ -35,6 +35,11 @@ const waSessionSchema = new mongoose.Schema({
   isStopped: {
     type: Boolean,
     default: false
+  },
+  initStage: {
+    type: String,
+    enum: ['launching_browser', 'loading_wweb', null],
+    default: null
   }
 }, {
   timestamps: true

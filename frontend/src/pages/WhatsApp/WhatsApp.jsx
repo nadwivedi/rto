@@ -6,10 +6,24 @@ import { toast } from 'react-toastify'
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
 // If status stays "initializing" (no QR, no connected) for this long, show a warning + retry.
-const STUCK_INIT_WARN_MS = 60000
+const STUCK_INIT_WARN_MS = 40000
 
 // After the QR has been visible for this long without a scan, show a "Get New QR" prompt.
 const QR_SHOW_REFRESH_BTN_MS = 60000
+
+// Maps initStage values from the backend to human-readable progress steps
+const INIT_STAGE_CONFIG = {
+  launching_browser: {
+    step: 1,
+    label: 'Launching browser engine',
+    sublabel: 'Starting up Chrome in the background...'
+  },
+  loading_wweb: {
+    step: 2,
+    label: 'Loading WhatsApp Web',
+    sublabel: 'Almost there — fetching WhatsApp interface...'
+  }
+}
 
 const statusConfig = {
   authenticated: {
@@ -382,44 +396,52 @@ const WhatsApp = () => {
             </div>
           )}
 
-          {/* Initializing spinner — Chrome is booting */}
-          {currentStatus === 'initializing' && !initStuck && (
-            <div className='flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-              <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
-              <div>
-                <p className='text-sm text-blue-800 font-semibold'>
-                  🚀 Starting Chrome browser...
-                  {initElapsed > 0 && (
-                    <span className='ml-1 text-blue-400 font-normal text-xs'>{formatElapsed(initElapsed)}</span>
-                  )}
-                </p>
-                <p className='text-xs text-blue-500'>QR code will appear in ~20-30 seconds</p>
+          {/* Initializing spinner — Chrome is booting. Shows step-by-step progress via initStage. */}
+          {(currentStatus === 'initializing' || isPreparingScanner) && !initStuck && (() => {
+            const stage = statusInfo?.initStage
+            const stageConfig = INIT_STAGE_CONFIG[stage] || { step: 1, label: 'Preparing session', sublabel: 'Starting up...' }
+            const totalSteps = 3
+            return (
+              <div className='p-3 bg-blue-50 border border-blue-200 rounded-lg'>
+                {/* Step progress bar */}
+                <div className='flex items-center gap-1 mb-2'>
+                  {[1, 2, 3].map(s => (
+                    <div
+                      key={s}
+                      className={`h-1.5 flex-1 rounded-full transition-all ${
+                        s < stageConfig.step ? 'bg-blue-500' :
+                        s === stageConfig.step ? 'bg-blue-400 animate-pulse' :
+                        'bg-blue-100'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <div className='flex items-center gap-3'>
+                  <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
+                  <div className='flex-1 min-w-0'>
+                    <p className='text-sm text-blue-800 font-semibold flex items-center gap-1.5'>
+                      <span className='text-[10px] font-bold bg-blue-200 text-blue-700 px-1.5 py-0.5 rounded-full shrink-0'>
+                        {stageConfig.step}/{totalSteps}
+                      </span>
+                      {stageConfig.label}
+                      {initElapsed > 0 && (
+                        <span className='ml-auto text-blue-400 font-normal text-xs shrink-0'>{formatElapsed(initElapsed)}</span>
+                      )}
+                    </p>
+                    <p className='text-xs text-blue-500 mt-0.5'>{stageConfig.sublabel}</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          )}
+            )
+          })()}
 
-          {/* Preparing scanner spinner (Chrome booting after Connect click) */}
-          {isPreparingScanner && !initStuck && (
-            <div className='flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-              <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
-              <div>
-                <p className='text-sm text-blue-800 font-semibold'>
-                  🚀 Starting Chrome browser...
-                  {initElapsed > 5 && (
-                    <span className='ml-1 text-blue-400 font-normal text-xs'>{formatElapsed(initElapsed)}</span>
-                  )}
-                </p>
-                <p className='text-xs text-blue-500'>QR code will appear in ~20-30 seconds</p>
-              </div>
-            </div>
-          )}
-
-          {/* Stuck init warning */}
+          {/* Stuck init warning — shown after 40 seconds with no QR */}
           {initStuck && (currentStatus === 'initializing' || isPreparingScanner) && (
             <div className='p-3 bg-amber-50 border border-amber-200 rounded-lg'>
               <p className='text-sm text-amber-800 font-semibold mb-1'>⚠️ Taking longer than expected</p>
               <p className='text-xs text-amber-600 mb-2'>
-                Connection has been running for {formatElapsed(initElapsed)}. Chrome may need a restart.
+                Connection has been running for {formatElapsed(initElapsed)} without a QR code.
+                This usually means a stale session lock. Click below to clean up and retry.
               </p>
               <button
                 onClick={() => {
@@ -431,7 +453,7 @@ const WhatsApp = () => {
                 disabled={!!actionBusy}
                 className='w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition'
               >
-                🔄 Retry Connection
+                🔄 Clean &amp; Retry Connection
               </button>
             </div>
           )}
