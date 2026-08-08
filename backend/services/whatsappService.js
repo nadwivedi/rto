@@ -4,6 +4,7 @@ const WaSession = require('../models/WaSession')
 const path = require('path')
 const fs = require('fs')
 const { execSync } = require('child_process')
+const waLog = require('../utils/whatsappLogger')
 
 const AUTH_DATA_PATH = process.env.WHATSAPP_AUTH_DIR || '.wwebjs_auth'
 const IDLE_TIMEOUT_MS = 5 * 60 * 1000       // 5 minutes (was 15) — kill idle connected sessions to free RAM
@@ -90,7 +91,9 @@ class WhatsappUserClient {
     const timeout = isQr ? QR_IDLE_TIMEOUT_MS : IDLE_TIMEOUT_MS
     this.idleTimer = setTimeout(async () => {
       console.log(`[WHATSAPP:${this.userId}] Session idle for ${timeout/1000/60} min. Destroying client to free RAM...`)
+      waLog.idleKill(this.userId, Math.round(timeout / 60000))
       if (isQr && !this.authReceived) {
+        waLog.qrExpired(this.userId)
         await this.updateStatus('disconnected', {
           qrCodeDataUrl: null,
           initStage: null,
@@ -115,6 +118,7 @@ class WhatsappUserClient {
     this.initTimeoutTimer = setTimeout(async () => {
       if (this.isInitializing) {
         console.warn(`[WHATSAPP:${this.userId}] Initialization timed out after ${INIT_TIMEOUT_MS/1000}s. Resetting...`)
+        waLog.initTimeout(this.userId, INIT_TIMEOUT_MS / 1000)
         this.isInitializing = false
         await this.updateStatus('disconnected', {
           qrCodeDataUrl: null,
@@ -172,6 +176,7 @@ class WhatsappUserClient {
             if (fs.existsSync(p)) {
               fs.rmSync(p, { force: true })
               console.log(`[WHATSAPP:${this.userId}] Removed lock file: ${p}`)
+              waLog.lockFileRemoved(this.userId, p)
             }
           } catch (_) {}
         }
@@ -187,6 +192,7 @@ class WhatsappUserClient {
     // (returning undefined would leave the enqueueTask promise hanging forever)
     if (this.isInitializing) {
       console.log(`[WHATSAPP:${this.userId}] _init() — already initializing, waiting for completion...`)
+      waLog.concurrentInitWait(this.userId)
       await new Promise((resolve) => {
         const check = setInterval(() => {
           if (!this.isInitializing) {
@@ -214,8 +220,11 @@ class WhatsappUserClient {
     this.startInitTimeout()
 
     try {
+      waLog.sessionStart(this.userId)
+      waLog.separator('SESSION START')
       await this.updateStatus('initializing', { qrCodeDataUrl: null, initStage: 'launching_browser', isStopped: false, lastError: null })
       console.log(`[WHATSAPP:${this.userId}] Instantiating browser...`)
+      waLog.browserLaunching(this.userId)
 
       const client = new Client({
         authStrategy: new LocalAuth({
@@ -262,9 +271,11 @@ class WhatsappUserClient {
         try {
           const browser = client.pupPage?.browser?.()
           const browserProcess = browser?.process?.()
-          if (browserProcess?.pid) {
+          if (browserProcess?.pid && this._chromePid !== browserProcess.pid) {
             this._chromePid = browserProcess.pid
             console.log(`[WHATSAPP:${this.userId}] Chrome PID: ${this._chromePid}`)
+            waLog.chromePid(this.userId, this._chromePid)
+            waLog.logRamStatus(this.userId, 'CHROME_RAM_CHECK', this._chromePid)
           }
         } catch (_) {}
       }
@@ -273,6 +284,7 @@ class WhatsappUserClient {
       const loadingStageTimer = setTimeout(async () => {
         if (this.isInitializing) {
           trackPid()
+          waLog.wwwbLoading(this.userId)
           await this.updateStatus('initializing', { initStage: 'loading_wweb' }).catch(() => {})
         }
       }, 5000)
@@ -292,11 +304,13 @@ class WhatsappUserClient {
           try {
             const qrCodeDataUrl = await QRCode.toDataURL(qr, { width: 300 })
             await this.updateStatus('qr_ready', { qrCodeDataUrl, initStage: null, lastError: null })
+            waLog.qrReady(this.userId)
             this.resetIdleTimeout(true)
             this.isInitializing = false
             safeResolve()
           } catch (err) {
             console.error(`[WHATSAPP:${this.userId}] QR error:`, err.message)
+            waLog.error(this.userId, 'QR_GENERATE_ERR', 'Failed to generate QR data URL', err)
             safeResolve()
           }
         })
@@ -306,6 +320,7 @@ class WhatsappUserClient {
           this.clearInitTimeout()
           trackPid()
           console.log(`[WHATSAPP:${this.userId}] ✓ Authenticated — waiting for ready...`)
+          waLog.authenticated(this.userId, null)
           await this.updateStatus('authenticated', { qrCodeDataUrl: null, initStage: null, lastError: null })
         })
 
@@ -316,6 +331,8 @@ class WhatsappUserClient {
           trackPid()
           const phoneNumber = client?.info?.wid?.user || null
           console.log(`[WHATSAPP:${this.userId}] ✅ READY! Phone: ${phoneNumber}`)
+          waLog.sessionReady(this.userId, phoneNumber)
+          waLog.logRamStatus(this.userId, 'SESSION_READY_RAM', this._chromePid)
           await this.updateStatus('authenticated', {
             qrCodeDataUrl: null,
             initStage: null,
@@ -331,6 +348,7 @@ class WhatsappUserClient {
           this.isInitializing = false
           this.clearInitTimeout()
           console.error(`[WHATSAPP:${this.userId}] Auth failure:`, msg)
+          waLog.authFailed(this.userId, String(msg))
           await this.updateStatus('auth_failure', { initStage: null, lastError: String(msg) })
           this.destroySession()
           safeReject(new Error('Auth failure: ' + msg))
@@ -340,6 +358,7 @@ class WhatsappUserClient {
           console.log(`[WHATSAPP:${this.userId}] Disconnected reason:`, reason)
           const isLogout = String(reason).toUpperCase() === 'LOGOUT'
           if (isLogout) this.isStopped = true
+          waLog.disconnected(this.userId, String(reason), isLogout)
           await this.updateStatus('disconnected', {
             qrCodeDataUrl: null,
             initStage: null,
@@ -352,8 +371,11 @@ class WhatsappUserClient {
         })
 
         client.on('error', (err) => {
-          if (!isPuppeteerNoise(err)) {
+          if (isPuppeteerNoise(err)) {
+            waLog.puppeteerNoise(this.userId, err?.message || String(err))
+          } else {
             console.error(`[WHATSAPP:${this.userId}] Client error:`, err?.message || err)
+            waLog.error(this.userId, 'CLIENT_ERROR', `WhatsApp client error: ${err?.message || err}`, err instanceof Error ? err : null)
           }
         })
 
@@ -361,11 +383,13 @@ class WhatsappUserClient {
         client.initialize().catch(err => {
           if (isPuppeteerNoise(err)) {
             console.log(`[WHATSAPP:${this.userId}] Browser closed mid-init (normal during logout). Cleaning up.`)
+            waLog.puppeteerNoise(this.userId, err?.message || String(err))
             this.isInitializing = false
             this.clearInitTimeout()
             this.destroySession()
             safeResolve()
           } else {
+            waLog.browserLaunchFailed(this.userId, err)
             safeReject(err)
           }
         })
@@ -374,8 +398,11 @@ class WhatsappUserClient {
       const errMsg = String(error?.message || error)
       this.isInitializing = false
       this.clearInitTimeout()
-      if (!isPuppeteerNoise(error)) {
+      if (isPuppeteerNoise(error)) {
+        waLog.puppeteerNoise(this.userId, errMsg)
+      } else {
         console.error(`[WHATSAPP:${this.userId}] Init error:`, errMsg)
+        waLog.error(this.userId, 'INIT_ERROR', `Initialization error: ${errMsg}`, error instanceof Error ? error : null)
       }
       this.destroySession()
       await this.updateStatus('disconnected', { initStage: null, lastError: isPuppeteerNoise(error) ? 'Connection interrupted. Please retry.' : errMsg })
@@ -412,6 +439,7 @@ class WhatsappUserClient {
       } finally {
         // Force-kill process tree on Windows to prevent zombie chrome.exe
         killProcessTree(pidRef)
+        waLog.sessionDestroyed(this.userId, pidRef)
         this.clearChromeLock()
       }
     }
@@ -483,6 +511,7 @@ class WhatsappUserClient {
       const wasClientNull = !this.client
 
       if (!this.client) {
+        waLog.lazyColdStart(this.userId)
         await this._init()
       }
 
@@ -491,6 +520,7 @@ class WhatsappUserClient {
       if (!this.authReceived) {
         if (wasClientNull && this.qrShownDuringInit) {
           console.warn(`[WHATSAPP:${this.userId}] QR was shown during lazy connect — saved session is expired. Clearing auth.`)
+          waLog.sessionExpiredOnSend(this.userId)
           await this._forceLoggedOut('WhatsApp session expired. Please scan the QR code again to reconnect.')
         } else {
           console.warn(`[WHATSAPP:${this.userId}] Not authenticated after init (no QR shown). Keeping auth files — will retry next send.`)
@@ -503,6 +533,7 @@ class WhatsappUserClient {
         const state = await this.client.getState().catch(() => null)
         if (state !== 'CONNECTED') {
           console.warn(`[WHATSAPP:${this.userId}] State is ${state} (not CONNECTED). Killing browser but keeping auth.`)
+          waLog.connectionLost(this.userId, state)
           this.destroySession()
           throw new Error(`WhatsApp connection lost (state: ${state}). Will retry on next send cycle.`)
         }
@@ -511,11 +542,15 @@ class WhatsappUserClient {
         if (num.length === 10) num = '91' + num
 
         const numberId = await this.client.getNumberId(num).catch(() => null)
-        if (!numberId) throw new Error(`${num} is not registered on WhatsApp`)
+        if (!numberId) {
+          waLog.messageNotOnWA(this.userId, num)
+          throw new Error(`${num} is not registered on WhatsApp`)
+        }
 
         const chatId = numberId._serialized
 
         console.log(`[WHATSAPP:${this.userId}] Sending message to ${chatId}${mediaPath ? ' (with attachment: ' + mediaPath + ')' : ''}`)
+        waLog.messageSending(this.userId, targetNumber, !!mediaPath)
         
         let result
         if (mediaPath) {
@@ -548,12 +583,16 @@ class WhatsappUserClient {
           result = await this.client.sendMessage(chatId, text)
         }
 
+        waLog.messageSent(this.userId, targetNumber, result?.id?._serialized)
         this.resetIdleTimeout()
         return { success: true, messageId: result?.id?._serialized }
       } catch (err) {
         if (isPuppeteerNoise(err)) {
           console.warn(`[WHATSAPP:${this.userId}] Browser crashed during send. Killing browser (auth preserved).`)
+          waLog.puppeteerNoise(this.userId, err?.message || String(err))
           this.destroySession()
+        } else {
+          waLog.messageFailed(this.userId, targetNumber, err instanceof Error ? err : null)
         }
         throw err
       }
@@ -587,6 +626,7 @@ class WhatsappServiceManager {
       if (instance && !instance.client && !instance.isInitializing) {
         this.instances.delete(id)
         console.log(`[WHATSAPP] Instance for user ${id} removed from memory (idle cleanup)`)
+        waLog.instanceCleaned(id)
       }
     }, INSTANCE_CLEANUP_DELAY_MS)
   }
@@ -619,6 +659,7 @@ class WhatsappServiceManager {
   // On server restart, clear stale mid-handshake sessions. No browsers are launched.
   async restoreSessionsOnStartup() {
     try {
+      waLog.separator('SERVER STARTUP')
       const stale = await WaSession.updateMany(
         { status: { $in: ['qr_ready', 'initializing'] } },
         {
@@ -628,11 +669,13 @@ class WhatsappServiceManager {
           lastError: 'Session interrupted by server restart. Please reconnect.'
         }
       )
+      waLog.startupCleanup(stale.modifiedCount)
       if (stale.modifiedCount > 0) {
         console.log(`[WHATSAPP] Cleared ${stale.modifiedCount} stale mid-handshake session(s) after restart.`)
       }
     } catch (error) {
       console.error('[WHATSAPP] Error clearing stale sessions on startup:', error)
+      waLog.error('', 'STARTUP_ERROR', 'Failed to clear stale sessions on startup', error instanceof Error ? error : null)
     }
   }
 }

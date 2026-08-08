@@ -2,6 +2,7 @@ const cron = require('node-cron')
 const WhatsAppSetting = require('../models/WhatsAppSetting')
 const MessageLog = require('../models/MessageLog')
 const whatsappService = require('../services/whatsappService')
+const waLog = require('../utils/whatsappLogger')
 
 const processPendingMessagesForUser = async (userId) => {
     try {
@@ -11,6 +12,7 @@ const processPendingMessagesForUser = async (userId) => {
         // because whatsappService now starts completely on-demand.
         if (whatsappService.isClientStopped(uid)) {
             console.log(`[WHATSAPP-SENDER:${uid}] User has manually stopped sending. Skipping...`)
+            waLog.cronUserSkip(uid, 'User has manually stopped sending')
             return
         }
 
@@ -28,6 +30,7 @@ const processPendingMessagesForUser = async (userId) => {
 
         if (hourIST < 7 || hourIST >= 21) {
             console.log(`[WHATSAPP-SENDER:${uid}] Outside sending window (7 AM - 9 PM IST). Current IST hour: ${hourIST}. Skipping.`)
+            waLog.cronUserSkip(uid, `Outside IST sending window (hour: ${hourIST})`)
             return
         }
 
@@ -57,9 +60,7 @@ const processPendingMessagesForUser = async (userId) => {
 
         if (sentTodayCount >= maxPerDay) {
             console.log(`[WHATSAPP-SENDER:${uid}] Daily limit reached (${sentTodayCount}/${maxPerDay}). Skipping until tomorrow.`)
-            // Don't destroy session here — if the user is actively connected, let the idle
-            // timer handle cleanup naturally. Forcing a destroy here causes unnecessary
-            // cold-starts on the next cron tick.
+            waLog.cronUserSkip(uid, `Daily limit reached (${sentTodayCount}/${maxPerDay})`)
             return
         }
 
@@ -77,7 +78,7 @@ const processPendingMessagesForUser = async (userId) => {
 
         if (sentThisHourCount >= maxPerHour) {
             console.log(`[WHATSAPP-SENDER:${uid}] Hourly limit reached (${sentThisHourCount}/${maxPerHour}). Waiting for next hour.`)
-            // Same as daily limit — let idle timer handle cleanup, don't force destroy.
+            waLog.cronUserSkip(uid, `Hourly limit reached (${sentThisHourCount}/${maxPerHour})`)
             return
         }
 
@@ -98,6 +99,7 @@ const processPendingMessagesForUser = async (userId) => {
         if (messages.length === 0) return
 
         console.log(`[WHATSAPP-SENDER:${uid}] Found ${messages.length} pending message(s) within cycle limit. Queueing...`)
+        waLog.cronUserQueued(uid, messages.length)
 
         // The sendWhatsAppMessage call will internally queue them up one by one and cold-start browser if needed
         for (const msg of messages) {
@@ -108,9 +110,11 @@ const processPendingMessagesForUser = async (userId) => {
                 msg.whatsappMessageId = result.messageId
                 await msg.save()
                 console.log(`[WHATSAPP-SENDER:${uid}] Successfully sent message to ${msg.targetNumber}`)
+                waLog.messageSent(uid, msg.targetNumber, msg.whatsappMessageId)
                 await new Promise(r => setTimeout(r, 2000))
             } catch (err) {
                 console.error(`[WHATSAPP-SENDER:${uid}] Failed to send message to ${msg.targetNumber}:`, err.message)
+                waLog.messageFailed(uid, msg.targetNumber, err instanceof Error ? err : null)
                 msg.status = 'failed'
                 msg.errorReason = err.message
                 await msg.save()
@@ -123,9 +127,11 @@ const processPendingMessagesForUser = async (userId) => {
         const instance = whatsappService.getInstance(uid)
         if (!instance.hasActiveUiUser()) {
             console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. No active UI user — destroying Chrome immediately to free RAM.`)
+            waLog.cronBatchDone(uid, true)
             whatsappService.destroySession(uid)
         } else {
             console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. UI user active — idle timer will clean up.`)
+            waLog.cronBatchDone(uid, false)
         }
     } catch (error) {
         console.error(`[WHATSAPP-SENDER:${userId}] Error in message sender:`, error)
@@ -141,11 +147,17 @@ const processAllPendingMessages = async () => {
             scheduledFor: { $lte: new Date() }
         })
 
+        if (userIds.length > 0) {
+            waLog.separator('CRON RUN')
+            waLog.cronStart(userIds.length)
+        }
+
         for (const userId of userIds) {
             await processPendingMessagesForUser(userId)
         }
     } catch (err) {
         console.error('[WHATSAPP-SENDER] Global process error:', err)
+        waLog.error('', 'CRON_GLOBAL_ERR', 'processAllPendingMessages threw an error', err instanceof Error ? err : null)
     }
 }
 

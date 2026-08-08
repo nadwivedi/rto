@@ -551,6 +551,33 @@ const WhatsApp = () => {
             )}
           </button>
 
+          {/* Download Today's WhatsApp Log File */}
+          <button
+            onClick={async () => {
+              try {
+                const response = await axios.get(`${API_URL}/api/whatsapp/download-system-log`, {
+                  withCredentials: true,
+                  responseType: 'blob'
+                })
+                const url = window.URL.createObjectURL(new Blob([response.data]))
+                const link = document.createElement('a')
+                const now = new Date()
+                const dateStr = now.toISOString().split('T')[0]
+                link.href = url
+                link.setAttribute('download', `whatsapp-${dateStr}.log`)
+                document.body.appendChild(link)
+                link.click()
+                link.remove()
+                toast.success('WhatsApp system log downloaded successfully')
+              } catch (err) {
+                toast.error('No log file available for today yet or error downloading')
+              }
+            }}
+            className='w-full py-2 bg-gray-800 hover:bg-gray-900 text-white rounded-lg font-bold text-xs transition shadow-sm flex items-center justify-center gap-2'
+          >
+            📥 Download Today's System Log File (.log)
+          </button>
+
           {/* Sent Today Summary */}
           <div className='p-3 bg-gray-50 border border-gray-200 rounded-lg text-center'>
             <p className='text-xs text-gray-500'>Messages Sent Today</p>

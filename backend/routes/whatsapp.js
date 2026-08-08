@@ -200,4 +200,58 @@ router.delete('/logs/:id', async (req, res) => {
   }
 })
 
+// GET Download today's system log file
+router.get('/download-system-log', async (req, res) => {
+  try {
+    const fs = require('fs')
+    const path = require('path')
+    const now = new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000)
+    const yyyy = now.getUTCFullYear()
+    const mm = String(now.getUTCMonth() + 1).padStart(2, '0')
+    const dd = String(now.getUTCDate()).padStart(2, '0')
+    const fileName = `whatsapp-${yyyy}-${mm}-${dd}.log`
+    const filePath = path.join(__dirname, '../logs/whatsapp', fileName)
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ message: `No log file found for today (${fileName})` })
+    }
+
+    res.setHeader('Content-Type', 'text/plain; charset=utf-8')
+    res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`)
+    const fileStream = fs.createReadStream(filePath)
+    fileStream.pipe(res)
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
+// GET Live RAM & System Diagnostic Status
+router.get('/ram-status', async (req, res) => {
+  try {
+    const waLog = require('../utils/whatsappLogger')
+    const userId = req.user.id
+    const instance = whatsappService.getInstance(userId)
+    const pid = instance ? instance._chromePid : null
+
+    const sysRam = waLog.getSystemRamStats()
+    const chromeRamMb = pid ? waLog.getProcessRamMb(pid) : null
+
+    // Also log this check into the file
+    waLog.logRamStatus(userId, 'MANUAL_RAM_DIAGNOSTIC', pid)
+
+    res.json({
+      timestamp: new Date().toISOString(),
+      systemRam: sysRam,
+      chromePid: pid,
+      chromeRamMb: chromeRamMb,
+      isSlowWarning: sysRam.freePercent < 15 || (chromeRamMb && chromeRamMb > 400),
+      message: sysRam.freePercent < 15
+        ? '⚠️ System free RAM is low (<15%). This can cause Chromium or WhatsApp Web to freeze/timeout.'
+        : '✅ System RAM is in normal range.'
+    })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
 module.exports = router
