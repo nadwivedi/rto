@@ -7,9 +7,12 @@ const Export = () => {
   const [statistics, setStatistics] = useState(null)
   const [loading, setLoading] = useState(true)
   const [downloadingType, setDownloadingType] = useState(null)
+  const [waLogs, setWaLogs] = useState([])
+  const [waLogsLoading, setWaLogsLoading] = useState(true)
 
   useEffect(() => {
     fetchStatistics()
+    fetchWaLogs()
   }, [])
 
   const fetchStatistics = async () => {
@@ -29,6 +32,45 @@ const Export = () => {
     }
   }
 
+  const fetchWaLogs = async () => {
+    try {
+      setWaLogsLoading(true)
+      const response = await axios.get(`${BACKEND_URL}/api/admin/export/whatsapp-log/list`, {
+        withCredentials: true
+      })
+
+      if (response.data.success) {
+        setWaLogs(response.data.data)
+      }
+    } catch (error) {
+      console.error('Failed to fetch WhatsApp logs:', error)
+    } finally {
+      setWaLogsLoading(false)
+    }
+  }
+
+  const formatLogSize = (bytes) => {
+    if (!bytes && bytes !== 0) return '0 B'
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`
+  }
+
+  const getErrorMessage = async (error) => {
+    let message = error?.response?.data?.message || error?.message || 'Please try again.'
+    const data = error?.response?.data
+    if (data instanceof Blob) {
+      try {
+        const text = await data.text()
+        const parsed = JSON.parse(text)
+        if (parsed?.message) message = parsed.message
+      } catch (parseError) {
+        console.error('Failed to parse error response:', parseError)
+      }
+    }
+    return message
+  }
+
   const handleExport = async (type, endpoint) => {
     try {
       setDownloadingType(type)
@@ -44,9 +86,9 @@ const Export = () => {
 
       // Extract filename from Content-Disposition header or use default
       const contentDisposition = response.headers['content-disposition']
-      let filename = type === 'combined' ? 'rto_all_data_combined.zip' : 'rto_all_data_user_wise.zip'
+      let filename = 'rto_all_data_combined.zip'
       if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/)
+        const filenameMatch = contentDisposition.match(/filename="?([^";]+)"?/)
         if (filenameMatch) {
           filename = filenameMatch[1]
         }
@@ -59,7 +101,8 @@ const Export = () => {
       window.URL.revokeObjectURL(url)
     } catch (error) {
       console.error(`Failed to export ${type}:`, error)
-      alert(`Failed to export ${type}. Please try again.`)
+      const message = await getErrorMessage(error)
+      alert(`Failed to export ${type}. ${message}`)
     } finally {
       setDownloadingType(null)
     }
@@ -221,31 +264,71 @@ const Export = () => {
                 </div>
               </div>
               <button
-                onClick={() => handleExport('whatsapp-log', 'whatsapp-log')}
-                disabled={downloadingType === 'whatsapp-log'}
-                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
-                  downloadingType === 'whatsapp-log'
+                onClick={() => handleExport('whatsapp-log-all', 'whatsapp-log/all')}
+                disabled={downloadingType === 'whatsapp-log-all' || waLogs.length === 0}
+                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 mb-3 ${
+                  downloadingType === 'whatsapp-log-all' || waLogs.length === 0
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-amber-600 text-white hover:bg-amber-700 active:scale-95'
                 }`}
               >
-                {downloadingType === 'whatsapp-log' ? (
+                {downloadingType === 'whatsapp-log-all' ? (
                   <>
                     <svg className='animate-spin h-5 w-5' fill='none' viewBox='0 0 24 24'>
                       <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
                       <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
                     </svg>
-                    Fetching...
+                    Preparing ZIP...
                   </>
                 ) : (
                   <>
                     <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' />
                     </svg>
-                    Download Today's WA Log
+                    Download All Logs (ZIP)
                   </>
                 )}
               </button>
+
+              {waLogsLoading ? (
+                <div className='text-sm text-gray-500 text-center py-2'>Loading log files...</div>
+              ) : waLogs.length === 0 ? (
+                <div className='text-sm text-gray-500 text-center py-2'>
+                  No WhatsApp log files found yet.
+                </div>
+              ) : (
+                <div className='max-h-56 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100'>
+                  {waLogs.map((log) => (
+                    <div key={log.date} className='flex items-center justify-between px-3 py-2 hover:bg-gray-50'>
+                      <div className='min-w-0'>
+                        <div className='text-sm font-medium text-gray-800'>{log.date}</div>
+                        <div className='text-xs text-gray-500'>{formatLogSize(log.sizeBytes)}</div>
+                      </div>
+                      <button
+                        onClick={() => handleExport(`whatsapp-log-${log.date}`, `whatsapp-log?date=${log.date}`)}
+                        disabled={downloadingType === `whatsapp-log-${log.date}`}
+                        className={`ml-3 shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all duration-200 ${
+                          downloadingType === `whatsapp-log-${log.date}`
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-amber-100 text-amber-700 hover:bg-amber-200 active:scale-95'
+                        }`}
+                      >
+                        {downloadingType === `whatsapp-log-${log.date}` ? (
+                          <svg className='animate-spin h-3.5 w-3.5' fill='none' viewBox='0 0 24 24'>
+                            <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                            <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'></path>
+                          </svg>
+                        ) : (
+                          <svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' />
+                          </svg>
+                        )}
+                        Download
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>
