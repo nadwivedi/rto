@@ -126,9 +126,9 @@ const processPendingMessagesForUser = async (userId) => {
         // If a UI user IS present, the 5-min idle timer will handle cleanup naturally.
         const instance = whatsappService.getInstance(uid)
         if (!instance.hasActiveUiUser()) {
-            console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. No active UI user — destroying Chrome immediately to free RAM.`)
+            console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. No active UI user — destroying Chrome gracefully to free RAM.`)
             waLog.cronBatchDone(uid, true)
-            whatsappService.destroySession(uid)
+            await whatsappService.destroySession(uid)
         } else {
             console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. UI user active — idle timer will clean up.`)
             waLog.cronBatchDone(uid, false)

@@ -29,6 +29,16 @@ function isPuppeteerNoise(err) {
   return PUPPETEER_NOISE.some(n => msg.includes(n))
 }
 
+function isPidRunning(pid) {
+  if (!pid) return false
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch (_) {
+    return false
+  }
+}
+
 // Kill the entire Chrome process tree on Windows so no zombie chrome.exe remains.
 // Falls back to a no-op on non-Windows or if PID is null.
 function killProcessTree(pid) {
@@ -42,6 +52,18 @@ function killProcessTree(pid) {
   } catch (_) {
     // Process may already be dead — ignore
   }
+}
+
+// Gives Chromium time to exit gracefully and flush IndexedDB/leveldb files to disk before force-killing
+async function gracefulKillProcessTree(pid) {
+  if (!pid) return
+  for (let i = 0; i < 4; i++) {
+    if (!isPidRunning(pid)) {
+      return // Exited cleanly on its own — no force kill needed
+    }
+    await new Promise(r => setTimeout(r, 500))
+  }
+  killProcessTree(pid)
 }
 
 class WhatsappUserClient {
@@ -437,8 +459,8 @@ class WhatsappUserClient {
       } catch (err) {
         // Ignore — browser may already be dead
       } finally {
-        // Force-kill process tree on Windows to prevent zombie chrome.exe
-        killProcessTree(pidRef)
+        // Allow Chrome process time to exit cleanly & write session data to disk before force-killing
+        await gracefulKillProcessTree(pidRef)
         waLog.sessionDestroyed(this.userId, pidRef)
         this.clearChromeLock()
       }
@@ -518,15 +540,15 @@ class WhatsappUserClient {
       this.resetIdleTimeout()
 
       if (!this.authReceived) {
-        if (wasClientNull && this.qrShownDuringInit) {
-          console.warn(`[WHATSAPP:${this.userId}] QR was shown during lazy connect — saved session is expired. Clearing auth.`)
-          waLog.sessionExpiredOnSend(this.userId)
-          await this._forceLoggedOut('WhatsApp session expired. Please scan the QR code again to reconnect.')
-        } else {
-          console.warn(`[WHATSAPP:${this.userId}] Not authenticated after init (no QR shown). Keeping auth files — will retry next send.`)
-          this.destroySession()
-        }
-        throw new Error('WhatsApp not ready — will retry automatically. If this persists, re-scan the QR code.')
+        console.warn(`[WHATSAPP:${this.userId}] Session not authenticated during background send. Closing Chrome and preserving saved auth files on disk.`)
+        waLog.warn(this.userId, 'LAZY_SEND_UNAUTH', 'Background send attempted without ready session. Preserving auth directory.')
+        await this.destroySession()
+        await this.updateStatus('disconnected', {
+          qrCodeDataUrl: null,
+          initStage: null,
+          lastError: 'Session not authenticated during message send. Will retry automatically.'
+        }).catch(() => {})
+        throw new Error('WhatsApp not ready — will retry automatically. If this persists, re-scan the QR code in WhatsApp settings.')
       }
 
       try {
@@ -607,6 +629,24 @@ class WhatsappUserClient {
 class WhatsappServiceManager {
   constructor() {
     this.instances = new Map()
+    // Global mutex chain ensuring ONLY ONE Chrome browser process runs at any time system-wide
+    this.globalQueue = Promise.resolve()
+  }
+
+  // Queue any task globally across all users so Chrome instances never overlap or waste RAM
+  enqueueGlobalTask(taskFn) {
+    return new Promise((resolve, reject) => {
+      this.globalQueue = this.globalQueue.then(async () => {
+        try {
+          const result = await taskFn()
+          resolve(result)
+        } catch (error) {
+          reject(error)
+        }
+      }).catch(() => {
+        // Keep global chain intact even if task throws
+      })
+    })
   }
 
   getInstance(userId) {
@@ -631,10 +671,10 @@ class WhatsappServiceManager {
     }, INSTANCE_CLEANUP_DELAY_MS)
   }
 
-  // Clean API methods
-  initializeSession(userId) { return this.getInstance(userId).initializeSession() }
-  sendWhatsAppMessage(userId, targetNumber, text, mediaPath = null) { return this.getInstance(userId).sendWhatsAppMessage(targetNumber, text, mediaPath) }
-  logoutSession(userId) { return this.getInstance(userId).logoutSession() }
+  // Clean API methods — wrapped in global queue to prevent concurrent Chrome instances!
+  initializeSession(userId) { return this.enqueueGlobalTask(() => this.getInstance(userId).initializeSession()) }
+  sendWhatsAppMessage(userId, targetNumber, text, mediaPath = null) { return this.enqueueGlobalTask(() => this.getInstance(userId).sendWhatsAppMessage(targetNumber, text, mediaPath)) }
+  logoutSession(userId) { return this.enqueueGlobalTask(() => this.getInstance(userId).logoutSession()) }
   getSessionStatus(userId) { return this.getInstance(userId).getSessionStatus() }
   touchPoll(userId) { return this.getInstance(userId).touchPoll() }
   getIsInitializing(userId) { return this.getInstance(userId).isInitializing }

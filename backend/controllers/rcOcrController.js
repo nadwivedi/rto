@@ -70,27 +70,41 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
       }
     ];
 
-    const makeRequest = (withFormat) => {
-      const body = {
-        model: 'llama-3.3-70b-versatile',
-        messages,
-        temperature: 0,
-        max_tokens: 512
-      };
-      if (withFormat) body.response_format = { type: 'json_object' };
-      return executeWithRetry('https://api.groq.com/openai/v1/chat/completions', body);
+    const candidateModels = [
+      'openai/gpt-oss-20b',
+      'qwen/qwen3.6-27b',
+      'groq/compound-mini',
+      'groq/compound'
+    ];
+
+    const makeRequest = async (withFormat) => {
+      let lastErr = null;
+      for (const model of candidateModels) {
+        try {
+          const body = {
+            model,
+            messages,
+            temperature: 0,
+            max_completion_tokens: 1024
+          };
+          if (withFormat) body.response_format = { type: 'json_object' };
+          return await executeWithRetry('https://api.groq.com/openai/v1/chat/completions', body);
+        } catch (err) {
+          lastErr = err;
+          const errCode = err.response?.data?.error?.code;
+          const errType = err.response?.data?.error?.type;
+          console.warn(`Groq text model '${model}' failed (${errCode || errType || err.message}). Trying fallback...`);
+        }
+      }
+      throw lastErr;
     };
 
     try {
       const response = await makeRequest(true);
       return response;
     } catch (firstErr) {
-      const errCode = firstErr.response?.data?.error?.code;
-      if (errCode === 'json_validate_failed' || errCode === 'invalid_request_error') {
-        console.warn('Groq json_object mode failed, retrying in free-text mode...');
-        return await makeRequest(false);
-      }
-      throw firstErr;
+      console.warn('Groq json_object mode failed across models, retrying in free-text mode...');
+      return await makeRequest(false);
     }
   } else {
     // Standard vision model - support front + optional back image

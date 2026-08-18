@@ -229,7 +229,7 @@ async function runAudit() {
   console.log(`  Output tokens (fixed)    : ~${outputTokPerCall} tokens/call (JSON response)`);
   console.log(`  Total cost per call OLD  : ~${(avgOld + outputTokPerCall).toLocaleString()} tokens`);
   console.log(`  Total cost per call NEW  : ~${(avgNew + outputTokPerCall).toLocaleString()} tokens`);
-  console.log(`\n  Groq llama-3.3-70b rate limit: ${GROQ_LIMIT.toLocaleString()} tokens/min (free tier)`);
+  console.log(`\n  Groq active models rate limit: 8,000+ tokens/min (free tier)`);
   console.log(`  OLD: max ~${callsPerMin_Old} calls/min → ~${(callsPerMin_Old * 60).toLocaleString()} calls/hour`);
   console.log(`  NEW: max ~${callsPerMin_New} calls/min → ~${(callsPerMin_New * 60).toLocaleString()} calls/hour`);
   console.log(`  Throughput improvement   : +${((callsPerMin_New / callsPerMin_Old - 1) * 100).toFixed(0)}% more extractions per hour`);
