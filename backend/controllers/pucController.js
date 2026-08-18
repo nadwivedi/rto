@@ -782,15 +782,19 @@ exports.bulkImportPuc = async (req, res) => {
         // Calculate status
         const status = getPucStatus(validTo)
 
-        // Find partyId if possible
+        // Find partyId and vehicle details if possible
         let partyId = null
+        let vehicleOwnerName = ''
+        let vehicleMobile = ''
         const vehicle = await VehicleRegistration.findOne({
           registrationNumber: vehicleNumber.toUpperCase().trim(),
           userId: req.user.id
-        }).select('partyId')
+        }).select('partyId ownerName mobileNumber')
         
-        if (vehicle && vehicle.partyId) {
-          partyId = vehicle.partyId
+        if (vehicle) {
+          if (vehicle.partyId) partyId = vehicle.partyId
+          if (vehicle.ownerName) vehicleOwnerName = vehicle.ownerName
+          if (vehicle.mobileNumber) vehicleMobile = vehicle.mobileNumber
         }
 
         // Mark any existing non-renewed PUC records for this vehicle as expired and renewed
@@ -811,8 +815,8 @@ exports.bulkImportPuc = async (req, res) => {
         // Create new PUC record
         const puc = new Puc({
           vehicleNumber: vehicleNumber.toUpperCase().trim(),
-          ownerName: ownerName || '',
-          mobileNumber: mobileNumber || '',
+          ownerName: ownerName || vehicleOwnerName || '',
+          mobileNumber: mobileNumber || vehicleMobile || '',
           vehicleModel: vehicleModel || '',
           validFrom,
           validTo,

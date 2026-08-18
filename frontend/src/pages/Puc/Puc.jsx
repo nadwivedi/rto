@@ -199,24 +199,35 @@ const Puc = () => {
   }, [searchQuery, statusFilter]);
 
   const parseExcelDate = (excelDate) => {
-    if (!excelDate) return "";
-    if (typeof excelDate === 'string' && excelDate.includes('-')) {
-      const parts = excelDate.split('-');
-      // Check if format is YYYY-MM-DD
-      if (parts.length === 3 && parts[0].length === 4) {
-        return `${parts[2]}-${parts[1]}-${parts[0]}`;
-      }
-      return excelDate;
-    }
+    if (!excelDate && excelDate !== 0) return "";
     if (typeof excelDate === 'number') {
-      const date = new Date((excelDate - (25567 + 1)) * 86400 * 1000);
-      const day = String(date.getDate()).padStart(2, '0');
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const year = date.getFullYear();
-      return `${day}-${month}-${year}`;
+      try {
+        const dateObj = XLSX.SSF.parse_date_code(excelDate);
+        if (dateObj && dateObj.y && dateObj.m && dateObj.d) {
+          const day = String(dateObj.d).padStart(2, '0');
+          const month = String(dateObj.m).padStart(2, '0');
+          const year = dateObj.y;
+          return `${day}-${month}-${year}`;
+        }
+      } catch (err) {
+        console.warn("SSF date parse error:", err);
+      }
     }
-    return String(excelDate);
-  }
+    const str = String(excelDate).trim();
+    if (!str) return "";
+    if (str.includes('-') || str.includes('/')) {
+      const parts = str.split(/[-/]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) {
+          return `${parts[2].padStart(2, '0')}-${parts[1].padStart(2, '0')}-${parts[0]}`;
+        }
+        if (parts[2].length === 4) {
+          return `${parts[0].padStart(2, '0')}-${parts[1].padStart(2, '0')}-${parts[2]}`;
+        }
+      }
+    }
+    return str;
+  };
 
   const handleExcelUpload = async (event) => {
     const file = event.target.files[0];
@@ -231,20 +242,94 @@ const Puc = () => {
           const workbook = XLSX.read(data, { type: 'array' });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const rawJson = XLSX.utils.sheet_to_json(worksheet);
+          
+          const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+          if (!rawRows || rawRows.length === 0) {
+            toast.error('Excel file is empty');
+            setIsUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            return;
+          }
 
-          const formattedRecords = rawJson.map(row => {
-            return {
-              mobileNumber: row['MOBILE_NO'] ? String(row['MOBILE_NO']) : '',
-              vehicleNumber: row['VEHICLE_NO'] ? String(row['VEHICLE_NO']).replace(/\s+/g, '') : '',
-              vehicleModel: row['MODEL'] ? String(row['MODEL']) : '',
-              validFrom: parseExcelDate(row['TESTDATE']),
-              validTo: parseExcelDate(row['VALIDDATE'])
+          // Detect header row (check first 15 rows)
+          let headerRowIndex = -1;
+          for (let i = 0; i < Math.min(15, rawRows.length); i++) {
+            const row = rawRows[i];
+            if (!Array.isArray(row)) continue;
+            const rowStr = row.map(cell => String(cell || '').toLowerCase()).join(' ');
+            
+            const hasReg = rowStr.includes('registration') || rowStr.includes('vehicle') || rowStr.includes('reg') || rowStr.includes('vehicleno');
+            const hasDate = rowStr.includes('pucc') || rowStr.includes('valid') || rowStr.includes('testdate') || rowStr.includes('from') || rowStr.includes('upto');
+            
+            if (hasReg && hasDate) {
+              headerRowIndex = i;
+              break;
             }
-          }).filter(record => record.vehicleNumber && record.validFrom && record.validTo);
+          }
+
+          if (headerRowIndex === -1) {
+            headerRowIndex = 0;
+          }
+
+          const headers = rawRows[headerRowIndex].map(h => String(h || '').trim());
+
+          let regIdx = -1, fromIdx = -1, uptoIdx = -1, mobileIdx = -1, modelIdx = -1, ownerIdx = -1;
+
+          headers.forEach((h, idx) => {
+            const lower = h.toLowerCase().replace(/[^a-z0-9]/g, '');
+            
+            if (regIdx === -1 && ['registrationnumber', 'registrationno', 'regno', 'vehicleno', 'vehiclenumber', 'vehicle', 'vehiclenum'].some(k => lower.includes(k))) {
+              regIdx = idx;
+            }
+            if (fromIdx === -1 && ['puccfrom', 'validfrom', 'testdate', 'fromdate', 'issuedate', 'puccstartdate'].some(k => lower.includes(k))) {
+              fromIdx = idx;
+            }
+            if (uptoIdx === -1 && ['puccupto', 'puccvalidupto', 'validto', 'validupto', 'validdate', 'todate', 'expdate', 'expirydate'].some(k => lower.includes(k))) {
+              uptoIdx = idx;
+            }
+            if (mobileIdx === -1 && ['mobileno', 'mobile', 'phone', 'phoneno', 'contact', 'contactno'].some(k => lower.includes(k))) {
+              mobileIdx = idx;
+            }
+            if (modelIdx === -1 && ['model', 'vehiclemodel', 'makermodel'].some(k => lower.includes(k))) {
+              modelIdx = idx;
+            }
+            if (ownerIdx === -1 && ['ownername', 'owner', 'insuredname', 'partyname', 'name', 'pucccentrename', 'centrename'].some(k => lower.includes(k))) {
+              ownerIdx = idx;
+            }
+          });
+
+          const formattedRecords = [];
+          for (let i = headerRowIndex + 1; i < rawRows.length; i++) {
+            const row = rawRows[i];
+            if (!row || row.length === 0) continue;
+
+            const rawVeh = regIdx !== -1 && row[regIdx] !== undefined ? String(row[regIdx]).trim() : '';
+            const vehicleNumber = rawVeh.replace(/\s+/g, '').toUpperCase();
+
+            if (!vehicleNumber || vehicleNumber.toLowerCase().includes('registration') || vehicleNumber.toLowerCase().includes('vehicle')) {
+              continue;
+            }
+
+            const validFrom = fromIdx !== -1 ? parseExcelDate(row[fromIdx]) : '';
+            const validTo = uptoIdx !== -1 ? parseExcelDate(row[uptoIdx]) : '';
+            const mobileNumber = mobileIdx !== -1 && row[mobileIdx] !== undefined ? String(row[mobileIdx]).trim() : '';
+            const vehicleModel = modelIdx !== -1 && row[modelIdx] !== undefined ? String(row[modelIdx]).trim() : '';
+            const ownerName = ownerIdx !== -1 && row[ownerIdx] !== undefined ? String(row[ownerIdx]).trim() : '';
+
+            if (vehicleNumber && validFrom && validTo) {
+              formattedRecords.push({
+                vehicleNumber,
+                validFrom,
+                validTo,
+                mobileNumber,
+                vehicleModel,
+                ownerName
+              });
+            }
+          }
 
           if (formattedRecords.length === 0) {
-            toast.error('No valid records found in Excel. Make sure columns match: MOBILE_NO, VEHICLE_NO, MODEL, TESTDATE, VALIDDATE.');
+            toast.error('No valid records found in Excel. Please ensure columns match Registration No, PUCC From, and PUCC Upto.');
             setIsUploading(false);
             if (fileInputRef.current) fileInputRef.current.value = '';
             return;

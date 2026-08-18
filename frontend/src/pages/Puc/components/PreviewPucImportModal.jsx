@@ -42,6 +42,7 @@ const PreviewPucImportModal = ({ isOpen, onClose, data, onSave, isSaving }) => {
                   <tr className='bg-gray-100 text-gray-700 text-xs uppercase tracking-wider border-b border-gray-200'>
                     <th className='p-3 font-semibold'>S.No</th>
                     <th className='p-3 font-semibold'>Vehicle No</th>
+                    <th className='p-3 font-semibold'>Owner/Centre</th>
                     <th className='p-3 font-semibold'>Mobile No</th>
                     <th className='p-3 font-semibold'>Model</th>
                     <th className='p-3 font-semibold'>Valid From</th>
@@ -70,6 +71,7 @@ const PreviewPucImportModal = ({ isOpen, onClose, data, onSave, isSaving }) => {
                             <span className='font-bold font-mono text-gray-800'>{record.vehicleNumber}</span>
                           )}
                         </td>
+                        <td className='p-3 text-gray-700'>{record.ownerName || '-'}</td>
                         <td className='p-3 text-gray-700'>{record.mobileNumber || '-'}</td>
                         <td className='p-3 text-gray-700'>{record.vehicleModel || '-'}</td>
                         <td className='p-3'>
