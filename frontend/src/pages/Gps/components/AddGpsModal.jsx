@@ -17,6 +17,8 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
     vehicleNumber: prefilledVehicleNumber,
     ownerName: prefilledOwnerName,
     mobileNumber: prefilledMobileNumber,
+    fittedBy: '',
+    companyName: '',
     validFrom: '',
     validTo: '',
     totalFee: '',
@@ -58,6 +60,8 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
         vehicleNumber: prefilledVehicleNumber,
         ownerName: prefilledOwnerName,
         mobileNumber: prefilledMobileNumber,
+        fittedBy: '',
+        companyName: '',
         validFrom: '',
         validTo: '',
         totalFee: '',
@@ -433,6 +437,8 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
         vehicleNumber: formData.vehicleNumber,
         ownerName: formData.ownerName,
         mobileNumber: formData.mobileNumber,
+        fittedBy: formData.fittedBy || undefined,
+        companyName: formData.companyName || undefined,
         validFrom: formData.validFrom,
         validTo: formData.validTo,
         totalFee: parseFloat(formData.totalFee) || 0,
@@ -858,10 +864,50 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
               </div>
             </div>
 
-            {/* Section 2: Validity Period */}
+            {/* Section 2: Fitment & Device Details */}
+            <div className='bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
+              <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
+                <span className='bg-amber-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>2</span>
+                Fitment & Device Details
+              </h3>
+
+              <div className='grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4'>
+                {/* Fitted By */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Fitted By
+                  </label>
+                  <input
+                    type='text'
+                    name='fittedBy'
+                    value={formData.fittedBy}
+                    onChange={handleChange}
+                    placeholder='Enter installer / technician name'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white'
+                  />
+                </div>
+
+                {/* Company Name */}
+                <div>
+                  <label className='block text-xs md:text-sm font-semibold text-gray-700 mb-1'>
+                    Company Name
+                  </label>
+                  <input
+                    type='text'
+                    name='companyName'
+                    value={formData.companyName}
+                    onChange={handleChange}
+                    placeholder='Enter GPS company name'
+                    className='w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-white'
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3: Validity Period */}
             <div className='bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
-                <span className='bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>2</span>
+                <span className='bg-indigo-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>3</span>
                 Validity Period
               </h3>
 
@@ -901,10 +947,10 @@ const AddGpsModal = ({ isOpen, onClose, onSubmit, prefilledVehicleNumber = '', p
               </div>
             </div>
 
-            {/* Section 3: Payment Information */}
+            {/* Section 4: Payment Information */}
             <div className='bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-xl p-3 md:p-6 mb-4 md:mb-6'>
               <h3 className='text-base md:text-lg font-bold text-gray-800 mb-3 md:mb-4 flex items-center gap-2'>
-                <span className='bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>3</span>
+                <span className='bg-emerald-600 text-white w-6 h-6 md:w-8 md:h-8 rounded-full flex items-center justify-center text-xs md:text-sm'>4</span>
                 Payment Information
               </h3>
 

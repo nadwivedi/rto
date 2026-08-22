@@ -234,6 +234,32 @@ const GpsDetailModal = ({ isOpen, onClose, gps }) => {
               </div>
             </div>
 
+            {(gps.fittedBy || gps.companyName) && (
+              <div className='bg-gradient-to-r from-amber-50 to-orange-50 rounded-lg p-4 border-l-4 border-amber-500'>
+                <h3 className='text-sm md:text-base font-bold text-amber-900 mb-3 flex items-center gap-2'>
+                  <svg className='w-4 h-4 md:w-5 md:h-5 text-amber-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' />
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 12a3 3 0 11-6 0 3 3 0 016 0z' />
+                  </svg>
+                  Fitment & Device Details
+                </h3>
+                <div className='grid grid-cols-1 md:grid-cols-2 gap-3'>
+                  {gps.fittedBy && (
+                    <div className='bg-white/70 p-3 rounded-lg'>
+                      <label className='text-xs font-semibold text-gray-600 block mb-1'>Fitted By</label>
+                      <p className='text-sm md:text-base font-bold text-gray-900'>{gps.fittedBy}</p>
+                    </div>
+                  )}
+                  {gps.companyName && (
+                    <div className='bg-white/70 p-3 rounded-lg'>
+                      <label className='text-xs font-semibold text-gray-600 block mb-1'>Company Name</label>
+                      <p className='text-sm md:text-base font-bold text-gray-900'>{gps.companyName}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             <div className='bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg p-4 border-l-4 border-purple-500 relative'>
               {gps.balance === 0 && (
                 <div className='absolute top-2 right-2 md:top-3 md:right-3'>

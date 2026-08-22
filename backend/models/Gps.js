@@ -27,6 +27,14 @@ const gpsSchema = new mongoose.Schema({
     type: String,
     trim: true
   },
+  fittedBy: {
+    type: String,
+    trim: true
+  },
+  companyName: {
+    type: String,
+    trim: true
+  },
   date: {
     type: String,
     trim: true
