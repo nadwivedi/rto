@@ -7,7 +7,7 @@ require('dotenv').config({ path: path.join(__dirname, '..', '.env') })
 const VehicleRegistration = require('../models/VehicleRegistration')
 const Insurance = require('../models/Insurance')
 
-const DEFAULT_MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/rto'
+const DEFAULT_MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/rto2'
 const DEFAULT_USER_ID = '6a055af65b635ab08748db26'
 const CSV_PATH = path.join(__dirname, '..', '..', 'final.csv')
 
