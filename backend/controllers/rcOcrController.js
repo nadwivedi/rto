@@ -139,8 +139,9 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
         model: 'qwen/qwen3.6-27b',
         messages: [{ role: 'user', content: contentArray }],
         temperature: 0.1,
-        max_completion_tokens: 2048,
-        reasoning_format: 'hidden'
+        max_completion_tokens: 2048
+        // NOTE: Do NOT set reasoning_format: 'hidden' for vision calls —
+        // it causes the model to return an empty content string on image uploads.
       };
       if (withFormat) body.response_format = { type: 'json_object' };
       return executeWithRetry('https://api.groq.com/openai/v1/chat/completions', body);
