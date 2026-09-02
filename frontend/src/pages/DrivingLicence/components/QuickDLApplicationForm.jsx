@@ -61,7 +61,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
     // Payment Information
     totalAmount: '',
     paidAmount: '',
-    balanceAmount: '',
+    balanceAmount: 0,
     profit: '',
     byName: '',
     byMobile: '',
@@ -798,7 +798,7 @@ const QuickDLApplicationForm = ({ isOpen, onClose, application }) => {
       emergencyRelation: 'Father',
       totalAmount: '',
       paidAmount: '',
-      balanceAmount: '',
+      balanceAmount: 0,
       profit: '',
       documents: {
         learningLicense: '',

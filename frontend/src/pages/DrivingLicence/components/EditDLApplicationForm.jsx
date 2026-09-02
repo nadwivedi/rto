@@ -84,7 +84,7 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     // Payment Information
     totalAmount: '',
     paidAmount: '',
-    balanceAmount: '',
+    balanceAmount: 0,
     profit: '',
 
     // Application Status
