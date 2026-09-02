@@ -82,9 +82,9 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
     emergencyRelation: 'Father',
 
     // Payment Information
-    totalAmount: '4000',
-    paidAmount: '2000',
-    balanceAmount: 2000,
+    totalAmount: '',
+    paidAmount: '',
+    balanceAmount: '',
     profit: '',
 
     // Application Status
@@ -154,8 +154,8 @@ const EditDLApplicationForm = ({ isOpen, onClose, onSubmit, application }) => {
         panNumber: appData.panNumber || '',
         emergencyContact: appData.emergencyContact || '',
         emergencyRelation: appData.emergencyRelation || 'Father',
-        totalAmount: appData.totalAmount?.toString() || '4000',
-        paidAmount: appData.paidAmount?.toString() || '2000',
+        totalAmount: appData.totalAmount?.toString() || '',
+        paidAmount: appData.paidAmount?.toString() || '',
         balanceAmount: calculatedBalance >= 0 ? calculatedBalance : 0,
         profit: appData.profit?.toString() || '',
         applicationStatus: appData.applicationStatus || 'pending',
