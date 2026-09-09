@@ -33,16 +33,27 @@ const executeWithRetry = async (url, body, retryCount = 0) => {
       headers: {
         'Authorization': `Bearer ${currentKey}`,
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 60000 // 60s timeout to avoid hanging on overloaded endpoints
     });
   } catch (error) {
-    if (error.response?.status === 429) {
+    const status = error.response?.status;
+    if (status === 429) {
+      // Hard rate limit — mark this key as exhausted for 12 hours
       markKeyRateLimited(currentKey);
+      return executeWithRetry(url, body, retryCount + 1);
+    }
+    if (status === 503 || status === 502 || status === 500 || status === 529) {
+      // Transient server overload — do NOT blacklist the key, just try the next one
+      const errMsg = error.response?.data?.error?.message || error.message || status;
+      console.warn(`Groq key ${currentKey.substring(0, 8)}... got ${status} (${errMsg}). Retrying with next key...`);
+      await new Promise(r => setTimeout(r, 1000 * (retryCount + 1))); // 1s, 2s, 3s... backoff
       return executeWithRetry(url, body, retryCount + 1);
     }
     throw error;
   }
 }
+
 
 const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase64 = null) => {
   if (isPdf) {
