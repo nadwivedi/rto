@@ -7,10 +7,11 @@ const { execSync } = require('child_process')
 const waLog = require('../utils/whatsappLogger')
 
 const AUTH_DATA_PATH = process.env.WHATSAPP_AUTH_DIR || '.wwebjs_auth'
-const IDLE_TIMEOUT_MS = 5 * 60 * 1000       // 5 minutes (was 15) — kill idle connected sessions to free RAM
-const QR_IDLE_TIMEOUT_MS = 3 * 60 * 1000    // 3 minutes (was 5) — kill QR waiting sessions if nobody is polling
-const INIT_TIMEOUT_MS = 4 * 60 * 1000       // 4 minutes (was 2) — handles slow machines / high system load
+const IDLE_TIMEOUT_MS = 15 * 60 * 1000      // 15 minutes — kill idle connected sessions to free RAM (was 5 min, too aggressive → caused frequent cold-restarts → auth corruption)
+const QR_IDLE_TIMEOUT_MS = 3 * 60 * 1000    // 3 minutes — kill QR waiting sessions if nobody is polling
+const INIT_TIMEOUT_MS = 4 * 60 * 1000       // 4 minutes — handles slow machines / high system load
 const INSTANCE_CLEANUP_DELAY_MS = 60 * 1000 // 1 minute grace before removing dead instance from Map
+const GLOBAL_QUEUE_WATCHDOG_MS = 5 * 60 * 1000 // 5 minutes — if globalQueue makes no progress, reset to unblock future calls
 
 // Errors from Puppeteer that we safely ignore — they happen when the browser is destroyed
 // while whatsapp-web.js is still running async page operations (inject, getWWebVersion, etc.)
@@ -54,14 +55,17 @@ function killProcessTree(pid) {
   }
 }
 
-// Gives Chromium time to exit gracefully and flush IndexedDB/leveldb files to disk before force-killing
+// Gives Chromium time to exit gracefully and flush IndexedDB/leveldb files to disk before force-killing.
+// FIX 3: Increased from 4×500ms (2s) to 10×1000ms (10s) — Chrome on a loaded VPS needs more time
+// to fully write WhatsApp auth session files before being killed. 2s was too short, leading to
+// corrupted auth files → forced QR re-scan on next connect.
 async function gracefulKillProcessTree(pid) {
   if (!pid) return
-  for (let i = 0; i < 4; i++) {
+  for (let i = 0; i < 10; i++) {
     if (!isPidRunning(pid)) {
       return // Exited cleanly on its own — no force kill needed
     }
-    await new Promise(r => setTimeout(r, 500))
+    await new Promise(r => setTimeout(r, 1000))
   }
   killProcessTree(pid)
 }
@@ -91,20 +95,26 @@ class WhatsappUserClient {
   }
 
   // Enqueue async tasks to prevent multiple Chrome instances launching simultaneously.
-  // If the previous task threw, the chain is still intact because we always resolve the
-  // outer wrapper — errors are forwarded to the caller but don't break the queue.
+  // FIX 1b: The .catch() safety-net previously never called resolve/reject, leaving callers
+  // permanently hanging if the chain itself broke. Now always resolves/rejects the caller.
   enqueueTask(taskFn) {
     return new Promise((resolve, reject) => {
-      this.taskQueue = this.taskQueue.then(async () => {
-        try {
-          const result = await taskFn()
-          resolve(result)
-        } catch (error) {
-          reject(error)
-        }
-      }).catch(() => {
-        // Queue chain safety-net: if something went terribly wrong, keep the chain alive
-      })
+      this.taskQueue = this.taskQueue
+        .then(async () => {
+          try {
+            const result = await taskFn()
+            resolve(result)
+          } catch (error) {
+            reject(error)
+          }
+        })
+        .catch((chainErr) => {
+          // Keep per-user queue chain alive, but MUST resolve/reject the outer promise
+          // so the caller is never permanently stuck
+          reject(chainErr || new Error('Task queue chain error'))
+          // Reset the chain to a clean state so future tasks can run
+          this.taskQueue = Promise.resolve()
+        })
     })
   }
 
@@ -341,7 +351,13 @@ class WhatsappUserClient {
           this.authReceived = true
           this.clearInitTimeout()
           trackPid()
-          console.log(`[WHATSAPP:${this.userId}] ✓ Authenticated — waiting for ready...`)
+          // CRITICAL FIX: Replace the 3-minute QR idle timer with the full 15-minute idle timer
+          // immediately when the user scans the QR. Without this, the QR timer fires ~3 minutes
+          // after QR was shown. If 'ready' is slow (VPS load, WhatsApp loading), Chrome gets
+          // destroyed mid-auth before IndexedDB session files are fully written → corrupted auth
+          // → next cold-start triggers QR again → session is never persisted.
+          this.resetIdleTimeout()
+          console.log(`[WHATSAPP:${this.userId}] ✓ Authenticated — waiting for ready... (QR timer replaced with 15-min idle)`)
           waLog.authenticated(this.userId, null)
           await this.updateStatus('authenticated', { qrCodeDataUrl: null, initStage: null, lastError: null })
         })
@@ -387,7 +403,19 @@ class WhatsappUserClient {
             isStopped: isLogout ? true : this.isStopped,
             lastError: isLogout ? 'WhatsApp session was logged out from your phone. Click Connect to reconnect.' : String(reason)
           })
-          if (reason !== 'NAVIGATION') {
+          if (reason === 'NAVIGATION') {
+            // FIX 5: NAVIGATION is a transient WhatsApp Web page redirect.
+            // Previously we skipped destroy entirely, leaving zombie Chrome processes that
+            // held auth directory locks. Now: give it 10 seconds to self-recover, then clean up.
+            console.log(`[WHATSAPP:${this.userId}] NAVIGATION disconnect — waiting 10s for self-recovery...`)
+            setTimeout(() => {
+              if (this.client && !this.authReceived) {
+                console.log(`[WHATSAPP:${this.userId}] NAVIGATION did not self-recover — destroying to prevent zombie Chrome.`)
+                waLog.warn(this.userId, 'NAVIGATION_TIMEOUT', 'NAVIGATION disconnect did not recover in 10s — forcing cleanup')
+                this.destroySession()
+              }
+            }, 10_000)
+          } else {
             this.destroySession()
           }
         })
@@ -631,21 +659,44 @@ class WhatsappServiceManager {
     this.instances = new Map()
     // Global mutex chain ensuring ONLY ONE Chrome browser process runs at any time system-wide
     this.globalQueue = Promise.resolve()
+    this._globalQueueLastActivity = Date.now()
+    // FIX 2: Watchdog timer — resets globalQueue if it makes no progress for 5 minutes.
+    // This prevents a single broken/hung task from permanently blocking ALL users' WhatsApp.
+    this._globalQueueWatchdog = setInterval(() => {
+      const idleMs = Date.now() - this._globalQueueLastActivity
+      if (idleMs > GLOBAL_QUEUE_WATCHDOG_MS) {
+        console.warn(`[WHATSAPP] GlobalQueue appears stuck (idle ${Math.round(idleMs/1000)}s). Resetting to unblock future operations.`)
+        waLog.warn('', 'GLOBAL_QUEUE_RESET', `GlobalQueue idle for ${Math.round(idleMs/1000)}s — resetting to prevent permanent deadlock`)
+        this.globalQueue = Promise.resolve()
+        this._globalQueueLastActivity = Date.now()
+      }
+    }, 60_000) // Check every 1 minute
   }
 
-  // Queue any task globally across all users so Chrome instances never overlap or waste RAM
+  // Queue any task globally across all users so Chrome instances never overlap or waste RAM.
+  // FIX 1: The .catch() safety-net previously never called resolve/reject, leaving callers
+  // permanently hanging. This was the PRIMARY cause of "QR scanner not opening without restart".
+  // Now the outer Promise is always settled (resolved or rejected) even if the chain breaks.
   enqueueGlobalTask(taskFn) {
+    this._globalQueueLastActivity = Date.now()
     return new Promise((resolve, reject) => {
-      this.globalQueue = this.globalQueue.then(async () => {
-        try {
-          const result = await taskFn()
-          resolve(result)
-        } catch (error) {
-          reject(error)
-        }
-      }).catch(() => {
-        // Keep global chain intact even if task throws
-      })
+      this.globalQueue = this.globalQueue
+        .then(async () => {
+          this._globalQueueLastActivity = Date.now()
+          try {
+            const result = await taskFn()
+            resolve(result)
+          } catch (error) {
+            reject(error)
+          }
+        })
+        .catch((chainErr) => {
+          // Keep global chain alive, but MUST resolve/reject the caller so they are never stuck
+          reject(chainErr || new Error('Global queue chain error'))
+          // Reset chain to a clean resolved state for the next queued task
+          this.globalQueue = Promise.resolve()
+          this._globalQueueLastActivity = Date.now()
+        })
     })
   }
 
@@ -700,6 +751,50 @@ class WhatsappServiceManager {
   async restoreSessionsOnStartup() {
     try {
       waLog.separator('SERVER STARTUP')
+
+      // FIX 7: Sweep ALL Chrome lock files from every session directory on startup.
+      // When a VPS crashes or is hard-rebooted, Chrome cannot remove its own lock files.
+      // These stale locks prevent Chrome from launching on the next connect attempt,
+      // causing the QR page to silently hang until a server restart clears them.
+      const authRoot = path.resolve(AUTH_DATA_PATH)
+      if (fs.existsSync(authRoot)) {
+        let lockFilesRemoved = 0
+        try {
+          const entries = fs.readdirSync(authRoot)
+          for (const dir of entries) {
+            if (!dir.startsWith('session-')) continue
+            const sessionDir = path.join(authRoot, dir)
+            // Chrome places lock files in session root and any profile subdirs
+            const subdirs = [sessionDir]
+            try {
+              for (const sub of fs.readdirSync(sessionDir)) {
+                const subPath = path.join(sessionDir, sub)
+                if (fs.statSync(subPath).isDirectory()) subdirs.push(subPath)
+              }
+            } catch (_) {}
+            const lockFiles = ['SingletonLock', 'SingletonSocket', 'SingletonCookie']
+            for (const subdir of subdirs) {
+              for (const lf of lockFiles) {
+                const lockPath = path.join(subdir, lf)
+                try {
+                  if (fs.existsSync(lockPath)) {
+                    fs.rmSync(lockPath, { force: true })
+                    lockFilesRemoved++
+                    console.log(`[WHATSAPP] Startup: removed stale lock file: ${lockPath}`)
+                  }
+                } catch (_) {}
+              }
+            }
+          }
+        } catch (lockErr) {
+          console.warn('[WHATSAPP] Startup lock sweep warning:', lockErr.message)
+        }
+        if (lockFilesRemoved > 0) {
+          console.log(`[WHATSAPP] Startup: removed ${lockFilesRemoved} stale Chrome lock file(s).`)
+          waLog.info('', 'STARTUP_LOCK_SWEEP', `Removed ${lockFilesRemoved} stale Chrome lock file(s) from auth directories`)
+        }
+      }
+
       const stale = await WaSession.updateMany(
         { status: { $in: ['qr_ready', 'initializing'] } },
         {

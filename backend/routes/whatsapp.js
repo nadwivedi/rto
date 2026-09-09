@@ -99,6 +99,39 @@ router.post('/renew-qr', async (req, res) => {
   }
 })
 
+// POST Auto-reconnect: silently restores a session using saved auth files after a VPS restart.
+// FIX 6: If DB says the user was authenticated but there is no active Chrome in memory,
+// and the user hasn't manually stopped/logged out, this restarts the session automatically
+// so the user doesn't need to re-scan QR just because the VPS rebooted.
+router.post('/auto-reconnect', async (req, res) => {
+  try {
+    const userId = req.user.id
+    const session = await whatsappService.getSessionStatus(userId)
+    const instance = whatsappService.getInstance(userId)
+
+    // Only auto-reconnect if: previously authenticated, no active browser, not manually stopped
+    if (
+      session?.status === 'authenticated' &&
+      !instance.client &&
+      !instance.isInitializing &&
+      !instance.isStopped
+    ) {
+      console.log(`[WHATSAPP:${userId}] Auto-reconnect triggered — restoring session from saved auth.`)
+      whatsappService.initializeSession(userId) // non-blocking — QR or ready will follow
+      return res.json({ message: 'Auto-reconnect initiated. Session will restore if auth files are valid.', reconnecting: true })
+    }
+
+    res.json({
+      message: 'No auto-reconnect needed.',
+      reconnecting: false,
+      status: session?.status,
+      clientActive: whatsappService.isClientConnected(userId)
+    })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
 // POST Manual trigger — immediately scan + send (for testing, one-click from UI)
 router.post('/trigger-check', async (req, res) => {
   try {
@@ -106,31 +139,11 @@ router.post('/trigger-check', async (req, res) => {
     const { checkUserAndQueueAlerts } = require('../jobs/whatsappDailyExpiryChecker')
     const { processPendingMessagesForUser } = require('../jobs/whatsappMessageSender')
 
-    // Reset ALL today's failed messages back to pending before scan
-    const startOfDay = new Date()
-    startOfDay.setHours(0, 0, 0, 0)
-    const failedReset = await MessageLog.updateMany(
-      { userId, status: 'failed', createdAt: { $gte: startOfDay } },
-      { $set: { status: 'pending', errorReason: null, scheduledFor: new Date() } }
-    )
-
-    // Also reset stale pending messages older than 1 hour (so re-check can re-queue if needed)
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
-    const stalePendingReset = await MessageLog.updateMany(
-      { userId, status: 'pending', scheduledFor: { $lt: oneHourAgo } },
-      { $set: { status: 'failed', errorReason: 'Stale — reset by manual trigger' } }
-    )
-
-    // Delete old 'failed' stale logs so they can be re-queued fresh
-    await MessageLog.deleteMany(
-      { userId, status: 'failed', errorReason: 'Stale — reset by manual trigger' }
-    )
-
     const queued = await checkUserAndQueueAlerts(userId)
     await processPendingMessagesForUser(userId)
 
     res.json({
-      message: `Scan done. ${queued || 0} new alerts queued. ${failedReset.modifiedCount} failed messages reset. ${stalePendingReset.modifiedCount} stale pending cleared. Sender processed pending.`
+      message: `Scan done. ${queued || 0} new alerts queued. Sender processed pending.`
     })
   } catch (error) {
     res.status(500).json({ message: error.message })

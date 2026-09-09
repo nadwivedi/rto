@@ -315,7 +315,9 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
         if (specificUserId) activeQuery.userId = specificUserId
         const activeRecords = await Model.find(activeQuery).select('vehicleNumber userId').lean()
         vehiclesWithActiveService = new Set(
-          activeRecords.map(r => `${r.userId.toString()}:${r.vehicleNumber}`)
+          activeRecords
+            .filter(r => r.userId)
+            .map(r => `${r.userId.toString()}:${r.vehicleNumber}`)
         )
       }
 
@@ -343,26 +345,13 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
         const alert = getAlertForDay(diffDays, rule)
         if (!alert) continue
 
-        const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000)
-
-        // Clear stale pending for this specific bucket — if WhatsApp was down
-        // and the message stayed pending for 2+ hours, delete it so we can retry today
-        await MessageLog.deleteMany({
-          userId: docUserId,
-          documentId: doc._id,
-          documentType: source.documentType,
-          status: 'pending',
-          alertKey: alert.key,
-          scheduledFor: { $lt: twoHoursAgo }
-        })
-
-        // Now check if this bucket already has a sent or recently-pending message
+        // Check if this alert bucket has ALREADY been queued/sent/failed for this document
         const alreadyQueued = await MessageLog.findOne({
           userId: docUserId,
           documentId: doc._id,
           documentType: source.documentType,
-          status: { $in: ['pending', 'sent'] },
-          alertKey: alert.key
+          alertKey: alert.key,
+          status: { $in: ['pending', 'sent', 'failed'] }
         })
 
         if (alreadyQueued) continue
@@ -381,20 +370,28 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
           language: setting.messageLanguage
         })
 
-        await MessageLog.create({
-          userId: docUserId,
-          documentId: doc._id,
-          documentType: source.documentType,
-          targetNumber: mobileNumber,
-          ownerName: doc[source.ownerField] || doc.ownerName || doc.partyName || 'Unknown Owner',
-          messageBody,
-          alertKey: alert.key,
-          status: 'pending',
-          scheduledFor: new Date()
-        })
+        try {
+          await MessageLog.create({
+            userId: docUserId,
+            documentId: doc._id,
+            documentType: source.documentType,
+            targetNumber: mobileNumber,
+            ownerName: doc[source.ownerField] || doc.ownerName || doc.partyName || 'Unknown Owner',
+            messageBody,
+            alertKey: alert.key,
+            status: 'pending',
+            scheduledFor: new Date()
+          })
 
-        queuedCount++
-        console.log(`[WHATSAPP-CRON:${docUserId}] Queued: ${source.name} | ${vehicleNo} | ${mobileNumber} | ${alert.label}`)
+          queuedCount++
+          console.log(`[WHATSAPP-CRON:${docUserId}] Queued: ${source.name} | ${vehicleNo} | ${mobileNumber} | ${alert.label}`)
+        } catch (createErr) {
+          if (createErr.code === 11000) {
+            console.log(`[WHATSAPP-CRON:${docUserId}] Duplicate alert key prevented by DB index: ${source.name} | ${vehicleNo}`)
+          } else {
+            throw createErr
+          }
+        }
       }
     }
 
@@ -443,7 +440,7 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
           userId: docUserId,
           documentId: doc._id,
           documentType: 'NationalPermit',
-          status: { $in: ['pending', 'sent'] },
+          status: { $in: ['pending', 'sent', 'failed'] },
           alertKey: { $regex: `(^|__)${escapeRegExp(partAlert.alertKey)}($|__)` }
         })
 
@@ -459,7 +456,7 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
         userId: docUserId,
         documentId: doc._id,
         documentType: 'NationalPermit',
-        status: { $in: ['pending', 'sent'] },
+        status: { $in: ['pending', 'sent', 'failed'] },
         alertKey
       })
 
@@ -477,21 +474,29 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
         language: setting.messageLanguage
       })
 
-      await MessageLog.create({
-        userId: docUserId,
-        documentId: doc._id,
-        documentType: 'NationalPermit',
-        targetNumber: mobileNumber,
-        ownerName: doc.permitHolder || doc.ownerName || doc.partyName || 'Unknown Owner',
-        messageBody,
-        alertKey,
-        status: 'pending',
-        scheduledFor: new Date()
-      })
+      try {
+        await MessageLog.create({
+          userId: docUserId,
+          documentId: doc._id,
+          documentType: 'NationalPermit',
+          targetNumber: mobileNumber,
+          ownerName: doc.permitHolder || doc.ownerName || doc.partyName || 'Unknown Owner',
+          messageBody,
+          alertKey,
+          status: 'pending',
+          scheduledFor: new Date()
+        })
 
-      queuedCount++
-      const partLabels = missingPartAlerts.map((partAlert) => partAlert.partLabel).join(' + ')
-      console.log(`[WHATSAPP-CRON:${docUserId}] Queued: NP ${partLabels} | ${vehicleNo} | ${mobileNumber}`)
+        queuedCount++
+        const partLabels = missingPartAlerts.map((partAlert) => partAlert.partLabel).join(' + ')
+        console.log(`[WHATSAPP-CRON:${docUserId}] Queued: NP ${partLabels} | ${vehicleNo} | ${mobileNumber}`)
+      } catch (createErr) {
+        if (createErr.code === 11000) {
+          console.log(`[WHATSAPP-CRON:${docUserId}] Duplicate NP alert key prevented by DB index: ${vehicleNo}`)
+        } else {
+          throw createErr
+        }
+      }
     }
 
     // ── LL Eligible for DL reminder (30–40 days after LL issue date) ──────────
@@ -538,7 +543,7 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
         userId: docUserId,
         documentId: doc._id,
         documentType: 'Driving',
-        status: { $in: ['pending', 'sent'] },
+        status: { $in: ['pending', 'sent', 'failed'] },
         alertKey: LL_ELIGIBLE_ALERT_KEY
       })
       if (alreadyQueued) continue
@@ -570,21 +575,29 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
             : `${englishLL}\n\n${hindiLL}`
       }
 
-      await MessageLog.create({
-        userId: docUserId,
-        documentId: doc._id,
-        documentType: 'Driving',
-        targetNumber: mobileNumber,
-        ownerName: doc.name || 'Unknown',
-        messageBody,
-        alertKey: LL_ELIGIBLE_ALERT_KEY,
-        status: 'pending',
-        scheduledFor: new Date()
-      })
+      try {
+        await MessageLog.create({
+          userId: docUserId,
+          documentId: doc._id,
+          documentType: 'Driving',
+          targetNumber: mobileNumber,
+          ownerName: doc.name || 'Unknown',
+          messageBody,
+          alertKey: LL_ELIGIBLE_ALERT_KEY,
+          status: 'pending',
+          scheduledFor: new Date()
+        })
 
-      queuedCount++
-      const daysSinceIssue = Math.floor((today_ll - new Date(doc.learningLicenseIssueDate)) / (24 * 60 * 60 * 1000))
-      console.log(`[WHATSAPP-CRON:${docUserId}] Queued: LL Eligible | ${doc.name} | ${mobileNumber} | Day ${daysSinceIssue}`)
+        queuedCount++
+        const daysSinceIssue = Math.floor((today_ll - new Date(doc.learningLicenseIssueDate)) / (24 * 60 * 60 * 1000))
+        console.log(`[WHATSAPP-CRON:${docUserId}] Queued: LL Eligible | ${doc.name} | ${mobileNumber} | Day ${daysSinceIssue}`)
+      } catch (createErr) {
+        if (createErr.code === 11000) {
+          console.log(`[WHATSAPP-CRON:${docUserId}] Duplicate LL Eligible alert key prevented by DB index: ${doc.name}`)
+        } else {
+          throw createErr
+        }
+      }
     }
     // ── End LL Eligible scan ──────────────────────────────────────────────────
 

@@ -67,5 +67,10 @@ const messageLogSchema = new mongoose.Schema({
 messageLogSchema.index({ status: 1, scheduledFor: 1 })
 // Index for checking how many sent today
 messageLogSchema.index({ status: 1, sentAt: 1 })
+// Compound index for deduplicating document alerts per alert key
+messageLogSchema.index(
+  { userId: 1, documentId: 1, documentType: 1, alertKey: 1 },
+  { unique: true, partialFilterExpression: { alertKey: { $type: 'string' } } }
+)
 
 module.exports = mongoose.model('MessageLog', messageLogSchema)

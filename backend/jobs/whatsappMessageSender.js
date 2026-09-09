@@ -37,18 +37,35 @@ const processPendingMessagesForUser = async (userId) => {
         const startOfDay = new Date()
         startOfDay.setHours(0, 0, 0, 0)
 
-        // Reset today's failed messages back to pending for retry on transient connection issues
-        const resetResult = await MessageLog.updateMany(
-            {
-                userId: uid,
-                status: 'failed',
-                createdAt: { $gte: startOfDay },
-                errorReason: { $regex: /not initialized|paused|State: null|State: undefined|not found.*@lid|not found @lid|not ready|will retry|connection lost/i }
-            },
-            { $set: { status: 'pending', errorReason: null, scheduledFor: new Date() } }
-        )
-        if (resetResult.modifiedCount > 0) {
-            console.log(`[WHATSAPP-SENDER:${uid}] Reset ${resetResult.modifiedCount} failed message(s) back to pending for retry.`)
+        // Reset today's failed messages back to pending for retry — ONLY 1 per (documentId, alertKey)
+        const failedToday = await MessageLog.find({
+            userId: uid,
+            status: 'failed',
+            createdAt: { $gte: startOfDay },
+            errorReason: { $regex: /not initialized|paused|State: null|State: undefined|not found.*@lid|not found @lid|not ready|will retry|connection lost/i }
+        }).sort({ createdAt: -1 })
+
+        const resetDocKeys = new Set()
+        let resetCount = 0
+
+        for (const fMsg of failedToday) {
+            const key = fMsg.documentId ? `${fMsg.documentId.toString()}:${fMsg.alertKey || ''}` : fMsg._id.toString()
+            if (!resetDocKeys.has(key)) {
+                resetDocKeys.add(key)
+                fMsg.status = 'pending'
+                fMsg.errorReason = null
+                fMsg.scheduledFor = new Date()
+                await fMsg.save()
+                resetCount++
+            } else {
+                // Mark older duplicate failed message so it won't be retried
+                fMsg.errorReason = 'Duplicate failed log ignored'
+                await fMsg.save()
+            }
+        }
+
+        if (resetCount > 0) {
+            console.log(`[WHATSAPP-SENDER:${uid}] Reset ${resetCount} unique failed message(s) back to pending for retry.`)
         }
 
         // 2. Check Daily Limit
@@ -90,12 +107,32 @@ const processPendingMessagesForUser = async (userId) => {
 
         if (limitToFetch <= 0) return
 
-        const messages = await MessageLog.find({
+        const rawPendingMessages = await MessageLog.find({
             userId: uid,
             status: 'pending',
             scheduledFor: { $lte: new Date() }
-        }).sort({ scheduledFor: 1 }).limit(limitToFetch)
+        }).sort({ scheduledFor: 1 })
 
+        if (rawPendingMessages.length === 0) return
+
+        // In-memory deduplication by documentId + alertKey
+        const seenDocAlertKeys = new Set()
+        const messagesToProcess = []
+
+        for (const pMsg of rawPendingMessages) {
+            const key = pMsg.documentId ? `${pMsg.documentId.toString()}:${pMsg.alertKey || ''}` : pMsg._id.toString()
+            if (!seenDocAlertKeys.has(key)) {
+                seenDocAlertKeys.add(key)
+                messagesToProcess.push(pMsg)
+            } else {
+                // Cancel duplicate pending log to prevent re-sending
+                pMsg.status = 'failed'
+                pMsg.errorReason = 'Duplicate pending alert cancelled'
+                await pMsg.save()
+            }
+        }
+
+        const messages = messagesToProcess.slice(0, limitToFetch)
         if (messages.length === 0) return
 
         console.log(`[WHATSAPP-SENDER:${uid}] Found ${messages.length} pending message(s) within cycle limit. Queueing...`)
@@ -121,14 +158,19 @@ const processPendingMessagesForUser = async (userId) => {
             }
         }
         
-        // Session stays alive only if a UI user is actively on the WhatsApp page.
-        // If nobody has polled in 30+ seconds, destroy Chrome immediately to free RAM.
-        // If a UI user IS present, the 5-min idle timer will handle cleanup naturally.
+        // Session stays alive for at least 2 minutes after batch finishes before destroying session
         const instance = whatsappService.getInstance(uid)
         if (!instance.hasActiveUiUser()) {
-            console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. No active UI user — destroying Chrome gracefully to free RAM.`)
-            waLog.cronBatchDone(uid, true)
-            await whatsappService.destroySession(uid)
+            console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. Keeping Chrome session open for 2 minutes before cleanup...`)
+            await new Promise(r => setTimeout(r, 120000))
+            if (!instance.hasActiveUiUser()) {
+                console.log(`[WHATSAPP-SENDER:${uid}] 2-minute pause elapsed. Destroying Chrome gracefully to free RAM.`)
+                waLog.cronBatchDone(uid, true)
+                await whatsappService.destroySession(uid)
+            } else {
+                console.log(`[WHATSAPP-SENDER:${uid}] UI user active after pause — leaving session open.`)
+                waLog.cronBatchDone(uid, false)
+            }
         } else {
             console.log(`[WHATSAPP-SENDER:${uid}] Batch complete. UI user active — idle timer will clean up.`)
             waLog.cronBatchDone(uid, false)

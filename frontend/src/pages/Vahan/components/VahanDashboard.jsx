@@ -52,6 +52,25 @@ const formatDate = (date) => {
   return parsedDate.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+const formatDateTime = (value) => {
+  if (!value) return null
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return null
+
+  const day = String(date.getDate()).padStart(2, '0')
+  const month = String(date.getMonth() + 1).padStart(2, '0')
+  const year = date.getFullYear()
+
+  let hours = date.getHours()
+  const minutes = String(date.getMinutes()).padStart(2, '0')
+  const ampm = hours >= 12 ? 'PM' : 'AM'
+  hours = hours % 12
+  hours = hours ? hours : 12
+  const strHours = String(hours).padStart(2, '0')
+
+  return `${day}/${month}/${year} ${strHours}:${minutes} ${ampm}`
+}
+
 const getDateTime = (date) => parseAppDate(date)?.getTime() || Number.MAX_SAFE_INTEGER
 
 const VahanDashboard = () => {
@@ -338,6 +357,7 @@ const VahanDashboard = () => {
                       <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Doc</th>
                       <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Validity</th>
                       <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>Days Left</th>
+                      <th className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3 text-left text-[11px] lg:text-xs xl:text-sm font-semibold uppercase tracking-wider text-gray-600'>WhatsApp Alert</th>
                     </tr>
                   </thead>
                   <tbody className='divide-y divide-gray-200'>
@@ -370,6 +390,55 @@ const VahanDashboard = () => {
                           <span className={`text-[10px] sm:text-[11px] lg:text-xs xl:text-sm font-bold ${getDaysRemaining(record.validTo) < 0 ? 'text-red-600' : 'text-orange-600'}`}>
                             {formatExpiryText(record.validTo)}
                           </span>
+                        </td>
+                        <td className='px-2 py-2 sm:px-3 lg:px-4 lg:py-3'>
+                          {record.whatsappLog?.status === 'sent' && (
+                            <div className='space-y-0.5'>
+                              <span className='inline-flex items-center gap-1 rounded bg-emerald-100 px-1.5 py-0.5 text-[9px] sm:text-[11px] lg:text-xs font-semibold text-emerald-700'>
+                                <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
+                                </svg>
+                                Sent
+                              </span>
+                              <div className='text-[9px] sm:text-[10px] text-gray-500 font-medium'>
+                                {formatDateTime(record.whatsappLog.sentAt || record.whatsappLog.createdAt) || '-'}
+                              </div>
+                            </div>
+                          )}
+                          {record.whatsappLog?.status === 'pending' && (
+                            <div className='space-y-0.5'>
+                              <span className='inline-flex items-center gap-1 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] sm:text-[11px] lg:text-xs font-semibold text-amber-700'>
+                                <svg className='w-3 h-3 animate-spin' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                  <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4'></circle>
+                                  <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z'></path>
+                                </svg>
+                                Pending
+                              </span>
+                              <div className='text-[9px] sm:text-[10px] text-gray-500 font-medium'>
+                                {formatDateTime(record.whatsappLog.scheduledFor || record.whatsappLog.createdAt) || '-'}
+                              </div>
+                            </div>
+                          )}
+                          {record.whatsappLog?.status === 'failed' && (
+                            <div className='space-y-0.5'>
+                              <span className='inline-flex items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-[9px] sm:text-[11px] lg:text-xs font-semibold text-red-700' title={record.whatsappLog.errorReason || 'Failed to send'}>
+                                <svg className='w-3 h-3' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                                </svg>
+                                Failed
+                              </span>
+                              <div className='text-[9px] sm:text-[10px] text-red-500 font-medium truncate max-w-[120px]' title={record.whatsappLog.errorReason}>
+                                {formatDateTime(record.whatsappLog.createdAt) || '-'}
+                              </div>
+                            </div>
+                          )}
+                          {!record.whatsappLog && (
+                            <div className='space-y-0.5'>
+                              <span className='inline-flex items-center rounded bg-gray-100 px-1.5 py-0.5 text-[9px] sm:text-[11px] lg:text-xs font-semibold text-gray-500'>
+                                Not Sent
+                              </span>
+                            </div>
+                          )}
                         </td>
                       </tr>
                     ))}

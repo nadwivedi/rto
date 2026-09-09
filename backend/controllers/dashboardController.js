@@ -8,6 +8,7 @@ const CgPermit = require('../models/CgPermit');
 const Insurance = require('../models/Insurance');
 const TemporaryPermit = require('../models/TemporaryPermit');
 const TemporaryPermitOtherState = require('../models/TemporaryPermitOtherState');
+const MessageLog = require('../models/MessageLog');
 const mongoose = require('mongoose');
 
 exports.getDashboardData = async (req, res) => {
@@ -149,6 +150,60 @@ exports.getDashboardData = async (req, res) => {
         return aDate - bDate
       })
 
+    // Fetch latest MessageLog for each expiring document
+    const expiringDocIds = [];
+    const addDocIds = (docs) => {
+      if (Array.isArray(docs)) {
+        docs.forEach(d => {
+          if (d && d._id) expiringDocIds.push(d._id);
+        });
+      }
+    };
+
+    addDocIds(fitnessExpiring);
+    addDocIds(pucExpiring);
+    addDocIds(gpsExpiring);
+    addDocIds(taxExpiring);
+    addDocIds(busPermitExpiring);
+    addDocIds(nationalPermitExpiring);
+    addDocIds(cgPermitExpiring);
+    addDocIds(insuranceExpiring);
+    addDocIds(insuranceThirdPartyExpiring);
+    addDocIds(temporaryPermitExpiring);
+    addDocIds(temporaryPermitOtherStateExpiring);
+
+    const messageLogs = await MessageLog.find({
+      userId,
+      documentId: { $in: expiringDocIds }
+    }).sort({ createdAt: -1 }).lean();
+
+    const whatsappLogMap = {};
+    for (const log of messageLogs) {
+      const docIdStr = log.documentId.toString();
+      if (!whatsappLogMap[docIdStr]) {
+        whatsappLogMap[docIdStr] = {
+          status: log.status,
+          sentAt: log.sentAt,
+          scheduledFor: log.scheduledFor,
+          createdAt: log.createdAt,
+          errorReason: log.errorReason,
+          alertKey: log.alertKey
+        };
+      }
+    }
+
+    const attachWhatsappInfo = (docs) => {
+      if (!Array.isArray(docs)) return [];
+      return docs.map(doc => {
+        const docObj = doc.toObject ? doc.toObject() : { ...doc };
+        const log = docObj._id ? (whatsappLogMap[docObj._id.toString()] || null) : null;
+        return {
+          ...docObj,
+          whatsappLog: log
+        };
+      });
+    };
+
     const formatStats = (stats) => {
       const result = { total: 0, active: 0, expiringSoon: 0, expired: 0 };
       let total = 0;
@@ -180,17 +235,17 @@ exports.getDashboardData = async (req, res) => {
           temporaryPermitOtherState: formatStats(temporaryPermitOtherStateStats),
         },
         expiringRecords: {
-          fitness: fitnessExpiring,
-          puc: pucExpiring,
-          gps: gpsExpiring,
-          tax: taxExpiring,
-          busPermit: busPermitExpiring,
-          nationalPermit: nationalPermitExpiring,
-          cgPermit: cgPermitExpiring,
-          insurance: insuranceExpiring,
-          insuranceThirdParty: insuranceThirdPartyExpiring,
-          temporaryPermit: temporaryPermitExpiring,
-          temporaryPermitOtherState: temporaryPermitOtherStateExpiring,
+          fitness: attachWhatsappInfo(fitnessExpiring),
+          puc: attachWhatsappInfo(pucExpiring),
+          gps: attachWhatsappInfo(gpsExpiring),
+          tax: attachWhatsappInfo(taxExpiring),
+          busPermit: attachWhatsappInfo(busPermitExpiring),
+          nationalPermit: attachWhatsappInfo(nationalPermitExpiring),
+          cgPermit: attachWhatsappInfo(cgPermitExpiring),
+          insurance: attachWhatsappInfo(insuranceExpiring),
+          insuranceThirdParty: attachWhatsappInfo(insuranceThirdPartyExpiring),
+          temporaryPermit: attachWhatsappInfo(temporaryPermitExpiring),
+          temporaryPermitOtherState: attachWhatsappInfo(temporaryPermitOtherStateExpiring),
         },
       },
     });
