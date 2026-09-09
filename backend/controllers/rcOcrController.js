@@ -112,10 +112,16 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
       ? imageBase64
       : `data:image/jpeg;base64,${imageBase64}`;
 
+    // Prepend /no_think to suppress Qwen's chain-of-thought reasoning.
+    // Without this, Qwen emits a <think>...</think> block before JSON output.
+    // If max_completion_tokens is too low, the think block truncates mid-way,
+    // leaving no JSON in the response at all — causing the parse failure.
+    const noThinkPrompt = '/no_think\n' + textPrompt;
+
     const contentArray = [
       {
         type: 'text',
-        text: textPrompt
+        text: noThinkPrompt
       },
       {
         type: 'image_url',
@@ -139,9 +145,9 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
         model: 'qwen/qwen3.6-27b',
         messages: [{ role: 'user', content: contentArray }],
         temperature: 0.1,
-        max_completion_tokens: 2048
-        // NOTE: Do NOT set reasoning_format: 'hidden' for vision calls —
-        // it causes the model to return an empty content string on image uploads.
+        // Increased from 2048 → 4096: at 2048 the think block can consume all tokens
+        // before the model outputs any JSON, causing a truncated response with no valid JSON.
+        max_completion_tokens: 4096
       };
       if (withFormat) body.response_format = { type: 'json_object' };
       return executeWithRetry('https://api.groq.com/openai/v1/chat/completions', body);
@@ -752,17 +758,53 @@ ${jsonTemplate}`;
 
     let messageContent = response.data.choices[0].message.content;
 
-    // Strip out the <think>...</think> block if present
+    // Strip out <think>...</think> blocks — handles BOTH properly closed and truncated (no </think>) blocks.
+    // The Qwen reasoning model sometimes hits max_tokens mid-think, leaving an unclosed <think> tag.
+    // Lazy match: try closed form first, then strip everything from <think> onward if unclosed.
     messageContent = messageContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+    // If a <think> tag still exists (unclosed/truncated), strip everything from <think> to end of content,
+    // then look for any JSON that may have been emitted BEFORE the think block started.
+    if (/<think>/i.test(messageContent)) {
+      const beforeThink = messageContent.replace(/<think>[\s\S]*/i, '').trim();
+      messageContent = beforeThink;
+    }
+
+    // If messageContent is empty after stripping (think block consumed ALL tokens),
+    // retry without json_object format and without /no_think — free-form fallback.
+    if (!messageContent.trim()) {
+      console.warn('[OCR] Response was empty after stripping think blocks. Retrying in free-text mode...');
+      const fallbackBody = {
+        model: 'qwen/qwen3.6-27b',
+        messages: [{ role: 'user', content: contentArray }],
+        temperature: 0.1,
+        max_completion_tokens: 4096
+      };
+      try {
+        const fallbackResp = await executeWithRetry('https://api.groq.com/openai/v1/chat/completions', fallbackBody);
+        let fallbackContent = fallbackResp.data.choices[0].message.content || '';
+        fallbackContent = fallbackContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+        if (/<think>/i.test(fallbackContent)) {
+          fallbackContent = fallbackContent.replace(/<think>[\s\S]*/i, '').trim();
+        }
+        if (fallbackContent.trim()) {
+          messageContent = fallbackContent;
+        }
+      } catch (retryErr) {
+        console.error('[OCR] Fallback retry also failed:', retryErr.message);
+      }
+    }
 
     let jsonStr = messageContent;
-    const jsonMatch = messageContent.match(/```(?:json)?\n([\s\S]*?)\n```/);
+    const jsonMatch = messageContent.match(/```(?:json)?\n?([\s\S]*?)\n?```/);
     if (jsonMatch) {
       jsonStr = jsonMatch[1];
     } else {
-        const objMatch = messageContent.match(/\{[\s\S]*\}/);
-        if (objMatch) {
-            jsonStr = objMatch[0];
+        // Find the LAST valid JSON object in the response (model sometimes emits text before the JSON)
+        const allObjMatches = [...messageContent.matchAll(/\{[\s\S]*?\}/g)];
+        if (allObjMatches.length > 0) {
+            // Try largest match first (most complete JSON object)
+            const sorted = allObjMatches.slice().sort((a, b) => b[0].length - a[0].length);
+            jsonStr = sorted[0][0];
         }
     }
 
