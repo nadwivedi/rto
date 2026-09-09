@@ -6,7 +6,17 @@ const rateLimitedKeys = new Map();
 const RATE_LIMIT_DURATION = 12 * 60 * 60 * 1000; // 12 hours
 
 const getGroqApiKeyInfo = () => {
-  const allKeys = [process.env.GROQ_API_KEY, process.env.GROQ_API_KEY_2, process.env.GROQ_API_KEY_3, process.env.GROQ_API_KEY_4, process.env.GROQ_API_KEY_5, process.env.GROQ_API_KEY_6, process.env.GROQ_API_KEY_7].filter(Boolean);
+  // Dynamically collect all GROQ_API_KEY and GROQ_API_KEY_* environment variables
+  const allKeys = Object.keys(process.env)
+    .filter(k => /^GROQ_API_KEY(_\d+)?$/i.test(k) && process.env[k])
+    .sort((a, b) => {
+      const numA = parseInt(a.replace(/\D/g, '') || '1', 10);
+      const numB = parseInt(b.replace(/\D/g, '') || '1', 10);
+      return numA - numB;
+    })
+    .map(k => process.env[k].trim())
+    .filter(Boolean);
+
   const now = Date.now();
   for (const [key, timestamp] of rateLimitedKeys.entries()) {
     if (now - timestamp > RATE_LIMIT_DURATION) rateLimitedKeys.delete(key);
