@@ -1,47 +1,86 @@
 const axios = require('axios');
 const pdfParse = require('pdf-parse');
 
-let groqKeyIndex = 0;
-const rateLimitedKeys = new Map();
-const RATE_LIMIT_DURATION = 12 * 60 * 60 * 1000; // 12 hours
+// ─── OCR Provider Configuration ───────────────────────────────────────────────
+// Set OCR_PROVIDER=auto   → Tries Groq free-tier keys first; automatically falls back to OpenAI when exhausted (Default)
+// Set OCR_PROVIDER=groq   → Uses Groq with OpenAI fallback on limit
+// Set OCR_PROVIDER=openai → Uses OpenAI (gpt-4o-mini) directly
+const getOcrProvider = () => (process.env.OCR_PROVIDER || 'auto').toLowerCase();
 
-const getGroqApiKeyInfo = () => {
-  // Dynamically collect all GROQ_API_KEY and GROQ_API_KEY_* environment variables
-  const allKeys = Object.keys(process.env)
+// ─── Groq key management & 12-hour cooldown ──────────────────────────────────
+let groqKeyIndex = 0;
+const rateLimitedKeys = new Map(); // keyString -> { timestamp, name, preview }
+const RATE_LIMIT_DURATION = 12 * 60 * 60 * 1000; // 12 hours cooldown
+
+const getAllGroqKeys = () => {
+  return Object.keys(process.env)
     .filter(k => /^GROQ_API_KEY(_\d+)?$/i.test(k) && process.env[k])
     .sort((a, b) => {
       const numA = parseInt(a.replace(/\D/g, '') || '1', 10);
       const numB = parseInt(b.replace(/\D/g, '') || '1', 10);
       return numA - numB;
     })
-    .map(k => process.env[k].trim())
-    .filter(Boolean);
+    .map(k => {
+      const val = process.env[k].trim();
+      return {
+        name: k,
+        key: val,
+        preview: val.substring(0, 8) + '...' + val.substring(val.length - 4)
+      };
+    })
+    .filter(item => Boolean(item.key));
+};
 
+const cleanupExpiredRateLimits = () => {
   const now = Date.now();
-  for (const [key, timestamp] of rateLimitedKeys.entries()) {
-    if (now - timestamp > RATE_LIMIT_DURATION) rateLimitedKeys.delete(key);
+  for (const [key, info] of rateLimitedKeys.entries()) {
+    if (now - info.timestamp > RATE_LIMIT_DURATION) {
+      rateLimitedKeys.delete(key);
+      console.log(`[OCR/Groq] ♻️ COOLDOWN EXPIRED: ${info.name} (${info.preview}) is re-enabled for free tier!`);
+    }
   }
-  const availableKeys = allKeys.filter(key => !rateLimitedKeys.has(key));
-  const keysToUse = availableKeys.length > 0 ? availableKeys : allKeys;
-  groqKeyIndex = (groqKeyIndex + 1) % keysToUse.length;
-  return { key: keysToUse[groqKeyIndex], totalAvailable: allKeys.length };
-}
+};
 
-const markKeyRateLimited = (key) => {
-  rateLimitedKeys.set(key, Date.now());
-  console.warn(`Groq API key starting with ${key.substring(0, 8)} rate limited. Cooldown for 12 hours.`);
-}
+const hasAvailableGroqKeys = () => {
+  cleanupExpiredRateLimits();
+  const allKeys = getAllGroqKeys();
+  if (allKeys.length === 0) return false;
+  const availableKeys = allKeys.filter(item => !rateLimitedKeys.has(item.key));
+  return availableKeys.length > 0;
+};
+
+const getGroqApiKeyInfo = () => {
+  cleanupExpiredRateLimits();
+  const allKeys = getAllGroqKeys();
+  const availableKeys = allKeys.filter(item => !rateLimitedKeys.has(item.key));
+
+  if (availableKeys.length === 0) {
+    return { keyObj: null, totalAvailable: allKeys.length, availableCount: 0 };
+  }
+
+  groqKeyIndex = (groqKeyIndex + 1) % availableKeys.length;
+  const chosenKeyObj = availableKeys[groqKeyIndex];
+  return { keyObj: chosenKeyObj, totalAvailable: allKeys.length, availableCount: availableKeys.length };
+};
+
+const markKeyRateLimited = (keyObj) => {
+  rateLimitedKeys.set(keyObj.key, { timestamp: Date.now(), name: keyObj.name, preview: keyObj.preview });
+  const allKeys = getAllGroqKeys();
+  const remaining = allKeys.filter(item => !rateLimitedKeys.has(item.key)).length;
+  console.warn(`[OCR/Groq] ⚠️ RATE LIMIT HIT on ${keyObj.name} (${keyObj.preview}). Marked for 12h cooldown. Active Groq keys: ${remaining}/${allKeys.length}`);
+};
 
 const executeWithRetry = async (url, body, retryCount = 0) => {
   const keyInfo = getGroqApiKeyInfo();
-  if (retryCount >= keyInfo.totalAvailable) {
-    throw new Error('All Groq API keys are currently rate-limited or max retries reached.');
+  if (!keyInfo.keyObj || keyInfo.availableCount === 0 || retryCount >= keyInfo.totalAvailable) {
+    throw new Error('All Groq API keys are currently rate-limited (12h cooldown).');
   }
-  const currentKey = keyInfo.key;
+  const currentKeyObj = keyInfo.keyObj;
+  console.log(`[OCR/Groq] 🔑 Calling Groq with ${currentKeyObj.name} (${currentKeyObj.preview} | Active keys: ${keyInfo.availableCount}/${keyInfo.totalAvailable})`);
   try {
     return await axios.post(url, body, {
       headers: {
-        'Authorization': `Bearer ${currentKey}`,
+        'Authorization': `Bearer ${currentKeyObj.key}`,
         'Content-Type': 'application/json'
       },
       timeout: 60000 // 60s timeout to avoid hanging on overloaded endpoints
@@ -50,21 +89,118 @@ const executeWithRetry = async (url, body, retryCount = 0) => {
     const status = error.response?.status;
     if (status === 429) {
       // Hard rate limit — mark this key as exhausted for 12 hours
-      markKeyRateLimited(currentKey);
+      markKeyRateLimited(currentKeyObj);
       return executeWithRetry(url, body, retryCount + 1);
     }
     if (status === 503 || status === 502 || status === 500 || status === 529) {
       // Transient server overload — do NOT blacklist the key, just try the next one
       const errMsg = error.response?.data?.error?.message || error.message || status;
-      console.warn(`Groq key ${currentKey.substring(0, 8)}... got ${status} (${errMsg}). Retrying with next key...`);
+      console.warn(`[OCR/Groq] ${currentKeyObj.name} got ${status} (${errMsg}). Retrying with next key...`);
       await new Promise(r => setTimeout(r, 1000 * (retryCount + 1))); // 1s, 2s, 3s... backoff
       return executeWithRetry(url, body, retryCount + 1);
     }
     throw error;
   }
-}
+};
 
 
+// ─── OpenAI API (gpt-4o-mini) ────────────────────────────────────────────────
+// Image OCR  → gpt-4o-mini with image_url vision input
+// PDF OCR    → gpt-4o-mini in text-only mode (extracted PDF text)
+// Retries on 429 / 5xx with exponential backoff: 2s → 4s → 8s → 16s
+
+const OPENAI_URL = 'https://api.openai.com/v1/chat/completions';
+const OPENAI_OCR_MODEL = 'gpt-4o-mini';
+const MAX_OPENAI_RETRIES = 4;
+
+const openaiPostWithRetry = async (body, attempt = 0) => {
+  const OPENAI_API_KEY = (process.env.OPENAI_API_KEY || '').trim();
+  if (!OPENAI_API_KEY) throw new Error('OPENAI_API_KEY is not set in environment variables.');
+  try {
+    return await axios.post(OPENAI_URL, body, {
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      timeout: 90000
+    });
+  } catch (err) {
+    const httpStatus = err.response?.status || 0;
+    const errCode    = String(err.response?.data?.error?.code || '');
+    const errMsg     = err.response?.data?.error?.message || err.message;
+    const isRateLimit = httpStatus === 429;
+    const isServer5xx = httpStatus >= 500 && httpStatus < 600;
+    if ((isRateLimit || isServer5xx) && attempt < MAX_OPENAI_RETRIES) {
+      const waitMs = Math.pow(2, attempt + 1) * 1000; // 2s, 4s, 8s, 16s
+      console.warn(`[OCR/OpenAI] Transient error (${httpStatus}${errCode ? '/' + errCode : ''}, "${errMsg}"). Retry ${attempt + 1}/${MAX_OPENAI_RETRIES} in ${waitMs / 1000}s...`);
+      await new Promise(r => setTimeout(r, waitMs));
+      return openaiPostWithRetry(body, attempt + 1);
+    }
+    console.error(`[OCR/OpenAI] Request failed after ${attempt + 1} attempt(s): ${httpStatus}${errCode ? '/' + errCode : ''}, "${errMsg}"`);
+    throw err;
+  }
+};
+
+const callOpenAIAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase64 = null) => {
+  console.log(`[OCR/OpenAI] 🌐 Sending ${isPdf ? 'PDF text' : 'Image vision'} OCR request to OpenAI (${OPENAI_OCR_MODEL})...`);
+  if (isPdf) {
+    // PDF: imageBase64 is extracted text — send as text-only message
+    const sanitizedText = imageBase64
+      .replace(/\uFB00/g, 'ff').replace(/\uFB01/g, 'fi').replace(/\uFB02/g, 'fl')
+      .replace(/\uFB03/g, 'ffi').replace(/\uFB04/g, 'ffl').replace(/\uFB05/g, 'st')
+      .replace(/\u0000/g, ' ')
+      .replace(/[^\x09\x0A\x0D\x20-\x7E\u00A0-\uFFFF]/g, ' ')
+      .replace(/[ \t]{3,}/g, '  ')
+      .trim();
+    return openaiPostWithRetry({
+      model: OPENAI_OCR_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a precise document OCR extractor. Extract literal values from document text into the requested JSON schema. Never guess. Return valid JSON only.'
+        },
+        {
+          role: 'user',
+          content: `<DOCUMENT>\n${sanitizedText}\n</DOCUMENT>\n\n${textPrompt}`
+        }
+      ],
+      temperature: 0,
+      max_tokens: 1024,
+      response_format: { type: 'json_object' }
+    });
+  } else {
+    // Image OCR — vision request with base64 image(s)
+    const formattedImage = imageBase64.startsWith('data:image')
+      ? imageBase64
+      : `data:image/jpeg;base64,${imageBase64}`;
+    const contentArray = [
+      { type: 'text', text: textPrompt },
+      { type: 'image_url', image_url: { url: formattedImage, detail: 'high' } }
+    ];
+    if (backImageBase64) {
+      const formattedBack = backImageBase64.startsWith('data:image')
+        ? backImageBase64
+        : `data:image/jpeg;base64,${backImageBase64}`;
+      contentArray.push({ type: 'image_url', image_url: { url: formattedBack, detail: 'high' } });
+    }
+    return openaiPostWithRetry({
+      model: OPENAI_OCR_MODEL,
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a precise document OCR extractor. Extract literal values from document images into the requested JSON schema. Never guess. Return valid JSON only.'
+        },
+        { role: 'user', content: contentArray }
+      ],
+      temperature: 0,
+      max_tokens: 1536,
+      response_format: { type: 'json_object' }
+    });
+  }
+};
+
+
+// ─── Groq API (kept intact for fallback / switching) ──────────────────────────
 const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase64 = null) => {
   if (isPdf) {
     // imageBase64 here is actually cleaned PDF text (extracted by pdf-parse + extractRelevantPdfText)
@@ -771,11 +907,34 @@ const processOcrRequest = async (req, res, promptText, jsonTemplate, maxPages = 
         payload = extractedText;
     }
 
-    const fullPrompt = `${promptText}
-Respond ONLY with a valid JSON object matching this structure exactly (use empty string "" if a field is not found):
-${jsonTemplate}`;
+    const fullPrompt = `${promptText}\nRespond ONLY with valid JSON matching this schema (use "" if absent):\n${jsonTemplate}`;
 
-    const response = await callGroqAPI(payload, fullPrompt, isPdf, backImageBase64);
+    const configuredProvider = getOcrProvider();
+    let response = null;
+    let usedProvider = 'groq';
+
+    if (configuredProvider === 'openai') {
+      console.log('[OCR] Provider configured to OPENAI directly');
+      response = await callOpenAIAPI(payload, fullPrompt, isPdf, backImageBase64);
+      usedProvider = 'openai';
+    } else {
+      // Default / 'auto' / 'groq': Try Groq free tier first across all active keys
+      if (hasAvailableGroqKeys()) {
+        try {
+          console.log('[OCR] Using provider: GROQ (Free Tier round-robin)');
+          response = await callGroqAPI(payload, fullPrompt, isPdf, backImageBase64);
+          usedProvider = 'groq';
+        } catch (groqErr) {
+          console.warn(`[OCR] Groq request failed (${groqErr.message}). Seamlessly falling back to OpenAI (gpt-4o-mini)...`);
+          response = await callOpenAIAPI(payload, fullPrompt, isPdf, backImageBase64);
+          usedProvider = 'openai';
+        }
+      } else {
+        console.log('[OCR] All Groq keys are currently rate-limited (12h cooldown). Seamlessly using OpenAI (gpt-4o-mini)...');
+        response = await callOpenAIAPI(payload, fullPrompt, isPdf, backImageBase64);
+        usedProvider = 'openai';
+      }
+    }
 
     let messageContent = response.data.choices[0].message.content;
 
@@ -791,17 +950,19 @@ ${jsonTemplate}`;
     }
 
     // If messageContent is empty after stripping (think block consumed ALL tokens),
-    // retry without json_object format and without /no_think — free-form fallback.
+    // retry without json_object format — free-form fallback.
     if (!messageContent.trim()) {
-      console.warn('[OCR] Response was empty after stripping think blocks. Retrying in free-text mode...');
+      console.warn(`[OCR] Response was empty from ${usedProvider.toUpperCase()}. Retrying in free-text mode...`);
       const fallbackBody = {
-        model: 'qwen/qwen3.6-27b',
-        messages: [{ role: 'user', content: contentArray }],
+        model: usedProvider === 'groq' ? 'qwen/qwen3.6-27b' : OPENAI_OCR_MODEL,
+        messages: [{ role: 'user', content: fullPrompt }],
         temperature: 0.1,
-        max_completion_tokens: 4096
+        max_tokens: usedProvider === 'groq' ? 4096 : 1024
       };
       try {
-        const fallbackResp = await executeWithRetry('https://api.groq.com/openai/v1/chat/completions', fallbackBody);
+        const fallbackResp = usedProvider === 'groq'
+          ? await executeWithRetry('https://api.groq.com/openai/v1/chat/completions', fallbackBody)
+          : await openaiPostWithRetry(fallbackBody);
         let fallbackContent = fallbackResp.data.choices[0].message.content || '';
         fallbackContent = fallbackContent.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
         if (/<think>/i.test(fallbackContent)) {
@@ -811,7 +972,17 @@ ${jsonTemplate}`;
           messageContent = fallbackContent;
         }
       } catch (retryErr) {
-        console.error('[OCR] Fallback retry also failed:', retryErr.message);
+        console.error(`[OCR] Fallback retry also failed on ${usedProvider.toUpperCase()}:`, retryErr.message);
+        // If Groq fallback fails, try OpenAI once as emergency backup
+        if (usedProvider === 'groq') {
+          try {
+            console.log('[OCR] Attempting emergency fallback to OpenAI...');
+            const emergencyResp = await callOpenAIAPI(payload, fullPrompt, isPdf, backImageBase64);
+            messageContent = emergencyResp.data.choices[0].message.content || '';
+          } catch (emergErr) {
+            console.error('[OCR] Emergency OpenAI fallback also failed:', emergErr.message);
+          }
+        }
       }
     }
 
@@ -833,7 +1004,7 @@ ${jsonTemplate}`;
     try {
         extractedData = JSON.parse(jsonStr);
     } catch (parseError) {
-        console.error('Failed to parse Groq response to JSON:', jsonStr);
+        console.error(`[OCR/${getOcrProvider().toUpperCase()}] Failed to parse AI response to JSON:`, jsonStr);
         return res.status(500).json({
           success: false,
           message: 'Failed to parse AI response into valid format',
@@ -874,75 +1045,31 @@ ${jsonTemplate}`;
 
 exports.rcOcr = async (req, res) => {
   const prompt = "Extract the details from this vehicle registration certificate (RC). If two images are provided, they are the front and back of the same RC - extract data from both. For manufactureYear, extract the exact manufacturing month/year or date string as it appears on the document (e.g., '10/2018' or '2018'). For fuelType, extract the fuel used or fuel type (e.g., Petrol, Diesel, CNG, LPG, etc.). For vehicleCategory, extract the class of vehicle or vehicle class (e.g., Goods Carrier, PCV, LMV, HMV, Tractor, etc.).";
-  const template = `{
-  "registrationNumber": "", 
-  "dateOfRegistration": "", 
-  "chassisNumber": "",
-  "engineNumber": "",
-  "ownerName": "",
-  "sonWifeDaughterOf": "",
-  "address": "",
-  "makerName": "",
-  "makerModel": "",
-  "colour": "",
-  "seatingCapacity": "",
-  "vehicleType": "",
-  "ladenWeight": "",
-  "unladenWeight": "",
-  "manufactureYear": "",
-  "vehicleCategory": "",
-  "numberOfCylinders": "",
-  "cubicCapacity": "",
-  "fuelType": "",
-  "bodyType": "",
-  "wheelBase": ""
-}`;
+  const template = `{"registrationNumber":"","dateOfRegistration":"","chassisNumber":"","engineNumber":"","ownerName":"","sonWifeDaughterOf":"","address":"","makerName":"","makerModel":"","colour":"","seatingCapacity":"","vehicleType":"","ladenWeight":"","unladenWeight":"","manufactureYear":"","vehicleCategory":"","numberOfCylinders":"","cubicCapacity":"","fuelType":"","bodyType":"","wheelBase":""}`;
   return processOcrRequest(req, res, prompt, template);
 };
 
 exports.taxOcr = async (req, res) => {
   const prompt = "Extract the details from this vehicle tax receipt/document. DO NOT extract or pick up the tax amount, fine, or total paid. Leave them blank.";
-  const template = `{
-  "vehicleNumber": "", 
-  "ownerName": "", 
-  "taxFrom": "",
-  "taxTo": ""
-}`;
+  const template = `{"vehicleNumber":"","ownerName":"","taxFrom":"","taxTo":""}`;
   return processOcrRequest(req, res, prompt, template);
 };
 
 exports.fitnessOcr = async (req, res) => {
   const prompt = "Extract the details from this vehicle fitness certificate/document. DO NOT extract or pick up the tax amount, fine, or total paid. Leave them blank.";
-  const template = `{
-  "vehicleNumber": "", 
-  "ownerName": "", 
-  "validFrom": "",
-  "validTo": ""
-}`;
+  const template = `{"vehicleNumber":"","ownerName":"","validFrom":"","validTo":""}`;
   return processOcrRequest(req, res, prompt, template);
 };
 
 exports.pucOcr = async (req, res) => {
   const prompt = 'Extract the details from this vehicle PUC certificate/document. Extract vehicle number, owner name, valid from date, and valid to date only.';
-  const template = `{
-  "vehicleNumber": "",
-  "ownerName": "",
-  "validFrom": "",
-  "validTo": ""
-}`;
+  const template = `{"vehicleNumber":"","ownerName":"","validFrom":"","validTo":""}`;
   return processOcrRequest(req, res, prompt, template);
 };
 
 exports.gpsOcr = async (req, res) => {
   const prompt = 'Extract the details from this vehicle GPS or VLTD fitment certificate/document. Extract vehicle number, owner name, valid from date, valid to date, fitted by (installer / technician / fitment center name), and company name (GPS device manufacturer or company name). Map "VLTD Fitment Date" to "validFrom". Map "Valid Upto" or "Valid Up to" to "validTo". Preserve the actual date value even when it appears in formats like "03 Apr 2026" or "Mon Apr 03 06:09:38 UTC 2028". Do not invent dates.';
-  const template = `{
-  "vehicleNumber": "",
-  "ownerName": "",
-  "validFrom": "",
-  "validTo": "",
-  "fittedBy": "",
-  "companyName": ""
-}`;
+  const template = `{"vehicleNumber":"","ownerName":"","validFrom":"","validTo":"","fittedBy":"","companyName":""}`;
   return processOcrRequest(req, res, prompt, template);
 };
 
@@ -955,16 +1082,7 @@ exports.llOcr = async (req, res) => {
 - Map the issue date/from date to learningLicenseIssueDate.
 - Map the expiry/valid till date to learningLicenseExpiryDate.
 - If only a guardian/father name line is present and there is no separate "Name" line, leave "name" empty rather than copying the guardian's name into it.`;
-  const template = `{
-  "name": "",
-  "dateOfBirth": "",
-  "fatherName": "",
-  "address": "",
-  "learningLicenseApplicationNumber": "",
-  "learningLicenseNumber": "",
-  "learningLicenseIssueDate": "",
-  "learningLicenseExpiryDate": ""
-}`;
+  const template = `{"name":"","dateOfBirth":"","fatherName":"","address":"","learningLicenseApplicationNumber":"","learningLicenseNumber":"","learningLicenseIssueDate":"","learningLicenseExpiryDate":""}`;
   return processOcrRequest(req, res, prompt, template, 0, true);
 };
 
@@ -1184,22 +1302,12 @@ exports.temporaryPermitOcr = async (req, res) => {
 - Determine if the vehicle type is Commercial Vehicle (CV) or Passenger Vehicle (PV) based on the document content. Look for keywords like "COMMERCIAL", "GOODS", "FREIGHT", "CARGO" for CV, and "PASSENGER", "PV", "PRIVATE", "PERSONAL" for PV. If not clear, return empty string.
 - Extract the permit holder name if present.
 - If a field is not present, return empty string "".`;
-  const template = `{
-  "vehicleNumber": "",
-  "validFrom": "",
-  "validTo": "",
-  "vehicleType": "",
-  "permitHolderName": ""
-}`;
+  const template = `{"vehicleNumber":"","validFrom":"","validTo":"","vehicleType":"","permitHolderName":""}`;
   return processOcrRequest(req, res, prompt, template, 1);
 };
 
 exports.dlOcr = async (req, res) => {
   const prompt = "Extract the details from this Driving Licence document. Extract driving licence number, valid from date, and valid to date only. Map the valid from date to 'validFrom' and the valid to date or expiry date to 'validTo'. Remove any spaces or hyphens from the driving licence number.";
-  const template = `{
-  "drivingLicenceNumber": "",
-  "validFrom": "",
-  "validTo": ""
-}`;
+  const template = `{"drivingLicenceNumber":"","validFrom":"","validTo":""}`;
   return processOcrRequest(req, res, prompt, template);
 };
