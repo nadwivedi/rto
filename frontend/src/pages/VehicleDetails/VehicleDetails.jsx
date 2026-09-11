@@ -1170,7 +1170,9 @@ const VehicleDetails = () => {
                           </div>
                         </td>
                         <td className="py-3 px-4 text-slate-600 hidden md:table-cell">
-                          {item.makerModel || 'NA'}
+                          <span className="font-medium text-[11px] sm:text-xs leading-snug break-words whitespace-normal block max-w-[220px]">
+                            {item.makerModel || 'NA'}
+                          </span>
                         </td>
 
                         <td className="py-3 px-4 text-slate-600 hidden lg:table-cell text-xs">

@@ -182,17 +182,41 @@ const getSearchHistory = async (req, res) => {
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20))
     const search = (req.query.search || '').trim()
 
+    const searchType = req.query.searchType || 'all'
     const query = { userId: req.user.id }
 
     if (search) {
-      const regex = new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i')
-      query.$or = [
-        { vehicleNumber: regex },
-        { ownerName: regex },
-        { mobileNo: regex },
-        { makerModel: regex },
-        { registeredAt: regex }
-      ]
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = new RegExp(escaped, 'i')
+
+      // For vehicle number, also strip spaces/dashes so "CG 12 BU 5574" matches "CG12BU5574"
+      const cleanSearch = search.replace(/[\s-]/g, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const cleanRegex = new RegExp(cleanSearch, 'i')
+
+      if (searchType === 'vehicleNumber') {
+        // Match either cleaned (CG12BU5574) or original input
+        query.$or = [
+          { vehicleNumber: cleanRegex },
+          { vehicleNumber: regex }
+        ]
+      } else if (searchType === 'ownerName') {
+        query.ownerName = regex
+      } else if (searchType === 'rtoLocation') {
+        // registeredAt is a top-level flat field saved from API response
+        query.registeredAt = regex
+      } else if (searchType === 'mobileNo') {
+        query.mobileNo = regex
+      } else {
+        // "all" — search across all top-level string fields (reliable, no Mixed path queries)
+        query.$or = [
+          { vehicleNumber: cleanRegex },
+          { vehicleNumber: regex },
+          { ownerName: regex },
+          { mobileNo: regex },
+          { makerModel: regex },
+          { registeredAt: regex }
+        ]
+      }
     }
 
     const total = await VehicleSearchHistory.countDocuments(query)
