@@ -1,7 +1,7 @@
 /** Shared contact details for RTO Sarthi */
 export const WHATSAPP_NUMBER = '916264682508'
 export const PHONE_PRIMARY = '6264682508'
-export const PHONE_SECONDARY = '8602145864'
+export const PHONE_SECONDARY = '9202469725'
 export const EMAIL = 'rtosarthi@gmail.com'
 
 export const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Hello RTO Sarthi, I would like to know more about your software.')}`
