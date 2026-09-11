@@ -373,12 +373,6 @@ exports.updateUser = async (req, res) => {
         user.rcSearchLimit = parsedLimit
       }
     }
-    if (rcSearchCount !== undefined) {
-      const parsedCount = Number(rcSearchCount)
-      if (!Number.isNaN(parsedCount) && parsedCount >= 0) {
-        user.rcSearchCount = parsedCount
-      }
-    }
     if (subscriptionExpiresAt !== undefined) {
       const d = new Date(subscriptionExpiresAt)
       if (!Number.isNaN(d.getTime())) {

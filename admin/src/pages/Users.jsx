@@ -253,7 +253,6 @@ const Users = () => {
       delete bodyData.features_moneyReceived
       delete bodyData.features_rcDetails
       bodyData.rcSearchLimit = formData.rcSearchLimit !== '' ? Number(formData.rcSearchLimit) : 0
-      bodyData.rcSearchCount = formData.rcSearchCount !== '' ? Number(formData.rcSearchCount) : 0
       if (isEditMode && !formData.password) {
         delete bodyData.password
       }
@@ -1105,62 +1104,50 @@ const Users = () => {
                 </div>
 
                 {formData.features_rcDetails && (
-                  <div className='mt-3 p-3 bg-indigo-50/70 rounded-xl border border-indigo-100 space-y-2'>
-                    <div className='flex flex-wrap items-center justify-between gap-1'>
-                      <label className='block text-xs sm:text-sm font-bold text-indigo-900'>
-                        RC Search Limit (Allowed API Searches)
+                  <div className='mt-3 p-3.5 bg-indigo-50/80 rounded-xl border border-indigo-100 space-y-3'>
+                    <div>
+                      <label className='block text-xs sm:text-sm font-bold text-indigo-950 mb-1'>
+                        RC Search Limit (Allotted API Searches)
                       </label>
-                      {isEditMode && (
-                        <span className='text-xs font-semibold text-indigo-700'>
-                          Lifetime Searches: <b>{formData.rcSearchCount || 0}</b> | Left:{' '}
-                          <b className={(formData.rcSearchLimit - formData.rcSearchCount) <= 0 ? 'text-red-600 font-bold' : 'text-emerald-700 font-bold'}>
-                            {Math.max(0, (formData.rcSearchLimit || 0) - (formData.rcSearchCount || 0))}
-                          </b>
-                        </span>
-                      )}
+                      <input
+                        type='number'
+                        name='rcSearchLimit'
+                        value={formData.rcSearchLimit}
+                        onChange={handleChange}
+                        placeholder='e.g. 10'
+                        min='0'
+                        className='w-full px-3 py-2 text-sm bg-white border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                      />
+                      <p className='text-[11px] text-indigo-600 mt-1'>
+                        Total vehicle search quota allotted to this user. E.g. set 10 to allow 10 searches.
+                      </p>
                     </div>
-                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-                      <div>
-                        <input
-                          type='number'
-                          name='rcSearchLimit'
-                          value={formData.rcSearchLimit}
-                          onChange={handleChange}
-                          placeholder='e.g. 10'
-                          min='0'
-                          className='w-full px-3 py-2 text-sm bg-white border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                        />
-                        <p className='text-[11px] text-indigo-600 mt-1'>
-                          Total vehicle search quota. E.g. set 10 to give user 10 searches.
-                        </p>
-                      </div>
-                      {isEditMode && (
-                        <div>
-                          <div className='flex items-center gap-2'>
-                            <input
-                              type='number'
-                              name='rcSearchCount'
-                              value={formData.rcSearchCount}
-                              onChange={handleChange}
-                              placeholder='0'
-                              min='0'
-                              className='w-full px-3 py-2 text-sm bg-white border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                            />
-                            <button
-                              type='button'
-                              onClick={() => setFormData({ ...formData, rcSearchCount: 0 })}
-                              className='px-2.5 py-2 text-xs bg-indigo-200 hover:bg-indigo-300 text-indigo-900 rounded-lg font-bold transition cursor-pointer whitespace-nowrap'
-                              title='Reset lifetime searches to 0'
-                            >
-                              Reset Count
-                            </button>
-                          </div>
-                          <p className='text-[11px] text-gray-500 mt-1'>
-                            Lifetime searches used by this user.
-                          </p>
+
+                    {isEditMode && (
+                      <div className='p-3 bg-white rounded-lg border border-indigo-100 flex flex-wrap items-center justify-between gap-2 shadow-xs'>
+                        <div className='flex items-center gap-2'>
+                          <span className='w-2 h-2 rounded-full bg-indigo-600'></span>
+                          <span className='text-xs font-semibold text-gray-700'>
+                            Total Lifetime Searches:
+                          </span>
+                          <span className='text-xs font-bold text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 font-mono'>
+                            {formData.rcSearchCount || 0}
+                          </span>
                         </div>
-                      )}
-                    </div>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-xs font-semibold text-gray-700'>
+                            Remaining Limits:
+                          </span>
+                          <span className={`text-xs font-bold px-2 py-0.5 rounded border font-mono ${
+                            (formData.rcSearchLimit - formData.rcSearchCount) <= 0
+                              ? 'bg-rose-50 text-rose-700 border-rose-200'
+                              : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                          }`}>
+                            {Math.max(0, (formData.rcSearchLimit || 0) - (formData.rcSearchCount || 0))} Left
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
