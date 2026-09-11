@@ -176,22 +176,24 @@ const Vahan = () => {
 
   const filteredVahanOptions = useMemo(() =>
     vahanOptions.filter(o => {
+      if (o.title === 'Vehicle Details') return enabledFeatures.rcDetails === true
       if (o.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (o.title === 'Professional Tax') return enabledFeatures.professionalTax === true
       if (o.title === 'Money Received') return enabledFeatures.moneyReceived === true
       return canAccessSection(o.title)
     }),
-    [enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledSections, isStaff]
+    [enabledFeatures.rcDetails, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledSections, isStaff]
   )
 
   const filteredQuickButtons = useMemo(() =>
     quickButtons.filter(b => {
+      if (b.title === 'RC Lookup') return enabledFeatures.rcDetails === true
       if (b.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (b.title === 'Professional Tax') return enabledFeatures.professionalTax === true
       if (b.title === 'Money Received') return enabledFeatures.moneyReceived === true
       return canAccessSection(b.title)
     }),
-    [enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledSections, isStaff]
+    [enabledFeatures.rcDetails, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledSections, isStaff]
   )
 
   const openModal = (title) => {

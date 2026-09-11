@@ -154,6 +154,9 @@ exports.login = async (req, res) => {
           profileImage: user.profileImage || null,
           isActive: user.isActive,
           features: user.features || {},
+          rcSearchLimit: user.rcSearchLimit || 0,
+          rcSearchCount: user.rcSearchCount || 0,
+          rcSearchRemaining: Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0)),
           lastLogin: user.lastLogin,
           lastActivity: user.lastActivity
         }
@@ -360,6 +363,9 @@ exports.adminAccessLogin = async (req, res) => {
           type: 'user',
           isActive: user.isActive,
           features: user.features || {},
+          rcSearchLimit: user.rcSearchLimit || 0,
+          rcSearchCount: user.rcSearchCount || 0,
+          rcSearchRemaining: Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0)),
           lastLogin: user.lastLogin,
           lastActivity: user.lastActivity
         }
@@ -398,7 +404,7 @@ exports.getProfile = async (req, res) => {
       const activityAt = new Date()
       await Employee.updateOne({ _id: employee._id }, { lastActivity: activityAt })
       employee.lastActivity = activityAt
-      const adminUser = await User.findById(employee.adminId || req.user.adminId).select('features').lean()
+      const adminUser = await User.findById(employee.adminId || req.user.adminId).select('features rcSearchLimit rcSearchCount').lean()
       return res.json({
         success: true,
         data: {
@@ -410,6 +416,9 @@ exports.getProfile = async (req, res) => {
             permissions: employee.permissions,
             sections: employee.sections,
             features: adminUser?.features || {},
+            rcSearchLimit: adminUser?.rcSearchLimit || 0,
+            rcSearchCount: adminUser?.rcSearchCount || 0,
+            rcSearchRemaining: Math.max(0, (adminUser?.rcSearchLimit || 0) - (adminUser?.rcSearchCount || 0)),
             isActive: employee.isActive,
             lastLogin: employee.lastLogin,
             lastActivity: employee.lastActivity
@@ -451,6 +460,9 @@ exports.getProfile = async (req, res) => {
           type: 'user',
           isActive: user.isActive,
           features: user.features || {},
+          rcSearchLimit: user.rcSearchLimit || 0,
+          rcSearchCount: user.rcSearchCount || 0,
+          rcSearchRemaining: Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0)),
           lastLogin: user.lastLogin,
           lastActivity: user.lastActivity
         }

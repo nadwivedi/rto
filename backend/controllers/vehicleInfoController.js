@@ -1,5 +1,6 @@
 const axios = require('axios')
 const VehicleSearchHistory = require('../models/VehicleSearchHistory')
+const User = require('../models/User')
 
 /**
  * Controller to fetch vehicle details from external RTO Information API
@@ -23,6 +24,39 @@ const lookupVehicle = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: 'Please enter a valid vehicle registration number.'
+      })
+    }
+
+    // ── Check User Access & Quota Limits ──
+    const targetUserId = req.user?.type === 'staff' ? (req.user?.adminId || req.user?.id) : req.user?.id
+    if (!targetUserId) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' })
+    }
+
+    const userDoc = await User.findById(targetUserId).select('features rcSearchLimit rcSearchCount')
+    if (!userDoc) {
+      return res.status(404).json({ success: false, message: 'User account not found' })
+    }
+
+    if (!userDoc.features?.rcDetails) {
+      return res.status(403).json({
+        success: false,
+        message: 'RC Details feature is not enabled for your account. Please contact admin.'
+      })
+    }
+
+    const currentLimit = userDoc.rcSearchLimit || 0
+    const currentCount = userDoc.rcSearchCount || 0
+    const remaining = currentLimit - currentCount
+
+    if (remaining <= 0) {
+      return res.status(403).json({
+        success: false,
+        limitExhausted: true,
+        message: `RC search limit exhausted (0 limits left). Total lifetime searches: ${currentCount}. Please contact admin to increase your limit.`,
+        rcSearchLimit: currentLimit,
+        rcSearchCount: currentCount,
+        rcSearchRemaining: 0
       })
     }
 
@@ -91,11 +125,25 @@ const lookupVehicle = async (req, res) => {
       }
     }
 
+    // ── Increment user's lifetime search count ──
+    const updatedUser = await User.findByIdAndUpdate(
+      targetUserId,
+      { $inc: { rcSearchCount: 1 } },
+      { new: true }
+    ).select('rcSearchLimit rcSearchCount')
+
+    const newLimit = updatedUser?.rcSearchLimit || currentLimit
+    const newCount = updatedUser?.rcSearchCount || (currentCount + 1)
+    const newRemaining = Math.max(0, newLimit - newCount)
+
     return res.status(200).json({
       success: true,
       message: 'Vehicle details fetched successfully',
       data: parsedData,
       isLiveApi: true,
+      rcSearchLimit: newLimit,
+      rcSearchCount: newCount,
+      rcSearchRemaining: newRemaining,
       historyMeta: savedRecord ? {
         _id: savedRecord._id,
         vehicleNumber: savedRecord.vehicleNumber,
@@ -226,9 +274,22 @@ const getSearchHistory = async (req, res) => {
       .limit(limit)
       .lean()
 
+    const targetUserId = req.user?.type === 'staff' ? (req.user?.adminId || req.user?.id) : req.user?.id
+    const userDoc = await User.findById(targetUserId).select('features rcSearchLimit rcSearchCount').lean()
+    const quotaLimit = userDoc?.rcSearchLimit || 0
+    const quotaCount = userDoc?.rcSearchCount || 0
+    const quotaRemaining = Math.max(0, quotaLimit - quotaCount)
+
     return res.status(200).json({
       success: true,
       data: records,
+      quota: {
+        rcDetailsEnabled: !!userDoc?.features?.rcDetails,
+        rcSearchLimit: quotaLimit,
+        rcSearchCount: quotaCount,
+        rcSearchRemaining: quotaRemaining,
+        limitExhausted: quotaRemaining <= 0
+      },
       pagination: {
         total,
         page,
@@ -349,11 +410,49 @@ const clearSearchHistory = async (req, res) => {
   }
 }
 
+/**
+ * Get RC search quota status for authenticated user
+ */
+const getQuotaStatus = async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' })
+    }
+
+    const targetUserId = req.user.type === 'staff' ? (req.user.adminId || req.user.id) : req.user.id
+    const userDoc = await User.findById(targetUserId).select('features rcSearchLimit rcSearchCount').lean()
+
+    if (!userDoc) {
+      return res.status(404).json({ success: false, message: 'User not found' })
+    }
+
+    const rcDetailsEnabled = !!userDoc.features?.rcDetails
+    const rcSearchLimit = userDoc.rcSearchLimit || 0
+    const rcSearchCount = userDoc.rcSearchCount || 0
+    const rcSearchRemaining = Math.max(0, rcSearchLimit - rcSearchCount)
+
+    return res.status(200).json({
+      success: true,
+      data: {
+        rcDetailsEnabled,
+        rcSearchLimit,
+        rcSearchCount,
+        rcSearchRemaining,
+        limitExhausted: rcSearchRemaining <= 0
+      }
+    })
+  } catch (error) {
+    console.error('Error getting quota status:', error)
+    return res.status(500).json({ success: false, message: 'Failed to retrieve quota status' })
+  }
+}
+
 module.exports = {
   lookupVehicle,
   getSavedVehicleByVno,
   getSearchHistory,
   getHistoryById,
   deleteHistoryItem,
-  clearSearchHistory
+  clearSearchHistory,
+  getQuotaStatus
 }

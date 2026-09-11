@@ -70,6 +70,16 @@ function ProtectedLayout() {
     return null
   }
 
+  const rcDetailsGuard = () => {
+    const rcRoutes = ['/vehicle-details', '/vehicle-detail', '/vehicle-search-history', '/vehicle-details/history']
+    if (rcRoutes.includes(location.pathname)) {
+      if (!user?.features?.rcDetails) {
+        return true
+      }
+    }
+    return null
+  }
+
   useEffect(() => {
     if (user?.type === 'staff') {
       document.body.classList.add('is-staff');
@@ -89,7 +99,7 @@ function ProtectedLayout() {
   }, [user]);
 
   useEffect(() => {
-    if (staffRouteGuard()) {
+    if (staffRouteGuard() || rcDetailsGuard()) {
       navigate('/')
     }
   }, [location.pathname, user]);

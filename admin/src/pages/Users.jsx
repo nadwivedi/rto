@@ -97,7 +97,10 @@ const Users = () => {
     features_professionalTax: false,
     features_autoCreateRC: false,
     features_expandAdditionalDetails: false,
-    features_moneyReceived: false
+    features_moneyReceived: false,
+    features_rcDetails: false,
+    rcSearchLimit: 0,
+    rcSearchCount: 0
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -239,7 +242,8 @@ const Users = () => {
           professionalTax: formData.features_professionalTax,
           autoCreateRC: formData.features_autoCreateRC,
           expandAdditionalDetails: formData.features_expandAdditionalDetails,
-          moneyReceived: formData.features_moneyReceived
+          moneyReceived: formData.features_moneyReceived,
+          rcDetails: formData.features_rcDetails
         }
       }
       delete bodyData.features_greenTax
@@ -247,6 +251,9 @@ const Users = () => {
       delete bodyData.features_autoCreateRC
       delete bodyData.features_expandAdditionalDetails
       delete bodyData.features_moneyReceived
+      delete bodyData.features_rcDetails
+      bodyData.rcSearchLimit = formData.rcSearchLimit !== '' ? Number(formData.rcSearchLimit) : 0
+      bodyData.rcSearchCount = formData.rcSearchCount !== '' ? Number(formData.rcSearchCount) : 0
       if (isEditMode && !formData.password) {
         delete bodyData.password
       }
@@ -265,7 +272,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, rcSearchLimit: 0, rcSearchCount: 0 })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -297,7 +304,10 @@ const Users = () => {
       features_professionalTax: user.features?.professionalTax ?? false,
       features_autoCreateRC: user.features?.autoCreateRC ?? false,
       features_expandAdditionalDetails: user.features?.expandAdditionalDetails ?? false,
-      features_moneyReceived: user.features?.moneyReceived ?? false
+      features_moneyReceived: user.features?.moneyReceived ?? false,
+      features_rcDetails: user.features?.rcDetails ?? false,
+      rcSearchLimit: user.rcSearchLimit ?? 0,
+      rcSearchCount: user.rcSearchCount ?? 0
     })
     setShowModal(true)
     setError('')
@@ -308,7 +318,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, rcSearchLimit: 0, rcSearchCount: 0 })
   }
 
   const handleDelete = async (id) => {
@@ -576,6 +586,17 @@ const Users = () => {
                         <td className='px-5 py-3.5'>
                           <div className='text-sm text-gray-700'>{user.state || '-'}</div>
                           <div className='text-xs text-gray-400'>{user.rto || '-'}</div>
+                          {user.features?.rcDetails && (
+                            <div className='mt-1'>
+                              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                                Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0)) <= 0
+                                  ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                                  : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                              }`}>
+                                🔍 RC: {Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0))} left / {user.rcSearchLimit || 0} ({user.rcSearchCount || 0} done)
+                              </span>
+                            </div>
+                          )}
                         </td>
                         <td className='px-5 py-3.5'>
                           <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
@@ -1071,7 +1092,77 @@ const Users = () => {
                     />
                     Money Received
                   </label>
+                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      name='features_rcDetails'
+                      checked={formData.features_rcDetails}
+                      onChange={handleChange}
+                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                    />
+                    RC Details
+                  </label>
                 </div>
+
+                {formData.features_rcDetails && (
+                  <div className='mt-3 p-3 bg-indigo-50/70 rounded-xl border border-indigo-100 space-y-2'>
+                    <div className='flex flex-wrap items-center justify-between gap-1'>
+                      <label className='block text-xs sm:text-sm font-bold text-indigo-900'>
+                        RC Search Limit (Allowed API Searches)
+                      </label>
+                      {isEditMode && (
+                        <span className='text-xs font-semibold text-indigo-700'>
+                          Lifetime Searches: <b>{formData.rcSearchCount || 0}</b> | Left:{' '}
+                          <b className={(formData.rcSearchLimit - formData.rcSearchCount) <= 0 ? 'text-red-600 font-bold' : 'text-emerald-700 font-bold'}>
+                            {Math.max(0, (formData.rcSearchLimit || 0) - (formData.rcSearchCount || 0))}
+                          </b>
+                        </span>
+                      )}
+                    </div>
+                    <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                      <div>
+                        <input
+                          type='number'
+                          name='rcSearchLimit'
+                          value={formData.rcSearchLimit}
+                          onChange={handleChange}
+                          placeholder='e.g. 10'
+                          min='0'
+                          className='w-full px-3 py-2 text-sm bg-white border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                        />
+                        <p className='text-[11px] text-indigo-600 mt-1'>
+                          Total vehicle search quota. E.g. set 10 to give user 10 searches.
+                        </p>
+                      </div>
+                      {isEditMode && (
+                        <div>
+                          <div className='flex items-center gap-2'>
+                            <input
+                              type='number'
+                              name='rcSearchCount'
+                              value={formData.rcSearchCount}
+                              onChange={handleChange}
+                              placeholder='0'
+                              min='0'
+                              className='w-full px-3 py-2 text-sm bg-white border border-indigo-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                            />
+                            <button
+                              type='button'
+                              onClick={() => setFormData({ ...formData, rcSearchCount: 0 })}
+                              className='px-2.5 py-2 text-xs bg-indigo-200 hover:bg-indigo-300 text-indigo-900 rounded-lg font-bold transition cursor-pointer whitespace-nowrap'
+                              title='Reset lifetime searches to 0'
+                            >
+                              Reset Count
+                            </button>
+                          </div>
+                          <p className='text-[11px] text-gray-500 mt-1'>
+                            Lifetime searches used by this user.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className='flex gap-2 sm:gap-3 pt-2'>

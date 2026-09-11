@@ -249,6 +249,7 @@ const Navbar = () => {
   const enabledFeatures = user?.features || {};
 
   const featureFilter = (item) => {
+    if (item.path === '/vehicle-details') return enabledFeatures.rcDetails === true;
     if (item.path === '/green-tax') return enabledFeatures.greenTax === true;
     if (item.path === '/professional-tax') return enabledFeatures.professionalTax === true;
     return true;

@@ -2,6 +2,9 @@ const express = require('express')
 const router = express.Router()
 const vehicleInfoController = require('../controllers/vehicleInfoController')
 
+// GET search quota status for current user
+router.get('/quota', vehicleInfoController.getQuotaStatus)
+
 // GET paginated search history
 router.get('/history', vehicleInfoController.getSearchHistory)
 

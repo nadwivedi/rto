@@ -211,6 +211,26 @@ const VehicleSearchHistory = () => {
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                 Complete database records of all verified vehicle searches performed in your account
               </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                  quota.rcSearchRemaining <= 0
+                    ? 'bg-rose-100 text-rose-800 border-rose-300'
+                    : quota.rcSearchRemaining <= 3
+                    ? 'bg-amber-100 text-amber-800 border-amber-300'
+                    : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${
+                    quota.rcSearchRemaining <= 0 ? 'bg-rose-500 animate-ping' : quota.rcSearchRemaining <= 3 ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}></span>
+                  {quota.rcSearchRemaining} Limits Left
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                  Lifetime Searches: <b>{quota.rcSearchCount}</b>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                  Total Limit: <b>{quota.rcSearchLimit}</b>
+                </span>
+              </div>
             </div>
           </div>
 

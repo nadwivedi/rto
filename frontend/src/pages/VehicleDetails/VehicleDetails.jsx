@@ -61,6 +61,28 @@ const VehicleDetails = () => {
   const [historyPage, setHistoryPage] = useState(1)
   const [historyPagination, setHistoryPagination] = useState({ total: 0, totalPages: 1, limit: 10 })
   const [deletingId, setDeletingId] = useState(null)
+  const [quota, setQuota] = useState({
+    rcDetailsEnabled: true,
+    rcSearchLimit: 0,
+    rcSearchCount: 0,
+    rcSearchRemaining: 0,
+    limitExhausted: false
+  })
+
+  const fetchQuota = async () => {
+    try {
+      const res = await axios.get(`${API_URL}/api/vehicle-info/quota`, { withCredentials: true })
+      if (res.data.success && res.data.data) {
+        setQuota(res.data.data)
+      }
+    } catch (err) {
+      console.error('Error fetching quota:', err)
+    }
+  }
+
+  useEffect(() => {
+    fetchQuota()
+  }, [])
 
 
   // Load history from database
@@ -76,6 +98,7 @@ const VehicleDetails = () => {
       if (response.data.success) {
         setHistoryList(response.data.data || [])
         setHistoryPagination(response.data.pagination || { total: 0, totalPages: 1, limit: 10 })
+        if (response.data.quota) setQuota(response.data.quota)
       }
     } catch (error) {
       console.error('Error fetching search history:', error)
@@ -121,6 +144,15 @@ const VehicleDetails = () => {
           lastSearchedAt: new Date().toISOString()
         })
         toast.success(`Live details loaded from RTO for ${response.data.data.REGN_NO || vnoToSearch}`)
+        if (response.data.rcSearchLimit !== undefined) {
+          setQuota({
+            rcDetailsEnabled: true,
+            rcSearchLimit: response.data.rcSearchLimit,
+            rcSearchCount: response.data.rcSearchCount,
+            rcSearchRemaining: response.data.rcSearchRemaining,
+            limitExhausted: response.data.rcSearchRemaining <= 0
+          })
+        }
         fetchHistory(1, historySearch) // refresh bottom history table
 
         if (resultsTopRef.current) {
@@ -137,6 +169,15 @@ const VehicleDetails = () => {
         error.message ||
         'Failed to fetch vehicle details'
       toast.error(msg)
+      if (error.response?.data?.limitExhausted) {
+        setQuota(prev => ({
+          ...prev,
+          rcSearchRemaining: 0,
+          rcSearchLimit: error.response?.data?.rcSearchLimit ?? prev.rcSearchLimit,
+          rcSearchCount: error.response?.data?.rcSearchCount ?? prev.rcSearchCount,
+          limitExhausted: true
+        }))
+      }
     } finally {
       setLoading(false)
     }
@@ -355,6 +396,26 @@ const VehicleDetails = () => {
               <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
                 Manual live search & saved database records for vehicle specifications, owner, insurance & tax
               </p>
+              <div className="flex flex-wrap items-center gap-2 mt-2">
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
+                  quota.rcSearchRemaining <= 0
+                    ? 'bg-rose-100 text-rose-800 border-rose-300'
+                    : quota.rcSearchRemaining <= 3
+                    ? 'bg-amber-100 text-amber-800 border-amber-300'
+                    : 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                }`}>
+                  <span className={`w-2 h-2 rounded-full ${
+                    quota.rcSearchRemaining <= 0 ? 'bg-rose-500 animate-ping' : quota.rcSearchRemaining <= 3 ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}></span>
+                  {quota.rcSearchRemaining} Limits Left
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+                  Lifetime Searches: <b>{quota.rcSearchCount}</b>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
+                  Total Limit: <b>{quota.rcSearchLimit}</b>
+                </span>
+              </div>
             </div>
           </div>
 
@@ -388,6 +449,20 @@ const VehicleDetails = () => {
         </div>
 
         {/* MANUAL SEARCH HERO CARD (Clean - No clutter near search) */}
+        {quota.rcSearchRemaining <= 0 && (
+          <div className="bg-rose-50 border-2 border-rose-300 text-rose-800 p-4 sm:p-5 rounded-2xl flex items-start gap-3 shadow-sm">
+            <AlertTriangle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5 animate-bounce" />
+            <div>
+              <h3 className="font-bold text-sm sm:text-base text-rose-900">
+                RC Search Limit Exhausted (0 Limits Left)
+              </h3>
+              <p className="text-xs sm:text-sm text-rose-700 mt-1">
+                You have reached your limit of <b>{quota.rcSearchLimit}</b> vehicle searches (Lifetime searches performed: <b>{quota.rcSearchCount}</b>). You cannot perform any more live searches until your limit is increased. Please contact your administrator.
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-sm print:hidden">
           <form
             onSubmit={(e) => {
@@ -429,7 +504,7 @@ const VehicleDetails = () => {
 
             <button
               type="submit"
-              disabled={loading || !vehicleNo.trim()}
+              disabled={loading || quota.rcSearchRemaining <= 0 || !vehicleNo.trim()}
               className="px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-sm sm:text-base rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
             >
               {loading ? (

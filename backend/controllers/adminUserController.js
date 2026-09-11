@@ -99,7 +99,7 @@ exports.getUserById = async (req, res) => {
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, rcSearchLimit } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -232,7 +232,9 @@ exports.createUser = async (req, res) => {
       isActive: true,
       monthlyPrice: monthlyPrice !== undefined && !Number.isNaN(Number(monthlyPrice)) ? Number(monthlyPrice) : undefined,
       yearlyPrice: yearlyPrice !== undefined && !Number.isNaN(Number(yearlyPrice)) ? Number(yearlyPrice) : undefined,
-      features: features || { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false }
+      features: features || { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false },
+      rcSearchLimit: rcSearchLimit !== undefined && !Number.isNaN(Number(rcSearchLimit)) ? Math.max(0, Number(rcSearchLimit)) : 0,
+      rcSearchCount: 0
     })
 
     await newUser.save()
@@ -276,7 +278,7 @@ exports.createUser = async (req, res) => {
 // Update user
 exports.updateUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, subscriptionExpiresAt, monthlyPrice, yearlyPrice, features } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, subscriptionExpiresAt, monthlyPrice, yearlyPrice, features, rcSearchLimit, rcSearchCount } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -361,7 +363,20 @@ exports.updateUser = async (req, res) => {
         professionalTax: features.professionalTax === true,
         autoCreateRC: features.autoCreateRC === true,
         expandAdditionalDetails: features.expandAdditionalDetails === true,
-        moneyReceived: features.moneyReceived === true
+        moneyReceived: features.moneyReceived === true,
+        rcDetails: features.rcDetails === true
+      }
+    }
+    if (rcSearchLimit !== undefined) {
+      const parsedLimit = Number(rcSearchLimit)
+      if (!Number.isNaN(parsedLimit) && parsedLimit >= 0) {
+        user.rcSearchLimit = parsedLimit
+      }
+    }
+    if (rcSearchCount !== undefined) {
+      const parsedCount = Number(rcSearchCount)
+      if (!Number.isNaN(parsedCount) && parsedCount >= 0) {
+        user.rcSearchCount = parsedCount
       }
     }
     if (subscriptionExpiresAt !== undefined) {
@@ -412,6 +427,9 @@ exports.updateUser = async (req, res) => {
         billDescription: user.billDescription,
         isActive: user.isActive,
         features: user.features,
+        rcSearchLimit: user.rcSearchLimit || 0,
+        rcSearchCount: user.rcSearchCount || 0,
+        rcSearchRemaining: Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0)),
         subscriptionExpiresAt: user.subscriptionExpiresAt,
         monthlyPrice: user.monthlyPrice,
         yearlyPrice: user.yearlyPrice

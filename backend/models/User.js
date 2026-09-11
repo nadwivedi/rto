@@ -101,7 +101,18 @@ const userSchema = new mongoose.Schema({
     professionalTax: { type: Boolean, default: false },
     autoCreateRC: { type: Boolean, default: false },
     expandAdditionalDetails: { type: Boolean, default: false },
-    moneyReceived: { type: Boolean, default: false }
+    moneyReceived: { type: Boolean, default: false },
+    rcDetails: { type: Boolean, default: false }
+  },
+  rcSearchLimit: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  rcSearchCount: {
+    type: Number,
+    default: 0,
+    min: 0
   }
 }, {
   timestamps: true
