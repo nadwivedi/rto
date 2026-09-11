@@ -4,6 +4,7 @@ const sectionGroups = [
     label: 'RTO Vahan',
     sections: [
       { key: 'vehicleRegistration', label: 'Vehicle Registration', path: '/vehicle-registration', icon: '🚚' },
+      { key: 'vehicleDetails', label: 'Vehicle Details (RC Lookup)', path: '/vehicle-details', icon: '🔍' },
       { key: 'insurance', label: 'Insurance', path: '/insurance', icon: '🛡️' },
       { key: 'fitness', label: 'Fitness', path: '/fitness', icon: '✅' },
       { key: 'tax', label: 'Road Tax', path: '/tax', icon: '💰' },
@@ -45,6 +46,7 @@ const sectionGroups = [
 
 export const sectionKeyToRoute = {
   vehicleRegistration: '/vehicle-registration',
+  vehicleDetails: '/vehicle-details',
   insurance: '/insurance',
   fitness: '/fitness',
   tax: '/tax',

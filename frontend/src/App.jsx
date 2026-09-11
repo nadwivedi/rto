@@ -43,6 +43,8 @@ import Javak from './pages/Javak/Javak'
 import CashflowReport from './pages/Reports/CashflowReport'
 import SpeedGovernor from './pages/SpeedGovernor/SpeedGovernor'
 import MoneyReceived from './pages/MoneyReceived/MoneyReceived'
+import VehicleDetails from './pages/VehicleDetails/VehicleDetails'
+import VehicleSearchHistory from './pages/VehicleDetails/VehicleSearchHistory'
 import PWAPrompt from './components/PWAPrompt'
 // import { Agentation } from 'agentation'
 
@@ -98,7 +100,7 @@ function ProtectedLayout() {
         const isModalOpen = document.querySelector('.bg-slate-900\\/60, .fixed.inset-0, [role="dialog"]') !== null;
         if (isModalOpen) return;
 
-        const vahanHubPages = ['/vahan', '/whatsapp', '/setting', '/javak', '/kyc'];
+        const vahanHubPages = ['/vahan', '/whatsapp', '/setting', '/javak', '/kyc', '/vehicle-details', '/vehicle-detail', '/vehicle-search-history', '/vehicle-details/history'];
         const sarthiHubPages = ['/sarthi'];
         const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal', '/hpa-hpt', '/cashflow-report'];
 
@@ -123,6 +125,8 @@ function ProtectedLayout() {
           '/money-received',
           '/speed-governor'
         ];
+
+
 
         if (location.pathname.startsWith('/party/')) {
           navigate('/party');
@@ -159,6 +163,11 @@ function ProtectedLayout() {
                 <Route path='/temporary-permit-other-state' element={<TemporaryPermitOtherState />} />
                 <Route path='/vehicle-registartion' element={<VehicleRegistration />} />
                 <Route path='/vehicle-registration' element={<VehicleRegistration />} />
+                <Route path='/vehicle-details' element={<VehicleDetails />} />
+                <Route path='/vehicle-detail' element={<VehicleDetails />} />
+                <Route path='/vehicle-search-history' element={<VehicleSearchHistory />} />
+                <Route path='/vehicle-details/history' element={<VehicleSearchHistory />} />
+
                 <Route path='/vehicle-ledger/:registrationNumber' element={<VehicleLedgerPage />} />
                 <Route path='/insurance' element={<Insurance />} />
                 <Route path='/insurance/reports' element={<InsuranceReports />} />
@@ -186,6 +195,7 @@ function ProtectedLayout() {
                 <Route path='/speed-governor' element={<SpeedGovernor />} />
                 <Route path='/money-received' element={<MoneyReceived />} />
               </Routes>
+
             </main>
           </div>
         </div>

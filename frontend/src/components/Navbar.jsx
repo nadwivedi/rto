@@ -33,6 +33,12 @@ const Navbar = () => {
       path: "/vehicle-registration",
       description: "Register Vehicles",
     },
+    {
+      name: "RC Lookup",
+      icon: "🔍",
+      path: "/vehicle-details",
+      description: "Live Vehicle RC Details",
+    },
 
     {
       name: "NP",

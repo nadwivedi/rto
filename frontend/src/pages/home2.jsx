@@ -210,6 +210,13 @@ const Home2 = () => {
             </button>
           )}
           <button
+            onClick={() => navigate('/vehicle-details')}
+            className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-700 transition-all duration-300 font-bold text-xs sm:text-base cursor-pointer'
+          >
+            <span className='text-base sm:text-xl'>🔍</span>
+            RC Details
+          </button>
+          <button
             onClick={() => navigate('/setting')}
             className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-slate-700 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-slate-800 transition-all duration-300 font-bold text-xs sm:text-base'
           >
