@@ -189,6 +189,7 @@ const getSearchHistory = async (req, res) => {
       query.$or = [
         { vehicleNumber: regex },
         { ownerName: regex },
+        { mobileNo: regex },
         { makerModel: regex },
         { registeredAt: regex }
       ]

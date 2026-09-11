@@ -282,6 +282,34 @@ const VehicleDetails = () => {
     }
   }
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A'
+    try {
+      const d = new Date(dateStr)
+      return d.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      })
+    } catch {
+      return dateStr
+    }
+  }
+
+  const formatTime = (dateStr) => {
+    if (!dateStr) return ''
+    try {
+      const d = new Date(dateStr)
+      return d.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      })
+    } catch {
+      return ''
+    }
+  }
+
   const formatDateTime = (dateStr) => {
     if (!dateStr) return 'N/A'
     try {
@@ -1115,7 +1143,7 @@ const VehicleDetails = () => {
                       <th className="py-3 px-4">Vehicle & Owner</th>
                       <th className="py-3 px-4 hidden md:table-cell">Maker & Model</th>
                       <th className="py-3 px-4 hidden lg:table-cell">Fitness / Ins. Upto</th>
-                      <th className="py-3 px-4">Search Date & Time</th>
+                      <th className="py-3 px-4">Search Time</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -1132,6 +1160,13 @@ const VehicleDetails = () => {
                               <User className="w-3 h-3 text-indigo-500 shrink-0" />
                               <span className="line-clamp-1">{item.ownerName || 'NA'}</span>
                             </div>
+                            {(item.mobileNo || item.rawResponse?.MOBILE_NO) &&
+                             (item.mobileNo !== 'NA' && item.rawResponse?.MOBILE_NO !== 'NA') && (
+                              <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                                <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                                <span>{item.mobileNo || item.rawResponse?.MOBILE_NO}</span>
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="py-3 px-4 text-slate-600 hidden md:table-cell">
@@ -1146,11 +1181,17 @@ const VehicleDetails = () => {
                             Ins: <span className="font-medium text-slate-800">{item.insuranceUpto || 'NA'}</span>
                           </div>
                         </td>
-                        <td className="py-3 px-4 text-slate-500 text-xs">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-slate-400" />
-                            {formatDateTime(item.lastSearchedAt || item.updatedAt)}
-                          </span>
+                        <td className="py-3 px-4 text-xs">
+                          <div className="flex flex-col items-start gap-0.5 whitespace-nowrap">
+                            <span className="flex items-center gap-1 font-semibold text-slate-800">
+                              <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                              {formatDate(item.lastSearchedAt || item.updatedAt)}
+                            </span>
+                            <span className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                              <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                              {formatTime(item.lastSearchedAt || item.updatedAt)}
+                            </span>
+                          </div>
                         </td>
                         <td className="py-3 px-4 text-right">
                           <div className="flex items-center justify-end gap-1.5">

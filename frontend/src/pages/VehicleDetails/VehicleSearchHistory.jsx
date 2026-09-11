@@ -23,7 +23,8 @@ import {
   Building2,
   Fuel,
   CheckCircle2,
-  AlertTriangle
+  AlertTriangle,
+  Phone
 } from 'lucide-react'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
@@ -91,6 +92,34 @@ const VehicleSearchHistory = () => {
       toast.error('Failed to delete search record')
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return 'N/A'
+    try {
+      const d = new Date(dateStr)
+      return d.toLocaleDateString('en-IN', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric'
+      })
+    } catch {
+      return dateStr
+    }
+  }
+
+  const formatTime = (dateStr) => {
+    if (!dateStr) return ''
+    try {
+      const d = new Date(dateStr)
+      return d.toLocaleTimeString('en-IN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      })
+    } catch {
+      return ''
     }
   }
 
@@ -274,8 +303,7 @@ const VehicleSearchHistory = () => {
                       <th className="py-3.5 px-3 min-w-[110px] hidden lg:table-cell">Fitness Upto</th>
                       <th className="py-3.5 px-3 min-w-[110px] hidden lg:table-cell">Insurance Upto</th>
                       <th className="py-3.5 px-3 min-w-[110px] hidden xl:table-cell">Road Tax Upto</th>
-                      <th className="py-3.5 px-4 min-w-[170px]">Search Time & Date</th>
-                      <th className="py-3.5 px-3 text-center w-24">Status</th>
+                      <th className="py-3.5 px-4 min-w-[170px]">Search Time</th>
                       <th className="py-3.5 px-4 text-right min-w-[130px] sticky right-0 bg-slate-50">Actions</th>
                     </tr>
                   </thead>
@@ -292,7 +320,7 @@ const VehicleSearchHistory = () => {
                             {serialNumber}
                           </td>
 
-                          {/* Plate Look + Owner Name below */}
+                          {/* Plate Look + Owner Name + Mobile No below */}
                           <td className="py-3.5 px-4">
                             <div className="flex flex-col items-start gap-1.5">
                               <span className="inline-flex items-center bg-slate-900 text-white rounded-lg shadow-sm font-mono font-black text-xs sm:text-sm tracking-wider overflow-hidden border border-slate-800">
@@ -305,6 +333,13 @@ const VehicleSearchHistory = () => {
                                 <User className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
                                 <span className="line-clamp-1">{item.ownerName || 'NA'}</span>
                               </div>
+                              {(item.mobileNo || item.rawResponse?.MOBILE_NO) &&
+                               (item.mobileNo !== 'NA' && item.rawResponse?.MOBILE_NO !== 'NA') && (
+                                <div className="flex items-center gap-1 text-[11px] text-slate-600 font-medium">
+                                  <Phone className="w-3 h-3 text-slate-400 shrink-0" />
+                                  <span>{item.mobileNo || item.rawResponse?.MOBILE_NO}</span>
+                                </div>
+                              )}
                             </div>
                           </td>
 
@@ -355,25 +390,18 @@ const VehicleSearchHistory = () => {
                             </span>
                           </td>
 
-                          {/* Search Time & Date */}
-                          <td className="py-3.5 px-4 text-slate-600 text-xs">
-                            <div className="flex items-center gap-1.5 whitespace-nowrap">
-                              <Clock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              <span>{formatDateTime(item.lastSearchedAt || item.updatedAt)}</span>
+                          {/* Search Date on top & Time on bottom */}
+                          <td className="py-3.5 px-4 text-xs">
+                            <div className="flex flex-col items-start gap-0.5 whitespace-nowrap">
+                              <span className="flex items-center gap-1 font-semibold text-slate-800">
+                                <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+                                {formatDate(item.lastSearchedAt || item.updatedAt)}
+                              </span>
+                              <span className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
+                                <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                                {formatTime(item.lastSearchedAt || item.updatedAt)}
+                              </span>
                             </div>
-                          </td>
-
-                          {/* Status Badge */}
-                          <td className="py-3.5 px-3 text-center">
-                            <span
-                              className={`text-[10px] font-bold px-2 py-0.5 rounded-full inline-block uppercase ${
-                                item.status === 'ACTIVE'
-                                  ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                                  : 'bg-red-50 text-red-700 border border-red-200'
-                              }`}
-                            >
-                              {item.status || 'ACTIVE'}
-                            </span>
                           </td>
 
                           {/* Actions */}
