@@ -76,3 +76,7 @@ pnpm-lock.yaml
 
 # Generated Reports
 party_report*.md
+
+# Public uploads/temporary PDFs
+public/insurance/
+frontend/public/insurance/

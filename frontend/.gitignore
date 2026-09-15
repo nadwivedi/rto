@@ -72,3 +72,7 @@ package-lock.json
 yarn.lock
 pnpm-lock.yaml
 .pnpm-debug.log
+
+# Public insurance folder
+public/insurance/
+
