@@ -110,7 +110,7 @@ function ProtectedLayout() {
         const isModalOpen = document.querySelector('.bg-slate-900\\/60, .fixed.inset-0, [role="dialog"]') !== null;
         if (isModalOpen) return;
 
-        const vahanHubPages = ['/vahan', '/whatsapp', '/setting', '/javak', '/kyc', '/vehicle-details', '/vehicle-detail', '/vehicle-search-history', '/vehicle-details/history'];
+        const vahanHubPages = ['/vahan', '/forms', '/whatsapp', '/setting', '/javak', '/kyc', '/vehicle-details', '/vehicle-detail', '/vehicle-search-history', '/vehicle-details/history'];
         const sarthiHubPages = ['/sarthi'];
         const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal', '/hpa-hpt', '/cashflow-report'];
 

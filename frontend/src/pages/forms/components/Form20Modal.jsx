@@ -12,6 +12,7 @@ const Form20Modal = ({ onClose }) => {
   const [vehicleError, setVehicleError] = useState('')
 
   const [formData, setFormData] = useState({
+    rtoName: '',
     fullName: '',
     relation: '',
     age: '',
@@ -281,7 +282,18 @@ const Form20Modal = ({ onClose }) => {
                 {/* To Section */}
                 <div style={{marginBottom: '12px'}}>
                   <p>To,</p>
-                  <p style={{marginLeft: '24px'}}>The Registering Authority Raipur</p>
+                  <div style={{marginLeft: '24px', display: 'flex', alignItems: 'baseline', gap: '4px'}}>
+                    <span>The Registering Authority</span>
+                    <div style={{flex: 1, borderBottom: '1.5px dotted #000', minHeight: '16px', minWidth: '120px'}}>
+                      <input
+                        type="text"
+                        name="rtoName"
+                        value={formData.rtoName}
+                        onChange={handleChange}
+                        style={{border:'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "Arial, Helvetica, sans-serif", fontSize: '12px', padding: '0 2px', textTransform: 'uppercase', fontWeight: 'bold'}}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Field 1 */}
@@ -1469,7 +1481,7 @@ const Form20Modal = ({ onClose }) => {
               <label className="block text-xs font-bold text-gray-700 uppercase">Auto-Fill</label>
               <input
                 type="text"
-                placeholder="Vehicle Number"
+
                 value={vehicleSearchNumber}
                 onChange={(e) => setVehicleSearchNumber(e.target.value.toUpperCase())}
                 className="w-full px-3 py-2 border-2 border-gray-300 rounded-lg text-sm focus:outline-none focus:border-blue-500 font-semibold uppercase"

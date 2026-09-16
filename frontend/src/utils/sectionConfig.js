@@ -37,6 +37,7 @@ const sectionGroups = [
     id: 'other',
     label: 'Other',
     sections: [
+      { key: 'forms', label: 'RTO Forms', path: '/forms', icon: '📋' },
       { key: 'kyc', label: 'KYC Zone', path: '/kyc', icon: '🛡️' },
       { key: 'javak', label: 'Javak (Notes)', path: '/javak', icon: '📋' },
       { key: 'cashflow', label: 'Cashflow Reports', path: '/cashflow-report', icon: '💰' }
@@ -45,6 +46,7 @@ const sectionGroups = [
 ]
 
 export const sectionKeyToRoute = {
+  forms: '/forms',
   vehicleRegistration: '/vehicle-registration',
   vehicleDetails: '/vehicle-details',
   insurance: '/insurance',

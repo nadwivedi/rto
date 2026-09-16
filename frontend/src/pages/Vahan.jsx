@@ -31,7 +31,8 @@ const vahanOptions = [
   { title: 'Money Received', path: '/money-received', note: 'Party-wise money received entries', image: '/buttons/money received.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
   { title: 'Insurance', path: '/insurance', note: 'Insurance details and renewals', image: '/buttons/addinsurance.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
   { title: 'Bill', path: '/dealer-bill', note: 'Billing and dealer bills', image: '/buttons/add bill.png', category: 'billing', badgeTone: 'bg-amber-100 text-amber-700' },
-  { title: 'Speed Governor', path: '/speed-governor', note: 'Speed governor work records', image: '/buttons/speed governor.png', category: 'compliance', badgeTone: 'bg-orange-100 text-orange-700' }
+  { title: 'Speed Governor', path: '/speed-governor', note: 'Speed governor work records', image: '/buttons/speed governor.png', category: 'compliance', badgeTone: 'bg-orange-100 text-orange-700' },
+  { title: 'RTO Forms', path: '/forms', note: 'Form 20/29/30, Affidavits & official forms', image: '/buttons/add permit.png', category: 'forms', badgeTone: 'bg-indigo-100 text-indigo-700' }
 ]
 
 const quickButtons = [
@@ -52,7 +53,8 @@ const quickButtons = [
   { title: 'Add GPS', shortLabel: 'GPS', tone: 'border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-100' },
   { title: 'Bill', shortLabel: 'Bill', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100', path: '/dealer-bill' },
   { title: 'Money Received', shortLabel: 'Money Rec.', tone: 'border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100', path: '/money-received' },
-  { title: 'Speed Governor', shortLabel: 'Speed Gov.', tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100', path: '/speed-governor' }
+  { title: 'Speed Governor', shortLabel: 'Speed Gov.', tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100', path: '/speed-governor' },
+  { title: 'RTO Forms', shortLabel: 'Forms', tone: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100', path: '/forms' }
 ]
 
 const actionNavbarButtons = []
@@ -75,6 +77,7 @@ const buttonIcons = {
   'Green Tax': Leaf,
   'Professional Tax': FileText,
   'Money Received': Wallet,
+  'RTO Forms': FileText,
 }
 
 const PermitTypeSelectModal = ({ onClose, openModal }) => {

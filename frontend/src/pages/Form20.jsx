@@ -130,7 +130,7 @@ const Form20 = () => {
                 <h2 className="text-sm font-bold mt-1">Form of Application for Registration of a Motor Vehicle</h2>
               </div>
 
-              <p className="mb-4">To,<br/><span className="ml-8">The Registering Authority Raipur</span></p>
+              <p className="mb-4">To,<br/><span className="ml-8">The Registering Authority</span></p>
 
               {/* Field 1 */}
               <div className="row flex">

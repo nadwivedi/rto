@@ -16,6 +16,7 @@ const buttonIcons = {
   'NOC List': FileCheck,
   'Renewal List': RefreshCw,
   'HPA+HPT List': FileSignature,
+  Forms: FileText,
 }
 
 const quickButtons = [
@@ -24,6 +25,7 @@ const quickButtons = [
   { title: 'NOC List', shortLabel: 'NOC', path: '/noc', tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100' },
   { title: 'Renewal List', shortLabel: 'Renewal', path: '/registration-renewal', tone: 'border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100' },
   { title: 'HPA+HPT List', shortLabel: 'HPA+HPT', path: '/hpa-hpt', tone: 'border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100' },
+  { title: 'Forms', shortLabel: 'Forms', path: '/forms', tone: 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100' },
 ]
 
 const Sarthi = () => {

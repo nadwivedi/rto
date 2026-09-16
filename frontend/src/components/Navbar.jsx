@@ -257,10 +257,10 @@ const Navbar = () => {
 
   if (user?.type === 'staff') {
     filteredMenuItems = menuItems.filter(item => 
-      !['Forms', 'whatsapp'].includes(item.name) && !['/forms', '/whatsapp'].includes(item.path)
+      !['whatsapp'].includes(item.name) && !['/whatsapp'].includes(item.path)
     ).filter(featureFilter);
     filteredDropdownItems = dropdownItems.filter(item => 
-      !['Forms', 'whatsapp'].includes(item.name) && !['/forms', '/whatsapp'].includes(item.path)
+      !['whatsapp'].includes(item.name) && !['/whatsapp'].includes(item.path)
     ).filter(featureFilter);
   } else {
     filteredMenuItems = menuItems.filter(featureFilter);
