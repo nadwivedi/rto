@@ -232,7 +232,15 @@ exports.createUser = async (req, res) => {
       isActive: true,
       monthlyPrice: monthlyPrice !== undefined && !Number.isNaN(Number(monthlyPrice)) ? Number(monthlyPrice) : undefined,
       yearlyPrice: yearlyPrice !== undefined && !Number.isNaN(Number(yearlyPrice)) ? Number(yearlyPrice) : undefined,
-      features: features || { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false },
+      features: features ? {
+        greenTax: features.greenTax === true,
+        professionalTax: features.professionalTax === true,
+        autoCreateRC: features.autoCreateRC === true,
+        expandAdditionalDetails: features.expandAdditionalDetails === true,
+        moneyReceived: features.moneyReceived === true,
+        rcDetails: features.rcDetails === true,
+        forms: features.forms === true
+      } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false },
       rcSearchLimit: rcSearchLimit !== undefined && !Number.isNaN(Number(rcSearchLimit)) ? Math.max(0, Number(rcSearchLimit)) : 0,
       rcSearchCount: 0
     })
@@ -364,7 +372,8 @@ exports.updateUser = async (req, res) => {
         autoCreateRC: features.autoCreateRC === true,
         expandAdditionalDetails: features.expandAdditionalDetails === true,
         moneyReceived: features.moneyReceived === true,
-        rcDetails: features.rcDetails === true
+        rcDetails: features.rcDetails === true,
+        forms: features.forms === true
       }
     }
     if (rcSearchLimit !== undefined) {

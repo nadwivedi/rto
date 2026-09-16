@@ -189,8 +189,8 @@ function ProtectedLayout() {
                 <Route path='/vehicle-transfer' element={<VehicleTransfer />} />
                 <Route path='/noc' element={<Noc />} />
                 <Route path='/registration-renewal' element={<RegistrationRenewal />} />
-                <Route path='/forms' element={<Forms />} />
-                <Route path='/forms/form-20' element={<Form20 />} />
+                <Route path='/forms' element={user?.features?.forms ? <Forms /> : <Navigate to='/' replace />} />
+                <Route path='/forms/form-20' element={user?.features?.forms ? <Form20 /> : <Navigate to='/' replace />} />
                 <Route path='/puc' element={<Puc />} />
                 <Route path='/gps' element={<Gps />} />
                 <Route path='/dealer-bill' element={<DealerBill />} />

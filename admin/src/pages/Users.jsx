@@ -99,6 +99,7 @@ const Users = () => {
     features_expandAdditionalDetails: false,
     features_moneyReceived: false,
     features_rcDetails: false,
+    features_forms: false,
     rcSearchLimit: 0,
     rcSearchCount: 0
   })
@@ -243,7 +244,8 @@ const Users = () => {
           autoCreateRC: formData.features_autoCreateRC,
           expandAdditionalDetails: formData.features_expandAdditionalDetails,
           moneyReceived: formData.features_moneyReceived,
-          rcDetails: formData.features_rcDetails
+          rcDetails: formData.features_rcDetails,
+          forms: formData.features_forms
         }
       }
       delete bodyData.features_greenTax
@@ -252,6 +254,7 @@ const Users = () => {
       delete bodyData.features_expandAdditionalDetails
       delete bodyData.features_moneyReceived
       delete bodyData.features_rcDetails
+      delete bodyData.features_forms
       bodyData.rcSearchLimit = formData.rcSearchLimit !== '' ? Number(formData.rcSearchLimit) : 0
       if (isEditMode && !formData.password) {
         delete bodyData.password
@@ -271,7 +274,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, rcSearchLimit: 0, rcSearchCount: 0 })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, rcSearchLimit: 0, rcSearchCount: 0 })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -305,6 +308,7 @@ const Users = () => {
       features_expandAdditionalDetails: user.features?.expandAdditionalDetails ?? false,
       features_moneyReceived: user.features?.moneyReceived ?? false,
       features_rcDetails: user.features?.rcDetails ?? false,
+      features_forms: user.features?.forms ?? false,
       rcSearchLimit: user.rcSearchLimit ?? 0,
       rcSearchCount: user.rcSearchCount ?? 0
     })
@@ -317,7 +321,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, rcSearchLimit: 0, rcSearchCount: 0 })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, rcSearchLimit: 0, rcSearchCount: 0 })
   }
 
   const handleDelete = async (id) => {
@@ -1040,7 +1044,7 @@ const Users = () => {
                 <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-2'>
                   Feature Access
                 </label>
-                <div className='flex gap-6'>
+                <div className='flex flex-wrap gap-4 sm:gap-6'>
                   <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
                     <input
                       type='checkbox'
@@ -1100,6 +1104,16 @@ const Users = () => {
                       className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
                     />
                     RC Details
+                  </label>
+                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
+                    <input
+                      type='checkbox'
+                      name='features_forms'
+                      checked={formData.features_forms}
+                      onChange={handleChange}
+                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                    />
+                    Forms
                   </label>
                 </div>
 

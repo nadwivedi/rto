@@ -183,9 +183,10 @@ const Vahan = () => {
       if (o.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (o.title === 'Professional Tax') return enabledFeatures.professionalTax === true
       if (o.title === 'Money Received') return enabledFeatures.moneyReceived === true
+      if (o.title === 'RTO Forms' || o.title === 'Forms') return enabledFeatures.forms === true
       return canAccessSection(o.title)
     }),
-    [enabledFeatures.rcDetails, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledSections, isStaff]
+    [enabledFeatures.rcDetails, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledFeatures.forms, enabledSections, isStaff]
   )
 
   const filteredQuickButtons = useMemo(() =>
@@ -194,9 +195,10 @@ const Vahan = () => {
       if (b.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (b.title === 'Professional Tax') return enabledFeatures.professionalTax === true
       if (b.title === 'Money Received') return enabledFeatures.moneyReceived === true
+      if (b.title === 'RTO Forms' || b.title === 'Forms') return enabledFeatures.forms === true
       return canAccessSection(b.title)
     }),
-    [enabledFeatures.rcDetails, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledSections, isStaff]
+    [enabledFeatures.rcDetails, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledFeatures.forms, enabledSections, isStaff]
   )
 
   const openModal = (title) => {

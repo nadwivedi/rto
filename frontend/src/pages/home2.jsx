@@ -200,7 +200,7 @@ const Home2 = () => {
                 {isWhatsAppConnected ? 'WhatsApp' : 'Connect WA'}
               </button>
             )}
-          {(!isStaff || enabledSections.forms !== false) && (
+          {user?.features?.forms && (!isStaff || enabledSections.forms !== false) && (
             <button
               onClick={() => navigate('/forms')}
               className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-bold text-xs sm:text-base cursor-pointer'

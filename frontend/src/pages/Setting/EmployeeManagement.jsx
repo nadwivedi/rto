@@ -21,10 +21,11 @@ const EmployeeManagement = () => {
         if (s.key === 'vehicleDetails') return enabledFeatures.rcDetails === true
         if (s.key === 'greenTax') return enabledFeatures.greenTax === true
         if (s.key === 'professionalTax') return enabledFeatures.professionalTax === true
+        if (s.key === 'forms') return enabledFeatures.forms === true
         return true
       })
     })).filter(group => group.sections.length > 0),
-    [enabledFeatures.rcDetails, enabledFeatures.greenTax, enabledFeatures.professionalTax]
+    [enabledFeatures.rcDetails, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.forms]
   )
   const visibleSectionKeys = useMemo(() => visibleGroups.flatMap(g => g.sections.map(s => s.key)), [visibleGroups])
   const visibleDefaultSections = useMemo(() => Object.fromEntries(visibleSectionKeys.map(k => [k, true])), [visibleSectionKeys])

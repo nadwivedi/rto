@@ -252,6 +252,7 @@ const Navbar = () => {
     if (item.path === '/vehicle-details') return enabledFeatures.rcDetails === true;
     if (item.path === '/green-tax') return enabledFeatures.greenTax === true;
     if (item.path === '/professional-tax') return enabledFeatures.professionalTax === true;
+    if (item.path === '/forms' || item.path?.startsWith('/forms/')) return enabledFeatures.forms === true;
     return true;
   };
 

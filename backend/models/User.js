@@ -102,7 +102,8 @@ const userSchema = new mongoose.Schema({
     autoCreateRC: { type: Boolean, default: false },
     expandAdditionalDetails: { type: Boolean, default: false },
     moneyReceived: { type: Boolean, default: false },
-    rcDetails: { type: Boolean, default: false }
+    rcDetails: { type: Boolean, default: false },
+    forms: { type: Boolean, default: false }
   },
   rcSearchLimit: {
     type: Number,

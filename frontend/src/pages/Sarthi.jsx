@@ -36,6 +36,7 @@ const Sarthi = () => {
   const [isReportModalOpen, setIsReportModalOpen] = useState(false)
   const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0)
 
+  const enabledFeatures = user?.features || {}
   const enabledSections = user?.sections || {}
   const isStaff = user?.type === 'staff'
 
@@ -49,8 +50,11 @@ const Sarthi = () => {
   }
 
   const filteredQuickButtons = useMemo(() =>
-    quickButtons.filter(b => canAccessSection(b.title)),
-    [enabledSections, isStaff]
+    quickButtons.filter(b => {
+      if (b.title === 'Forms') return enabledFeatures.forms === true
+      return canAccessSection(b.title)
+    }),
+    [enabledFeatures.forms, enabledSections, isStaff]
   )
 
   const closeModal = () => {
