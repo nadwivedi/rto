@@ -85,10 +85,13 @@ const Home2 = () => {
       try {
         const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
         const res = await axios.get(`${API_URL}/api/whatsapp/status`, { withCredentials: true })
-        setIsWhatsAppConnected(res.data?.status === 'authenticated')
+        // WhatsApp only connects while sending, so "connected" means the login is linked:
+        // either a connection is open now, or a saved login exists that hasn't expired.
+        const s = res.data || {}
+        setIsWhatsAppConnected(s.status === 'authenticated' || (!!s.hasSavedSession && s.status !== 'needs_qr'))
       } catch (error) {
+        // A failed status check says nothing about WhatsApp; keep showing the last known state.
         console.error('[WhatsApp] Status check error:', error)
-        setIsWhatsAppConnected(false)
       }
     }
     
