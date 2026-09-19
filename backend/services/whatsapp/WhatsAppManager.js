@@ -1,5 +1,3 @@
-const fs = require('fs')
-const path = require('path')
 const { WhatsAppSession, STATE } = require('./WhatsAppSession')
 
 // Limits how many WhatsApp browsers exist at once (config.maxActiveSessions). A session takes a
@@ -35,7 +33,7 @@ class Semaphore {
 
 class WhatsAppManager {
   /**
-   * @param {object} deps  config, store, createClient, log, toQrDataUrl, chrome
+   * @param {object} deps  config, store, createClient, profile, log, toQrDataUrl
    */
   constructor(deps) {
     this.deps = deps
@@ -97,10 +95,6 @@ class WhatsAppManager {
     return this.sessions.get(String(userId))?.closeIfIdle()
   }
 
-  getChromePid(userId) {
-    return this.sessions.get(String(userId))?.chromePid || null
-  }
-
   _guard(fn) {
     if (this.shuttingDown) return Promise.reject(new Error('Server is shutting down'))
     return fn()
@@ -109,27 +103,20 @@ class WhatsAppManager {
   // ── Startup ────────────────────────────────────────────────────────────────
 
   async start() {
-    this._cleanupAuthDir()
+    await this._loadLogins()
     await this._restoreSessions()
     this.watchdog = setInterval(() => this._tick(), this.config.watchdogIntervalMs)
     this.watchdog.unref?.()
   }
 
-  // Any Chrome still using the auth folder at boot belongs to a previous server process.
-  _cleanupAuthDir() {
-    const { chrome, log, config } = this.deps
-    fs.mkdirSync(config.authDir, { recursive: true })
-    const killed = chrome.killOrphanChromes(config.authDir)
-    if (killed.length) log.warn('', 'ORPHAN_CHROME_KILLED', `Killed ${killed.length} Chrome process(es) left by the previous server run`)
-    for (const dir of fs.readdirSync(config.authDir)) {
-      if (dir.startsWith('session-')) chrome.removeLockFiles(path.join(config.authDir, dir))
-    }
-    log.info('', 'STARTUP', `Auth folder: ${config.authDir} | keep-alive: ${config.keepAlive} | max active sessions: ${config.maxActiveSessions}`)
-    // Chrome stores WhatsApp Web data ~130 characters deep inside the profile. Past Windows'
-    // 260-character path limit that storage fails and WhatsApp Web reloads forever (no QR).
-    if (process.platform === 'win32' && path.resolve(config.authDir).length > 110) {
-      log.warn('', 'AUTH_PATH_TOO_LONG', `Auth folder path is ${path.resolve(config.authDir).length} characters — use a shorter WHATSAPP_AUTH_DIR (e.g. C:\wa-auth)`)
-    }
+  // Logins are stored in MongoDB; remember which users have a linked device.
+  async _loadLogins() {
+    const { log, config, profile } = this.deps
+    const linked = await profile.load().catch(err => {
+      log.error('', 'STARTUP_ERROR', `Could not load WhatsApp logins: ${err.message}`)
+      return 0
+    })
+    log.info('', 'STARTUP', `Engine: Baileys | logins in MongoDB: ${linked} | keep-alive: ${config.keepAlive} | max active sessions: ${config.maxActiveSessions}`)
   }
 
   async _restoreSessions() {
@@ -179,7 +166,7 @@ class WhatsAppManager {
     this.shuttingDown = true
     if (this.watchdog) clearInterval(this.watchdog)
     const running = [...this.sessions.values()].filter(s => s.isRunning())
-    this.deps.log.info('', 'SHUTDOWN', `Closing ${running.length} WhatsApp browser(s)`)
+    this.deps.log.info('', 'SHUTDOWN', `Closing ${running.length} WhatsApp connection(s)`)
     await Promise.allSettled([...this.sessions.values()].map(s => s.shutdown()))
   }
 }

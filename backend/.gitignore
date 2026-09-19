@@ -76,6 +76,6 @@ yarn.lock
 pnpm-lock.yaml
 .pnpm-debug.log
 
-# WhatsApp Web session auth data (contains sensitive browser login state)
+# WhatsApp session auth data (contains sensitive login keys)
 .wwebjs_auth/
 .wwebjs_cache/

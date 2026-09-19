@@ -1,6 +1,6 @@
 const QRCode = require('qrcode')
 const config = require('./config')
-const chrome = require('./chromeProcess')
+const { profile } = require('./mongoAuthState')
 const { WhatsAppManager } = require('./WhatsAppManager')
 const { WaUnavailableError, WaRecipientError } = require('./errors')
 const { STATE } = require('./WhatsAppSession')
@@ -17,7 +17,7 @@ const store = {
 const manager = new WhatsAppManager({
   config,
   store,
-  chrome,
+  profile,
   createClient,
   log: waLog,
   toQrDataUrl: (qr) => QRCode.toDataURL(qr, { width: 300, margin: 1 }),

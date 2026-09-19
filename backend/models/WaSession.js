@@ -41,9 +41,13 @@ const waSessionSchema = new mongoose.Schema({
   autoStart: {
     type: Boolean
   },
+  // Connection engine that created the saved login ('baileys'); older records were browser-based
+  engine: {
+    type: String
+  },
   initStage: {
     type: String,
-    enum: ['waiting', 'launching_browser', 'loading_wweb', null],
+    enum: ['waiting', 'connecting', 'launching_browser', 'loading_wweb', null],
     default: null
   }
 }, {

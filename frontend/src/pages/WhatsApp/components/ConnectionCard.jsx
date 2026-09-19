@@ -4,13 +4,14 @@ import {
   WifiOff, Smartphone, X, PlayCircle, Clock
 } from 'lucide-react'
 
-// Steps shown while the server starts WhatsApp. Keys match the backend initStage / status.
+// Steps shown while the server connects to WhatsApp. Keys match the backend initStage / status.
 const START_STEPS = [
-  { key: 'waiting', label: 'Waiting for a free slot' },
-  { key: 'launching_browser', label: 'Starting browser' },
-  { key: 'loading_wweb', label: 'Loading WhatsApp Web' },
+  { key: 'waiting', label: 'Waiting for your turn' },
+  { key: 'connecting', label: 'Connecting to WhatsApp' },
   { key: 'syncing', label: 'Finishing connection' },
 ]
+// Stage names used by the older browser-based engine
+const STAGE_ALIASES = { launching_browser: 'connecting', loading_wweb: 'connecting' }
 
 function useNow(active) {
   const [now, setNow] = useState(Date.now())
@@ -85,7 +86,7 @@ function PendingNote({ count, connected = false }) {
 }
 
 function StartingView({ s, now, onCancel, busy }) {
-  const stageKey = s.status === 'syncing' ? 'syncing' : (s.initStage || 'waiting')
+  const stageKey = s.status === 'syncing' ? 'syncing' : (STAGE_ALIASES[s.initStage] || s.initStage || 'waiting')
   const current = Math.max(0, START_STEPS.findIndex(st => st.key === stageKey))
   const elapsed = s.startedAt ? Math.max(0, Math.floor((now - new Date(s.startedAt).getTime()) / 1000)) : 0
   return (
@@ -107,9 +108,14 @@ function StartingView({ s, now, onCancel, busy }) {
           </li>
         ))}
       </ol>
-      {elapsed > 90 && (
-        <Notice tone='blue' icon={Clock} title='The server is taking a while'>
-          It keeps trying for up to 3 minutes, then shows what went wrong. You don't need to click anything.
+      {stageKey === 'waiting' && (
+        <Notice tone='blue' icon={Clock} title='Another account is sending right now'>
+          WhatsApp connects one account at a time. Yours starts automatically in a moment.
+        </Notice>
+      )}
+      {stageKey !== 'waiting' && elapsed > 30 && (
+        <Notice tone='blue' icon={Clock} title='Taking longer than usual'>
+          It keeps trying for up to 90 seconds, then shows what went wrong. You don't need to click anything.
         </Notice>
       )}
       <Button variant='secondary' icon={X} onClick={onCancel} busy={busy === 'cancel'}>Cancel</Button>

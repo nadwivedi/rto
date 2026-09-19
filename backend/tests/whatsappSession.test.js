@@ -16,7 +16,7 @@ async function until(fn, ms = 2000) {
   throw new Error('condition not met in time')
 }
 
-// Behaves like whatsapp-web.js Client: initialize() launches the "browser", then the test
+// Behaves like the Baileys client adapter: initialize() connects, then the test
 // drives the WhatsApp side by emitting qr / authenticated / ready / disconnected.
 class FakeClient extends EventEmitter {
   constructor(env) {
@@ -26,16 +26,10 @@ class FakeClient extends EventEmitter {
     this.loggedOut = false
     this.sent = []
     this.waState = 'CONNECTED'
-    this.browser = new EventEmitter()
-    this.browser.isConnected = () => !this.destroyed
-    this.browser.process = () => ({ pid: 4242 })
-    this.pupBrowser = null
-    this.pupPage = new EventEmitter()
     this.info = { wid: { user: '919876543210' } }
     env.clients.push(this)
   }
   async initialize() {
-    this.pupBrowser = this.browser
     if (this.env.initErrors?.length) throw new Error(this.env.initErrors.shift())
     this.env.onInitialize?.(this)
     // like the real client, initialize() stays pending until the page is closed or fails
@@ -46,9 +40,9 @@ class FakeClient extends EventEmitter {
     this._initReject?.(new Error('Target closed'))
   }
   async logout() { this.loggedOut = true }
-  async getState() { return this.waState }
+  getState() { return this.destroyed ? null : this.waState }
   async getNumberId(num) { return num.endsWith('0000000000') ? null : { _serialized: `${num}@c.us` } }
-  async sendMessage(chatId, text) {
+  async sendMessage(chatId, text, opts = {}) {
     if (this.env.sendError) throw this.env.sendError
     this.sent.push({ chatId, text })
     return { id: { _serialized: `msg-${this.sent.length}` } }
@@ -59,13 +53,11 @@ function makeEnv(overrides = {}) {
   const env = {
     clients: [],
     saved: new Set(),   // userIds that have a linked login on disk
-    data: new Set(),    // userIds with WhatsApp Web data but no linked marker (pre-redesign sessions)
     wiped: [],
     db: new Map(),
     logs: [],
   }
   const config = {
-    authDir: '/tmp/wa-test',
     keepAlive: true,
     idleCloseMs: 60000,
     launchTimeoutMs: 2000,
@@ -80,7 +72,7 @@ function makeEnv(overrides = {}) {
     bootStaggerMs: 10,
     ...overrides,
   }
-  const userFromDir = (dir) => dir.replace(/.*session-user_/, '')
+  const userFromDir = (sessionId) => sessionId.replace(/^user_/, '')
   const deps = {
     config,
     store: {
@@ -88,16 +80,10 @@ function makeEnv(overrides = {}) {
       list: async () => [...env.db.entries()].map(([userId, d]) => ({ userId, ...d })),
       save: async (id, data) => { env.db.set(id, { ...(env.db.get(id) || {}), ...data }) },
     },
-    chrome: {
-      killOrphanChromes: () => [],
-      removeLockFiles: () => [],
+    profile: {
+      load: async () => env.saved.size,
       hasSavedSession: (dir) => env.saved.has(userFromDir(dir)),
-      hasWhatsAppData: (dir) => env.saved.has(userFromDir(dir)) || env.data.has(userFromDir(dir)),
-      markLinked: (dir) => env.saved.add(userFromDir(dir)),
-      clearLinked: (dir) => env.saved.delete(userFromDir(dir)),
-      wipeProfile: (dir) => { env.wiped.push(userFromDir(dir)); env.saved.delete(userFromDir(dir)) },
-      killPid: () => {},
-      isPidAlive: () => false,
+      wipe: async (dir) => { env.wiped.push(userFromDir(dir)); env.saved.delete(userFromDir(dir)) },
     },
     createClient: () => new FakeClient(env),
     log: {
@@ -195,13 +181,13 @@ test('logged out from phone → needs_qr and the saved login is wiped', async ()
   assert.equal(env.db.get('u6').autoStart, false)
 })
 
-test('browser crash → automatic reconnect from the saved login (no QR)', async () => {
+test('connection drop → automatic reconnect from the saved login (no QR, keep-alive mode)', async () => {
   env.saved.add('u7')
   env.onInitialize = (c) => setTimeout(() => c.emit('ready'), 5)
   await env.manager.ensureRunning('u7')
   await until(async () => (await env.manager.getStatus('u7')).status === STATE.READY)
   const first = env.last()
-  first.browser.emit('disconnected') // Chrome killed by the OS
+  first.emit('disconnected', 'CLOSED (428: Connection Closed)')
   await until(async () => env.clients.length === 2 && (await env.manager.getStatus('u7')).status === STATE.READY)
   assert.equal(first.destroyed, true)
   assert.equal(env.wiped.length, 0)
@@ -258,7 +244,7 @@ test('launch timeout → error shown, launch slot released for the next user', a
   await env.manager.connect('b') // waits for the single launch slot
   await tick(20)
   assert.equal(env.clients.length, 1)
-  await until(async () => (await env.manager.getStatus('a')).lastError?.includes('did not load'))
+  await until(async () => (await env.manager.getStatus('a')).lastError?.includes('did not connect'))
   const st = await env.manager.getStatus('a')
   assert.equal(st.status, STATE.NEEDS_QR) // no saved login → needs a scan
   await until(() => env.clients.length === 2) // b got the slot
@@ -323,12 +309,12 @@ test('health check: WhatsApp unresponsive twice → browser restarted', async ()
   await until(async () => (await env.manager.getStatus('h')).status === STATE.READY)
 })
 
-test('browser dies mid-send → message error is "unavailable" (stays pending) and session restarts', async () => {
+test('connection drops mid-send → message error is "unavailable" (stays pending) and session restarts', async () => {
   env.saved.add('m')
   env.onInitialize = (c) => setTimeout(() => c.emit('ready'), 5)
   await env.manager.ensureRunning('m')
   await until(async () => (await env.manager.getStatus('m')).status === STATE.READY)
-  env.sendError = new Error('Protocol error (Runtime.callFunctionOn): Target closed')
+  env.sendError = new Error('Connection Closed')
   await assert.rejects(env.manager.sendWhatsAppMessage('m', '9876543210', 'x'), WaUnavailableError)
   env.sendError = null
   await until(() => env.clients.length === 2)
@@ -349,27 +335,29 @@ test('logout unlinks the device and deletes the saved login', async () => {
   assert.equal(st.hasSavedSession, false)
 })
 
-test('boot: restores previously connected sessions (incl. pre-redesign records), normalizes stale states', async () => {
-  env.db.set('old', { status: 'authenticated', isStopped: false })          // legacy record, no autoStart, no marker
-  env.db.set('new', { status: 'authenticated', autoStart: true })
-  env.db.set('paused', { status: 'disconnected', isStopped: true })
-  env.db.set('stale', { status: 'qr_ready', autoStart: false })
-  env.db.set('nologin', { status: 'authenticated', autoStart: true })       // login folder missing
-  env.data.add('old'); env.saved.add('new'); env.saved.add('paused'); env.saved.add('stale')
+test('boot: restores connected Baileys sessions (keep-alive), old browser-engine logins need one scan', async () => {
+  env.db.set('old', { status: 'authenticated', isStopped: false, lastConnectedAt: new Date() }) // linked with whatsapp-web.js
+  env.db.set('new', { status: 'authenticated', autoStart: true, engine: 'baileys' })
+  env.db.set('paused', { status: 'disconnected', isStopped: true, engine: 'baileys' })
+  env.db.set('stale', { status: 'qr_ready', autoStart: false, engine: 'baileys' })
+  env.db.set('nologin', { status: 'authenticated', autoStart: true, engine: 'baileys' }) // login folder missing
+  env.saved.add('new'); env.saved.add('paused'); env.saved.add('stale')
   env.onInitialize = (c) => setTimeout(() => c.emit('ready'), 5)
 
   env.manager.config.bootStaggerMs = 0
   env.manager.launchSlots.max = 5 // keep-alive with several users needs several slots
   await env.manager.start()
   clearInterval(env.manager.watchdog)
-  await until(async () => (await env.manager.getStatus('old')).status === STATE.READY &&
-    (await env.manager.getStatus('new')).status === STATE.READY, 6000)
+  await until(async () => (await env.manager.getStatus('new')).status === STATE.READY, 6000)
 
+  const old = await env.manager.getStatus('old')
+  assert.equal(old.status, STATE.NEEDS_QR)
+  assert.match(old.lastError, /upgraded/)
   assert.equal((await env.manager.getStatus('paused')).status, STATE.STOPPED)
   assert.equal(env.db.get('stale').status, STATE.DISCONNECTED)
   assert.equal((await env.manager.getStatus('nologin')).status, STATE.DISCONNECTED)
-  assert.equal(env.clients.length, 2)
-  assert.ok(env.saved.has('old')) // migrated to the linked marker
+  assert.equal(env.clients.length, 1)
+  assert.equal(env.db.get('new').engine, 'baileys')
 })
 
 test('shutdown closes every browser and keeps autoStart for the next boot', async () => {
@@ -383,8 +371,8 @@ test('shutdown closes every browser and keeps autoStart for the next boot', asyn
   await assert.rejects(env.manager.connect('s'), /shutting down/)
 })
 
-test('WhatsApp Web reloading during start-up is retried automatically', async () => {
-  env.initErrors = ['Execution context was destroyed, most likely because of a navigation.']
+test('a network blip while connecting is retried automatically', async () => {
+  env.initErrors = ['WhatsApp connection closed (428: Connection Closed)']
   await env.manager.connect('r1')
   await until(() => env.clients.length === 2)
   env.last().emit('qr', 'QR')
@@ -393,18 +381,17 @@ test('WhatsApp Web reloading during start-up is retried automatically', async ()
 })
 
 test('launch retries are limited; a permanent error is shown to the user', async () => {
-  env.initErrors = ['Execution context was destroyed', 'Execution context was destroyed', 'Execution context was destroyed']
+  env.initErrors = ['WhatsApp connection closed (408: timed out)', 'WhatsApp connection closed (408: timed out)', 'WhatsApp connection closed (408: timed out)']
   await env.manager.connect('r2')
-  await until(async () => (await env.manager.getStatus('r2')).lastError?.includes('Could not start'))
+  await until(async () => (await env.manager.getStatus('r2')).lastError?.includes('Could not connect'))
   assert.equal(env.clients.length, 3) // first try + 2 retries
-  env.initErrors = ['Failed to launch the browser process: no chrome']
+  env.initErrors = ['Unsupported state or unable to authenticate data (no chrome)']
   await env.manager.connect('r3')
   await until(async () => (await env.manager.getStatus('r3')).lastError?.includes('no chrome'))
   assert.equal(env.clients.length, 4) // not retried
 })
 
-test('a QR start wipes a profile that has no linked login; a linked profile is never wiped on start', async () => {
-  env.data.add('w1') // leftover WhatsApp Web data from an unfinished attempt
+test('a QR start wipes a folder without a completed login; a linked login is never wiped on start', async () => {
   await env.manager.connect('w1')
   await until(() => env.clients.length === 1)
   assert.deepEqual(env.wiped, ['w1'])
@@ -456,24 +443,29 @@ test('on-demand mode: never closes while a send is in progress; crash does not s
   release()
   await sending
 
-  c.browser.emit('disconnected')
+  c.emit('disconnected', 'CLOSED (408: Connection was lost)')
   await until(async () => (await env.manager.getStatus('od2')).status === STATE.DISCONNECTED)
   await tick(80)
   assert.equal(env.clients.length, 1) // no automatic reconnect loop
 })
 
-test('"ready" never arrives but WhatsApp is logged in and can send → session continues (fallback)', async (t) => {
-  t.mock.timers.enable({ apis: ['setTimeout'] })
-  env = makeEnv({ launchTimeoutMs: 600000 })
-  env.saved.add('fb')
-  env.onInitialize = (c) => {
-    c.pupPage.evaluate = async () => ({ wwebjs: 'object', sendFn: 'function', conn: true, me: '918602145864', missing: ['WAWebSyncGatingUtils'] })
-    queueMicrotask(() => c.emit('authenticated'))
-  }
-  await env.manager.ensureRunning('fb')
-  for (let i = 0; i < 20 && (await env.manager.getStatus('fb')).status !== STATE.SYNCING; i++) await Promise.resolve()
-  for (let i = 0; i < 4; i++) { t.mock.timers.tick(8000); for (let j = 0; j < 20; j++) await Promise.resolve() }
-  const st = await env.manager.getStatus('fb')
-  assert.equal(st.status, STATE.READY)
-  assert.equal(st.phoneNumber, '918602145864')
+test('invalid saved login while the user is at the screen → wiped and a fresh QR is shown', async () => {
+  env.saved.add('af')
+  let n = 0
+  env.onInitialize = (c) => setTimeout(() => (n++ === 0 ? c.emit('auth_failure', 'refused (401)') : c.emit('qr', 'FRESH')), 5)
+  await env.manager.connect('af')
+  await until(async () => (await env.manager.getStatus('af', { watching: true })).status === STATE.QR)
+  assert.deepEqual(env.wiped, ['af', 'af']) // wiped after the failure, then the fresh start
+  assert.equal(env.clients.length, 2)
+  assert.match((await env.manager.getStatus('af')).qrCodeDataUrl, /FRESH/)
+})
+
+test('invalid saved login in the background → needs_qr, no retry loop', async () => {
+  env.saved.add('af2')
+  env.onInitialize = (c) => setTimeout(() => c.emit('auth_failure', 'refused (401)'), 5)
+  await env.manager.ensureRunning('af2')
+  await until(async () => (await env.manager.getStatus('af2')).status === STATE.NEEDS_QR)
+  await env.manager.ensureRunning('af2')
+  await tick(20)
+  assert.equal(env.clients.length, 1)
 })

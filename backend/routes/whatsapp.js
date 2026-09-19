@@ -180,23 +180,15 @@ router.delete('/logs/:id', async (req, res) => {
 router.get('/ram-status', async (req, res) => {
   try {
     const waLog = require('../utils/whatsappLogger')
-    const userId = req.user.id
-    const pid = whatsappService.getChromePid(userId)
-
     const sysRam = waLog.getSystemRamStats()
-    const chromeRamMb = pid ? waLog.getProcessRamMb(pid) : null
-
-    // Also log this check into the file
-    waLog.logRamStatus(userId, 'MANUAL_RAM_DIAGNOSTIC', pid)
-
+    const serverMb = Math.round(process.memoryUsage().rss / 1024 / 1024)
     res.json({
       timestamp: new Date().toISOString(),
       systemRam: sysRam,
-      chromePid: pid,
-      chromeRamMb: chromeRamMb,
-      isSlowWarning: sysRam.freePercent < 15 || (chromeRamMb && chromeRamMb > 400),
+      serverProcessMb: serverMb, // WhatsApp connections run inside this process (no browser)
+      isSlowWarning: sysRam.freePercent < 15,
       message: sysRam.freePercent < 15
-        ? '⚠️ System free RAM is low (<15%). This can cause Chromium or WhatsApp Web to freeze/timeout.'
+        ? '⚠️ System free RAM is low (<15%).'
         : '✅ System RAM is in normal range.'
     })
   } catch (error) {
