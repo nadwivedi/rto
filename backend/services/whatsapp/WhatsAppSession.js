@@ -282,6 +282,9 @@ class WhatsAppSession {
   }
 
   async _runLaunch(gen) {
+    if (this.deps.launchSlots.active >= this.deps.launchSlots.max) {
+      this.deps.log.info(this.userId, 'WAITING_FOR_SLOT', 'Another WhatsApp session is active — waiting for it to finish')
+    }
     const release = await this.deps.launchSlots.acquire()
     let released = false
     const releaseOnce = () => { if (!released) { released = true; release() } }
@@ -493,7 +496,13 @@ class WhatsAppSession {
   _finishLaunchPhase() {
     this.launchRetries = 0
     if (this.launchTimer) { clearTimeout(this.launchTimer); this.launchTimer = null }
-    if (this.releaseLaunchSlot) { this.releaseLaunchSlot(); this.releaseLaunchSlot = null }
+  }
+
+  _releaseSlot() {
+    if (this.releaseLaunchSlot) {
+      this.releaseLaunchSlot()
+      this.releaseLaunchSlot = null
+    }
   }
 
   async _teardown() {
@@ -504,12 +513,13 @@ class WhatsAppSession {
     this.client = null
     this.chromePid = null
     this.startedAt = null
-    if (!client) return
+    if (!client) return this._releaseSlot()
 
     // browser.close() lets Chrome flush IndexedDB (the WhatsApp login) to disk before exiting.
     await withTimeout(client.destroy(), 20000, 'browser close').catch(() => {})
     if (pid && this.deps.chrome.isPidAlive(pid)) this.deps.chrome.killPid(pid)
     this.deps.chrome.killOrphanChromes(this.profileDir)
+    this._releaseSlot() // only now can the next user's browser start
     this.deps.log.info(this.userId, 'BROWSER_CLOSED', `Chrome closed${pid ? ` (pid ${pid})` : ''}`)
   }
 
@@ -643,7 +653,9 @@ class WhatsAppSession {
     const gen = this.generation
     return this.lock.run(async () => {
       if (gen !== this.generation || this.state !== STATE.READY || this.sendsInFlight > 0) return
-      if (Date.now() - this.lastActivityAt < this.config.idleCloseMs) return
+      // Close almost immediately when another user is waiting for the slot.
+      const idleLimit = this.deps.launchSlots.waiting > 0 ? 5000 : this.config.idleCloseMs
+      if (Date.now() - this.lastActivityAt < idleLimit) return
       this.deps.log.info(this.userId, 'IDLE_CLOSE', 'Nothing left to send — closing WhatsApp (login stays saved)')
       await this._teardown()
       await this._setState(STATE.DISCONNECTED, { lastError: null })

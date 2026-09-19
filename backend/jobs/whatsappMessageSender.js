@@ -166,6 +166,8 @@ const processAllPendingMessages = async () => {
 // mode the browser is then closed once it has been idle for a minute.
 whatsappService.setReadyHandler(async (userId) => {
   await processPendingMessagesForUser(userId)
+  // Quick close if another user is queued, otherwise after the normal idle time.
+  setTimeout(() => whatsappService.closeIfIdle(userId), 6000).unref?.()
   setTimeout(() => whatsappService.closeIfIdle(userId), whatsappService.config.idleCloseMs + 1000).unref?.()
 })
 

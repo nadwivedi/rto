@@ -2,14 +2,18 @@ const fs = require('fs')
 const path = require('path')
 const { WhatsAppSession, STATE } = require('./WhatsAppSession')
 
-// Limits how many browsers are starting at once. Unlike the old global queue, it only covers
-// the launch itself — a running session never blocks another user.
+// Limits how many WhatsApp browsers exist at once (config.maxActiveSessions). A session takes a
+// slot when it starts and gives it back when its browser is closed; others queue in FIFO order.
 class Semaphore {
   constructor(max) {
     this.max = max
     this.active = 0
     this.queue = []
   }
+  get waiting() {
+    return this.queue.length
+  }
+
   acquire() {
     return new Promise(resolve => {
       const grant = () => {
@@ -37,7 +41,7 @@ class WhatsAppManager {
     this.deps = deps
     this.config = deps.config
     this.sessions = new Map()
-    this.launchSlots = new Semaphore(this.config.maxConcurrentLaunches)
+    this.launchSlots = new Semaphore(this.config.maxActiveSessions)
     this.watchdog = null
     this.shuttingDown = false
   }
@@ -120,7 +124,7 @@ class WhatsAppManager {
     for (const dir of fs.readdirSync(config.authDir)) {
       if (dir.startsWith('session-')) chrome.removeLockFiles(path.join(config.authDir, dir))
     }
-    log.info('', 'STARTUP', `Auth folder: ${config.authDir} | keep-alive: ${config.keepAlive}`)
+    log.info('', 'STARTUP', `Auth folder: ${config.authDir} | keep-alive: ${config.keepAlive} | max active sessions: ${config.maxActiveSessions}`)
     // Chrome stores WhatsApp Web data ~130 characters deep inside the profile. Past Windows'
     // 260-character path limit that storage fails and WhatsApp Web reloads forever (no QR).
     if (process.platform === 'win32' && path.resolve(config.authDir).length > 110) {

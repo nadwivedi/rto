@@ -69,7 +69,7 @@ function makeEnv(overrides = {}) {
     keepAlive: true,
     idleCloseMs: 60000,
     launchTimeoutMs: 2000,
-    maxConcurrentLaunches: 1,
+    maxActiveSessions: 1,
     qrIdleMs: 60000,
     qrMaxMs: 300000,
     watchdogIntervalMs: 60000,
@@ -264,14 +264,35 @@ test('launch timeout → error shown, launch slot released for the next user', a
   await until(() => env.clients.length === 2) // b got the slot
 })
 
-test('only one browser launches at a time; the next starts once the first shows QR/ready', async () => {
+test('one WhatsApp session at a time: the next user starts only after the first browser is closed', async () => {
+  env = makeEnv({ keepAlive: false, idleCloseMs: 60000 })
   env.saved.add('x')
   env.saved.add('y')
+  env.onInitialize = (c) => setTimeout(() => c.emit('ready'), 5)
   await env.manager.ensureRunning('x')
-  await env.manager.ensureRunning('y')
-  await tick(20)
+  await env.manager.connect('y') // user y clicks Connect while x is sending
+  await until(async () => (await env.manager.getStatus('x')).status === STATE.READY)
+  await tick(30)
+  assert.equal(env.clients.length, 1) // y waits, even though x is past login
+  assert.equal((await env.manager.getStatus('y')).initStage, 'waiting')
+
+  // x has nothing left to send; with someone waiting it closes after 5s idle instead of 60s
+  env.manager.session('x').lastActivityAt = Date.now() - 6000
+  await env.manager.closeIfIdle('x')
+  await until(() => env.clients.length === 2)
+  assert.equal(env.clients[0].destroyed, true)
+  await until(async () => (await env.manager.getStatus('y')).status === STATE.READY)
+})
+
+test('a QR screen also holds the slot until it is cancelled', async () => {
+  await env.manager.connect('q1')
+  await until(() => env.clients.length === 1)
+  env.last().emit('qr', 'QR')
+  env.saved.add('q2')
+  await env.manager.ensureRunning('q2')
+  await tick(30)
   assert.equal(env.clients.length, 1)
-  env.clients[0].emit('ready')
+  await env.manager.cancel('q1')
   await until(() => env.clients.length === 2)
 })
 
@@ -338,6 +359,7 @@ test('boot: restores previously connected sessions (incl. pre-redesign records),
   env.onInitialize = (c) => setTimeout(() => c.emit('ready'), 5)
 
   env.manager.config.bootStaggerMs = 0
+  env.manager.launchSlots.max = 5 // keep-alive with several users needs several slots
   await env.manager.start()
   clearInterval(env.manager.watchdog)
   await until(async () => (await env.manager.getStatus('old')).status === STATE.READY &&
@@ -389,7 +411,7 @@ test('a QR start wipes a profile that has no linked login; a linked profile is n
 
   env.saved.add('w2')
   await env.manager.ensureRunning('w2')
-  env.clients[0].emit('qr', 'x') // free the launch slot
+  await env.manager.cancel('w1') // free the single session slot
   await until(() => env.clients.length === 2)
   assert.deepEqual(env.wiped, ['w1'])
 })

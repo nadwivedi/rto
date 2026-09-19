@@ -54,8 +54,11 @@ const config = {
 
   // Browser launch + WhatsApp Web load must finish within this time.
   launchTimeoutMs: envInt('WHATSAPP_LAUNCH_TIMEOUT_SEC', 180) * 1000,
-  // How many browsers may be starting at the same moment (launch is the CPU/RAM spike).
-  maxConcurrentLaunches: Math.max(1, envInt('WHATSAPP_MAX_CONCURRENT_LAUNCHES', 1)),
+  // How many WhatsApp browsers may exist at the same time across ALL users. A session holds its
+  // slot for its whole life (start, QR scan, login, sending) until the browser is closed; other
+  // users wait in a queue. Default 1 = one user at a time, lowest RAM. With WHATSAPP_KEEP_ALIVE=true
+  // raise this to the number of users, otherwise the first connected user blocks everyone else.
+  maxActiveSessions: Math.max(1, envInt('WHATSAPP_MAX_ACTIVE_SESSIONS', 1)),
 
   // QR screen: closed when nobody has polled the page for qrIdleMs, or after qrMaxMs in total.
   qrIdleMs: envInt('WHATSAPP_QR_IDLE_SEC', 90) * 1000,
