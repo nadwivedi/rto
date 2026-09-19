@@ -56,6 +56,11 @@ const messageLogSchema = new mongoose.Schema({
   errorReason: {
     type: String
   },
+  // Send attempts that failed with an unexpected error (WhatsApp being offline doesn't count)
+  attempts: {
+    type: Number,
+    default: 0
+  },
   whatsappMessageId: {
     type: String
   }

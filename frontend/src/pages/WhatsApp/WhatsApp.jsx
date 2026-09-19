@@ -1,773 +1,148 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
+import { ArrowLeft, Search, Loader2, Send, Clock } from 'lucide-react'
+import useWhatsAppStatus from './useWhatsAppStatus'
+import ConnectionCard from './components/ConnectionCard'
+import MessageLogs from './components/MessageLogs'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+const LOGS_REFRESH_MS = 30000
 
-// If status stays "initializing" (no QR, no connected) for this long, show a warning + retry.
-const STUCK_INIT_WARN_MS = 40000
-
-// After the QR has been visible for this long without a scan, show a "Get New QR" prompt.
-const QR_SHOW_REFRESH_BTN_MS = 60000
-
-// Maps initStage values from the backend to human-readable progress steps
-const INIT_STAGE_CONFIG = {
-  launching_browser: {
-    step: 1,
-    label: 'Launching browser engine',
-    sublabel: 'Starting up Chrome in the background...'
-  },
-  loading_wweb: {
-    step: 2,
-    label: 'Loading WhatsApp Web',
-    sublabel: 'Almost there — fetching WhatsApp interface...'
-  }
-}
-
-const statusConfig = {
-  authenticated: {
-    label: '✅ Connected',
-    color: 'bg-green-100 text-green-700 border-green-300',
-    card: 'bg-green-50 border-green-200'
-  },
-  qr_ready: {
-    label: '📱 Scan QR Code',
-    color: 'bg-orange-100 text-orange-700 border-orange-300',
-    card: 'bg-orange-50 border-orange-200'
-  },
-  initializing: {
-    label: '⏳ Connecting...',
-    color: 'bg-blue-100 text-blue-700 border-blue-300',
-    card: 'bg-blue-50 border-blue-200'
-  },
-  auth_failure: {
-    label: '❌ Auth Failed',
-    color: 'bg-red-100 text-red-700 border-red-300',
-    card: 'bg-red-50 border-red-200'
-  },
-  disconnected: {
-    label: '🔌 Disconnected',
-    color: 'bg-gray-100 text-gray-700 border-gray-300',
-    card: 'bg-gray-50 border-gray-200'
-  }
+const ACTION_MESSAGES = {
+  connect: 'Connecting to WhatsApp...',
+  cancel: 'Connection cancelled',
+  stop: 'Sending paused. Your login is saved.',
+  logout: 'Logged out of WhatsApp',
+  'renew-qr': 'Getting a new QR code...',
 }
 
 const WhatsApp = () => {
   const navigate = useNavigate()
-  const [statusInfo, setStatusInfo] = useState(null)
+  const { status, error: statusError, refresh: refreshStatus } = useWhatsAppStatus()
+  const [busy, setBusy] = useState(null)
+
   const [logs, setLogs] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [actionBusy, setActionBusy] = useState(null)
+  const [logsLoading, setLogsLoading] = useState(true)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [todaySentCount, setTodaySentCount] = useState(0)
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [selectedIds, setSelectedIds] = useState([])
-  const [bulkDeleting, setBulkDeleting] = useState(false)
-  const [dailyLimit, setDailyLimit] = useState(25)
-  const [qrSecondsLeft, setQrSecondsLeft] = useState(null)
-  const [initElapsed, setInitElapsed] = useState(0)  // seconds spent in initializing/preparing
-  const [initStuck, setInitStuck] = useState(false)  // true when init has taken too long
+  const [dailyLimit, setDailyLimit] = useState(null)
 
-  // Tracks the currently-shown QR image so we can detect when a new one arrives.
-  const lastQrRef = useRef(null)
-  const qrGeneratedAtRef = useRef(null)
-  // Tracks when the current "initializing/preparing" phase started
-  const initStartedAtRef = useRef(null)
-
-  const fetchStatus = useCallback(async () => {
+  const fetchLogs = useCallback(async (p) => {
     try {
-      const res = await axios.get(`${API_URL}/api/whatsapp/status`, { withCredentials: true })
-      setStatusInfo(res.data)
-    } catch (error) {
-      console.error('[WhatsApp] Status fetch error:', error)
-    }
-  }, [])
-
-  const fetchLogs = async (currentPage = page) => {
-    try {
-      const res = await axios.get(`${API_URL}/api/whatsapp/logs?page=${currentPage}&limit=50`, { withCredentials: true })
+      const res = await axios.get(`${API_URL}/api/whatsapp/logs?page=${p}&limit=50`, { withCredentials: true })
       setLogs(res.data.logs || [])
       setTotalPages(res.data.totalPages || 1)
       setTodaySentCount(res.data.todaySentCount || 0)
-      setSelectedIds([])
-    } catch (error) {
-      console.error('[WhatsApp] Logs fetch error:', error)
+    } catch (err) {
+      console.error('[WhatsApp] Logs fetch error:', err)
+    } finally {
+      setLogsLoading(false)
     }
-  }
+  }, [])
 
-  const fetchSettings = async () => {
+  useEffect(() => {
+    fetchLogs(page)
+    const t = setInterval(() => { if (!document.hidden) fetchLogs(page) }, LOGS_REFRESH_MS)
+    return () => clearInterval(t)
+  }, [page, fetchLogs])
+
+  useEffect(() => {
+    axios.get(`${API_URL}/api/whatsapp-settings`, { withCredentials: true })
+      .then(res => setDailyLimit(res.data?.maxMessagesPerDay ?? null))
+      .catch(() => {})
+  }, [])
+
+  const doAction = async (action) => {
+    setBusy(action)
     try {
-      const res = await axios.get(`${API_URL}/api/whatsapp-settings`, { withCredentials: true })
-      if (res.data?.maxMessagesPerDay) setDailyLimit(res.data.maxMessagesPerDay)
-    } catch (error) {
-      console.error('[WhatsApp] Settings fetch error:', error)
+      await axios.post(`${API_URL}/api/whatsapp/${action}`, {}, { withCredentials: true })
+      if (ACTION_MESSAGES[action]) toast.success(ACTION_MESSAGES[action])
+    } catch (err) {
+      toast.error(err?.response?.data?.message || err.message)
+    } finally {
+      await refreshStatus()
+      setBusy(null)
     }
   }
 
   const runCheckNow = async () => {
-    setActionBusy('check')
+    setBusy('check')
     try {
       const res = await axios.post(`${API_URL}/api/whatsapp/trigger-check`, {}, { withCredentials: true })
       toast.success(res.data.message, { autoClose: 5000 })
-      await fetchLogs(page)
-    } catch (error) {
-      toast.error(`Check failed: ${error?.response?.data?.message || error.message}`)
+      await Promise.all([fetchLogs(page), refreshStatus()])
+    } catch (err) {
+      toast.error(`Check failed: ${err?.response?.data?.message || err.message}`)
     } finally {
-      setActionBusy(null)
+      setBusy(null)
     }
-  }
-
-  // Initial load
-  useEffect(() => {
-    const init = async () => {
-      await fetchStatus()
-      await fetchLogs(1)
-      await fetchSettings()
-      setLoading(false)
-    }
-    init()
-  }, [])
-
-  // Dynamic polling: moderate while connecting/scanning, slow otherwise.
-  // We do NOT use 1-second polling — it hammers the server and can interfere with the
-  // QR handshake via touchPoll(). 3s is fast enough to feel responsive.
-  useEffect(() => {
-    const currentStatus = statusInfo?.status || 'disconnected'
-    const isActivelyConnecting = ['qr_ready', 'initializing'].includes(currentStatus)
-    const browserLaunching = statusInfo?.isInitializing
-    const intervalMs = (isActivelyConnecting || browserLaunching) ? 3000 : 8000
-
-    const interval = setInterval(fetchStatus, intervalMs)
-    return () => clearInterval(interval)
-  }, [statusInfo?.status, statusInfo?.isInitializing])
-
-  // NOTE: Auto-start has been intentionally removed.
-  // Previously the page would call /start automatically on page load which caused a race
-  // condition — if Chrome was still cleaning up from a previous session, the new call
-  // would launch a second instance, leading to the "perpetually Connecting" spinner.
-  // The user must now click "Connect WhatsApp" explicitly to start the session.
-
-  const doAction = async (action, successMsg, silent = false) => {
-    setActionBusy(action)
-    try {
-      await axios.post(`${API_URL}/api/whatsapp/${action}`, {}, { withCredentials: true })
-      if (!silent) toast.success(successMsg)
-      await fetchStatus()
-    } catch (error) {
-      if (!silent) toast.error(`Failed: ${error?.response?.data?.message || error.message}`)
-    } finally {
-      setActionBusy(null)
-    }
-  }
-
-  // Track when initializing/preparing phase starts so we can show elapsed time + detect stuck
-  useEffect(() => {
-    const s = statusInfo?.status || 'disconnected'
-    // Compute inline — effectiveIsStopped is declared later in render scope
-    const _stopped = statusInfo?.isStopped || statusInfo?.lastError === 'LOGOUT'
-    // Only consider "connecting" when the browser is truly being launched
-    const isConnecting = s === 'initializing' || (s === 'disconnected' && !_stopped && !!statusInfo?.isInitializing)
-
-    if (isConnecting) {
-      if (!initStartedAtRef.current) {
-        initStartedAtRef.current = Date.now()
-        setInitElapsed(0)
-        setInitStuck(false)
-      }
-    } else {
-      initStartedAtRef.current = null
-      setInitElapsed(0)
-      setInitStuck(false)
-    }
-  }, [statusInfo?.status, statusInfo?.isStopped, statusInfo?.lastError, statusInfo?.isInitializing])
-
-  // Elapsed timer tick — updates every second while in connecting/preparing phase
-  useEffect(() => {
-    const s = statusInfo?.status || 'disconnected'
-    const _stopped = statusInfo?.isStopped || statusInfo?.lastError === 'LOGOUT'
-    const isConnecting = s === 'initializing' || (s === 'disconnected' && !_stopped && !!statusInfo?.isInitializing)
-
-    if (!isConnecting) return
-
-    const tick = setInterval(() => {
-      if (!initStartedAtRef.current) return
-      const elapsed = Math.floor((Date.now() - initStartedAtRef.current) / 1000)
-      setInitElapsed(elapsed)
-      if (elapsed * 1000 >= STUCK_INIT_WARN_MS) {
-        setInitStuck(true)
-      }
-    }, 1000)
-
-    return () => clearInterval(tick)
-  }, [statusInfo?.status, statusInfo?.isStopped, statusInfo?.lastError, statusInfo?.isInitializing])
-
-  // QR tracking — detect new vs. stale QR images
-  useEffect(() => {
-    const qr = statusInfo?.qrCodeDataUrl
-    if (statusInfo?.status === 'qr_ready' && qr) {
-      if (lastQrRef.current !== qr) {
-        lastQrRef.current = qr
-        qrGeneratedAtRef.current = Date.now()
-        // QR appeared — reset stuck/elapsed state since we're no longer stuck
-        setInitStuck(false)
-        initStartedAtRef.current = null
-        setInitElapsed(0)
-      }
-    } else {
-      lastQrRef.current = null
-      qrGeneratedAtRef.current = null
-      setQrSecondsLeft(null)
-    }
-  }, [statusInfo?.status, statusInfo?.qrCodeDataUrl])
-
-  // Live QR countdown — shows seconds since QR was generated.
-  // Auto-renew has been intentionally removed: silently destroying the session every 45s
-  // was killing active handshakes mid-scan. The user can manually click "Get New QR" instead.
-  useEffect(() => {
-    if (statusInfo?.status !== 'qr_ready') return
-
-    const tick = () => {
-      if (!qrGeneratedAtRef.current) return
-      const elapsed = Date.now() - qrGeneratedAtRef.current
-      const secsElapsed = Math.floor(elapsed / 1000)
-      setQrSecondsLeft(secsElapsed)
-    }
-
-    tick()
-    const t = setInterval(tick, 1000)
-    return () => clearInterval(t)
-  }, [statusInfo?.status])
-
-  const handleDeleteLog = async (id) => {
-    if (!window.confirm('Are you sure you want to delete this log?')) return
-    try {
-      await axios.delete(`${API_URL}/api/whatsapp/logs/${id}`, { withCredentials: true })
-      toast.success('Log deleted')
-      setLogs((prev) => prev.filter((log) => log._id !== id))
-      setSelectedIds((prev) => prev.filter((sid) => sid !== id))
-    } catch (error) {
-      toast.error(`Failed to delete: ${error?.response?.data?.message || error.message}`)
-    }
-  }
-
-  const handleBulkDelete = async () => {
-    if (selectedIds.length === 0) return
-    if (!window.confirm(`Delete ${selectedIds.length} selected message${selectedIds.length === 1 ? '' : 's'}? This cannot be undone.`)) return
-    setBulkDeleting(true)
-    try {
-      const res = await axios.post(
-        `${API_URL}/api/whatsapp/logs/bulk-delete`,
-        { ids: selectedIds },
-        { withCredentials: true }
-      )
-      toast.success(res.data.message || 'Selected logs deleted')
-      setLogs((prev) => prev.filter((log) => !selectedIds.includes(log._id)))
-      setSelectedIds([])
-    } catch (error) {
-      toast.error(`Failed to delete: ${error?.response?.data?.message || error.message}`)
-    } finally {
-      setBulkDeleting(false)
-    }
-  }
-
-  const toggleSelect = (id) => {
-    setSelectedIds((prev) => prev.includes(id) ? prev.filter((sid) => sid !== id) : [...prev, id])
-  }
-
-  const currentStatus = statusInfo?.status || 'disconnected'
-  const config = statusConfig[currentStatus] || statusConfig.disconnected
-  const isConnected = currentStatus === 'authenticated'
-  const isRunning = ['authenticated', 'initializing', 'qr_ready'].includes(currentStatus)
-  // Treat raw LOGOUT lastError (old DB records before the fix) as isStopped
-  const wasLoggedOut = statusInfo?.lastError === 'LOGOUT'
-  const effectiveIsStopped = statusInfo?.isStopped || wasLoggedOut
-  // No longer auto-starts, so "isPreparingScanner" is only true when isInitializing flag is set
-  const isPreparingScanner = !isRunning && !effectiveIsStopped && statusInfo?.isInitializing
-
-  const filteredLogs = logs.filter((log) => statusFilter === 'all' || log.status === statusFilter)
-  const allVisibleSelected = filteredLogs.length > 0 && filteredLogs.every((log) => selectedIds.includes(log._id))
-
-  const toggleSelectAll = () => {
-    if (allVisibleSelected) {
-      const visibleIds = filteredLogs.map((log) => log._id)
-      setSelectedIds((prev) => prev.filter((id) => !visibleIds.includes(id)))
-    } else {
-      setSelectedIds((prev) => [...new Set([...prev, ...filteredLogs.map((log) => log._id)])])
-    }
-  }
-
-  // Format elapsed seconds as "12s" or "1m 23s"
-  const formatElapsed = (secs) => {
-    if (secs < 60) return `${secs}s`
-    return `${Math.floor(secs / 60)}m ${secs % 60}s`
   }
 
   return (
     <div className='p-4 md:p-6 lg:p-8 pt-4 lg:pt-6 max-w-[1400px] mx-auto'>
-      <div className='mb-6'>
-        <div className='flex items-center gap-3 mb-2'>
-          <button
-            onClick={() => navigate('/')}
-            className='flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition-all cursor-pointer flex-shrink-0'
-            title='Back to Home'
-          >
-            <svg className='w-5 h-5 text-gray-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 19l-7-7m0 0l7-7m-7 7h18' />
-            </svg>
-          </button>
-          <h1 className='text-2xl font-black text-gray-800 mb-1'>📲 WhatsApp Automation</h1>
+      <div className='mb-6 flex items-center gap-3'>
+        <button
+          onClick={() => navigate('/')}
+          className='flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:shadow-md hover:border-indigo-300 transition flex-shrink-0'
+          title='Back to Home'
+        >
+          <ArrowLeft className='w-5 h-5 text-gray-600' />
+        </button>
+        <div>
+          <h1 className='text-2xl font-black text-gray-800'>WhatsApp Automation</h1>
+          <p className='text-sm text-gray-600'>Send document expiry alerts to your clients automatically.</p>
         </div>
-        <p className='text-sm text-gray-600'>Connect WhatsApp to send automated document expiry alerts to clients.</p>
       </div>
 
-      <div className='grid grid-cols-1 lg:grid-cols-5 gap-6'>
-        {/* ---- STATUS + CONTROLS CARD ---- */}
-        <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-6 lg:col-span-1 space-y-4'>
-          <h2 className='text-base font-bold text-gray-800 flex items-center gap-2'>
-            💬 Connection Status
-          </h2>
+      {statusError && !status && (
+        <div className='mb-4 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700'>
+          Could not reach the server: {statusError}
+        </div>
+      )}
 
-          {/* Status Badge */}
-          <div className={`flex items-center justify-between p-3 rounded-lg border ${config.card}`}>
-            <span className='text-xs font-semibold text-gray-500 uppercase tracking-wide'>Status</span>
-            <span className={`px-3 py-1 rounded-full text-xs font-bold border ${config.color}`}>
-              {config.label}
-            </span>
+      <div className='grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start'>
+        <div className='space-y-4'>
+          <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-5'>
+            <ConnectionCard status={status} onAction={doAction} busy={busy} />
           </div>
 
-          {/* Phone Number when connected */}
-          {isConnected && statusInfo?.phoneNumber && (
-            <div className='p-3 rounded-lg bg-green-50 border border-green-200'>
-              <p className='text-xs text-green-600 font-semibold'>Active Number</p>
-              <p className='text-sm text-green-800 font-bold mt-0.5'>+{statusInfo.phoneNumber}</p>
-              {statusInfo?.lastConnectedAt && (
-                <p className='text-[11px] text-green-500 mt-1'>
-                  Connected: {new Date(statusInfo.lastConnectedAt).toLocaleString()}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* QR Code */}
-          {currentStatus === 'qr_ready' && statusInfo?.qrCodeDataUrl && (
-            <div className='flex flex-col items-center p-4 border-2 border-dashed border-orange-300 rounded-xl bg-orange-50'>
-              <p className='text-xs font-semibold text-orange-700 mb-1 text-center'>Open WhatsApp → Linked Devices → Link a Device</p>
-              <p className='text-[11px] text-orange-500 mb-2 text-center'>Point your camera at the code below</p>
-              <img
-                src={statusInfo.qrCodeDataUrl}
-                alt='WhatsApp QR Code'
-                className='w-52 h-52 rounded-xl border-4 border-white shadow-lg'
-              />
-              {/* Show elapsed seconds — purely informational, no auto-renew */}
-              {qrSecondsLeft !== null && (
-                <p className='text-[11px] text-orange-400 mt-2'>
-                  {actionBusy === 'renew-qr'
-                    ? 'Getting a fresh code...'
-                    : `QR visible for ${qrSecondsLeft}s — scan now`}
-                </p>
-              )}
-              {/* Show manual refresh button after 60s */}
-              {(qrSecondsLeft === null || qrSecondsLeft >= QR_SHOW_REFRESH_BTN_MS / 1000) && (
-                <button
-                  onClick={() => doAction('renew-qr', 'Getting a fresh QR code...')}
-                  disabled={actionBusy === 'renew-qr'}
-                  className='mt-3 flex items-center gap-2 px-4 py-2 bg-white border border-orange-200 text-orange-700 rounded-lg text-xs font-bold hover:bg-orange-100 transition shadow-sm'
-                >
-                  {actionBusy === 'renew-qr' ? (
-                    <div className='w-3 h-3 border-2 border-orange-500 border-t-transparent rounded-full animate-spin' />
-                  ) : (
-                    <span>🔄 Get New QR Code</span>
-                  )}
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Verifying session — after QR scan, before ready */}
-          {currentStatus === 'authenticated' && statusInfo?.isInitializing && (
-            <div className='flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-lg'>
-              <div className='w-5 h-5 border-2 border-green-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
-              <div>
-                <p className='text-sm text-green-800 font-semibold'>Verifying session...</p>
-                <p className='text-xs text-green-500'>WhatsApp confirmed — loading your chats</p>
-              </div>
-            </div>
-          )}
-
-          {/* Initializing spinner — Chrome is booting. Shows step-by-step progress via initStage. */}
-          {(currentStatus === 'initializing' || isPreparingScanner) && !initStuck && (() => {
-            const stage = statusInfo?.initStage
-            const stageConfig = INIT_STAGE_CONFIG[stage] || { step: 1, label: 'Preparing session', sublabel: 'Starting up...' }
-            const totalSteps = 3
-            return (
-              <div className='p-3 bg-blue-50 border border-blue-200 rounded-lg'>
-                {/* Step progress bar */}
-                <div className='flex items-center gap-1 mb-2'>
-                  {[1, 2, 3].map(s => (
-                    <div
-                      key={s}
-                      className={`h-1.5 flex-1 rounded-full transition-all ${
-                        s < stageConfig.step ? 'bg-blue-500' :
-                        s === stageConfig.step ? 'bg-blue-400 animate-pulse' :
-                        'bg-blue-100'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <div className='flex items-center gap-3'>
-                  <div className='w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin flex-shrink-0' />
-                  <div className='flex-1 min-w-0'>
-                    <p className='text-sm text-blue-800 font-semibold flex items-center gap-1.5'>
-                      <span className='text-[10px] font-bold bg-blue-200 text-blue-700 px-1.5 py-0.5 rounded-full shrink-0'>
-                        {stageConfig.step}/{totalSteps}
-                      </span>
-                      {stageConfig.label}
-                      {initElapsed > 0 && (
-                        <span className='ml-auto text-blue-400 font-normal text-xs shrink-0'>{formatElapsed(initElapsed)}</span>
-                      )}
-                    </p>
-                    <p className='text-xs text-blue-500 mt-0.5'>{stageConfig.sublabel}</p>
-                  </div>
-                </div>
-              </div>
-            )
-          })()}
-
-          {/* Stuck init warning — shown after 40 seconds with no QR */}
-          {initStuck && (currentStatus === 'initializing' || isPreparingScanner) && (
-            <div className='p-3 bg-amber-50 border border-amber-200 rounded-lg'>
-              <p className='text-sm text-amber-800 font-semibold mb-1'>⚠️ Taking longer than expected</p>
-              <p className='text-xs text-amber-600 mb-2'>
-                Connection has been running for {formatElapsed(initElapsed)} without a QR code.
-                This usually means a stale session lock. Click below to clean up and retry.
+          <div className='grid grid-cols-2 gap-3'>
+            <div className='bg-white rounded-xl border border-gray-200 shadow-sm p-3'>
+              <p className='text-xs text-gray-500 flex items-center gap-1'><Send className='w-3.5 h-3.5' /> Sent today</p>
+              <p className='text-2xl font-black text-gray-800 mt-1'>
+                {todaySentCount}
+                {dailyLimit !== null && <span className='text-sm font-normal text-gray-400'> / {dailyLimit}</span>}
               </p>
-              <button
-                onClick={() => {
-                  setInitStuck(false)
-                  initStartedAtRef.current = null
-                  setInitElapsed(0)
-                  doAction('renew-qr', 'Retrying connection...', true).then(() => fetchStatus())
-                }}
-                disabled={!!actionBusy}
-                className='w-full py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold transition'
-              >
-                🔄 Clean &amp; Retry Connection
-              </button>
             </div>
-          )}
-
-          {/* Error */}
-          {statusInfo?.lastError && !isConnected && currentStatus !== 'initializing' && !isPreparingScanner && (
-            <div className='p-3 bg-red-50 text-red-700 text-xs rounded-lg border border-red-200'>
-              <strong>Last event:</strong>{' '}
-              {statusInfo.lastError === 'LOGOUT'
-                ? 'WhatsApp session was logged out from your phone. Click Connect to reconnect.'
-                : statusInfo.lastError}
+            <div className='bg-white rounded-xl border border-gray-200 shadow-sm p-3'>
+              <p className='text-xs text-gray-500 flex items-center gap-1'><Clock className='w-3.5 h-3.5' /> Waiting</p>
+              <p className='text-2xl font-black text-gray-800 mt-1'>{status?.pendingCount ?? '—'}</p>
             </div>
-          )}
-
-          {/* ---- ACTION BUTTONS ---- */}
-          <div className='flex flex-col gap-2 pt-2 border-t border-gray-100'>
-
-            {/* CONNECT: show when disconnected and NOT intentionally stopped — user must click explicitly */}
-            {!isRunning && !effectiveIsStopped && !isPreparingScanner && (
-              <button
-                onClick={() => {
-                  doAction('start', 'Connecting... QR code will appear in ~20-30 seconds.')
-                }}
-                disabled={actionBusy === 'start'}
-                className='w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition shadow-md flex items-center justify-center gap-2'
-              >
-                {actionBusy === 'start' ? (
-                  <><div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' /> Starting...</>
-                ) : (
-                  <>📲 Connect WhatsApp</>
-                )}
-              </button>
-            )}
-
-            {/* RESUME: only when the user has intentionally stopped the session (or LOGOUT) */}
-            {!isRunning && effectiveIsStopped && (
-              <button
-                onClick={() => doAction('start', 'Resuming session... QR will appear if re-scan is needed.')}
-                disabled={actionBusy === 'start'}
-                className='w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-lg font-bold text-sm transition shadow-md flex items-center justify-center gap-2'
-              >
-                {actionBusy === 'start' ? (
-                  <><div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' /> Starting...</>
-                ) : (
-                  <>📲 Connect WhatsApp</>
-                )}
-              </button>
-            )}
-
-            {/* STOP: show when running (pauses sending, keeps auth) */}
-            {isRunning && (
-              <button
-                onClick={() => doAction('stop', 'Session stopped. Auth saved — tap Start to resume.')}
-                disabled={actionBusy === 'stop'}
-                className='w-full py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg font-bold text-sm transition shadow-md flex items-center justify-center gap-2'
-              >
-                {actionBusy === 'stop' ? (
-                  <><div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' /> Stopping...</>
-                ) : (
-                  <>⏹ Stop Sending Messages</>
-                )}
-              </button>
-            )}
-
-            {/* LOGOUT: always show when authenticated or running — clears session */}
-            {isRunning && (
-              <button
-                onClick={() => {
-                  if (window.confirm('Are you sure? This will clear the WhatsApp session and you will need to scan QR again.')) {
-                    doAction('logout', 'Logged out. Session cleared. Scan QR to reconnect.')
-                  }
-                }}
-                disabled={actionBusy === 'logout'}
-                className='w-full py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-sm transition shadow-md flex items-center justify-center gap-2'
-              >
-                {actionBusy === 'logout' ? (
-                  <><div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' /> Logging out...</>
-                ) : (
-                  <>🚪 Logout & Clear Session</>
-                )}
-              </button>
-            )}
           </div>
 
-          {/* Run Check Now — manual trigger for testing */}
           <button
             onClick={runCheckNow}
-            disabled={actionBusy === 'check'}
-            className='w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold text-sm transition shadow-md flex items-center justify-center gap-2'
+            disabled={busy === 'check'}
+            className='w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-semibold text-sm transition shadow-sm flex items-center justify-center gap-2 disabled:opacity-60'
           >
-            {actionBusy === 'check' ? (
-              <><div className='w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin' /> Scanning...</>
-            ) : (
-              <>🔍 Run Expiry Check Now</>
-            )}
+            {busy === 'check' ? <Loader2 className='w-4 h-4 animate-spin' /> : <Search className='w-4 h-4' />}
+            {busy === 'check' ? 'Checking...' : 'Run expiry check now'}
           </button>
-
-          {/* Sent Today Summary */}
-          <div className='p-3 bg-gray-50 border border-gray-200 rounded-lg text-center'>
-            <p className='text-xs text-gray-500'>Messages Sent Today</p>
-            <p className='text-2xl font-black text-gray-800'>{todaySentCount} <span className='text-sm font-normal text-gray-400'>/ {dailyLimit}</span></p>
-          </div>
         </div>
 
-        {/* ---- LOGS CARD ---- */}
-        <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-6 lg:col-span-4'>
-          <div className='flex items-center justify-between mb-4'>
-            <h2 className='text-base font-bold text-gray-800 flex items-center gap-2'>
-              📋 Recent Message Logs
-            </h2>
-            <div className='flex items-center gap-2'>
-              {selectedIds.length > 0 && (
-                <button
-                  onClick={handleBulkDelete}
-                  disabled={bulkDeleting}
-                  className='px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold border border-red-600 transition flex items-center gap-2 disabled:opacity-60'
-                >
-                  {bulkDeleting ? (
-                    <><div className='w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin' /> Deleting...</>
-                  ) : (
-                    <>🗑️ Delete Selected ({selectedIds.length})</>
-                  )}
-                </button>
-              )}
-              <button
-                onClick={() => { fetchLogs(page); toast.info('Logs refreshed') }}
-                className='px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-xs font-semibold text-gray-700 border border-gray-300 transition'
-              >
-                🔄 Refresh
-              </button>
-            </div>
-          </div>
-
-          {/* ---- STATUS FILTER TABS ---- */}
-          {(() => {
-            const counts = {
-              all: logs.length,
-              sent: logs.filter(l => l.status === 'sent').length,
-              pending: logs.filter(l => l.status === 'pending').length,
-              failed: logs.filter(l => l.status === 'failed').length,
-            }
-            const tabs = [
-              { key: 'all',     label: 'All',     emoji: '📋', active: 'bg-gray-800 text-white border-gray-800',     inactive: 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50',     badge: 'bg-gray-200 text-gray-800' },
-              { key: 'sent',    label: 'Sent',    emoji: '✅', active: 'bg-green-600 text-white border-green-600',   inactive: 'bg-white text-green-700 border-green-300 hover:bg-green-50',   badge: 'bg-green-100 text-green-800' },
-              { key: 'pending', label: 'Pending', emoji: '⏳', active: 'bg-yellow-500 text-white border-yellow-500', inactive: 'bg-white text-yellow-700 border-yellow-300 hover:bg-yellow-50', badge: 'bg-yellow-100 text-yellow-800' },
-              { key: 'failed',  label: 'Failed',  emoji: '❌', active: 'bg-red-600 text-white border-red-600',       inactive: 'bg-white text-red-700 border-red-300 hover:bg-red-50',         badge: 'bg-red-100 text-red-800' },
-            ]
-            return (
-              <div className='flex flex-wrap gap-2 mb-4'>
-                {tabs.map(tab => (
-                  <button
-                    key={tab.key}
-                    onClick={() => { setStatusFilter(tab.key); setSelectedIds([]) }}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold transition ${
-                      statusFilter === tab.key ? tab.active : tab.inactive
-                    }`}
-                  >
-                    <span>{tab.emoji}</span>
-                    <span>{tab.label}</span>
-                    <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                      statusFilter === tab.key ? 'bg-white/20 text-white' : tab.badge
-                    }`}>
-                      {counts[tab.key]}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )
-          })()}
-
-          <div className='overflow-x-auto'>
-            <table className='w-full text-left border-collapse'>
-              <thead>
-                <tr className='bg-gray-50 border-y border-gray-200'>
-                  <th className='py-3 px-4 text-center'>
-                    <input
-                      type='checkbox'
-                      checked={allVisibleSelected}
-                      onChange={toggleSelectAll}
-                      className='w-4 h-4 cursor-pointer accent-red-600'
-                      title='Select all'
-                    />
-                  </th>
-                  <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Date & Time</th>
-                  <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Party / Mobile</th>
-                  <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Document</th>
-                  <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Message Preview</th>
-                  <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Status</th>
-                  <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider'>Sent At</th>
-                  <th className='py-3 px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-center'>Action</th>
-                </tr>
-              </thead>
-              <tbody className='divide-y divide-gray-100'>
-                {loading ? (
-                  <tr><td colSpan='8' className='py-8 text-center text-sm text-gray-400'>Loading...</td></tr>
-                ) : logs.length === 0 ? (
-                  <tr><td colSpan='8' className='py-8 text-center text-sm text-gray-400'>No messages logged yet. They will appear here once alerts are triggered.</td></tr>
-                ) : (
-                  filteredLogs.length === 0 ? (
-                    <tr><td colSpan='8' className='py-8 text-center text-sm text-gray-400'>No {statusFilter} messages found.</td></tr>
-                  ) :
-                  filteredLogs.map((log) => {
-                    const d = new Date(log.createdAt);
-                    const dateStr = d.toLocaleDateString('en-IN');
-                    const timeStr = d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
-                    const sentD = log.sentAt ? new Date(log.sentAt) : null;
-                    const sentDateStr = sentD ? sentD.toLocaleDateString('en-IN') : null;
-                    const sentTimeStr = sentD ? sentD.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }) : null;
-                    return (
-                    <tr key={log._id} className={`transition ${selectedIds.includes(log._id) ? 'bg-red-50' : 'hover:bg-gray-50'}`}>
-                      <td className='py-3 px-4 text-center'>
-                        <input
-                          type='checkbox'
-                          checked={selectedIds.includes(log._id)}
-                          onChange={() => toggleSelect(log._id)}
-                          className='w-4 h-4 cursor-pointer accent-red-600'
-                        />
-                      </td>
-                      <td className='py-3 px-4 whitespace-nowrap'>
-                        <div className='text-sm text-gray-800 font-medium'>{dateStr}</div>
-                        <div className='text-xs text-gray-500'>{timeStr}</div>
-                      </td>
-                      <td className='py-3 px-4'>
-                        <div className='text-sm text-gray-800 font-bold'>{log.ownerName || 'Unknown Party'}</div>
-                        <div className='text-xs text-gray-500'>{log.targetNumber}</div>
-                      </td>
-                      <td className='py-3 px-4'>
-                        <span className={`px-2 py-0.5 rounded text-xs font-semibold ${
-                          log.documentType === 'Tax' ? 'bg-yellow-100 text-yellow-800' :
-                          log.documentType === 'Fitness' ? 'bg-blue-100 text-blue-800' :
-                          log.documentType === 'Puc' ? 'bg-purple-100 text-purple-800' :
-                          log.documentType === 'Gps' ? 'bg-teal-100 text-teal-800' :
-                          'bg-pink-100 text-pink-800'
-                        }`}>
-                          {log.documentType}
-                        </span>
-                      </td>
-                      <td className='py-3 px-4 text-xs text-gray-500 max-w-[220px]'>
-                        <div className='truncate' title={log.messageBody}>{log.messageBody}</div>
-                      </td>
-                      <td className='py-3 px-4'>
-                        <span className={`px-2 py-1 rounded-full text-[11px] font-bold ${
-                          log.status === 'sent' ? 'bg-green-100 text-green-700' :
-                          log.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                          'bg-red-100 text-red-700'
-                        }`}>
-                          {log.status === 'sent' ? '✓ SENT' :
-                           log.status === 'pending' ? '⏳ PENDING' : '✗ FAILED'}
-                        </span>
-                        {log.errorReason && (
-                          <div className='text-[10px] text-red-500 mt-1 max-w-[120px] truncate' title={log.errorReason}>
-                            {log.errorReason}
-                          </div>
-                        )}
-                      </td>
-                      <td className='py-3 px-4 whitespace-nowrap'>
-                        {sentD ? (
-                          <>
-                            <div className='text-sm text-gray-800 font-medium'>{sentDateStr}</div>
-                            <div className='text-xs text-gray-500'>{sentTimeStr}</div>
-                          </>
-                        ) : (
-                          <span className='text-xs text-gray-400'>-</span>
-                        )}
-                      </td>
-                      <td className='py-3 px-4 text-center border-l border-gray-100'>
-                        <button
-                          onClick={() => handleDeleteLog(log._id)}
-                          className='text-red-500 hover:text-red-700 bg-red-50 hover:bg-red-100 transition p-1.5 rounded-md'
-                          title='Delete Log'
-                        >
-                          🗑️
-                        </button>
-                      </td>
-                    </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className='flex items-center justify-between mt-4 px-4 py-3 bg-gray-50 border-t border-gray-200 rounded-b-xl'>
-              <div className='text-sm text-gray-500'>
-                Showing Page <span className='font-semibold text-gray-800'>{page}</span> of <span className='font-semibold text-gray-800'>{totalPages}</span>
-              </div>
-              <div className='flex items-center gap-2'>
-                <button
-                  onClick={() => {
-                    const newPage = Math.max(1, page - 1);
-                    setPage(newPage);
-                    fetchLogs(newPage);
-                  }}
-                  disabled={page === 1}
-                  className='px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition'
-                >
-                  Previous
-                </button>
-                <button
-                  onClick={() => {
-                    const newPage = Math.min(totalPages, page + 1);
-                    setPage(newPage);
-                    fetchLogs(newPage);
-                  }}
-                  disabled={page === totalPages}
-                  className='px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition'
-                >
-                  Next
-                </button>
-              </div>
-            </div>
-          )}
+        <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4 md:p-6 min-w-0'>
+          <MessageLogs
+            logs={logs}
+            loading={logsLoading}
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+            onRefresh={() => { fetchLogs(page); toast.info('Logs refreshed') }}
+            onRemoved={(ids) => setLogs(prev => prev.filter(l => !ids.includes(l._id)))}
+          />
         </div>
       </div>
     </div>

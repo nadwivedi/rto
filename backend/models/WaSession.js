@@ -14,7 +14,8 @@ const waSessionSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ['disconnected', 'qr_ready', 'initializing', 'authenticated', 'auth_failure'],
+    // authenticated = connected and ready to send
+    enum: ['disconnected', 'initializing', 'qr_ready', 'syncing', 'authenticated', 'needs_qr', 'stopped', 'auth_failure'],
     default: 'disconnected'
   },
   qrCodeDataUrl: {
@@ -36,9 +37,13 @@ const waSessionSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  // Restore this session automatically after a server restart or browser crash
+  autoStart: {
+    type: Boolean
+  },
   initStage: {
     type: String,
-    enum: ['launching_browser', 'loading_wweb', null],
+    enum: ['waiting', 'launching_browser', 'loading_wweb', null],
     default: null
   }
 }, {

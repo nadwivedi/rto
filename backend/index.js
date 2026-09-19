@@ -53,9 +53,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 }))
 
 // MongoDB Connection
+const whatsappService = require('./services/whatsappService')
 connectDB().then(() => {
-  const whatsappService = require('./services/whatsappService')
-  whatsappService.restoreSessionsOnStartup()
+  whatsappService.start().catch(err => console.error('[WHATSAPP] Startup failed:', err))
 })
 
 // Initialize Cron Jobs
@@ -224,9 +224,30 @@ app.use((err, req, res, next) => {
 })
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`)
 })
+
+// Graceful shutdown: close every WhatsApp browser properly so the login is written to disk.
+// Killing Chrome mid-write is what corrupts the saved session and brings the QR scanner back.
+// (pm2: set kill_timeout >= 30000 — see ecosystem.config.js)
+let shuttingDown = false
+const shutdown = async (signal) => {
+  if (shuttingDown) return
+  shuttingDown = true
+  console.log(`${signal} received — shutting down...`)
+  const forceExit = setTimeout(() => process.exit(0), 25000)
+  forceExit.unref()
+  server.close()
+  try { await whatsappService.shutdown() } catch (err) { console.error('WhatsApp shutdown error:', err) }
+  if (signal === 'SIGUSR2') process.kill(process.pid, 'SIGUSR2') // nodemon restart
+  else process.exit(0)
+}
+process.on('SIGINT', () => shutdown('SIGINT'))
+process.on('SIGTERM', () => shutdown('SIGTERM'))
+process.once('SIGUSR2', () => shutdown('SIGUSR2'))
+// pm2 on Windows sends a 'shutdown' message instead of a signal
+process.on('message', (msg) => { if (msg === 'shutdown') shutdown('shutdown') })
 
 // Handle uncaught exceptions and unhandled rejections to prevent third-party crashes (like Puppeteer target closed) from bringing down the server
 process.on('unhandledRejection', (reason, promise) => {
@@ -237,4 +258,3 @@ process.on('uncaughtException', (error) => {
   console.error('⚠️ Uncaught Exception:', error)
 })
 
-// trigger restart

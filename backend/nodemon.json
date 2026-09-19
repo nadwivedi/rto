@@ -1,0 +1,7 @@
+{
+  "watch": ["index.js", "controllers", "routes", "models", "middleware", "services", "jobs", "utils"],
+  "ext": "js,json",
+  "ignore": [".wwebjs_auth/**", ".wwebjs_cache/**", "logs/**", "uploads/**", "temp/**", "node_modules/**"],
+  "signal": "SIGUSR2",
+  "delay": 1000
+}

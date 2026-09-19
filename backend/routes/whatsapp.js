@@ -2,133 +2,96 @@ const express = require('express')
 const router = express.Router()
 const whatsappService = require('../services/whatsappService')
 const MessageLog = require('../models/MessageLog')
+const { istBoundaries } = require('../jobs/whatsappMessageSender')
 
-// GET current WA status
+// GET current WA status. The WhatsApp page passes ?watch=1 — that keeps a pending QR alive;
+// other pages (dashboard badge) only read the status.
 router.get('/status', async (req, res) => {
   try {
     const userId = req.user.id
-    const session = await whatsappService.getSessionStatus(userId)
-
-    // Signals "someone is actually looking at the QR page right now" — keeps the pending
-    // handshake alive while polled, so it only gets torn down after real inactivity.
-    whatsappService.touchPoll(userId)
-
-    // Restore in-memory isStopped from DB when the client has no active browser.
-    // This covers server restarts — e.g. if WhatsApp sent LOGOUT before restart,
-    // isStopped is persisted in DB but the new in-memory instance starts at false.
-    const instance = whatsappService.getInstance(userId)
-    if (!instance.client && !instance.isInitializing && session?.isStopped && !instance.isStopped) {
-      instance.isStopped = true
-    }
-
-    res.json({
-      ...(session ? session.toObject() : {}),
-      isStopped: whatsappService.isClientStopped(userId),
-      clientActive: whatsappService.isClientConnected(userId),
-      isInitializing: whatsappService.getIsInitializing(userId) // true while browser is actually launching
-    })
+    const status = await whatsappService.getStatus(userId, { watching: req.query.watch === '1' })
+    const pendingCount = await MessageLog.countDocuments({ userId, status: 'pending' })
+    res.json({ ...status, pendingCount })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 })
 
-
-// POST Start/resume session (will use saved auth if available — no QR needed)
-router.post('/start', async (req, res) => {
+// POST Connect / resume. Uses the saved login if there is one, otherwise shows a QR code.
+const connect = async (req, res) => {
   try {
-    const userId = req.user.id
-    whatsappService.initializeSession(userId) // non-blocking queue initiation
-    res.json({ message: 'Session start initiated. Check status for QR or connection update.' })
+    await whatsappService.connect(req.user.id)
+    res.json({ message: 'Connecting to WhatsApp...' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+}
+router.post('/connect', connect)
+router.post('/start', connect)
+
+// POST Stop: pause sending and close the browser. The login stays saved.
+router.post('/stop', async (req, res) => {
+  try {
+    await whatsappService.stop(req.user.id)
+    res.json({ message: 'WhatsApp paused. Click Connect to resume.' })
   } catch (error) {
     res.status(500).json({ message: error.message })
   }
 })
 
-// POST Send a singular ad-hoc message manually easily
+// POST Cancel an in-progress connection / QR scan.
+router.post('/cancel', async (req, res) => {
+  try {
+    await whatsappService.cancel(req.user.id)
+    res.json({ message: 'Connection cancelled.' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
+// POST Logout: unlink the device and delete the saved login (a QR scan is needed afterwards).
+router.post('/logout', async (req, res) => {
+  try {
+    await whatsappService.logout(req.user.id)
+    res.json({ message: 'Logged out. Scan the QR code to connect again.' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
+// POST Restart the browser and show a fresh QR code.
+router.post('/renew-qr', async (req, res) => {
+  try {
+    await whatsappService.renewQr(req.user.id)
+    res.json({ message: 'Getting a new QR code...' })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
+// POST Start the session in the background from the saved login (never shows a QR).
+router.post('/auto-reconnect', async (req, res) => {
+  try {
+    await whatsappService.ensureRunning(req.user.id, 'auto-reconnect')
+    res.json({ message: 'OK', ...(await whatsappService.getStatus(req.user.id)) })
+  } catch (error) {
+    res.status(500).json({ message: error.message })
+  }
+})
+
+// POST Send a single message right away
 router.post('/send', async (req, res) => {
   try {
-    const userId = req.user.id
     const { chatId, text } = req.body
-    
     if (!chatId || !text) {
       return res.status(400).json({ message: 'Please provide chatId/targetNumber and text payload' })
     }
-
-    // Call the robust queued sender (which cold starts if needed)
-    const result = await whatsappService.sendWhatsAppMessage(userId, chatId, text)
-    res.json({ message: 'Dynamic send successful', result })
+    const result = await whatsappService.sendWhatsAppMessage(req.user.id, chatId, text)
+    res.json({ message: 'Message sent', result })
   } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-})
-
-// POST Stop: destroys browser, keeps auth on disk, pauses message sender
-router.post('/stop', async (req, res) => {
-  try {
-    const userId = req.user.id
-    await whatsappService.destroySession(userId, true) // Pass true to manually pause it permanently
-    res.json({ message: 'WhatsApp session stopped. Auth saved. Tap Start to resume.' })
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-})
-
-// POST Logout: destroys browser AND wipes saved auth from disk (forces QR rescan)
-router.post('/logout', async (req, res) => {
-  try {
-    const userId = req.user.id
-    await whatsappService.logoutSession(userId)
-    res.json({ message: 'Logged out and session data cleared. You will need to scan QR again.' })
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-})
-
-// POST Renew QR: Restarts the session to get a fresh QR code.
-// IMPORTANT: We MUST await destroySession() before calling initializeSession() so the old
-// Chrome process is fully dead before launching a new one. Failing to do so caused two
-// Chrome instances to fight each other, resulting in the "perpetually Connecting" spinner.
-router.post('/renew-qr', async (req, res) => {
-  try {
-    const userId = req.user.id
-    await whatsappService.destroySession(userId)  // Wait for Chrome to fully die first
-    whatsappService.initializeSession(userId)     // Then start fresh (non-blocking queue)
-    res.json({ message: 'QR renewal initiated. New QR will appear shortly.' })
-  } catch (error) {
-    res.status(500).json({ message: error.message })
-  }
-})
-
-// POST Auto-reconnect: silently restores a session using saved auth files after a VPS restart.
-// FIX 6: If DB says the user was authenticated but there is no active Chrome in memory,
-// and the user hasn't manually stopped/logged out, this restarts the session automatically
-// so the user doesn't need to re-scan QR just because the VPS rebooted.
-router.post('/auto-reconnect', async (req, res) => {
-  try {
-    const userId = req.user.id
-    const session = await whatsappService.getSessionStatus(userId)
-    const instance = whatsappService.getInstance(userId)
-
-    // Only auto-reconnect if: previously authenticated, no active browser, not manually stopped
-    if (
-      session?.status === 'authenticated' &&
-      !instance.client &&
-      !instance.isInitializing &&
-      !instance.isStopped
-    ) {
-      console.log(`[WHATSAPP:${userId}] Auto-reconnect triggered — restoring session from saved auth.`)
-      whatsappService.initializeSession(userId) // non-blocking — QR or ready will follow
-      return res.json({ message: 'Auto-reconnect initiated. Session will restore if auth files are valid.', reconnecting: true })
-    }
-
-    res.json({
-      message: 'No auto-reconnect needed.',
-      reconnecting: false,
-      status: session?.status,
-      clientActive: whatsappService.isClientConnected(userId)
-    })
-  } catch (error) {
-    res.status(500).json({ message: error.message })
+    const code = error instanceof whatsappService.WaUnavailableError ? 409
+      : error instanceof whatsappService.WaRecipientError ? 400 : 500
+    res.status(code).json({ message: error.message })
   }
 })
 
@@ -140,10 +103,11 @@ router.post('/trigger-check', async (req, res) => {
     const { processPendingMessagesForUser } = require('../jobs/whatsappMessageSender')
 
     const queued = await checkUserAndQueueAlerts(userId)
-    await processPendingMessagesForUser(userId)
+    // Sending can take minutes (rate limits, human-like delays) — don't hold the request open.
+    processPendingMessagesForUser(userId)
 
     res.json({
-      message: `Scan done. ${queued || 0} new alerts queued. Sender processed pending.`
+      message: `Scan done. ${queued || 0} new alert(s) queued. Sending has started in the background.`
     })
   } catch (error) {
     res.status(500).json({ message: error.message })
@@ -166,12 +130,10 @@ router.get('/logs', async (req, res) => {
     const totalLogs = await MessageLog.countDocuments({ userId });
     const totalPages = Math.ceil(totalLogs / limit);
 
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
     const todaySentCount = await MessageLog.countDocuments({
       userId,
       status: 'sent',
-      createdAt: { $gte: startOfDay }
+      sentAt: { $gte: istBoundaries().dayStart }
     });
 
     res.json({ logs, totalPages, currentPage: page, totalLogs, todaySentCount });
@@ -219,8 +181,7 @@ router.get('/ram-status', async (req, res) => {
   try {
     const waLog = require('../utils/whatsappLogger')
     const userId = req.user.id
-    const instance = whatsappService.getInstance(userId)
-    const pid = instance ? instance._chromePid : null
+    const pid = whatsappService.getChromePid(userId)
 
     const sysRam = waLog.getSystemRamStats()
     const chromeRamMb = pid ? waLog.getProcessRamMb(pid) : null
