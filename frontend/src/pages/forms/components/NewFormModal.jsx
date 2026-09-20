@@ -288,6 +288,7 @@ const NewFormModal = ({ onClose }) => {
 
   // Page 4 (Form 30) shared styles
   const p4Head = "Georgia, 'Palatino Linotype', 'Book Antiqua', serif"
+  const p6Row = { ...p1Row, marginTop: '14px' }
   const p2Row = { ...p1Row, marginTop: '5px' }
   const p4Sheet = {
     width: '210mm',
@@ -1209,222 +1210,35 @@ const NewFormModal = ({ onClose }) => {
               </div>
             )}
 
-            {/* ================= PAGE 6: SALE LETTER ================= */}
+            {/* ================= PAGE 6: SALE LETTER (text from public/SALE LETTER new.pdf) ================= */}
             {(activeTab === 'all' || activeTab === 'sale_letter') && (
               <div
                 id="sec-sale-letter"
                 className="bg-white shadow-2xl mx-auto rounded-sm form-sheet text-black"
-                style={{
-                  width: '210mm',
-                  minHeight: '297mm',
-                  padding: '24mm 26mm',
-                  fontFamily: "'Times New Roman', Times, serif",
-                  fontSize: '15px',
-                  lineHeight: '2.3',
-                  color: '#000'
-                }}
+                style={{ ...p4Sheet, padding: '16mm 22mm', fontSize: '15px', lineHeight: '1.8' }}
               >
-                <div className="text-center mb-8">
-                  <h1 className="text-2xl font-bold tracking-widest uppercase underline decoration-2 underline-offset-4">
-                    SALE LETTER
-                  </h1>
-                </div>
+                <p style={{ fontFamily: p4Head, fontSize: '30px', fontWeight: 'bold', letterSpacing: '6px', textAlign: 'center', textDecoration: 'underline', textUnderlineOffset: '5px', marginBottom: '26px' }}>SALE LETTER</p>
 
-                <div className="space-y-4 text-justify">
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>I</span>
-                    <input
-                      ref={el => (inputRefs.current[69] = el)}
-                      type="text"
-                      name="sellerName"
-                      value={formData.sellerName}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 69)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[200px] focus:outline-none focus:bg-amber-50"
-                    />
-                  </div>
+                <div style={p6Row}><span>I</span>{p1In(5001, 'sellerName')}</div>
+                <div style={p6Row}><span>S/o</span>{p1In(5002, 'sellerFather')}</div>
+                <div style={p6Row}><span>At</span>{p1In(5003, 'sellerResidence')}</div>
+                <div style={p6Row}><span>P.S.</span>{p1In(5004, 'sellerPS')}<span>Dist.</span>{p1In(5005, 'sellerDistrict')}</div>
+                <div style={p6Row}><span>Have sold my vechile</span>{p1In(5006, 'vehicleMake')}<span>No</span>{p1In(5007, 'vehicleNumber')}</div>
+                <div style={p6Row}><span>Chassis</span>{p1In(5008, 'chassisNumber')}<span>Engine No</span>{p1In(5009, 'engineNumber')}</div>
+                <div style={p6Row}><span>Modle</span>{p1In(5010, 'vehicleModel')}</div>
+                <div style={p6Row}><span>To</span>{p1In(5011, 'buyerName')}</div>
+                <div style={p6Row}><span>S/o</span>{p1In(5012, 'buyerFather')}</div>
+                <div style={p6Row}><span>Address</span>{p1In(5013, 'buyerResidence')}</div>
+                <div style={p6Row}><span>P.S.</span>{p1In(5014, 'buyerPS')}<span>Dist.</span>{p1In(5015, 'buyerDistrict')}</div>
+                <div style={p6Row}><span>In a sum of Rs</span>{p1In(5016, 'saleAmount', { flex: 'none', width: '150px' })}<span>(in words</span>{p1In(5017, 'saleAmountWords')}<span>)</span></div>
+                <div style={p6Row}><span>on dated</span>{p1In(5019, 'saleDate', { flex: 'none', width: '170px', textAlign: 'center' })}</div>
 
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>S/o</span>
-                    <input
-                      ref={el => (inputRefs.current[70] = el)}
-                      type="text"
-                      name="sellerFather"
-                      value={formData.sellerFather}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 70)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[200px] focus:outline-none focus:bg-amber-50"
-                    />
-                  </div>
+                <p style={{ marginTop: '26px', textAlign: 'justify' }}>I have received full and final payment of this vehicle from purchaserI will fully responsible for any litigation, thief case, accident, dues of tax,Misuse till the date of sale, the purchaser will be fully responsible for any Case ,accidenet, thief case, misuse from the date of purchase.</p>
+                <p style={{ marginTop: '16px', textAlign: 'justify' }}>I handed over this sales letter to purchaser for his future needs if any.</p>
 
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>At</span>
-                    <input
-                      ref={el => (inputRefs.current[71] = el)}
-                      type="text"
-                      name="sellerResidence"
-                      value={formData.sellerResidence}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 71)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[200px] focus:outline-none focus:bg-amber-50"
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>Have sold my vechile</span>
-                    <input
-                      ref={el => (inputRefs.current[72] = el)}
-                      type="text"
-                      name="vehicleMake"
-                      value={formData.vehicleMake}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 72)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 w-36 focus:outline-none focus:bg-amber-50"
-                    />
-                    <span>No</span>
-                    <input
-                      ref={el => (inputRefs.current[73] = el)}
-                      type="text"
-                      name="vehicleNumber"
-                      value={formData.vehicleNumber}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 73)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[150px] focus:outline-none focus:bg-amber-50"
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>Chassis</span>
-                    <input
-                      ref={el => (inputRefs.current[74] = el)}
-                      type="text"
-                      name="chassisNumber"
-                      value={formData.chassisNumber}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 74)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[150px] focus:outline-none focus:bg-amber-50"
-                    />
-                    <span>Engine No</span>
-                    <input
-                      ref={el => (inputRefs.current[75] = el)}
-                      type="text"
-                      name="engineNumber"
-                      value={formData.engineNumber}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 75)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[150px] focus:outline-none focus:bg-amber-50"
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>Modle</span>
-                    <input
-                      ref={el => (inputRefs.current[76] = el)}
-                      type="text"
-                      name="vehicleModel"
-                      value={formData.vehicleModel}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 76)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[200px] focus:outline-none focus:bg-amber-50"
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>To</span>
-                    <input
-                      ref={el => (inputRefs.current[77] = el)}
-                      type="text"
-                      name="buyerName"
-                      value={formData.buyerName}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 77)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[200px] focus:outline-none focus:bg-amber-50"
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>S/o</span>
-                    <input
-                      ref={el => (inputRefs.current[78] = el)}
-                      type="text"
-                      name="buyerFather"
-                      value={formData.buyerFather}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 78)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[200px] focus:outline-none focus:bg-amber-50"
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>Address</span>
-                    <input
-                      ref={el => (inputRefs.current[79] = el)}
-                      type="text"
-                      name="buyerResidence"
-                      value={formData.buyerResidence}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 79)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[200px] focus:outline-none focus:bg-amber-50"
-                    />
-                  </div>
-
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>In a sum of Rs</span>
-                    <input
-                      ref={el => (inputRefs.current[80] = el)}
-                      type="text"
-                      name="saleAmount"
-                      value={formData.saleAmount}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 80)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 w-32 focus:outline-none focus:bg-amber-50"
-                    />
-                    <span>(in words</span>
-                    <input
-                      ref={el => (inputRefs.current[81] = el)}
-                      type="text"
-                      name="saleAmountWords"
-                      value={formData.saleAmountWords}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 81)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 flex-1 min-w-[150px] focus:outline-none focus:bg-amber-50"
-                    />
-                    <span>)</span>
-                  </div>
-
-                  <div className="flex flex-wrap items-baseline gap-1">
-                    <span>on dated</span>
-                    <input
-                      ref={el => (inputRefs.current[82] = el)}
-                      type="text"
-                      name="saleDate"
-                      value={formData.saleDate}
-                      onChange={handleChange}
-                      onKeyDown={e => handleKeyDown(e, 82)}
-                      className="border-b border-dotted border-black font-bold uppercase px-1 w-40 focus:outline-none focus:bg-amber-50"
-                    />
-                    <span>.</span>
-                  </div>
-
-                  <p className="mt-4 leading-relaxed">
-                    I have received full and final payment of this vehicle from purchaser. I will fully 
-                    responsible for any litigation, thief case, accident, dues of tax, Misuse till the date of 
-                    sale, the purchaser will be fully responsible for any Case ,accidenet, thief case, misuse 
-                    from the date of purchase.
-                  </p>
-
-                  <p className="mt-2 leading-relaxed">
-                    I handed over this sales letter to purchaser for his future needs if any.
-                  </p>
-                </div>
-
-                <div className="mt-16 flex justify-between items-end pt-10">
-                  <div className="text-center font-bold">
-                    Seller Signature
-                  </div>
-                  <div className="text-center font-bold">
-                    Purchaser Signature
-                  </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '90px', fontWeight: 'bold' }}>
+                  <p style={{ borderTop: '1px solid #000', paddingTop: '4px', minWidth: '170px', textAlign: 'center' }}>Seller Signature</p>
+                  <p style={{ borderTop: '1px solid #000', paddingTop: '4px', minWidth: '170px', textAlign: 'center' }}>Purchaser Signature</p>
                 </div>
               </div>
             )}
