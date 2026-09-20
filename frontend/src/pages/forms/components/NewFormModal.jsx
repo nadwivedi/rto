@@ -1257,6 +1257,18 @@ const NewFormModal = ({ onClose }) => {
               )}
             </div>
 
+            <div>
+              <label className="text-[11px] font-semibold text-gray-700 block mb-0.5">Vehicle Make</label>
+              <input
+                type="text"
+                name="vehicleMake"
+                value={formData.vehicleMake}
+                onChange={handleChange}
+                placeholder="e.g. HERO SPLENDOR"
+                className="w-full px-2.5 py-1.5 bg-white border border-sky-300 rounded-lg text-xs font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-sky-500 uppercase"
+              />
+            </div>
+
             <div className="grid grid-cols-2 gap-2">
               <div>
                 <label className="text-[10px] font-semibold text-gray-600 block mb-0.5">Engine No.</label>
@@ -1367,6 +1379,17 @@ const NewFormModal = ({ onClose }) => {
                 />
               </div>
             </div>
+            <div>
+              <label className="text-[10px] font-semibold text-gray-600 block mb-0.5">District</label>
+              <input
+                type="text"
+                name="sellerDistrict"
+                value={formData.sellerDistrict}
+                onChange={handleChange}
+                placeholder="Seller District"
+                className="w-full px-2 py-1 bg-white border border-purple-200 rounded-md text-xs font-medium text-gray-800 uppercase focus:outline-none focus:ring-1 focus:ring-purple-500"
+              />
+            </div>
           </div>
 
           {/* 4. Buyer / Transferee Details */}
@@ -1432,6 +1455,17 @@ const NewFormModal = ({ onClose }) => {
                   className="w-full px-2 py-1 bg-white border border-emerald-200 rounded-md text-xs font-medium text-gray-800 uppercase focus:outline-none focus:ring-1 focus:ring-emerald-500"
                 />
               </div>
+            </div>
+            <div>
+              <label className="text-[10px] font-semibold text-gray-600 block mb-0.5">District</label>
+              <input
+                type="text"
+                name="buyerDistrict"
+                value={formData.buyerDistrict}
+                onChange={handleChange}
+                placeholder="Buyer District"
+                className="w-full px-2 py-1 bg-white border border-emerald-200 rounded-md text-xs font-medium text-gray-800 uppercase focus:outline-none focus:ring-1 focus:ring-emerald-500"
+              />
             </div>
           </div>
 
