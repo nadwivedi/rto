@@ -407,7 +407,7 @@ const Vahan = () => {
                     {quickAddModals[button.title] && (
                       <button
                         onClick={(e) => handleQuickAdd(button.title, e)}
-                        className='absolute -top-2 -right-2 w-7 h-7 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-900 hover:scale-110 transition-all flex items-center justify-center z-10 opacity-0 group-hover:opacity-100'
+                        className='absolute -top-2 -right-2 w-7 h-7 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-900 hover:scale-110 transition-all flex items-center justify-center z-10 opacity-100'
                         title={`Add ${button.shortLabel}`}
                       >
                         <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -423,7 +423,7 @@ const Vahan = () => {
         </div>
       </aside>
 
-      <div className='min-h-screen bg-slate-100 px-0.5 pb-8 pt-4 sm:px-4 lg:px-6 lg:pt-5'>
+      <div className='min-h-screen bg-slate-100 px-2 pb-8 pt-3 sm:px-4 sm:pt-4 lg:px-6 lg:pt-5'>
         <div className='flex w-full flex-col gap-6 lg:flex-row lg:max-h-[calc(100vh-5rem)]'>
           <aside className='hidden lg:block lg:w-96 lg:shrink-0 lg:self-start lg:sticky lg:top-4'>
             <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4'>

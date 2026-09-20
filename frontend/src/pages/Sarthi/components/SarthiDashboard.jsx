@@ -102,33 +102,24 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
             </div>
           ) : (
             <>
-            {/* Mobile: card list */}
-            <div className='mt-2 space-y-2 sm:hidden'>
+            {/* Mobile: compact card list */}
+            <div className='mt-2 space-y-1.5 sm:hidden'>
               {filteredRecords.map((record, index) => (
-                <div key={record._id || index} className='rounded-xl border border-gray-200 bg-white p-3 shadow-sm'>
+                <div key={record._id || index} className='rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 shadow-sm'>
                   <div className='flex items-center justify-between gap-2'>
-                    <span className='text-xs font-semibold text-gray-500'>{record.date || '-'}</span>
-                    <span className={`rounded px-2 py-0.5 text-xs font-semibold ${getTypeBadge(record.type)}`}>{record.type}</span>
+                    <div className='min-w-0 leading-tight'>
+                      <div className='truncate text-[13px] font-semibold text-gray-800'>{record.customerName || '-'}</div>
+                      <div className='text-[11px] text-gray-500'>
+                        <span className='font-semibold'>{record.date || '-'}</span>
+                        {record.vehicleNumber && <span className='ml-1.5 font-mono font-bold text-blue-900'>{record.vehicleNumber}</span>}
+                      </div>
+                    </div>
+                    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${getTypeBadge(record.type)}`}>{record.type}</span>
                   </div>
-                  <div className='mt-1.5 min-w-0'>
-                    <div className='truncate text-sm font-semibold text-gray-800'>{record.customerName || '-'}</div>
-                    {record.vehicleNumber && (
-                      <div className='font-mono text-xs font-bold text-blue-900'>{record.vehicleNumber}</div>
-                    )}
-                  </div>
-                  <div className='mt-2 grid grid-cols-3 gap-2 border-t border-gray-100 pt-2 text-center'>
-                    <div>
-                      <div className='text-[10px] font-semibold uppercase text-gray-400'>Total</div>
-                      <div className='text-xs font-bold text-gray-800'>₹{(record.totalFee || 0).toLocaleString('en-IN')}</div>
-                    </div>
-                    <div>
-                      <div className='text-[10px] font-semibold uppercase text-gray-400'>Paid</div>
-                      <div className='text-xs font-bold text-emerald-600'>₹{(record.paid || 0).toLocaleString('en-IN')}</div>
-                    </div>
-                    <div>
-                      <div className='text-[10px] font-semibold uppercase text-gray-400'>Balance</div>
-                      <div className={`text-xs font-bold ${(record.balance || 0) > 0 ? 'text-orange-600' : 'text-gray-500'}`}>₹{(record.balance || 0).toLocaleString('en-IN')}</div>
-                    </div>
+                  <div className='mt-1 flex items-center justify-between gap-2 border-t border-gray-100 pt-1 text-[11px] font-semibold'>
+                    <span className='text-gray-500'>Fee <span className='text-gray-800'>₹{(record.totalFee || 0).toLocaleString('en-IN')}</span></span>
+                    <span className='text-gray-500'>Paid <span className='text-emerald-600'>₹{(record.paid || 0).toLocaleString('en-IN')}</span></span>
+                    <span className='text-gray-500'>Bal <span className={(record.balance || 0) > 0 ? 'text-orange-600' : 'text-gray-500'}>₹{(record.balance || 0).toLocaleString('en-IN')}</span></span>
                   </div>
                 </div>
               ))}

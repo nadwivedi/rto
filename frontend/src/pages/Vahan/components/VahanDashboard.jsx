@@ -290,6 +290,25 @@ const VahanDashboard = () => {
     return styles[docType] || 'bg-gray-100 text-gray-700'
   }
 
+  // Compact WhatsApp status for the mobile cards
+  const renderWhatsAppBadge = (log) => {
+    const notSent = <span className='rounded bg-gray-100 px-1.5 py-0.5 text-[11px] font-semibold text-gray-500'>Not Sent</span>
+    if (!log) return notSent
+    const map = {
+      sent: { cls: 'bg-emerald-100 text-emerald-700', label: '✓ Sent', time: log.sentAt || log.createdAt },
+      pending: { cls: 'bg-amber-100 text-amber-700', label: 'Pending', time: log.scheduledFor || log.createdAt },
+      failed: { cls: 'bg-red-100 text-red-700', label: '✕ Failed', time: log.createdAt }
+    }
+    const item = map[log.status]
+    if (!item) return notSent
+    return (
+      <span className='flex items-center gap-1.5'>
+        <span className='text-[10px] font-medium text-gray-500'>{formatDateTime(item.time) || '-'}</span>
+        <span className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${item.cls}`}>{item.label}</span>
+      </span>
+    )
+  }
+
   const filterButtons = [
     { key: 'all', label: 'All' },
     { key: 'tax', label: 'Road Tax' },
@@ -311,7 +330,7 @@ const VahanDashboard = () => {
   }
 
   return (
-    <div className='flex-1 flex flex-col p-1 sm:p-3 overflow-auto'>
+    <div className='flex-1 flex flex-col p-2 sm:p-3 overflow-auto'>
       <div className='flex flex-col gap-3 flex-1 min-h-0'>
         <section className='min-w-0 flex flex-col flex-1'>
           <div className='mb-3 grid grid-cols-1 items-center gap-3 text-center md:grid-cols-[auto_1fr]'>
@@ -322,7 +341,7 @@ const VahanDashboard = () => {
                 <button
                   key={btn.key}
                   onClick={() => setFilter(btn.key)}
-                  className={`rounded-md px-2 py-0.5 text-[10px] font-semibold transition lg:text-[10px] xl:px-2.5 xl:py-1 xl:text-[11px] 2xl:text-xs ${
+                  className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition sm:px-2 sm:py-0.5 sm:text-[10px] lg:text-[10px] xl:px-2.5 xl:py-1 xl:text-[11px] 2xl:text-xs ${
                     filter === btn.key
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -348,7 +367,39 @@ const VahanDashboard = () => {
               <p className='font-medium text-gray-500'>No documents expiring soon</p>
             </div>
           ) : (
-            <div className='mt-2 sm:mt-4 flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white'>
+            <>
+            {/* Mobile: compact card list */}
+            <div className='mt-2 space-y-1.5 sm:hidden'>
+              {filteredRecords.map((record, index) => {
+                const days = getDaysRemaining(record.validTo)
+                return (
+                  <div key={index} className='rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 shadow-sm'>
+                    <div className='flex items-center justify-between gap-2'>
+                      <div className='min-w-0 leading-tight'>
+                        <div className='truncate text-[13px] font-semibold text-gray-800'>{record.ownerName || record.partyName || '-'}</div>
+                        <div className='font-mono text-[11px] font-bold text-blue-900'>{record.vehicleNumber || '-'}</div>
+                      </div>
+                      <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-semibold ${getDocTypeBadge(record.docType)}`}>{record.docType}</span>
+                    </div>
+                    <div className='mt-1 flex items-center justify-between gap-2 text-[11px] font-semibold'>
+                      <span className='min-w-0 truncate'>
+                        <span className='text-green-700'>{formatDate(record.validFrom)}</span>
+                        <span className='mx-1 text-gray-400'>→</span>
+                        <span className='text-red-700'>{formatDate(record.validTo)}</span>
+                      </span>
+                      <span className={`shrink-0 font-bold ${days !== null && days < 0 ? 'text-red-600' : 'text-orange-600'}`}>{formatExpiryText(record.validTo)}</span>
+                    </div>
+                    <div className='mt-1 flex items-center justify-between gap-2 border-t border-gray-100 pt-1'>
+                      <span className='text-[10px] font-semibold uppercase text-gray-400'>WhatsApp</span>
+                      {renderWhatsAppBadge(record.whatsappLog)}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+
+            {/* Tablet / desktop: table */}
+            <div className='mt-2 sm:mt-4 flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white hidden sm:block'>
               <div className='h-full overflow-auto'>
                 <table className='w-full table-fixed'>
                   <thead className='border-b border-gray-200 bg-gray-50'>
@@ -446,6 +497,7 @@ const VahanDashboard = () => {
                 </table>
               </div>
             </div>
+            </>
           )}
         </section>
       </div>
