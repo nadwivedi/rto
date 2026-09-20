@@ -28,15 +28,15 @@ const kycServices = [
 const ServiceCard = ({ service, color, onClick }) => (
   <button
     onClick={onClick}
-    className={`group relative overflow-hidden rounded-xl border-2 border-transparent ${color.bg} p-1.5 sm:p-2 text-left transition-all duration-300 hover:border-current hover:shadow-lg hover:scale-[1.02]`}
+    className={`group relative overflow-hidden rounded-xl border-2 border-transparent ${color.bg} p-2 text-left transition-all duration-300 hover:border-current hover:shadow-lg hover:scale-[1.02]`}
   >
     <div className='relative flex flex-col items-center gap-1 sm:gap-1.5'>
-      <div className={`flex h-7 w-7 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-lg ${color.iconBg} text-sm sm:text-lg shadow-sm`}>
+      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color.iconBg} text-lg shadow-sm`}>
         {service.icon}
       </div>
       <div className='flex-1 min-w-0 text-center'>
-        <h3 className={`font-bold text-[10px] sm:text-xs ${color.text} truncate leading-tight`}>{service.name}</h3>
-        <p className={`text-[8px] sm:text-xs ${color.subtext} truncate leading-tight`}>{service.desc}</p>
+        <h3 className={`font-bold text-[11px] sm:text-xs ${color.text} truncate leading-tight`}>{service.name}</h3>
+        <p className={`text-[10px] sm:text-xs ${color.subtext} truncate leading-tight`}>{service.desc}</p>
       </div>
     </div>
   </button>
@@ -52,7 +52,7 @@ const HeaderSection = ({ title, subtitle, gradient, icon }) => (
       </div>
       <div>
         <h2 className='text-base sm:text-lg font-bold text-white'>{title}</h2>
-        <p className='text-[10px] sm:text-xs text-white/80 hidden sm:block'>{subtitle}</p>
+        <p className='text-[11px] sm:text-xs text-white/80'>{subtitle}</p>
       </div>
     </div>
   </div>
@@ -171,7 +171,7 @@ const Home2 = () => {
   }
 
   return (
-    <div className='min-h-screen bg-slate-100 px-2 py-6 sm:px-6 lg:px-10 pb-16'>
+    <div className='min-h-screen bg-slate-100 px-3 py-4 sm:px-6 sm:py-6 lg:px-10 pb-20'>
       <div className='mx-auto max-w-[1500px]'>
         {/* Top Navbar Options */}
         <div className='flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-6 sm:mb-8 w-full bg-white/40 backdrop-blur-sm p-3 rounded-2xl border border-slate-200/50 shadow-sm'>
@@ -189,11 +189,11 @@ const Home2 = () => {
           )}
 
           {/* Buttons Group */}
-          <div className='flex items-center justify-end gap-2 sm:gap-3 w-full md:w-auto'>
+          <div className='grid grid-cols-2 sm:flex sm:flex-wrap items-stretch sm:items-center sm:justify-end gap-2 sm:gap-3 w-full md:w-auto'>
             {user?.type !== 'staff' && (
               <button
                 onClick={() => navigate('/whatsapp')}
-                className={`flex items-center gap-1.5 sm:gap-2 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl shadow-sm transition-all duration-300 font-bold text-xs sm:text-base ${
+                className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl shadow-sm transition-all duration-300 font-bold text-xs sm:text-base ${
                   isWhatsAppConnected 
                     ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-md' 
                     : 'bg-red-500 text-white hover:bg-red-600 hover:shadow-md animate-pulse border border-red-300'
@@ -206,7 +206,7 @@ const Home2 = () => {
           {user?.features?.forms && (!isStaff || enabledSections.forms !== false) && (
             <button
               onClick={() => navigate('/forms')}
-              className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-bold text-xs sm:text-base cursor-pointer'
+              className='flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-bold text-xs sm:text-base cursor-pointer'
             >
               <span className='text-base sm:text-xl'>📋</span>
               Forms
@@ -215,7 +215,7 @@ const Home2 = () => {
           {(!isStaff || enabledSections.javak !== false) && (
             <button
               onClick={() => navigate('/javak')}
-              className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-indigo-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold text-xs sm:text-base'
+              className='flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 bg-indigo-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold text-xs sm:text-base'
             >
               <span className='text-base sm:text-xl'>📋</span>
               Javak(notes)
@@ -224,7 +224,7 @@ const Home2 = () => {
           {user?.features?.rcDetails && (
             <button
               onClick={() => navigate('/vehicle-details')}
-              className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-700 transition-all duration-300 font-bold text-xs sm:text-base cursor-pointer'
+              className='flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-700 transition-all duration-300 font-bold text-xs sm:text-base cursor-pointer'
             >
               <span className='text-base sm:text-xl'>🔍</span>
               RC Details
@@ -232,7 +232,7 @@ const Home2 = () => {
           )}
           <button
             onClick={() => navigate('/setting')}
-            className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-slate-700 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-slate-800 transition-all duration-300 font-bold text-xs sm:text-base'
+            className='flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 bg-slate-700 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-slate-800 transition-all duration-300 font-bold text-xs sm:text-base'
           >
             <span className='text-base sm:text-xl'>⚙️</span>
             Setting
@@ -240,7 +240,7 @@ const Home2 = () => {
           {(!isStaff || enabledSections.cashflow !== false) && (
             <button
               onClick={() => navigate('/cashflow-report')}
-              className='flex items-center gap-1 sm:gap-2 px-2.5 py-1.5 sm:px-4 sm:py-2 bg-emerald-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-emerald-700 transition-all duration-300 font-bold text-xs sm:text-base'
+              className='flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 bg-emerald-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-emerald-700 transition-all duration-300 font-bold text-xs sm:text-base'
             >
               <span className='text-base sm:text-xl'>💰</span>
               Cashflow
@@ -331,7 +331,7 @@ const Home2 = () => {
                 </a>
                 <button
                   onClick={() => setBmToDelete(bm)}
-                  className="absolute -top-1.5 -right-1.5 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 bg-red-500 text-white rounded-full shadow hover:bg-red-600"
+                  className="absolute -top-1.5 -right-1.5 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity p-0.5 bg-red-500 text-white rounded-full shadow hover:bg-red-600"
                 >
                   <X size={10} />
                 </button>
