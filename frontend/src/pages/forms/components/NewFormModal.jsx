@@ -163,35 +163,32 @@ const NewFormModal = ({ onClose }) => {
   }, [vehicleSearchNumber])
 
   const handlePrint = (printEmpty = false, specificSection = null) => {
-    let printContent = printRef.current
-    if (specificSection) {
-      const el = document.getElementById(specificSection)
-      if (el) printContent = el
-    }
+    const source = (specificSection && document.getElementById(specificSection)) || printRef.current
 
-    const inputs = printContent.querySelectorAll('input')
-    const originalValues = []
+    // Print a clone so the on-screen form is never touched; copy live input values into it
+    const clone = source.cloneNode(true)
+    const liveInputs = source.querySelectorAll('input')
+    clone.querySelectorAll('input').forEach((input, i) => {
+      input.setAttribute('value', printEmpty ? '' : liveInputs[i].value)
+    })
 
-    if (printEmpty) {
-      inputs.forEach((input, i) => {
-        originalValues[i] = input.value
-        input.value = ''
-      })
-    }
+    // Carry over the app's own CSS (Tailwind etc.) so every page prints exactly as it looks on screen
+    const appStyles = Array.from(document.querySelectorAll('link[rel="stylesheet"], style'))
+      .map(node => node.outerHTML)
+      .join('\n')
 
     const printWindow = window.open('', '_blank')
     printWindow.document.write(`
       <html>
         <head>
+          <base href="${document.baseURI}">
           <title>New Form - ${formData.vehicleNumber || 'Vehicle Transfer Set'}</title>
+          ${appStyles}
           <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
             body {
-              font-family: 'Times New Roman', Times, serif;
-              font-size: 13px;
-              line-height: 1.5;
-              padding: 10px;
-              font-weight: 500;
+              margin: 0;
+              padding: 0;
+              background: #fff;
               color: #000;
               -webkit-print-color-adjust: exact;
               print-color-adjust: exact;
@@ -199,76 +196,43 @@ const NewFormModal = ({ onClose }) => {
             .page-break {
               page-break-after: always;
               break-after: page;
-              margin-bottom: 25px;
             }
             .form-sheet {
-              width: 100%;
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 15mm 15mm;
-              min-height: 275mm;
+              margin: 0 auto !important;
+              box-shadow: none !important;
+              border-radius: 0 !important;
             }
-            input {
-              border: none !important;
-              background: transparent;
-              outline: none;
-              width: 100%;
-              font-family: 'Times New Roman', Times, serif;
-              font-size: 13px;
-              padding: 0 2px;
-              font-weight: bold;
-              color: #000;
-            }
+            input { background: transparent !important; outline: none !important; }
+            .space-y-6 > * { margin-top: 0 !important; margin-bottom: 0 !important; }
             .no-print { display: none !important; }
-            .photo-box {
-              width: 90px;
-              height: 110px;
-              border: 1px dashed #555;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              text-align: center;
-              font-size: 10px;
-              color: #555;
-              padding: 4px;
-              line-height: 1.2;
-            }
             @media print {
-              body { padding: 0; margin: 0; }
-              .page-break {
-                page-break-after: always !important;
-                break-after: page !important;
-                margin-bottom: 0;
-              }
-              .form-sheet {
-                padding: 12mm 15mm;
-                min-height: 285mm;
-              }
-              @page {
-                margin: 0;
-                size: A4;
-              }
+              @page { margin: 0; size: A4; }
             }
           </style>
         </head>
         <body>
-          ${printContent.innerHTML}
+          ${clone.outerHTML}
         </body>
       </html>
     `)
     printWindow.document.close()
     printWindow.focus()
-    setTimeout(() => {
+
+    // Wait for the copied stylesheets to load before opening the print dialog
+    const startPrint = () => {
       printWindow.print()
       printWindow.close()
-    }, 250)
-
-    if (printEmpty) {
-      inputs.forEach((input, i) => {
-        input.value = originalValues[i]
-      })
     }
+    let started = false
+    const once = () => {
+      if (started) return
+      started = true
+      setTimeout(startPrint, 200)
+    }
+    printWindow.onload = once
+    setTimeout(once, 1200)
   }
+
 
   // Page 1 (form.docx layout): dotted-line field + row style
   const p1Row = { display: 'flex', alignItems: 'baseline', gap: '6px', marginTop: '9px' }
