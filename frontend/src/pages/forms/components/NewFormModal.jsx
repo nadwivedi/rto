@@ -286,6 +286,19 @@ const NewFormModal = ({ onClose }) => {
     </div>
   )
 
+  // Page 4 (Form 30) shared styles
+  const p4Head = "Georgia, 'Palatino Linotype', 'Book Antiqua', serif"
+  const p2Row = { ...p1Row, marginTop: '5px' }
+  const p4Sheet = {
+    width: '210mm',
+    minHeight: '297mm',
+    padding: '12mm 18mm',
+    fontFamily: "'Times New Roman', Times, serif",
+    fontSize: '13px',
+    lineHeight: '1.55',
+    color: '#000'
+  }
+
   const handleClear = () => {
     setFormData({
       vehicleNumber: '',
@@ -528,178 +541,187 @@ const NewFormModal = ({ onClose }) => {
                 style={{
                   width: '210mm',
                   minHeight: '297mm',
-                  padding: '14mm 16mm',
+                  padding: '12mm 18mm',
                   fontFamily: "'Times New Roman', Times, serif",
-                  fontSize: '12px',
-                  lineHeight: '1.45',
+                  fontSize: '13px',
+                  lineHeight: '1.5',
                   color: '#000'
                 }}
               >
-                <div style={{ textAlign: 'center', marginBottom: '12px' }}>
-                  <h1 style={{ fontSize: '15px', fontWeight: 'bold', letterSpacing: '2px' }}>FORM 29</h1>
-                  <p style={{ fontSize: '11px', marginTop: '1px' }}>[See Rule 55(1)]</p>
-                  <h2 style={{ fontSize: '12px', fontWeight: 'bold', marginTop: '3px' }}>NOTICE OF TRANSFER OF OWNERSHIP OF A MOTOR VEHICLE</h2>
-                  <p style={{ fontSize: '10px', marginTop: '2px', fontStyle: 'italic' }}>(To be made in duplicate and the duplicate copy with the endorsement of the Registering Authority to be returned to the transferor immediately on making entries of transfer of ownership in certificate of Registration and Form 24)</p>
+                {/* Text taken as-is from form.docx (Form 29) */}
+                <div style={{ textAlign: 'center', fontFamily: "Georgia, 'Palatino Linotype', 'Book Antiqua', serif" }}>
+                  <p style={{ fontSize: '26px', fontWeight: 'bold', letterSpacing: '4px' }}>FORM 29</p>
+                  <p style={{ fontSize: '14px' }}>[See Rule 55(1)]</p>
+                  <p style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '4px' }}>NOTICE OF TRANSFER OF OWNERSHIP OF A MOTOR VEHICLE</p>
                 </div>
+                <p style={{ fontSize: '11.5px', textAlign: 'center', fontStyle: 'italic', margin: '6px 0 14px' }}>(To be made in duplicate and the duplicate copy with the endorsement of the Registering Authority to be returned to the transferor or immediately on making entries of transfer of ownership in certificate of Registration and Form 24)</p>
 
-                <div style={{ marginBottom: '10px' }}>
+                <p style={{ fontWeight: 'bold' }}>To</p>
+                <div style={{ ...p1Row, marginTop: '2px' }}><span>The Registering Authority</span>{p1In(3000, 'rtoLocation')}<span>(in whose jurisdiction the Transferee resides)</span></div>
+
+                <div style={{ ...p1Row, marginTop: '14px' }}><span>I/We</span>{p1In(3001, 'sellerName')}<span>resident of</span>{p1In(3002, 'sellerResidence')}</div>
+                <div style={p1Row}><span>have on the</span>{p1In(3003, 'saleDay', { flex: 'none', width: '110px', textAlign: 'center' })}<span>day of the year</span>{p1In(3004, 'saleMonthYear', { flex: 'none', width: '170px', textAlign: 'center' })}<span>Sold and delivered my / our Vehicle No</span>{p1In(3005, 'vehicleNumber')}</div>
+                <div style={p1Row}><span>make</span>{p1In(3006, 'vehicleMake')}<span>Chassis No</span>{p1In(3007, 'chassisNumber')}</div>
+                <div style={p1Row}><span>[Engine number or motor number in the case of Battery Operated Vehicles]</span>{p1In(3008, 'engineNumber')}<span>to</span></div>
+                <div style={p1Row}><span>Shri / Smt</span>{p1In(3009, 'buyerName')}<span>(Name) Son/Wife/Daughter of</span>{p1In(3010, 'buyerFather')}</div>
+                <div style={p1Row}><span>residing at</span>{p1In(3011, 'buyerResidence')}</div>
+                <div style={p1Row}><span>P.O.</span>{p1In(3012, 'buyerPO')}<span>P.S.</span>{p1In(3013, 'buyerPS')}<span>Distt.</span>{p1In(3014, 'buyerDistrict')}<span>State</span>{p1In(3015, 'buyerState')}</div>
+                <p style={{ fontSize: '11.5px', textAlign: 'center' }}>(House No./Street/Village/Town/Distt. And State)</p>
+                <div style={p1Row}><span>under an agreement of hire purchase/lease/ hypothecation with</span>{p1In(3016, 'financierDetails')}</div>
+
+                <p style={{ marginTop: '14px' }}>The Registration Certificate and Insurance Certificate have been handed over to him /her / them.</p>
+                <p style={{ marginTop: '8px', textAlign: 'justify' }}>To the best of my/our knowledge and belief the vehicle is not superdari and free from all encumbrances and information furnished is true. I/We undertake to hold my/our self-responsible for any inaccuracy or suppression of information.</p>
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '40px', fontWeight: 'bold', fontSize: '13px' }}>
+                  <div style={{ textAlign: 'center' }}><p style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>Signature of the Financier<br /><span style={{ fontWeight: 'normal' }}>(as his consent)</span></p></div>
+                  <div style={{ textAlign: 'center' }}><p style={{ borderTop: '1px solid #000', paddingTop: '3px' }}>Signature or thumb impression of the<br />Registered Owner (Transferor)</p></div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '8px' }}>
+                  <p>Date <strong>{formData.date}</strong></p>
+                  <p>Date <strong>{formData.date}</strong></p>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '14px', fontWeight: 'bold' }}>I/We (Transferee)</div>
+
+                <div style={{ ...p1Row, marginTop: '14px' }}><span>Copy to the Registering Authority</span>{p1In(3017, 'rtoLocation')}<span>in whose jurisdiction the</span></div>
+                <p>transferor resides.</p>
+                <p style={{ fontSize: '12px', fontStyle: 'italic', marginTop: '4px' }}>Note. – To be sent to the Registering Authority by Registered Post Acknowledgment Due.</p>
+
+                <div style={{ border: '1.5px solid #000', padding: '8px 12px', marginTop: '14px' }}>
+                  <p style={{ textAlign: 'center', fontWeight: 'bold', fontFamily: "Georgia, 'Palatino Linotype', 'Book Antiqua', serif", fontSize: '15px', letterSpacing: '1px' }}>OFFICE ENDORSEMENT</p>
+                  <div style={p1Row}><span>Ref.No</span>{p1In(3018, 'endorsementRefNo')}<span>Office of the</span>{p1In(3019, 'endorsementOffice')}</div>
+                  <div style={p1Row}><span>The ownership of the vehicle has been transferred to the name of</span>{p1In(3020, 'buyerName')}</div>
+                  <div style={p1Row}><span>with the note of the above said agreement with effect from</span>{p1In(3021, 'endorsementEffectDate')}<span>(date).</span></div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '24px', fontSize: '13px' }}>
+                    <p>Date ..............................</p>
+                    <p style={{ fontWeight: 'bold' }}>Signature of the Registering Authority with Office seal</p>
+                  </div>
+                </div>
+                <p style={{ fontSize: '12px', marginTop: '4px' }}>*Strike out whichever is inapplicable</p>
+
+                <div style={{ marginTop: '12px' }}>
                   <p style={{ fontWeight: 'bold' }}>To</p>
-                  <p style={{ marginLeft: '20px' }}>The Registering Authority <strong>{formData.rtoLocation || '..............................................................'}</strong> (in whose jurisdiction the Transferee resides)</p>
-                </div>
-
-                <div style={{ textAlign: 'justify', lineHeight: '1.6', marginBottom: '10px' }}>
-                  <p>
-                    I/We <strong>{formData.sellerName || '...................................................'}</strong> resident of <strong>{formData.sellerResidence || '........................................................................................................................'}</strong> have on the{' '}
-                    <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '60px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[34] = el)}
-                        type="text"
-                        name="saleDay"
-                        value={formData.saleDay}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 34)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '12px', fontWeight: 'bold', textAlign: 'center', padding: '0 2px' }}
-                      />
-                    </span>{' '}
-                    day of the year{' '}
-                    <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '80px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[35] = el)}
-                        type="text"
-                        name="saleMonthYear"
-                        value={formData.saleMonthYear}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 35)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '12px', fontWeight: 'bold', textAlign: 'center', padding: '0 2px' }}
-                      />
-                    </span>{' '}
-                    Sold and delivered my / our Vehicle No <strong>{formData.vehicleNumber || '........................................'}</strong> make <strong>{formData.vehicleMake || '........................................'}</strong> Chassis No <strong>{formData.chassisNumber || '....................................................................................'}</strong> [Engine number] <strong>{formData.engineNumber || '....................................................................................'}</strong> to Shri / Smt <strong>{formData.buyerName || '....................................................................................'}</strong> Son/Wife/Daughter of <strong>{formData.buyerFather || '....................................................................................'}</strong> residing at <strong>{formData.buyerResidence || '........................................................................................................................................................................'}</strong> (House No./Street/Village/Town/Distt. And State) under an agreement of hire purchase/lease/ hypothecation with <strong>{formData.financierDetails || '................................................................................................................................'}</strong>
-                  </p>
-                  <p style={{ marginTop: '6px' }}>The Registration Certificate and Insurance Certificate have been handed over to him /her / them.</p>
-                  <p style={{ marginTop: '3px' }}>To the best of my/our knowledge and belief the vehicle is not superdari and free from all encumbrances and information furnished is true. I/We undertake to hold my/our self-responsible for any inaccuracy or suppression of information.</p>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px', marginBottom: '12px' }}>
-                  <div style={{ width: '45%' }}>
-                    <p style={{ borderBottom: '1.5px dotted #000', minHeight: '20px' }}></p>
-                    <p style={{ fontWeight: 'bold', fontSize: '11px' }}>Signature of the Financier (as his consent)</p>
-                  </div>
-                  <div style={{ width: '48%', textAlign: 'right' }}>
-                    <p style={{ borderBottom: '1.5px dotted #000', minHeight: '20px' }}></p>
-                    <p style={{ fontWeight: 'bold', fontSize: '11px' }}>Signature or thumb impression of Registered Owner (Transferor)</p>
-                  </div>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                  <p>Date: <strong>{formData.date}</strong></p>
-                  <p style={{ fontWeight: 'bold' }}>I/We (Transferee)</p>
-                </div>
-
-                <div style={{ marginBottom: '10px', borderTop: '1px dashed #666', paddingTop: '8px' }}>
-                  <p>Copy to the Registering Authority <strong>{formData.rtoLocation || '..............................................................'}</strong> in whose jurisdiction the transferor resides.</p>
-                  <p style={{ marginTop: '2px' }}>Note: To be sent to the Registering Authority by Registered Post Acknowledgment Due.</p>
-                </div>
-
-                <div style={{ border: '1px solid #000', padding: '6px 10px', marginTop: '8px' }}>
-                  <h3 style={{ textAlign: 'center', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>OFFICE ENDORSEMENT</h3>
-                  <p style={{ fontSize: '11px' }}>Ref. No. <strong>{formData.endorsementRefNo || '.....................'}</strong> Office of the <strong>{formData.endorsementOffice || '..................................................'}</strong></p>
-                  <p style={{ fontSize: '11px', marginTop: '2px' }}>The ownership of the vehicle has been transferred to the name of <strong>{formData.buyerName || '..................................................'}</strong> with effect from <strong>{formData.endorsementEffectDate || '.....................'}</strong></p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '12px', fontSize: '11px' }}>
-                    <p>Date: <strong>{formData.date}</strong></p>
-                    <p style={{ fontWeight: 'bold' }}>Registering Authority (Office Seal)</p>
-                  </div>
+                  <div style={{ ...p1Row, marginTop: '2px' }}><span>The Transferor</span>{p1In(3022, 'sellerName')}</div>
+                  <p style={{ fontSize: '12px', fontStyle: 'italic', textAlign: 'center' }}>(To be sent by Registered Post Acknowledgment Due)</p>
                 </div>
               </div>
             )}
 
-            {/* ================= PAGE 4: FORM 30 ================= */}
+            {/* ================= PAGE 4: FORM 30 (Part I + Part II, as in form.docx) ================= */}
             {(activeTab === 'all' || activeTab === 'form30') && (
-              <div
-                id="sec-form30"
-                className="bg-white shadow-2xl mx-auto rounded-sm form-sheet page-break"
-                style={{
-                  width: '210mm',
-                  minHeight: '297mm',
-                  padding: '12mm 15mm',
-                  fontFamily: "'Times New Roman', Times, serif",
-                  fontSize: '11px',
-                  lineHeight: '1.4',
-                  color: '#000'
-                }}
-              >
-                <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-                  <h1 style={{ fontSize: '14px', fontWeight: 'bold', letterSpacing: '2px' }}>FORM 30</h1>
-                  <p style={{ fontSize: '10px' }}>[See Rule 55(2) and 55(3)]</p>
-                  <h2 style={{ fontSize: '11px', fontWeight: 'bold', marginTop: '2px' }}>APPLICATION FOR INTIMATION AND TRANSFER OF OWNERSHIP OF A MOTOR VEHICLE</h2>
-                  <p style={{ fontSize: '9.5px', fontStyle: 'italic' }}>(To be made in duplicate if the vehicle is held under an agreement of Hire Purchase/Lease/Hypothecation)</p>
-                </div>
+              <>
+                {/* ---- Form 30: Part I ---- */}
+                <div id="sec-form30" className="bg-white shadow-2xl mx-auto rounded-sm form-sheet page-break" style={p4Sheet}>
+                  <div style={{ textAlign: 'center', fontFamily: p4Head }}>
+                    <p style={{ fontSize: '26px', fontWeight: 'bold', letterSpacing: '4px' }}>FORM 30</p>
+                    <p style={{ fontSize: '14px' }}>[See Rule 55(2) and (3)]</p>
+                    <p style={{ fontSize: '16px', fontWeight: 'bold', marginTop: '4px' }}>APPLICATION FOR INTIMATION AND TRANSFER OF OWNERSHIP OF A MOTOR VEHICLE</p>
+                  </div>
+                  <p style={{ fontSize: '11.5px', textAlign: 'justify', fontStyle: 'italic', margin: '6px 0 14px' }}>(To be made in duplicate if the vehicle is held under an agreement of hire-purchase / lease / hypothecation. The duplicate copy with the endorsement of the Registering Authority to be returned to the Financier simultaneously on making the entry of the transfer of ownership in the Certificate of Registration and Registration Record in Form 24)</p>
 
-                <div style={{ borderBottom: '1px solid #333', paddingBottom: '6px', marginBottom: '6px' }}>
-                  <h3 style={{ textAlign: 'center', fontSize: '11.5px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>PART I - FOR THE USE OF THE TRANSFEROR</h3>
                   <p style={{ fontWeight: 'bold' }}>To</p>
-                  <p style={{ marginLeft: '16px' }}>The Registering Authority <strong>{formData.rtoLocation || '..............................................................'}</strong></p>
+                  <div style={{ ...p1Row, marginTop: '2px' }}><span>The Registering Authority</span>{p1In(4000, 'rtoLocation')}</div>
 
-                  <div style={{ marginTop: '4px', textAlign: 'justify', lineHeight: '1.45' }}>
-                    <p>
-                      I/We <strong>{formData.sellerName || '...................................................'}</strong> Son/Wife/Daughter of <strong>{formData.sellerFather || '...................................................'}</strong> residing at <strong>{formData.sellerResidence || '........................................................................................................................'}</strong> have on the <strong>{formData.saleDay || '.......'}</strong> day of <strong>{formData.saleMonthYear || '.......'}</strong> sold and delivered my/our motor vehicle No. <strong>{formData.vehicleNumber || '........................................'}</strong> make <strong>{formData.vehicleMake || '........................................'}</strong> Chassis No. <strong>{formData.chassisNumber || '....................................................................................'}</strong> Engine No. <strong>{formData.engineNumber || '....................................................................................'}</strong> to Shri/Smt. <strong>{formData.buyerName || '....................................................................................'}</strong> Son/Wife/Daughter of <strong>{formData.buyerFather || '....................................................................................'}</strong> residing at <strong>{formData.buyerResidence || '........................................................................................................................'}</strong>.
-                    </p>
-                    <p style={{ marginTop: '2px' }}>I/We hereby declare that I/We have submitted the transfer intimation along with relevant documents.</p>
+                  <p style={{ fontFamily: p4Head, fontWeight: 'bold', fontSize: '17px', textAlign: 'center', letterSpacing: '1px', margin: '18px 0 6px' }}>PART I – FOR THE USE OF THE TRANSFEROR</p>
+
+                  <div style={p1Row}><span>Name of the transferor</span>{p1In(4001, 'sellerName')}</div>
+                  <div style={p1Row}><span>Son/Wife/Daughter of</span>{p1In(4002, 'sellerFather')}</div>
+                  <div style={p1Row}><span>Full Address</span>{p1In(4003, 'sellerResidence')}</div>
+                  <div style={p1Row}><span>P.O.</span>{p1In(4004, 'sellerPO')}<span>P.S.</span>{p1In(4005, 'sellerPS')}</div>
+                  <div style={p1Row}><span>Dist.</span>{p1In(4006, 'sellerDistrict')}<span>State</span>{p1In(4007, 'sellerState')}<span>PIN</span>{p1In(4008, 'sellerPIN', { flex: 'none', width: '110px' })}</div>
+
+                  <div style={{ ...p1Row, marginTop: '16px' }}>
+                    <span>I/We, hereby declare that I/We have on this</span>{p1In(4009, 'saleDay', { flex: 'none', width: '100px', textAlign: 'center' })}
+                    <span>day of the year</span>{p1In(4010, 'saleMonthYear', { flex: 'none', width: '170px', textAlign: 'center' })}
+                  </div>
+                  <div style={p1Row}><span>sold my/our motor vehicle bearing Registration mark</span>{p1In(4011, 'vehicleNumber')}</div>
+                  <div style={p1Row}><span>to Shri./Smt.</span>{p1In(4012, 'buyerName')}<span>Son/Wife/Daughter of</span>{p1In(4013, 'buyerFather')}</div>
+                  <div style={p1Row}><span>residing at</span>{p1In(4014, 'buyerResidence')}</div>
+                  <div style={p1Row}><span>P.O.</span>{p1In(4015, 'buyerPO')}<span>P.S.</span>{p1In(4016, 'buyerPS')}</div>
+                  <div style={p1Row}><span>Dist.</span>{p1In(4017, 'buyerDistrict')}<span>State</span>{p1In(4018, 'buyerState')}<span>PIN</span>{p1In(4019, 'buyerPIN', { flex: 'none', width: '110px' })}<span>(full address)</span></div>
+                  <p style={{ marginTop: '4px', textAlign: 'justify' }}>and handed over the Certificate of Registration and the Certificate of Insurance to him/her/them.</p>
+
+                  <p style={{ marginTop: '14px', textAlign: 'justify' }}>I/We hereby declare that to the best of my/our knowledge the certificate of registration of the vehicle has not been suspended or cancelled.*</p>
+                  <p style={{ marginTop: '10px', textAlign: 'justify' }}>*I/We enclose the “No Objection Certificate” issued by the Registering Authority.</p>
+                  <p style={{ marginTop: '10px', textAlign: 'justify' }}>**If the “No Objection Certificate” issued from the Registering Authority is not enclosed, the transferor should file along with this application a declaration as required under sub-section (1) of section 50.</p>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '46px' }}>
+                    <p>Date <strong>{formData.date}</strong></p>
+                    <p style={{ fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '3px' }}>Signature or thumb impression of the Transferor</p>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '8px' }}>
-                    <p>Date: <strong>{formData.date}</strong></p>
-                    <p style={{ fontWeight: 'bold' }}>Signature or thumb impression of the Transferor</p>
-                  </div>
+                  <div style={{ ...p1Row, marginTop: '30px' }}><span>*Details of suspension or cancellation</span>{p1In(4020, 'suspensionDetails')}</div>
+                  <p style={{ marginTop: '6px' }}>**Strike out whichever is inapplicable.</p>
                 </div>
 
-                <div style={{ borderBottom: '1px solid #333', paddingBottom: '6px', marginBottom: '6px' }}>
-                  <h3 style={{ textAlign: 'center', fontSize: '11.5px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '4px' }}>PART II - FOR THE USE OF THE TRANSFEREE</h3>
-                  <p style={{ fontWeight: 'bold' }}>To</p>
-                  <p style={{ marginLeft: '16px' }}>The Registering Authority <strong>{formData.rtoLocation || '..............................................................'}</strong></p>
+                {/* ---- Form 30: Part II ---- */}
+                <div id="sec-form30-part2" className="bg-white shadow-2xl mx-auto rounded-sm form-sheet page-break" style={{ ...p4Sheet, fontSize: '12.5px', lineHeight: '1.45', padding: '11mm 18mm' }}>
+                  <p style={{ fontFamily: p4Head, fontWeight: 'bold', fontSize: '17px', textAlign: 'center', letterSpacing: '1px', marginBottom: '6px' }}>PART II – FOR THE USE OF TRANSFEREE</p>
 
-                  <div style={{ marginTop: '4px', textAlign: 'justify', lineHeight: '1.45' }}>
-                    <p>
-                      I/We <strong>{formData.buyerName || '...................................................'}</strong> Son/Wife/Daughter of <strong>{formData.buyerFather || '...................................................'}</strong> Age{' '}
-                      <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '40px' }}>
-                        <input
-                          ref={(el) => (inputRefs.current[36] = el)}
-                          type="text"
-                          name="buyerAge"
-                          value={formData.buyerAge}
-                          onChange={handleChange}
-                          onKeyDown={(e) => handleKeyDown(e, 36)}
-                          style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '11px', fontWeight: 'bold', textAlign: 'center', padding: '0 2px' }}
-                        />
-                      </span>{' '}
-                      residing at <strong>{formData.buyerResidence || '........................................................................................................................'}</strong> hereby declare that I/We have on this <strong>{formData.saleDay || '.......'}</strong> day of the year <strong>{formData.saleMonthYear || '.......'}</strong> purchased the motor vehicle bearing registration number <strong>{formData.vehicleNumber || '.....................'}</strong> from <strong>{formData.sellerName || '.....................'}</strong>.
-                    </p>
+                  <div style={p2Row}><span>Name of the Transferee</span>{p1In(4100, 'buyerName')}</div>
+                  <div style={p2Row}><span>Son/Wife/Daughter of</span>{p1In(4101, 'buyerFather')}<span>Age</span>{p1In(4102, 'buyerAge', { flex: 'none', width: '70px', textAlign: 'center' })}</div>
+                  <div style={p2Row}><span>Full address</span>{p1In(4103, 'buyerResidence')}</div>
+                  <div style={p2Row}><span>P.O.</span>{p1In(4104, 'buyerPO')}<span>P.S.</span>{p1In(4105, 'buyerPS')}</div>
+                  <div style={p2Row}><span>Dist.</span>{p1In(4106, 'buyerDistrict')}<span>State</span>{p1In(4107, 'buyerState')}<span>PIN</span>{p1In(4108, 'buyerPIN', { flex: 'none', width: '110px' })}<span>(Proof of address to be enclosed).</span></div>
+
+                  <div style={{ ...p2Row, marginTop: '10px' }}>
+                    <span>I/We hereby declare that I/We have on this</span>{p1In(4109, 'saleDay', { flex: 'none', width: '100px', textAlign: 'center' })}
+                    <span>day of the year</span>{p1In(4110, 'saleMonthYear', { flex: 'none', width: '170px', textAlign: 'center' })}
+                  </div>
+                  <div style={p2Row}><span>purchased the motor vehicle bearing registration number</span>{p1In(4111, 'vehicleNumber')}</div>
+                  <div style={p2Row}><span>from</span>{p1In(4112, 'sellerName')}</div>
+                  <div style={p2Row}>{p1In(4113, 'sellerResidence')}</div>
+                  <div style={p2Row}><span>P.O.</span>{p1In(4114, 'sellerPO')}<span>P.S.</span>{p1In(4115, 'sellerPS')}<span>Dist.</span>{p1In(4116, 'sellerDistrict')}<span>(name and full address)</span></div>
+                  <p style={{ marginTop: '4px', textAlign: 'justify' }}>and request that necessary entries regarding the transfer of ownership of the vehicle in my/our name may be recorded in the certificate of registration and certificate of fitness of the vehicle, which is enclosed.</p>
+                  <p style={{ marginTop: '6px', textAlign: 'justify' }}>The certificate of Insurance is also enclosed. To the best of my knowledge and belief I/We have not suppressed any facts and information furnished is true. The vehicle is not superdari and free from all encumbrances. I/We undertake to hold myself responsible for any inaccuracy of the information.</p>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '26px' }}>
+                    <p>Date <strong>{formData.date}</strong></p>
+                    <p style={{ fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '3px' }}>Signature or thumb impression of the Transferee</p>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '8px' }}>
-                    <p>Date: <strong>{formData.date}</strong></p>
-                    <p style={{ fontWeight: 'bold' }}>Signature or thumb impression of the Transferee</p>
+                  <div style={{ border: '1.5px solid #000', padding: '7px 12px', marginTop: '12px' }}>
+                    <p style={{ fontFamily: p4Head, fontWeight: 'bold', fontSize: '13px', textAlign: 'center', textTransform: 'uppercase' }}>Consent of the Financier in the case of motor vehicle subject to an agreement of hire-purchase/lease/hypothecation</p>
+                    <p style={{ marginTop: '3px', textAlign: 'justify' }}>I/We being a party to an agreement of hire-purchase/lease/hypothecation in respect of motor vehicle specified above, give consent to the transfer of ownership of the said motor vehicle in the name of the Transferee named above, with whom I/We have entered into an agreement of hire-purchase/lease/hypothecation.</p>
+                    <div style={p2Row}>{p1In(4117, 'financierDetails')}</div>
+                    <p style={{ textAlign: 'center', fontSize: '11.5px' }}>(Full name and address of the Financier)</p>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '18px' }}>
+                      <p>Date ..............................</p>
+                      <p style={{ fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '3px' }}>Signature of the Financier</p>
+                    </div>
+                  </div>
+
+                  <div style={{ border: '1.5px solid #000', padding: '7px 12px', marginTop: '10px' }}>
+                    <p style={{ fontFamily: p4Head, fontWeight: 'bold', fontSize: '15px', textAlign: 'center', letterSpacing: '1px' }}>OFFICE ENDORSEMENT</p>
+                    <div style={p2Row}><span>Ref.No</span>{p1In(4118, 'endorsementRefNo')}<span>Office of the</span>{p1In(4119, 'endorsementOffice')}</div>
+                    <p style={{ marginTop: '4px', textAlign: 'justify' }}>The transfer of ownership of vehicle under continuation of an endorsement of hire-purchase/lease/hypothecation agreement has been recorded with effect from</p>
+                    <div style={p2Row}>{p1In(4120, 'endorsementEffectDate')}<span>in the Registration Certificate of the vehicle and in the Registration Record of this office in Form 24.</span></div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '18px' }}>
+                      <p>Date ..............................</p>
+                      <p style={{ fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '3px' }}>Signature of the Registering Authority</p>
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: '8px' }}>
+                    <p style={{ fontWeight: 'bold' }}>To</p>
+                    <div style={{ ...p2Row, marginTop: '2px' }}><span>The Financier</span>{p1In(4121, 'financierDetails')}</div>
+                    <p style={{ fontSize: '11.5px', fontStyle: 'italic', textAlign: 'center' }}>(To be sent by Registered Post Acknowledgment Due)</p>
+                  </div>
+
+                  <p style={{ fontSize: '11px', marginTop: '8px', textAlign: 'justify' }}>Specimen signature or thumb impression of the registered owner and the Financier are to be obtained in the original application for affixing and attestation by the Registering Authority with the office seal in Forms 23 and 24, in such manner that the parts of impression of seal or stamp and attestation shall fall upon each signature.</p>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '30px', marginTop: '6px', fontWeight: 'bold', fontSize: '12px' }}>
+                    <div style={{ flex: 1 }}>
+                      <p>Specimen signatures of the Financier</p>
+                      <p style={{ fontWeight: 'normal', marginTop: '16px' }}>1 ..................................................</p>
+                      <p style={{ fontWeight: 'normal', marginTop: '16px' }}>2 ..................................................</p>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <p>Specimen signatures of the Registered Owner</p>
+                      <p style={{ fontWeight: 'normal', marginTop: '16px' }}>1 ..................................................</p>
+                      <p style={{ fontWeight: 'normal', marginTop: '16px' }}>2 ..................................................</p>
+                    </div>
                   </div>
                 </div>
-
-                <div style={{ borderTop: '1px dashed #444', paddingTop: '4px', marginBottom: '4px' }}>
-                  <h4 style={{ textAlign: 'center', fontSize: '10.5px', fontWeight: 'bold', textTransform: 'uppercase', marginBottom: '2px' }}>CONSENT OF THE FINANCIER</h4>
-                  <p style={{ fontSize: '10px', lineHeight: '1.3' }}>I/We being a party to an agreement of hire-purchase/lease/hypothecation give consent to the transfer of ownership.</p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '6px', fontSize: '10.5px' }}>
-                    <p>Date: <strong>{formData.date}</strong></p>
-                    <p style={{ fontWeight: 'bold' }}>Signature of the Financier</p>
-                  </div>
-                </div>
-
-                <div style={{ border: '1px solid #000', padding: '4px 6px', marginTop: '4px' }}>
-                  <h4 style={{ textAlign: 'center', fontSize: '10.5px', fontWeight: 'bold', marginBottom: '2px' }}>OFFICE ENDORSEMENT</h4>
-                  <p style={{ fontSize: '10px' }}>Ref.No. <strong>{formData.endorsementRefNo || '.....................'}</strong> Office of the <strong>{formData.endorsementOffice || '..........................................'}</strong></p>
-                  <p style={{ fontSize: '10px', marginTop: '1px' }}>The transfer of ownership of vehicle has been recorded with effect from <strong>{formData.endorsementEffectDate || '.....................'}</strong> in the Registration Record.</p>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '6px', fontSize: '10px' }}>
-                    <p>Date: <strong>{formData.date}</strong></p>
-                    <p style={{ fontWeight: 'bold' }}>Signature of the Registering Authority</p>
-                  </div>
-                </div>
-              </div>
+              </>
             )}
 
             {/* ================= PAGE 5: TRANSFER DECLARATION (हस्तांतरण घोषणा) ================= */}
