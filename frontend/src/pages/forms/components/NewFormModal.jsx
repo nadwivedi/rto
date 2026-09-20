@@ -486,275 +486,35 @@ const NewFormModal = ({ onClose }) => {
                   color: '#000'
                 }}
               >
-                <div style={{ textAlign: 'center', marginBottom: '18px' }}>
-                  <p style={{ fontSize: '13px', fontWeight: 'bold' }}>In The Court of</p>
-                  <h1 style={{ fontSize: '16px', fontWeight: 'bold' }}>
-                    Executive Magistrate / Notary Public
-                  </h1>
-                  <div style={{ display: 'inline-flex', alignItems: 'baseline', marginTop: '2px', minWidth: '160px', borderBottom: '1px dotted #000' }}>
-                    <input
-                      ref={(el) => (inputRefs.current[17] = el)}
-                      type="text"
-                      name="courtLocation"
-                      value={formData.courtLocation}
-                      onChange={handleChange}
-                      onKeyDown={(e) => handleKeyDown(e, 17)}
-                      style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', textAlign: 'center', fontFamily: "'Times New Roman', Times, serif", fontSize: '13px', fontWeight: 'bold' }}
-                    />
-                  </div>
-                  <h2 style={{ fontSize: '16px', fontWeight: 'bold', letterSpacing: '3px', marginTop: '10px' }}>
-                    (Seller Affidavit)
-                  </h2>
+                {/* Text taken as-is from form.docx (second affidavit) */}
+                <div style={{ textAlign: 'center', marginBottom: '22px', fontFamily: "Georgia, 'Palatino Linotype', 'Book Antiqua', serif", color: '#000' }}>
+                  <p style={{ fontSize: '17px', fontWeight: 'bold', letterSpacing: '1px' }}>In,</p>
+                  <p style={{ fontSize: '21px', fontWeight: 'bold', letterSpacing: '0.5px', marginTop: '2px' }}>The Court of Executive Magistrate / Notary Public</p>
+                  <div style={{ width: '300px', margin: '6px auto 0' }}>{p1In(2000, 'courtLocation', { textAlign: 'center' })}</div>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', letterSpacing: '5px', marginTop: '12px', textDecoration: 'underline', textUnderlineOffset: '4px' }}>AFFIDAVIT</p>
                 </div>
 
-                <div style={{ textAlign: 'justify', lineHeight: '1.8', marginBottom: '14px' }}>
-                  <div style={{ display: 'flex', alignItems: 'baseline' }}>
-                    <span style={{ fontWeight: 'bold' }}>I</span>
-                    <div style={{ flex: 1, borderBottom: '1.5px dotted #000', margin: '0 6px', minHeight: '18px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[18] = el)}
-                        type="text"
-                        name="sellerName"
-                        value={formData.sellerName}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 18)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', padding: '0 2px' }}
-                      />
-                    </div>
-                  </div>
+                <div style={p1Row}><span>I</span>{p1In(2001, 'sellerName')}<span>S/o</span>{p1In(2002, 'sellerFather')}</div>
+                <div style={p1Row}><span>resident of</span>{p1In(2003, 'sellerResidence')}<span>P.O.</span>{p1In(2004, 'sellerPO', { flex: 'none', width: '150px' })}</div>
+                <div style={p1Row}><span>P. S.</span>{p1In(2005, 'sellerPS')}<span>District</span>{p1In(2006, 'sellerDistrict')}</div>
 
-                  <div style={{ display: 'flex', alignItems: 'baseline', marginTop: '4px' }}>
-                    <span>S/o, D/o, W/o</span>
-                    <div style={{ flex: 1, borderBottom: '1.5px dotted #000', marginLeft: '6px', minHeight: '18px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[19] = el)}
-                        type="text"
-                        name="sellerFather"
-                        value={formData.sellerFather}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 19)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', padding: '0 2px' }}
-                      />
-                    </div>
-                  </div>
+                <p style={{ marginTop: '16px' }}>do hereby solemnly affirm and declare as follow :-</p>
 
-                  <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-                    <span>Residence of</span>
-                    <div style={{ flex: 1, minWidth: '160px', borderBottom: '1.5px dotted #000', minHeight: '18px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[20] = el)}
-                        type="text"
-                        name="sellerResidence"
-                        value={formData.sellerResidence}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 20)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', padding: '0 2px' }}
-                      />
-                    </div>
-                    <span>P.O.</span>
-                    <div style={{ width: '120px', borderBottom: '1.5px dotted #000', minHeight: '18px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[21] = el)}
-                        type="text"
-                        name="sellerPO"
-                        value={formData.sellerPO}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 21)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', padding: '0 2px' }}
-                      />
-                    </div>
-                  </div>
+                <div style={p1Row}><span>1. That I have sold my vehicle</span>{p1In(2007, 'vehicleMake')}</div>
+                <div style={p1Row}><span>Bearing registration No.</span>{p1In(2008, 'vehicleNumber')}</div>
+                <div style={p1Row}><span>Engine No.</span>{p1In(2009, 'engineNumber')}<span>Chassis No.</span>{p1In(2010, 'chassisNumber')}</div>
+                <div style={p1Row}><span>to Sri</span>{p1In(2011, 'buyerName')}</div>
+                <div style={p1Row}><span>S/o</span>{p1In(2012, 'buyerFather')}</div>
+                <div style={p1Row}><span>Resident of</span>{p1In(2013, 'buyerResidence')}<span>P.O.</span>{p1In(2014, 'buyerPO', { flex: 'none', width: '150px' })}</div>
+                <div style={p1Row}><span>P.S.</span>{p1In(2015, 'buyerPS')}<span>District</span>{p1In(2016, 'buyerDistrict')}</div>
 
-                  <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '6px', marginTop: '4px' }}>
-                    <span>P.S.</span>
-                    <div style={{ width: '150px', borderBottom: '1.5px dotted #000', minHeight: '18px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[22] = el)}
-                        type="text"
-                        name="sellerPS"
-                        value={formData.sellerPS}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 22)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', padding: '0 2px' }}
-                      />
-                    </div>
-                    <span>Dist</span>
-                    <div style={{ flex: 1, minWidth: '140px', borderBottom: '1.5px dotted #000', minHeight: '18px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[23] = el)}
-                        type="text"
-                        name="sellerDistrict"
-                        value={formData.sellerDistrict}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 23)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', padding: '0 2px' }}
-                      />
-                    </div>
-                  </div>
+                <p style={{ marginTop: '16px' }}>2.That neither any case not Govt. dues stands against this vehicle up to the date of affidavit and it is I am fully responsible for the same.</p>
+                <p style={{ marginTop: '12px' }}>3.That the ownership of the aforesaid vehicle may be transfered in the name of the purchager for which I have got no objection hence this affidavit.</p>
+                <p style={{ marginTop: '12px' }}>That the contents of this affidavit are true and correct to the best of my knowledge and belief.</p>
 
-                  <p style={{ marginTop: '8px' }}>
-                    Do hereby solemnly affirm and declare on oath as under: -
-                  </p>
-                </div>
-
-                <div style={{ textAlign: 'justify', lineHeight: '1.7', marginBottom: '16px' }}>
-                  <div style={{ marginBottom: '10px' }}>
-                    <p>
-                      <strong>1.</strong> That I am the registered owner of vehicle make{' '}
-                      <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '140px' }}>
-                        <input
-                          ref={(el) => (inputRefs.current[24] = el)}
-                          type="text"
-                          name="vehicleMake"
-                          value={formData.vehicleMake}
-                          onChange={handleChange}
-                          onKeyDown={(e) => handleKeyDown(e, 24)}
-                          style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', textAlign: 'center', padding: '0 2px' }}
-                        />
-                      </span>{' '}
-                      Bearing its Reg. No.{' '}
-                      <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '140px' }}>
-                        <input
-                          ref={(el) => (inputRefs.current[25] = el)}
-                          type="text"
-                          name="vehicleNumber"
-                          value={formData.vehicleNumber}
-                          onChange={handleChange}
-                          onKeyDown={(e) => handleKeyDown(e, 25)}
-                          style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', textAlign: 'center', padding: '0 2px' }}
-                        />
-                      </span>{' '}
-                      Engine No.{' '}
-                      <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '160px' }}>
-                        <input
-                          ref={(el) => (inputRefs.current[26] = el)}
-                          type="text"
-                          name="engineNumber"
-                          value={formData.engineNumber}
-                          onChange={handleChange}
-                          onKeyDown={(e) => handleKeyDown(e, 26)}
-                          style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', textAlign: 'center', padding: '0 2px' }}
-                        />
-                      </span>{' '}
-                      Chassis No.{' '}
-                      <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '180px' }}>
-                        <input
-                          ref={(el) => (inputRefs.current[27] = el)}
-                          type="text"
-                          name="chassisNumber"
-                          value={formData.chassisNumber}
-                          onChange={handleChange}
-                          onKeyDown={(e) => handleKeyDown(e, 27)}
-                          style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', textAlign: 'center', padding: '0 2px' }}
-                        />
-                      </span>.
-                    </p>
-                  </div>
-
-                  <p style={{ marginBottom: '8px' }}>
-                    <strong>2.</strong> That I have sold the above-mentioned vehicle to Shri/Smt.{' '}
-                    <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '180px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[28] = el)}
-                        type="text"
-                        name="buyerName"
-                        value={formData.buyerName}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 28)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', textAlign: 'center', padding: '0 2px' }}
-                      />
-                    </span>{' '}
-                    S/o, W/o, D/o Shri{' '}
-                    <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '160px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[29] = el)}
-                        type="text"
-                        name="buyerFather"
-                        value={formData.buyerFather}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 29)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', textAlign: 'center', padding: '0 2px' }}
-                      />
-                    </span>{' '}
-                    R/o{' '}
-                    <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '180px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[30] = el)}
-                        type="text"
-                        name="buyerResidence"
-                        value={formData.buyerResidence}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 30)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', padding: '0 2px' }}
-                      />
-                    </span>{' '}
-                    P.O.{' '}
-                    <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '100px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[31] = el)}
-                        type="text"
-                        name="buyerPO"
-                        value={formData.buyerPO}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 31)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', padding: '0 2px' }}
-                      />
-                    </span>{' '}
-                    P.S.{' '}
-                    <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '110px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[32] = el)}
-                        type="text"
-                        name="buyerPS"
-                        value={formData.buyerPS}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 32)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', padding: '0 2px' }}
-                      />
-                    </span>{' '}
-                    Dist.{' '}
-                    <span style={{ display: 'inline-block', borderBottom: '1.5px dotted #000', minWidth: '130px' }}>
-                      <input
-                        ref={(el) => (inputRefs.current[33] = el)}
-                        type="text"
-                        name="buyerDistrict"
-                        value={formData.buyerDistrict}
-                        onChange={handleChange}
-                        onKeyDown={(e) => handleKeyDown(e, 33)}
-                        style={{ border: 'none', background: 'transparent', outline: 'none', width: '100%', fontFamily: "'Times New Roman', Times, serif", fontSize: '14px', fontWeight: 'bold', padding: '0 2px' }}
-                      />
-                    </span>{' '}
-                    and have handed over physical delivery along with all relevant documents to the purchaser.
-                  </p>
-
-                  <p style={{ marginBottom: '8px' }}>
-                    <strong>3.</strong> That I have received full and final sale consideration amount from the purchaser and now have no claim, lien or title on the said vehicle.
-                  </p>
-
-                  <p style={{ marginBottom: '8px' }}>
-                    <strong>4.</strong> That all taxes, challans and liabilities up to the date of sale have been cleared by me.
-                  </p>
-
-                  <p style={{ marginBottom: '8px' }}>
-                    <strong>5.</strong> That the vehicle is free from all encumbrances, hire purchase, hypothecation or court attachment.
-                  </p>
-                </div>
-
-                <div style={{ marginTop: '16px', lineHeight: '1.7', textAlign: 'justify' }}>
-                  <p style={{ fontWeight: 'bold' }}>Verification:</p>
-                  <p>
-                    Verified at <strong>{formData.courtLocation || '.....................'}</strong> on this <strong>{formData.date}</strong> that the contents of above affidavit are true and correct to the best of my knowledge and belief and nothing material has been concealed therein.
-                  </p>
-                </div>
-
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: '30px' }}>
-                  <div>
-                    <p>Date: <strong>{formData.date}</strong></p>
-                    <p>Place: <strong>{formData.courtLocation}</strong></p>
-                  </div>
-                  <div style={{ textAlign: 'center' }}>
-                    <p style={{ minHeight: '35px', borderBottom: '1px solid #000', minWidth: '180px' }}></p>
-                    <p style={{ fontWeight: 'bold', marginTop: '4px' }}>Deponent / Seller</p>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '70px' }}>
+                  <div style={{ textAlign: 'center', minWidth: '200px' }}>
+                    <p style={{ borderTop: '1px solid #000', paddingTop: '4px', fontWeight: 'bold' }}>DEPONENT</p>
                   </div>
                 </div>
               </div>
