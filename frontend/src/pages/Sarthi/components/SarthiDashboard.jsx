@@ -64,7 +64,7 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
   }
 
   return (
-    <div className='flex-1 flex flex-col p-1 sm:p-3 overflow-auto'>
+    <div className='flex-1 flex flex-col p-2 sm:p-3 overflow-auto'>
       <div className='flex flex-col gap-3 flex-1 min-h-0'>
         <section className='min-w-0 flex flex-col flex-1'>
           <div className='mb-3 grid grid-cols-1 items-center gap-3 text-center md:grid-cols-[auto_1fr]'>
@@ -75,7 +75,7 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
                 <button
                   key={btn.key}
                   onClick={() => setFilter(btn.key)}
-                  className={`rounded-md px-2 py-0.5 text-[10px] font-semibold transition lg:text-[10px] xl:px-2.5 xl:py-1 xl:text-[11px] 2xl:text-xs ${
+                  className={`rounded-md px-2.5 py-1 text-[11px] font-semibold transition sm:px-2 sm:py-0.5 sm:text-[10px] lg:text-[10px] xl:px-2.5 xl:py-1 xl:text-[11px] 2xl:text-xs ${
                     filter === btn.key
                       ? 'bg-blue-600 text-white'
                       : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
@@ -101,7 +101,41 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
               <p className='font-medium text-gray-500'>No recently added records</p>
             </div>
           ) : (
-            <div className='mt-2 sm:mt-4 flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white'>
+            <>
+            {/* Mobile: card list */}
+            <div className='mt-2 space-y-2 sm:hidden'>
+              {filteredRecords.map((record, index) => (
+                <div key={record._id || index} className='rounded-xl border border-gray-200 bg-white p-3 shadow-sm'>
+                  <div className='flex items-center justify-between gap-2'>
+                    <span className='text-xs font-semibold text-gray-500'>{record.date || '-'}</span>
+                    <span className={`rounded px-2 py-0.5 text-xs font-semibold ${getTypeBadge(record.type)}`}>{record.type}</span>
+                  </div>
+                  <div className='mt-1.5 min-w-0'>
+                    <div className='truncate text-sm font-semibold text-gray-800'>{record.customerName || '-'}</div>
+                    {record.vehicleNumber && (
+                      <div className='font-mono text-xs font-bold text-blue-900'>{record.vehicleNumber}</div>
+                    )}
+                  </div>
+                  <div className='mt-2 grid grid-cols-3 gap-2 border-t border-gray-100 pt-2 text-center'>
+                    <div>
+                      <div className='text-[10px] font-semibold uppercase text-gray-400'>Total</div>
+                      <div className='text-xs font-bold text-gray-800'>₹{(record.totalFee || 0).toLocaleString('en-IN')}</div>
+                    </div>
+                    <div>
+                      <div className='text-[10px] font-semibold uppercase text-gray-400'>Paid</div>
+                      <div className='text-xs font-bold text-emerald-600'>₹{(record.paid || 0).toLocaleString('en-IN')}</div>
+                    </div>
+                    <div>
+                      <div className='text-[10px] font-semibold uppercase text-gray-400'>Balance</div>
+                      <div className={`text-xs font-bold ${(record.balance || 0) > 0 ? 'text-orange-600' : 'text-gray-500'}`}>₹{(record.balance || 0).toLocaleString('en-IN')}</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Tablet / desktop: table */}
+            <div className='mt-2 sm:mt-4 flex-1 min-h-0 overflow-hidden rounded-lg border border-gray-200 bg-white hidden sm:block'>
               <div className='h-full overflow-auto'>
                 <table className='w-full table-fixed h-full'>
                   <thead className='border-b border-gray-200 bg-gray-50'>
@@ -148,6 +182,7 @@ const SarthiDashboard = ({ refreshKey = 0 }) => {
                 </table>
               </div>
             </div>
+            </>
           )}
         </section>
       </div>

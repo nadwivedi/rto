@@ -83,28 +83,6 @@ const Sarthi = () => {
 
   return (
     <>
-      {/* Mobile Reports button - only visible on mobile */}
-      <div className='lg:hidden fixed top-4 right-4 z-[55]'>
-        <button
-          onClick={() => setIsReportModalOpen(true)}
-          className='flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors font-bold text-xs'
-        >
-          <FileText size={16} />
-          Reports
-        </button>
-      </div>
-
-      {/* Mobile Menu button - only visible on mobile */}
-      <div className='lg:hidden fixed top-4 left-4 z-[55]'>
-        <button
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          className='p-2 rounded-lg bg-white shadow-md hover:bg-slate-100 transition-colors text-slate-600'
-          aria-label="Menu"
-        >
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
-      </div>
-
       {/* Report Modal */}
       {isReportModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fadeIn">
@@ -198,7 +176,7 @@ const Sarthi = () => {
         </div>
       </aside>
 
-      <div className='min-h-screen bg-slate-100 px-0.5 pb-8 pt-4 sm:px-4 lg:px-6 lg:pt-5'>
+      <div className='min-h-screen bg-slate-100 px-2 pb-8 pt-2 sm:px-4 sm:pt-4 lg:px-6 lg:pt-5'>
         <div className='flex w-full flex-col gap-6 lg:flex-row lg:max-h-[calc(100vh-5rem)]'>
           <aside className='hidden lg:block lg:w-72 lg:shrink-0 lg:self-start lg:sticky lg:top-4'>
             <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4'>
@@ -248,6 +226,24 @@ const Sarthi = () => {
                   </svg>
                 </button>
                 <span className="ml-3 text-sm font-semibold text-gray-500">Dashboard</span>
+
+                {/* Mobile-only actions live inside the header so they never sit on top of the back button */}
+                <div className='ml-auto flex items-center gap-2 lg:hidden'>
+                  <button
+                    onClick={() => setIsReportModalOpen(true)}
+                    className='flex items-center gap-1.5 px-3 h-10 bg-blue-600 text-white rounded-xl shadow-sm hover:bg-blue-700 transition-colors font-bold text-xs'
+                  >
+                    <FileText size={16} />
+                    Reports
+                  </button>
+                  <button
+                    onClick={() => setIsMobileMenuOpen(true)}
+                    className='flex items-center justify-center w-10 h-10 rounded-xl bg-white border border-gray-200 shadow-sm hover:bg-slate-100 transition-colors text-slate-600'
+                    aria-label='Menu'
+                  >
+                    <Menu size={22} />
+                  </button>
+                </div>
               </div>
               <SarthiDashboard refreshKey={dashboardRefreshKey} />
             </div>
