@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import Button from '../components/Button'
 import SectionHeading from '../components/SectionHeading'
 import FeatureCard from '../components/FeatureCard'
@@ -107,7 +108,11 @@ export default function Home() {
             </p>
             <p className="mx-auto mb-5 max-w-sm text-xs leading-relaxed text-white/75 sm:max-w-md sm:text-sm lg:mx-0">
               One dashboard for documents, renewals, client balances, and WhatsApp alerts — built for
-              Indian RTO agents.
+              Indian RTO agents. Explore our{' '}
+              <Link to="/rto-management-software" className="font-semibold text-accent-300 underline underline-offset-2 hover:text-white">
+                RTO management software
+              </Link>
+              .
             </p>
             <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:justify-center lg:justify-start">
               <Button href="/contact" variant="primary" size="lg" className="w-full sm:w-auto">

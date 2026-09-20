@@ -427,11 +427,11 @@ const NewFormModal = ({ onClose }) => {
                 }}
               >
                 {/* Text taken as-is from form.docx page 1 */}
-                <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-                  <p style={{ fontWeight: 'bold' }}>Before,</p>
-                  <p style={{ fontWeight: 'bold' }}>Executive magistrate/Notary Public</p>
-                  <div style={{ width: '260px', margin: '4px auto 0' }}>{p1In(1000, 'courtLocation', { textAlign: 'center' })}</div>
-                  <p style={{ fontWeight: 'bold', marginTop: '8px' }}>(Affidavit)</p>
+                <div style={{ textAlign: 'center', marginBottom: '22px', fontFamily: "Georgia, 'Palatino Linotype', 'Book Antiqua', serif", color: '#000' }}>
+                  <p style={{ fontSize: '17px', fontWeight: 'bold', letterSpacing: '1px' }}>Before,</p>
+                  <p style={{ fontSize: '21px', fontWeight: 'bold', letterSpacing: '0.5px', marginTop: '2px' }}>Executive Magistrate / Notary Public</p>
+                  <div style={{ width: '300px', margin: '6px auto 0' }}>{p1In(1000, 'courtLocation', { textAlign: 'center' })}</div>
+                  <p style={{ fontSize: '24px', fontWeight: 'bold', letterSpacing: '5px', marginTop: '12px', textDecoration: 'underline', textUnderlineOffset: '4px' }}>(AFFIDAVIT)</p>
                 </div>
 
                 <div style={p1Row}><span>I</span>{p1In(1001, 'buyerName')}</div>

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { rtoManagementFaqs, RTO_MANAGEMENT_PATH, VIDEO_ID } from '../data/rtoManagement'
 import {
   SITE_URL,
   SITE_NAME,
@@ -82,6 +83,44 @@ function getSoftwareJsonLd(name, description, url) {
   }
 }
 
+function getFaqJsonLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: rtoManagementFaqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  }
+}
+
+function getVideoJsonLd(url) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'VideoObject',
+    name: 'RTO management software demo — RTO Sarthi',
+    description:
+      'Demo of RTO Sarthi RTO management software: vehicle management, WhatsApp expiry alerts and renewal tracking from one dashboard.',
+    thumbnailUrl: [`https://i.ytimg.com/vi/${VIDEO_ID}/hqdefault.jpg`],
+    uploadDate: '2026-05-22',
+    embedUrl: `https://www.youtube.com/embed/${VIDEO_ID}`,
+    contentUrl: `https://www.youtube.com/watch?v=${VIDEO_ID}`,
+    url,
+  }
+}
+
+function getBreadcrumbJsonLd(url) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
+      { '@type': 'ListItem', position: 2, name: 'RTO Management Software', item: url },
+    ],
+  }
+}
+
 export default function Seo() {
   const { pathname } = useLocation()
   const seo = getPageSeo(pathname)
@@ -113,8 +152,20 @@ export default function Seo() {
 
     if (pathname === '/puc-agent-software') {
       upsertJsonLd('software', getSoftwareJsonLd('RTO Sarthi - PUC Agent Software', seo.description, url))
+    } else if (pathname === RTO_MANAGEMENT_PATH) {
+      upsertJsonLd('software', getSoftwareJsonLd('RTO Sarthi - RTO Management Software', seo.description, url))
     } else {
       removeJsonLd('software')
+    }
+
+    if (pathname === RTO_MANAGEMENT_PATH) {
+      upsertJsonLd('faq', getFaqJsonLd())
+      upsertJsonLd('video', getVideoJsonLd(url))
+      upsertJsonLd('breadcrumb', getBreadcrumbJsonLd(url))
+    } else {
+      removeJsonLd('faq')
+      removeJsonLd('video')
+      removeJsonLd('breadcrumb')
     }
   }, [seo.title, seo.description, url, pathname])
 

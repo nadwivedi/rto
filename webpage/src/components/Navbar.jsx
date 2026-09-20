@@ -8,6 +8,7 @@ import { cn, container, navHeight } from '../lib/styles'
 const links = [
   { to: '/', label: 'Home' },
   { to: '/features', label: 'Features' },
+  { to: '/rto-management-software', label: 'RTO Software' },
   { to: '/about', label: 'About' },
   { to: '/blog', label: 'Blog' },
   { to: '/contact', label: 'Contact' },
