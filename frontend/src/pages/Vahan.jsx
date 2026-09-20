@@ -38,7 +38,6 @@ const vahanOptions = [
 const quickButtons = [
   { title: 'Party', shortLabel: 'Party', tone: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100', path: '/party' },
   { title: 'Manage Vehicle', shortLabel: 'Vehicle', tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' },
-  { title: 'RC Lookup', shortLabel: 'RC Lookup', tone: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100', path: '/vehicle-details' },
   { title: 'Add NP', shortLabel: 'NP', tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100', path: '/national-permit' },
   { title: 'Add State Permit', shortLabel: 'State Permit', tone: 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100', path: '/state-permit' },
   { title: 'Add Bus Permit', shortLabel: 'Bus Permit', tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100', path: '/bus-permit' },
@@ -191,7 +190,6 @@ const Vahan = () => {
 
   const filteredQuickButtons = useMemo(() =>
     quickButtons.filter(b => {
-      if (b.title === 'RC Lookup') return enabledFeatures.rcDetails === true
       if (b.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (b.title === 'Professional Tax') return enabledFeatures.professionalTax === true
       if (b.title === 'Money Received') return enabledFeatures.moneyReceived === true
