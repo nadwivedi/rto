@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import AddButton from "../../components/AddButton";
@@ -22,6 +23,7 @@ import { getVehicleNumberParts } from "../../utils/vehicleNoCheck";
 const Puc = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const theme = getTheme();
   const vehicleDesign = getVehicleNumberDesign();
   const [pucRecords, setPucRecords] = useState([]);
@@ -583,6 +585,32 @@ const Puc = () => {
     window.location.href = whatsappURL;
   };
 
+  // Open the phone's SMS app with a preloaded expiry message (user just taps Send)
+  const handleSmsClick = (record) => {
+    if (!record.mobileNumber || record.mobileNumber === 'N/A') {
+      toast.error('Mobile number not available for this record', { position: 'top-right', autoClose: 3000 });
+      return;
+    }
+
+    const phoneNumber = record.mobileNumber.replace(/\D/g, '').slice(-10);
+    const statusText = record.status === 'expired' ? 'has expired' : 'will expire';
+    // Office name and address, same as the WhatsApp alert footer
+    const officeName = user?.billName || user?.name || 'RTO Services';
+    const officeAddress = user?.address?.trim() || '';
+    const smsFooter = `\n\n- ${officeName}${officeAddress ? `\n${officeAddress}` : ''}`;
+
+    const message = `Dear Customer, your vehicle ${record.vehicleNumber} PUC certificate ${statusText} on ${record.validTo}. Please renew it at the earliest.${smsFooter}`;
+
+    // iOS uses "&body=", Android uses "?body="
+    const separator = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?';
+    window.location.href = `sms:${phoneNumber}${separator}body=${encodeURIComponent(message)}`;
+  };
+
+  // SMS icon only for expiring soon / expired records
+  const shouldShowSmsButton = (record) => {
+    return record.status === 'expiring_soon' || record.status === 'expired';
+  };
+
   // Determine if WhatsApp button should be shown (expiring only)
   const shouldShowWhatsAppButton = (record) => {
     return (record.status === 'expiring_soon' || record.status === 'expired');
@@ -830,6 +858,19 @@ const Puc = () => {
                 },
               }}
               actions={[
+                {
+                  title: 'SMS Reminder',
+                  condition: shouldShowSmsButton,
+                  onClick: handleSmsClick,
+                  bgColor: 'bg-sky-50',
+                  textColor: 'text-sky-600',
+                  hoverBgColor: 'bg-sky-100',
+                  icon: (
+                    <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 10h.01M12 10h.01M16 10h.01M21 12c0 4.418-4.03 8-9 8a9.86 9.86 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' />
+                    </svg>
+                  ),
+                },
                 {
                   title: 'WhatsApp Reminder',
                   condition: shouldShowWhatsAppButton,

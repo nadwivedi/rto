@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
+import { useAuth } from "../../context/AuthContext";
 import { toast } from "react-toastify";
 import * as XLSX from "xlsx";
 import Pagination from "../../components/Pagination";
@@ -20,6 +21,7 @@ import { getVehicleNumberParts } from "../../utils/vehicleNoCheck";
 const Insurance = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const theme = getTheme();
   const vehicleDesign = getVehicleNumberDesign();
   const [insurances, setInsurances] = useState([]);
@@ -511,7 +513,12 @@ const Insurance = () => {
     const expiryDate = isThirdParty ? insurance.thirdPartyValidTo : insurance.validTo;
     const statusText = effectiveStatus === 'expired' ? 'has expired' : 'will expire';
 
-    const message = `Dear Customer, your vehicle ${insurance.vehicleNumber} ${expiryField} ${statusText} on ${expiryDate}. Please renew it at the earliest.`;
+    // Office name and address, same as the WhatsApp alert footer
+    const officeName = user?.billName || user?.name || 'RTO Services';
+    const officeAddress = user?.address?.trim() || '';
+    const smsFooter = `\n\n- ${officeName}${officeAddress ? `\n${officeAddress}` : ''}`;
+
+    const message = `Dear Customer, your vehicle ${insurance.vehicleNumber} ${expiryField} ${statusText} on ${expiryDate}. Please renew it at the earliest.${smsFooter}`;
 
     // iOS uses "&body=", Android uses "?body="
     const separator = /iPhone|iPad|iPod/i.test(navigator.userAgent) ? '&' : '?';
