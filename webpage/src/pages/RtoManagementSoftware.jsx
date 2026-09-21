@@ -13,6 +13,7 @@ import {
   IconUsers,
   IconShield,
   IconCheck,
+  IconCar,
 } from '../components/Icons'
 import { rtoManagementFaqs } from '../data/rtoManagement'
 import {
@@ -66,6 +67,20 @@ const features = [
       'Move from registers and spreadsheets in an afternoon. Bulk upload vehicles, PUC and insurance records from Excel.',
   },
   {
+    icon: <IconUsers />,
+    variant: 'brand',
+    title: 'Driving Licence Record Management',
+    description:
+      'Keep every client’s driving licence record in one place: learner licence, permanent DL, renewal and endorsement work, with expiry dates and status you can search in seconds.',
+  },
+  {
+    icon: <IconCar />,
+    variant: 'accent',
+    title: 'Vehicle Transfer Record Management',
+    description:
+      'Track every vehicle ownership transfer from application to completion. Store buyer and seller details, transfer documents, fees and status so no file is lost or delayed.',
+  },
+  {
     icon: <IconChart />,
     variant: 'brand',
     title: 'Dashboard & Reports',
@@ -88,6 +103,7 @@ const problems = [
   { problem: 'Missed tax, PUC and insurance renewals', fix: 'Expiry tracking with WhatsApp alerts' },
   { problem: 'Calling every client for reminders', fix: 'Automatic WhatsApp reminders' },
   { problem: 'Unclear client dues', fix: 'Pending balance tracking per client' },
+  { problem: 'Driving licence and transfer files scattered in folders', fix: 'Driving licence and vehicle transfer records in one place' },
   { problem: 'Slow manual data entry', fix: 'AI document entry and bulk Excel upload' },
 ]
 
@@ -106,8 +122,9 @@ export default function RtoManagementSoftware() {
           </h1>
           <p className="mx-auto max-w-xl text-xs text-white/85 sm:text-[0.8125rem] lg:text-sm">
             RTO Sarthi is RTO management software built for Indian RTO agents, dealers and PUC
-            centers. Track tax, fitness, permit, PUC and insurance expiry, send WhatsApp alerts and
-            control client balances from one dashboard.
+            centers. Manage vehicle, driving licence and vehicle transfer records, track tax,
+            fitness, permit, PUC and insurance expiry, send WhatsApp alerts and control client
+            balances from one dashboard.
           </p>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
             <Button href="/contact" variant="primary" size="lg">
@@ -118,7 +135,7 @@ export default function RtoManagementSoftware() {
             </Button>
           </div>
           <div className="mt-4 flex flex-wrap justify-center gap-2">
-            {['Expiry Tracking', 'WhatsApp Alerts', 'AI Document Entry', 'Client Balance'].map((tag) => (
+            {['Expiry Tracking', 'Driving Licence Records', 'Vehicle Transfer Records', 'WhatsApp Alerts', 'AI Document Entry', 'Client Balance'].map((tag) => (
               <span
                 key={tag}
                 className="rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[0.625rem] font-medium sm:text-[0.6875rem]"
@@ -148,6 +165,14 @@ export default function RtoManagementSoftware() {
               vehicle, document, expiry date and client payment in one searchable system, and warns
               you and your clients before a deadline is missed. RTO Sarthi does this with WhatsApp
               alerts, AI document entry and a simple dashboard, made for Indian RTO workflows.
+            </p>
+            <p className={bodyMuted}>
+              An <strong className="text-slate-700">RTO agent</strong> also handles{' '}
+              <strong className="text-slate-700">driving licence</strong> and{' '}
+              <strong className="text-slate-700">vehicle transfer</strong> work every day. With RTO
+              Sarthi you can manage driving licence records (learner, permanent and renewal) and
+              vehicle transfer records (ownership change, documents, fees and status) next to your
+              vehicle data, so every client file is complete and easy to find.
             </p>
           </div>
         </div>

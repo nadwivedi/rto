@@ -20,6 +20,14 @@ export const rtoManagementFaqs = [
     a: 'Yes. Small agents benefit the most because one person often handles hundreds of vehicles. Expiry tracking, client balances and reminders remove the daily manual follow-up and reduce missed renewals and penalties.',
   },
   {
+    q: 'Can an RTO agent manage driving licence records in RTO management software?',
+    a: 'Yes. RTO Sarthi lets an RTO agent store and search driving licence records for every client, including learner licence, permanent driving licence, renewal and endorsement work, with expiry dates and status visible on the dashboard.',
+  },
+  {
+    q: 'Can I manage vehicle transfer records with RTO management software?',
+    a: 'Yes. You can record every vehicle ownership transfer in RTO Sarthi: buyer and seller details, documents, fees and current status. This keeps transfer files organised and lets you follow up on pending work quickly.',
+  },
+  {
     q: 'Can I manage PUC and insurance along with RTO work?',
     a: 'Yes. RTO Sarthi manages RTO registrations and renewals, PUC certificates and insurance policies from a single dashboard, including bulk Excel upload for PUC and insurance data.',
   },

@@ -73,11 +73,11 @@ export const PAGE_SEO = {
     keywords: 'PUC agent software India, PUC center software, PUC certificate management software, PUC expiry reminder software, PUC agent management software, best PUC software India, PUC center management system, RTO Sarthi PUC software',
   },
   '/rto-management-software': {
-    title: `RTO Management Software in India - Best RTO Software for Agents | RTO Sarthi`,
+    title: `RTO Management Software India - Vehicle, DL & Transfer | RTO Sarthi`,
     description:
-      'RTO management software for Indian RTO agents, dealers and PUC centers. Track tax, fitness, permit, PUC & insurance expiry, send WhatsApp alerts, manage client balances and vehicle documents from one dashboard. Watch the demo and start a free trial.',
+      'RTO management software for agents: manage vehicle, driving licence and vehicle transfer records, track tax, fitness, PUC & insurance expiry, and send WhatsApp alerts. Free trial.',
     path: '/rto-management-software',
-    keywords: 'RTO management software, RTO management software India, RTO management system, best RTO management software, RTO software, RTO agent software, vehicle registration management software, RTO consultant software, vehicle expiry reminder software, RTO Sarthi',
+    keywords: 'RTO management software, RTO management software India, RTO agent driving licence record software, driving licence management software, vehicle transfer management software, RTO agent software, RTO management system, best RTO management software, RTO software, RTO agent software, vehicle registration management software, RTO consultant software, vehicle expiry reminder software, RTO Sarthi',
   },
   '/sitemap': {
     title: `Sitemap | RTO Sarthi - ${TAGLINE}`,
