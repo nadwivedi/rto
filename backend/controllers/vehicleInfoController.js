@@ -447,7 +447,54 @@ const getQuotaStatus = async (req, res) => {
   }
 }
 
+const { generateRcCardPDF } = require('../utils/rcCardGenerator')
+
+// POST /api/vehicle-info/rc-pdf  { data: <vehicle details> } -> RC card style PDF (no API credit used)
+const downloadRcPdf = async (req, res) => {
+  try {
+    const data = req.body && req.body.data
+    if (!data || typeof data !== 'object' || !data.REGN_NO) {
+      return res.status(400).json({ success: false, message: 'Vehicle data is required' })
+    }
+    const pdf = await generateRcCardPDF(data)
+    const fname = `RC-${String(data.REGN_NO).replace(/[^A-Za-z0-9]/g, '')}.pdf`
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename="${fname}"`)
+    return res.send(pdf)
+  } catch (error) {
+    console.error('Error generating RC PDF:', error)
+    return res.status(500).json({ success: false, message: 'Failed to generate RC PDF' })
+  }
+}
+
+// GET /api/vehicle-info/history/:id/rc-pdf -> RC card PDF from saved record (NO API call)
+const downloadHistoryRcPdf = async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' })
+    }
+    const record = await VehicleSearchHistory.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    }).lean()
+    if (!record || !record.rawResponse) {
+      return res.status(404).json({ success: false, message: 'Search history record not found' })
+    }
+    const data = { REGN_NO: record.vehicleNumber, ...record.rawResponse }
+    const pdf = await generateRcCardPDF(data)
+    const fname = `RC-${String(data.REGN_NO).replace(/[^A-Za-z0-9]/g, '')}.pdf`
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename="${fname}"`)
+    return res.send(pdf)
+  } catch (error) {
+    console.error('Error generating history RC PDF:', error)
+    return res.status(500).json({ success: false, message: 'Failed to generate RC PDF' })
+  }
+}
+
 module.exports = {
+  downloadRcPdf,
+  downloadHistoryRcPdf,
   lookupVehicle,
   getSavedVehicleByVno,
   getSearchHistory,

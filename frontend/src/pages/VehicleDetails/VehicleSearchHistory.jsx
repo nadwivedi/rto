@@ -10,6 +10,7 @@ import {
   History,
   Trash2,
   Eye,
+  Download,
   RefreshCw,
   Calendar,
   User,
@@ -39,6 +40,31 @@ const VehicleSearchHistory = () => {
   const [limit, setLimit] = useState(20)
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 20 })
   const [deletingId, setDeletingId] = useState(null)
+  const [pdfId, setPdfId] = useState(null)
+
+  const handleDownloadPdf = async (item) => {
+    try {
+      setPdfId(item._id)
+      const res = await axios.get(`${API_URL}/api/vehicle-info/history/${item._id}/rc-pdf`, {
+        withCredentials: true,
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `RC-${String(item.vehicleNumber || 'vehicle').replace(/[^A-Za-z0-9]/g, '')}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('RC PDF error:', err)
+      toast.error('Failed to generate RC PDF')
+    } finally {
+      setPdfId(null)
+    }
+  }
+  const [quota, setQuota] = useState({ rcSearchLimit: 0, rcSearchCount: 0, rcSearchRemaining: 0 })
 
   const fetchHistory = async (page = currentPage, search = searchTerm, pageLimit = limit, type = searchType) => {
     try {
@@ -58,6 +84,7 @@ const VehicleSearchHistory = () => {
             limit: pageLimit
           }
         )
+        if (response.data.quota) setQuota(response.data.quota)
       }
     } catch (error) {
       console.error('Error fetching search history:', error)
@@ -481,6 +508,18 @@ const VehicleSearchHistory = () => {
                               >
                                 <Eye className="w-3.5 h-3.5" />
                                 View
+                              </button>
+                              <button
+                                onClick={() => handleDownloadPdf(item)}
+                                disabled={pdfId === item._id}
+                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer disabled:opacity-50"
+                                title="Download RC PDF"
+                              >
+                                {pdfId === item._id ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Download className="w-3.5 h-3.5" />
+                                )}
                               </button>
                               <button
                                 onClick={() => handleDeleteItem(item._id, item.vehicleNumber)}

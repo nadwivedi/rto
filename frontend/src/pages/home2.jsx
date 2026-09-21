@@ -25,9 +25,8 @@ const kycServices = [
   { name: 'Registry', icon: '📝', desc: 'Search Database' }
 ]
 
-const ServiceCard = ({ service, color, onClick }) => (
-  <button
-    onClick={onClick}
+const ServiceCard = ({ service, color }) => (
+  <div
     className={`group relative overflow-hidden rounded-xl border-2 border-transparent ${color.bg} p-2 text-left transition-all duration-300 hover:border-current hover:shadow-lg hover:scale-[1.02]`}
   >
     <div className='relative flex flex-col items-center gap-1 sm:gap-1.5'>
@@ -39,7 +38,7 @@ const ServiceCard = ({ service, color, onClick }) => (
         <p className={`text-[10px] sm:text-xs ${color.subtext} truncate leading-tight`}>{service.desc}</p>
       </div>
     </div>
-  </button>
+  </div>
 )
 
 const HeaderSection = ({ title, subtitle, gradient, icon }) => (
@@ -325,7 +324,7 @@ const Home2 = () => {
                   rel="noreferrer"
                   className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 hover:bg-indigo-100 text-slate-700 hover:text-indigo-700 rounded-lg text-[11px] sm:text-xs font-bold transition-all whitespace-nowrap"
                 >
-                  <img src={`https://www.google.com/s2/favicons?domain=${new URL(bm.url).hostname}&sz=32`} alt="" className="w-[18px] h-[18px] flex-shrink-0" />
+                  <img src={`https://www.google.com/s2/favicons?domain=${new URL(bm.url).hostname}&sz=32`} alt="" onError={(e) => { e.currentTarget.style.display = 'none' }} className="w-[18px] h-[18px] flex-shrink-0" />
                   {bm.name}
                   <ExternalLink size={10} className="opacity-40 flex-shrink-0" />
                 </a>

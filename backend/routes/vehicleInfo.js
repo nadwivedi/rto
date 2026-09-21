@@ -2,6 +2,9 @@ const express = require('express')
 const router = express.Router()
 const vehicleInfoController = require('../controllers/vehicleInfoController')
 
+// POST RC card PDF export (built from already-loaded data, NO API call)
+router.post('/rc-pdf', vehicleInfoController.downloadRcPdf)
+
 // GET search quota status for current user
 router.get('/quota', vehicleInfoController.getQuotaStatus)
 
@@ -10,6 +13,9 @@ router.get('/history', vehicleInfoController.getSearchHistory)
 
 // DELETE clear all search history
 router.delete('/history', vehicleInfoController.clearSearchHistory)
+
+// GET RC card PDF for a saved history item (NO API call)
+router.get('/history/:id/rc-pdf', vehicleInfoController.downloadHistoryRcPdf)
 
 // GET specific search history item by ID (loads from database, NO API call)
 router.get('/history/:id', vehicleInfoController.getHistoryById)

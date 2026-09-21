@@ -20,6 +20,7 @@ import {
   Copy,
   Check,
   Printer,
+  Download,
   Share2,
   Sparkles,
   RefreshCw,
@@ -51,6 +52,7 @@ const VehicleDetails = () => {
   const [vehicleData, setVehicleData] = useState(null)
   const [dataSourceMeta, setDataSourceMeta] = useState(null) // { isLiveApi: boolean, isSavedData: boolean, lastSearchedAt: string }
   const [copiedField, setCopiedField] = useState(null)
+  const [pdfLoading, setPdfLoading] = useState(false)
   const printRef = useRef(null)
   const resultsTopRef = useRef(null)
 
@@ -308,6 +310,31 @@ const VehicleDetails = () => {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(summary)}`, '_blank')
   }
 
+  const handleDownloadPdf = async () => {
+    if (!vehicleData) return
+    try {
+      setPdfLoading(true)
+      const res = await axios.post(
+        `${API_URL}/api/vehicle-info/rc-pdf`,
+        { data: vehicleData },
+        { withCredentials: true, responseType: 'blob' }
+      )
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `RC-${(vehicleData.REGN_NO || 'vehicle').replace(/[^A-Za-z0-9]/g, '')}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('RC PDF error:', err)
+      toast.error('Failed to generate RC PDF')
+    } finally {
+      setPdfLoading(false)
+    }
+  }
+
   const handlePrint = () => {
     window.print()
   }
@@ -435,6 +462,14 @@ const VehicleDetails = () => {
                 >
                   <Share2 className="w-4 h-4 text-emerald-600" />
                   WhatsApp
+                </button>
+                <button
+                  onClick={handleDownloadPdf}
+                  disabled={pdfLoading}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 disabled:opacity-60 text-rose-700 rounded-xl border border-rose-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  {pdfLoading ? 'Generating...' : 'Download RC PDF'}
                 </button>
                 <button
                   onClick={handlePrint}
