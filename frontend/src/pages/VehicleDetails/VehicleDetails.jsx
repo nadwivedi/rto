@@ -53,6 +53,7 @@ const VehicleDetails = () => {
   const [dataSourceMeta, setDataSourceMeta] = useState(null) // { isLiveApi: boolean, isSavedData: boolean, lastSearchedAt: string }
   const [copiedField, setCopiedField] = useState(null)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [historyPdfId, setHistoryPdfId] = useState(null)
   const printRef = useRef(null)
   const resultsTopRef = useRef(null)
 
@@ -310,6 +311,18 @@ const VehicleDetails = () => {
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(summary)}`, '_blank')
   }
 
+  const saveBlob = (blob, vno) => {
+    const url = window.URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `RC-${String(vno || 'vehicle').replace(/[^A-Za-z0-9]/g, '')}.pdf`
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    window.URL.revokeObjectURL(url)
+  }
+
+  // RC PDF for the vehicle currently shown in results
   const handleDownloadPdf = async () => {
     if (!vehicleData) return
     try {
@@ -319,19 +332,29 @@ const VehicleDetails = () => {
         { data: vehicleData },
         { withCredentials: true, responseType: 'blob' }
       )
-      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `RC-${(vehicleData.REGN_NO || 'vehicle').replace(/[^A-Za-z0-9]/g, '')}.pdf`
-      document.body.appendChild(a)
-      a.click()
-      a.remove()
-      window.URL.revokeObjectURL(url)
+      saveBlob(res.data, vehicleData.REGN_NO)
     } catch (err) {
       console.error('RC PDF error:', err)
       toast.error('Failed to generate RC PDF')
     } finally {
       setPdfLoading(false)
+    }
+  }
+
+  // RC PDF for a recent-search row (from saved record, no API credit)
+  const handleDownloadHistoryPdf = async (item) => {
+    try {
+      setHistoryPdfId(item._id)
+      const res = await axios.get(`${API_URL}/api/vehicle-info/history/${item._id}/rc-pdf`, {
+        withCredentials: true,
+        responseType: 'blob'
+      })
+      saveBlob(res.data, item.vehicleNumber)
+    } catch (err) {
+      console.error('RC PDF error:', err)
+      toast.error('Failed to generate RC PDF')
+    } finally {
+      setHistoryPdfId(null)
     }
   }
 
@@ -667,6 +690,14 @@ const VehicleDetails = () => {
 
                 {/* Right Status Tags */}
                 <div className="flex flex-wrap md:flex-col md:items-end gap-2">
+                  <button
+                    onClick={handleDownloadPdf}
+                    disabled={pdfLoading}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 disabled:opacity-60 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
+                  >
+                    <Download className="w-4 h-4 text-rose-600" />
+                    {pdfLoading ? 'Generating...' : 'Export RC PDF'}
+                  </button>
                   <div className="flex items-center gap-2">
                     <span
                       className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
@@ -1314,6 +1345,19 @@ const VehicleDetails = () => {
                             >
                               <Eye className="w-3.5 h-3.5" />
                               View Details
+                            </button>
+                            <button
+                              onClick={() => handleDownloadHistoryPdf(item)}
+                              disabled={historyPdfId === item._id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-lg text-xs transition cursor-pointer disabled:opacity-50"
+                              title="Download RC PDF"
+                            >
+                              {historyPdfId === item._id ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Download className="w-3.5 h-3.5" />
+                              )}
+                              RC PDF
                             </button>
                             <button
                               onClick={() => handleDeleteHistoryItem(item._id, item.vehicleNumber)}
