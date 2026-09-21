@@ -552,9 +552,9 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
       const userInfo = await getUserInfo(docUserId)
 
       // Build message in the global message language (english / hindi / both)
-      const footer = `\n\n────────────────\n*${userInfo.signature}*` + (userInfo.address ? `\n\n📍 ${userInfo.address}` : '')
-      const englishLL = `Dear *${doc.name || 'Customer'}*,\n\nYou are now eligible to apply for your *Driving Licence (DL)*.\nPlease visit us as soon as possible.\n${footer}`
-      const hindiLL = `प्रिय *${doc.name || 'ग्राहक'}*,\n\nआप अब *Driving Licence (DL)* के लिए आवेदन करने के लिए तैयार हैं।\nकृपया जल्द से जल्द हमारे पास पहुँचें।\n${footer}`
+      const footer = formatMessageFooter(userInfo.signature, userInfo.address)
+      const englishLL = `Dear *${doc.name || 'Customer'}*,\n\n✅ Good news! You are now eligible to apply for your *Full Driving Licence*.\n\nPlease visit our office to complete your application.${footer}`
+      const hindiLL = `प्रिय *${doc.name || 'ग्राहक'}*,\n\n✅ खुशखबरी! अब आप अपने *पक्के ड्राइविंग लाइसेंस (Full Driving Licence)* के लिए आवेदन करने के पात्र हैं।\n\nकृपया आवेदन पूरा करने के लिए हमारे कार्यालय पधारें।${footer}`
       const language = setting.messageLanguage || 'both'
 
       let messageBody
