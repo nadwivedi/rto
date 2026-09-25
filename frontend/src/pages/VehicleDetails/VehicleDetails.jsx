@@ -55,6 +55,7 @@ const VehicleDetails = () => {
   const [pdfLoading, setPdfLoading] = useState(false)
   const [particularLoading, setParticularLoading] = useState(false)
   const [historyPdfId, setHistoryPdfId] = useState(null)
+  const [historyParticularId, setHistoryParticularId] = useState(null)
   const printRef = useRef(null)
   const resultsTopRef = useRef(null)
 
@@ -382,6 +383,30 @@ const VehicleDetails = () => {
       toast.error('Failed to generate RC PDF')
     } finally {
       setHistoryPdfId(null)
+    }
+  }
+
+  // Particular PDF for a recent-search row (from saved record, no API credit)
+  const handleDownloadHistoryParticular = async (item) => {
+    try {
+      setHistoryParticularId(item._id)
+      const res = await axios.get(`${API_URL}/api/vehicle-info/history/${item._id}/particular-pdf`, {
+        withCredentials: true,
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${String(item.vehicleNumber || 'vehicle').replace(/[^A-Za-z0-9]/g, '')} Particular.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Particular PDF error:', err)
+      toast.error('Failed to generate Particular PDF')
+    } finally {
+      setHistoryParticularId(null)
     }
   }
 
@@ -1401,6 +1426,19 @@ const VehicleDetails = () => {
                                 <Download className="w-3.5 h-3.5" />
                               )}
                               RC PDF
+                            </button>
+                            <button
+                              onClick={() => handleDownloadHistoryParticular(item)}
+                              disabled={historyParticularId === item._id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold rounded-lg text-xs transition cursor-pointer disabled:opacity-50"
+                              title="Download Particular PDF"
+                            >
+                              {historyParticularId === item._id ? (
+                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <FileText className="w-3.5 h-3.5" />
+                              )}
+                              Particular
                             </button>
                             <button
                               onClick={() => handleDeleteHistoryItem(item._id, item.vehicleNumber)}

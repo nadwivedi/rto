@@ -512,9 +512,35 @@ const downloadParticularPdf = async (req, res) => {
   }
 }
 
+// GET /api/vehicle-info/history/:id/particular-pdf -> Vehicle Particulars PDF from saved record (NO API call)
+const downloadHistoryParticularPdf = async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' })
+    }
+    const record = await VehicleSearchHistory.findOne({
+      _id: req.params.id,
+      userId: req.user.id
+    }).lean()
+    if (!record || !record.rawResponse) {
+      return res.status(404).json({ success: false, message: 'Search history record not found' })
+    }
+    const data = { REGN_NO: record.vehicleNumber, ...record.rawResponse }
+    const pdf = await generateParticularPDF(data)
+    const fname = `${String(data.REGN_NO).replace(/[^A-Za-z0-9]/g, '')} Particular.pdf`
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename="${fname}"`)
+    return res.send(pdf)
+  } catch (error) {
+    console.error('Error generating history Particular PDF:', error)
+    return res.status(500).json({ success: false, message: 'Failed to generate Particular PDF' })
+  }
+}
+
 module.exports = {
   downloadRcPdf,
   downloadParticularPdf,
+  downloadHistoryParticularPdf,
   downloadHistoryRcPdf,
   lookupVehicle,
   getSavedVehicleByVno,

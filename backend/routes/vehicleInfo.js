@@ -20,6 +20,9 @@ router.delete('/history', vehicleInfoController.clearSearchHistory)
 // GET RC card PDF for a saved history item (NO API call)
 router.get('/history/:id/rc-pdf', vehicleInfoController.downloadHistoryRcPdf)
 
+// GET Vehicle Particulars PDF for a saved history item (NO API call)
+router.get('/history/:id/particular-pdf', vehicleInfoController.downloadHistoryParticularPdf)
+
 // GET specific search history item by ID (loads from database, NO API call)
 router.get('/history/:id', vehicleInfoController.getHistoryById)
 

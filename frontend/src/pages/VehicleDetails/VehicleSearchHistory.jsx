@@ -11,6 +11,7 @@ import {
   Trash2,
   Eye,
   Download,
+  FileText,
   RefreshCw,
   Calendar,
   User,
@@ -41,6 +42,7 @@ const VehicleSearchHistory = () => {
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 20 })
   const [deletingId, setDeletingId] = useState(null)
   const [pdfId, setPdfId] = useState(null)
+  const [particularId, setParticularId] = useState(null)
 
   const handleDownloadPdf = async (item) => {
     try {
@@ -62,6 +64,29 @@ const VehicleSearchHistory = () => {
       toast.error('Failed to generate RC PDF')
     } finally {
       setPdfId(null)
+    }
+  }
+
+  const handleDownloadParticular = async (item) => {
+    try {
+      setParticularId(item._id)
+      const res = await axios.get(`${API_URL}/api/vehicle-info/history/${item._id}/particular-pdf`, {
+        withCredentials: true,
+        responseType: 'blob'
+      })
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${String(item.vehicleNumber || 'vehicle').replace(/[^A-Za-z0-9]/g, '')} Particular.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Particular PDF error:', err)
+      toast.error('Failed to generate Particular PDF')
+    } finally {
+      setParticularId(null)
     }
   }
   const [quota, setQuota] = useState({ rcSearchLimit: 0, rcSearchCount: 0, rcSearchRemaining: 0 })
@@ -519,6 +544,18 @@ const VehicleSearchHistory = () => {
                                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
                                 ) : (
                                   <Download className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                              <button
+                                onClick={() => handleDownloadParticular(item)}
+                                disabled={particularId === item._id}
+                                className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer disabled:opacity-50"
+                                title="Download Particular PDF"
+                              >
+                                {particularId === item._id ? (
+                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <FileText className="w-3.5 h-3.5" />
                                 )}
                               </button>
                               <button
