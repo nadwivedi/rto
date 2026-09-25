@@ -53,6 +53,7 @@ const VehicleDetails = () => {
   const [dataSourceMeta, setDataSourceMeta] = useState(null) // { isLiveApi: boolean, isSavedData: boolean, lastSearchedAt: string }
   const [copiedField, setCopiedField] = useState(null)
   const [pdfLoading, setPdfLoading] = useState(false)
+  const [particularLoading, setParticularLoading] = useState(false)
   const [historyPdfId, setHistoryPdfId] = useState(null)
   const printRef = useRef(null)
   const resultsTopRef = useRef(null)
@@ -341,6 +342,32 @@ const VehicleDetails = () => {
     }
   }
 
+  // Vahan "Vehicle Particulars" PDF for the vehicle currently shown in results
+  const handleDownloadParticular = async () => {
+    if (!vehicleData) return
+    try {
+      setParticularLoading(true)
+      const res = await axios.post(
+        `${API_URL}/api/vehicle-info/particular-pdf`,
+        { data: vehicleData },
+        { withCredentials: true, responseType: 'blob' }
+      )
+      const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }))
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `${String(vehicleData.REGN_NO || 'vehicle').replace(/[^A-Za-z0-9]/g, '')} Particular.pdf`
+      document.body.appendChild(a)
+      a.click()
+      a.remove()
+      window.URL.revokeObjectURL(url)
+    } catch (err) {
+      console.error('Particular PDF error:', err)
+      toast.error('Failed to generate Particular PDF')
+    } finally {
+      setParticularLoading(false)
+    }
+  }
+
   // RC PDF for a recent-search row (from saved record, no API credit)
   const handleDownloadHistoryPdf = async (item) => {
     try {
@@ -493,6 +520,14 @@ const VehicleDetails = () => {
                 >
                   <Download className="w-4 h-4" />
                   {pdfLoading ? 'Generating...' : 'Download RC PDF'}
+                </button>
+                <button
+                  onClick={handleDownloadParticular}
+                  disabled={particularLoading}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 disabled:opacity-60 text-amber-700 rounded-xl border border-amber-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+                >
+                  <FileText className="w-4 h-4" />
+                  {particularLoading ? 'Generating...' : 'Download Particular'}
                 </button>
                 <button
                   onClick={handlePrint}
@@ -697,6 +732,14 @@ const VehicleDetails = () => {
                   >
                     <Download className="w-4 h-4 text-rose-600" />
                     {pdfLoading ? 'Generating...' : 'Export RC PDF'}
+                  </button>
+                  <button
+                    onClick={handleDownloadParticular}
+                    disabled={particularLoading}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 disabled:opacity-60 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
+                  >
+                    <FileText className="w-4 h-4 text-amber-600" />
+                    {particularLoading ? 'Generating...' : 'Export Particular'}
                   </button>
                   <div className="flex items-center gap-2">
                     <span

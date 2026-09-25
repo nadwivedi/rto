@@ -5,6 +5,9 @@ const vehicleInfoController = require('../controllers/vehicleInfoController')
 // POST RC card PDF export (built from already-loaded data, NO API call)
 router.post('/rc-pdf', vehicleInfoController.downloadRcPdf)
 
+// POST Vehicle Particulars PDF export (built from already-loaded data, NO API call)
+router.post('/particular-pdf', vehicleInfoController.downloadParticularPdf)
+
 // GET search quota status for current user
 router.get('/quota', vehicleInfoController.getQuotaStatus)
 

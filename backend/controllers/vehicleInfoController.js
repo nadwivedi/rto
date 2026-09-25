@@ -492,8 +492,29 @@ const downloadHistoryRcPdf = async (req, res) => {
   }
 }
 
+const { generateParticularPDF } = require('../utils/particularGenerator')
+
+// POST /api/vehicle-info/particular-pdf  { data: <vehicle details> } -> Vahan "Vehicle Particulars" PDF (no API credit used)
+const downloadParticularPdf = async (req, res) => {
+  try {
+    const data = req.body && req.body.data
+    if (!data || typeof data !== 'object' || !data.REGN_NO) {
+      return res.status(400).json({ success: false, message: 'Vehicle data is required' })
+    }
+    const pdf = await generateParticularPDF(data)
+    const fname = `${String(data.REGN_NO).replace(/[^A-Za-z0-9]/g, '')} Particular.pdf`
+    res.setHeader('Content-Type', 'application/pdf')
+    res.setHeader('Content-Disposition', `attachment; filename="${fname}"`)
+    return res.send(pdf)
+  } catch (error) {
+    console.error('Error generating Particular PDF:', error)
+    return res.status(500).json({ success: false, message: 'Failed to generate Particular PDF' })
+  }
+}
+
 module.exports = {
   downloadRcPdf,
+  downloadParticularPdf,
   downloadHistoryRcPdf,
   lookupVehicle,
   getSavedVehicleByVno,

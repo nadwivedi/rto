@@ -618,6 +618,8 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
           updated[key] = 'MCWOG'
         } else if (catVal.includes('MOTOR CAB') || catVal.includes('CAB')) {
           updated[key] = 'Motor Cab'
+        } else if (catVal.includes('ARTICULATED')) {
+          updated[key] = 'Articulated Vehicle'
         } else if (catVal.includes('TRAILER')) {
           updated[key] = 'Multiaxle Trailer'
         } else if (catVal.includes('TRACTOR')) {
@@ -2081,6 +2083,7 @@ const RegisterVehicleModal = ({ isOpen, onClose, onSuccess, editData }) => {
                         <option value='LMV-NT'>LMV-NT (Non-Transport)</option>
                         <option value='LMV-TR'>LMV-TR (Light Motor Vehicle - Transport)</option>
                         <option value='Motor Cab'>Motor Cab</option>
+                        <option value='Articulated Vehicle'>Articulated Vehicle</option>
                         <option value='Multiaxle Trailer'>Multiaxle Trailer</option>
                         <option value='Tractor'>Tractor</option>
                         <option value='Construction Vehicle'>Construction Vehicle</option>
