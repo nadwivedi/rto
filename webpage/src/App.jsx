@@ -10,6 +10,12 @@ import RtoManagementSoftware from './pages/RtoManagementSoftware'
 import VehicleInformationSoftware from './pages/VehicleInformationSoftware'
 import RcDownloadSoftware from './pages/RcDownloadSoftware'
 import RtoAgentSoftwareFreeDownload from './pages/RtoAgentSoftwareFreeDownload'
+import DrivingSchoolSoftware from './pages/DrivingSchoolSoftware'
+import DocumentExpiryReminderSoftware from './pages/DocumentExpiryReminderSoftware'
+import ExpiryReminderSoftware from './pages/ExpiryReminderSoftware'
+import RcVerificationSoftware from './pages/RcVerificationSoftware'
+import NationalPermitSoftware from './pages/NationalPermitSoftware'
+import DrivingLicenceSoftware from './pages/DrivingLicenceSoftware'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 
@@ -27,6 +33,12 @@ export default function App() {
           <Route path="vehicle-information-software" element={<VehicleInformationSoftware />} />
           <Route path="rc-download-software" element={<RcDownloadSoftware />} />
           <Route path="rto-agent-software-free-download" element={<RtoAgentSoftwareFreeDownload />} />
+          <Route path="driving-school-software" element={<DrivingSchoolSoftware />} />
+          <Route path="document-expiry-reminder-software" element={<DocumentExpiryReminderSoftware />} />
+          <Route path="vehicle-document-expiry-reminder-software" element={<ExpiryReminderSoftware />} />
+          <Route path="rc-verification-software" element={<RcVerificationSoftware />} />
+          <Route path="national-permit-renewal-reminder-software" element={<NationalPermitSoftware />} />
+          <Route path="driving-licence-software" element={<DrivingLicenceSoftware />} />
           <Route path="sitemap" element={<Sitemap />} />
           <Route path="blog" element={<Blog />} />
           <Route path="blog/:slug" element={<BlogPost />} />

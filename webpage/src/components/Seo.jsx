@@ -4,6 +4,12 @@ import { rtoManagementFaqs, RTO_MANAGEMENT_PATH, VIDEO_ID } from '../data/rtoMan
 import { vehicleInfoFaqs, VEHICLE_INFO_PATH } from '../data/vehicleInfo'
 import { rcDownloadFaqs, RC_DOWNLOAD_PATH } from '../data/rcDownload'
 import { freeDownloadFaqs, FREE_DOWNLOAD_PATH } from '../data/freeDownload'
+import { drivingSchoolFaqs, DRIVING_SCHOOL_PATH } from '../data/drivingSchool'
+import { documentExpiryFaqs, DOCUMENT_EXPIRY_PATH } from '../data/documentExpiry'
+import { expiryReminderFaqs, EXPIRY_REMINDER_PATH } from '../data/expiryReminder'
+import { rcVerificationFaqs, RC_VERIFICATION_PATH } from '../data/rcVerification'
+import { nationalPermitFaqs, NATIONAL_PERMIT_PATH } from '../data/nationalPermit'
+import { drivingLicenceFaqs, DRIVING_LICENCE_PATH } from '../data/drivingLicence'
 import {
   SITE_URL,
   SITE_NAME,
@@ -20,6 +26,12 @@ const PRODUCT_PAGES = {
   [VEHICLE_INFO_PATH]: { name: 'Vehicle Information Software', faqs: vehicleInfoFaqs },
   [RC_DOWNLOAD_PATH]: { name: 'RC Download Software', faqs: rcDownloadFaqs },
   [FREE_DOWNLOAD_PATH]: { name: 'RTO Agent Software Free Download', faqs: freeDownloadFaqs },
+  [DRIVING_SCHOOL_PATH]: { name: 'Driving School Software', faqs: drivingSchoolFaqs },
+  [DOCUMENT_EXPIRY_PATH]: { name: 'Document Expiry Reminder Software', faqs: documentExpiryFaqs },
+  [EXPIRY_REMINDER_PATH]: { name: 'Vehicle Document Expiry Reminder Software', faqs: expiryReminderFaqs },
+  [RC_VERIFICATION_PATH]: { name: 'RC Verification Software', faqs: rcVerificationFaqs },
+  [NATIONAL_PERMIT_PATH]: { name: 'National Permit Renewal Reminder Software', faqs: nationalPermitFaqs },
+  [DRIVING_LICENCE_PATH]: { name: 'Driving Licence Software', faqs: drivingLicenceFaqs },
 }
 
 function upsertMeta(attr, key, content) {

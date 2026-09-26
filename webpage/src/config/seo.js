@@ -100,9 +100,51 @@ export const PAGE_SEO = {
     path: '/rto-agent-software-free-download',
     keywords: 'RTO agent software free download, RTO software free download, RTO agent software free, RTO agent software free trial, free RTO agent software, RTO Sarthi free download, RTO Sarthi free trial, RTO agent app free download, RTO agent software download for PC, RTO agent software for Windows, RTO agent software for Android, RTO software download, RTO management software free download, RTO consultant software free download, free RTO software India, best free RTO agent software',
   },
+  '/vehicle-document-expiry-reminder-software': {
+    title: `Vehicle Document Expiry Reminder Software - Tax, Fitness, Permit, PUC | RTO Sarthi`,
+    description:
+      'Vehicle document expiry reminder software for RTO agents and transporters. Track road tax, fitness, permit, PUC, insurance and GPS expiry and send automatic WhatsApp reminders in Hindi or English. Free trial.',
+    path: '/vehicle-document-expiry-reminder-software',
+    keywords: 'vehicle document expiry reminder software, vehicle expiry reminder software, vehicle document expiry reminder, road tax expiry reminder, fitness expiry reminder, permit expiry reminder, PUC expiry reminder, insurance expiry reminder, vehicle renewal reminder software, WhatsApp vehicle expiry reminder, fleet document expiry reminder, transporter document management software, vehicle document management software, expiry reminder software for RTO agents, RTO Sarthi',
+  },
+  '/rc-verification-software': {
+    title: `RC Verification Software at ₹1.5 - Bulk RC Verification for RTO Agents | RTO Sarthi`,
+    description:
+      'RC verification software at just ₹1.5 per vehicle. Verify owner, chassis, engine, registration validity, hypothecation and blacklist status by vehicle number. Single and bulk RC verification for RTO agents, insurance agents and dealers.',
+    path: '/rc-verification-software',
+    keywords: 'RC verification software, RC verification at 1.5 rs, RC verification for RTO agents, bulk RC verification, bulk RC verification software, RC verification online, verify RC by vehicle number, cheapest RC verification, RC verification for insurance agents, RC verification for dealers, RC verification for financers, vehicle RC verification, RC check software, vehicle verification software, RTO Sarthi RC verification',
+  },
+  '/national-permit-renewal-reminder-software': {
+    title: `National Permit Renewal Reminder Software - Part A & Part B | RTO Sarthi`,
+    description:
+      'National permit renewal reminder software for RTO agents and transporters. Track Part A and Part B validity, renew each part, record fees and send automatic WhatsApp reminders before permit expiry. Free trial.',
+    path: '/national-permit-renewal-reminder-software',
+    keywords: 'national permit renewal reminder software, national permit renewal reminder, national permit software, national permit management software, national permit Part B renewal reminder, national permit authorisation renewal, NP Part A Part B tracking, permit expiry reminder software, state permit renewal reminder, bus permit software, temporary permit software, transporter permit management software, RTO agent permit software, RTO Sarthi',
+  },
+  '/driving-licence-software': {
+    title: `Driving Licence Software for RTO Agents - LL & DL Management | RTO Sarthi`,
+    description:
+      'Driving licence software for RTO agents by RTO Sarthi. RTO agents manage learner licence and DL applications, documents, LL and DL validity, fees and balance, with WhatsApp alert when LL becomes eligible for DL. Free trial of RTO Sarthi.',
+    path: '/driving-licence-software',
+    keywords: 'driving licence software for RTO agents, driving licence software for RTO agent, driving license software for RTO agents, DL software for RTO agents, driving licence management software for RTO agents, LL DL software for RTO agents, best driving licence software for RTO agents, driving licence software, driving license software, DL management software, driving licence record software, learner licence management software, LL DL record software, DL renewal software, driving licence application management, driving licence consultant software, RTO agent driving licence software, manage driving licence work, RTO Sarthi driving licence',
+  },
+  '/driving-school-software': {
+    title: `Driving School Software - Admissions, Fees, Licence & RTO Work | RTO Sarthi`,
+    description:
+      'Driving school software for driving school owners: manage student admissions, fees and documents, track learner licence and DL, and manage RTO work like registration, transfer, insurance and PUC in one software. Free trial.',
+    path: '/driving-school-software',
+    keywords: 'driving school software, driving school management software, driving school software India, driving school admission software, driving school fees management software, motor driving school software, driving school software with RTO work, driving school and RTO software, driving school licence management software, learner licence tracking software, driving school app, best driving school software, RTO Sarthi driving school',
+  },
+  '/document-expiry-reminder-software': {
+    title: `Document Expiry Reminder Software - WhatsApp Reminders for Any Document | RTO Sarthi`,
+    description:
+      'Document expiry reminder software for every type of document: licences, insurance, registrations, agreements, certificates and vehicle papers. Automatic WhatsApp reminders to you and your clients in Hindi or English. Free trial.',
+    path: '/document-expiry-reminder-software',
+    keywords: 'document expiry reminder software, document expiry reminder, document expiry tracking software, document renewal reminder software, expiry date reminder software, expiry reminder app, licence expiry reminder software, certificate expiry reminder, insurance policy expiry reminder, agreement expiry reminder, WhatsApp expiry reminder software, document expiry alert software, document management with expiry reminder, expiry reminder software India, RTO Sarthi',
+  },
   '/sitemap': {
     title: `Sitemap | RTO Sarthi - ${TAGLINE}`,
-    description: 'Sitemap of RTO Sarthi website — Home, Features, RTO Management Software, Vehicle Information Software, RC Download Software, RTO Agent Software Free Download, PUC Agent Software, About, and Contact pages.',
+    description: 'Sitemap of RTO Sarthi website — Home, Features, RTO Management Software, Vehicle Information Software, RC Download Software, RTO Agent Software Free Download, Vehicle Document Expiry Reminder Software, RC Verification Software, National Permit Renewal Reminder Software, Driving Licence Software, Driving School Software, Document Expiry Reminder Software, PUC Agent Software, About, and Contact pages.',
     path: '/sitemap',
   },
 }

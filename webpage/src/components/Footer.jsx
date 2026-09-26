@@ -59,6 +59,36 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/vehicle-document-expiry-reminder-software" className="hover:text-brand-800">
+                  Expiry Reminder Software
+                </Link>
+              </li>
+              <li>
+                <Link to="/rc-verification-software" className="hover:text-brand-800">
+                  RC Verification Software
+                </Link>
+              </li>
+              <li>
+                <Link to="/national-permit-renewal-reminder-software" className="hover:text-brand-800">
+                  National Permit Software
+                </Link>
+              </li>
+              <li>
+                <Link to="/driving-licence-software" className="hover:text-brand-800">
+                  Driving Licence Software
+                </Link>
+              </li>
+              <li>
+                <Link to="/driving-school-software" className="hover:text-brand-800">
+                  Driving School Software
+                </Link>
+              </li>
+              <li>
+                <Link to="/document-expiry-reminder-software" className="hover:text-brand-800">
+                  Document Expiry Reminder
+                </Link>
+              </li>
+              <li>
                 <Link to="/puc-agent-software" className="hover:text-brand-800">
                   PUC Agent Software
                 </Link>
