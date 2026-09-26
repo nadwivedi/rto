@@ -1,6 +1,9 @@
 import { useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
 import { rtoManagementFaqs, RTO_MANAGEMENT_PATH, VIDEO_ID } from '../data/rtoManagement'
+import { vehicleInfoFaqs, VEHICLE_INFO_PATH } from '../data/vehicleInfo'
+import { rcDownloadFaqs, RC_DOWNLOAD_PATH } from '../data/rcDownload'
+import { freeDownloadFaqs, FREE_DOWNLOAD_PATH } from '../data/freeDownload'
 import {
   SITE_URL,
   SITE_NAME,
@@ -9,6 +12,15 @@ import {
   getPageSeo,
   absoluteUrl,
 } from '../config/seo'
+
+// Product landing pages: SoftwareApplication, FAQ and breadcrumb structured data
+const PRODUCT_PAGES = {
+  '/puc-agent-software': { name: 'PUC Agent Software' },
+  [RTO_MANAGEMENT_PATH]: { name: 'RTO Management Software', faqs: rtoManagementFaqs, video: true },
+  [VEHICLE_INFO_PATH]: { name: 'Vehicle Information Software', faqs: vehicleInfoFaqs },
+  [RC_DOWNLOAD_PATH]: { name: 'RC Download Software', faqs: rcDownloadFaqs },
+  [FREE_DOWNLOAD_PATH]: { name: 'RTO Agent Software Free Download', faqs: freeDownloadFaqs },
+}
 
 function upsertMeta(attr, key, content) {
   if (!content) return
@@ -83,11 +95,11 @@ function getSoftwareJsonLd(name, description, url) {
   }
 }
 
-function getFaqJsonLd() {
+function getFaqJsonLd(faqs) {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: rtoManagementFaqs.map((f) => ({
+    mainEntity: faqs.map((f) => ({
       '@type': 'Question',
       name: f.q,
       acceptedAnswer: { '@type': 'Answer', text: f.a },
@@ -110,13 +122,13 @@ function getVideoJsonLd(url) {
   }
 }
 
-function getBreadcrumbJsonLd(url) {
+function getBreadcrumbJsonLd(name, url) {
   return {
     '@context': 'https://schema.org',
     '@type': 'BreadcrumbList',
     itemListElement: [
       { '@type': 'ListItem', position: 1, name: 'Home', item: `${SITE_URL}/` },
-      { '@type': 'ListItem', position: 2, name: 'RTO Management Software', item: url },
+      { '@type': 'ListItem', position: 2, name, item: url },
     ],
   }
 }
@@ -150,22 +162,25 @@ export default function Seo() {
     upsertMeta('name', 'twitter:description', seo.description)
     upsertMeta('name', 'twitter:image', absoluteUrl('/rtosarthi.avif'))
 
-    if (pathname === '/puc-agent-software') {
-      upsertJsonLd('software', getSoftwareJsonLd('RTO Sarthi - PUC Agent Software', seo.description, url))
-    } else if (pathname === RTO_MANAGEMENT_PATH) {
-      upsertJsonLd('software', getSoftwareJsonLd('RTO Sarthi - RTO Management Software', seo.description, url))
+    const product = PRODUCT_PAGES[pathname]
+    if (product) {
+      upsertJsonLd('software', getSoftwareJsonLd(`RTO Sarthi - ${product.name}`, seo.description, url))
     } else {
       removeJsonLd('software')
     }
 
-    if (pathname === RTO_MANAGEMENT_PATH) {
-      upsertJsonLd('faq', getFaqJsonLd())
-      upsertJsonLd('video', getVideoJsonLd(url))
-      upsertJsonLd('breadcrumb', getBreadcrumbJsonLd(url))
+    if (product?.faqs) {
+      upsertJsonLd('faq', getFaqJsonLd(product.faqs))
+      upsertJsonLd('breadcrumb', getBreadcrumbJsonLd(product.name, url))
     } else {
       removeJsonLd('faq')
-      removeJsonLd('video')
       removeJsonLd('breadcrumb')
+    }
+
+    if (product?.video) {
+      upsertJsonLd('video', getVideoJsonLd(url))
+    } else {
+      removeJsonLd('video')
     }
   }, [seo.title, seo.description, url, pathname])
 

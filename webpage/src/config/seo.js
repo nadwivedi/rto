@@ -79,9 +79,30 @@ export const PAGE_SEO = {
     path: '/rto-management-software',
     keywords: 'RTO management software, RTO management software India, RTO agent driving licence record software, driving licence management software, vehicle transfer management software, RTO agent software, RTO management system, best RTO management software, RTO software, RTO agent software, vehicle registration management software, RTO consultant software, vehicle expiry reminder software, RTO Sarthi',
   },
+  '/vehicle-information-software': {
+    title: `Vehicle Information Software for RTO Agents - RC, Tax, Challan, Fitness | RTO Sarthi`,
+    description:
+      'Vehicle information software for RTO agents by RTO Sarthi: search any vehicle number for RC download, Particular download, road tax, e-challan, fitness, PUC & insurance status. RC & bulk RC verification. Just ₹1.5 per search.',
+    path: '/vehicle-information-software',
+    keywords: 'vehicle information software for RTO agents, vehicle information software for RTO agent, vehicle details software for RTO agents, vehicle number search software for RTO agents, RC download software for RTO agents, RC verification software for RTO agents, bulk RC verification software for RTO agents, vehicle particular download software for RTO agents, e-challan check software for RTO agents, vehicle information software for insurance agents, vehicle information software for vehicle dealers, best vehicle information software for RTO agents, vehicle information software India, vehicle information software, vehicle details by number, vehicle number search software, RC download, RC verification, bulk RC verification, vehicle particulars download, road tax status check, e-challan status check, fitness status check, PUC status check, insurance status by vehicle number, vehicle owner details software, RTO agent vehicle search, RTO Sarthi vehicle information',
+  },
+  '/rc-download-software': {
+    title: `RC Download Software for RTO Agents - Download RC at ₹1.5 | RTO Sarthi`,
+    description:
+      'RC download software for RTO agents: download RC of any vehicle at just ₹1.5. Enter vehicle number, get smart card style RC PDF, Vehicle Particulars PDF and complete vehicle details for any state. Free trial.',
+    path: '/rc-download-software',
+    keywords: 'RC download software for RTO agents, RC download software for RTO agent, RC download software, download RC of any vehicle, download RC at 1.5 rs, RC download by vehicle number, RC PDF download, RC PDF download by vehicle number, vehicle RC download, online RC download software, RC details by vehicle number, RC copy download, smart card RC download, RC download software for insurance agents, RC download software for vehicle dealers, best RC download software for RTO agents, cheapest RC download software, RC download software India, RTO Sarthi RC download',
+  },
+  '/rto-agent-software-free-download': {
+    title: `RTO Agent Software Free Download - Free Trial for PC & Mobile | RTO Sarthi`,
+    description:
+      'RTO agent software free download: RTO Sarthi provides a free trial, so you can download and use RTO agent software free of cost on PC and mobile. Vehicle records, expiry tracking, WhatsApp alerts and more.',
+    path: '/rto-agent-software-free-download',
+    keywords: 'RTO agent software free download, RTO software free download, RTO agent software free, RTO agent software free trial, free RTO agent software, RTO Sarthi free download, RTO Sarthi free trial, RTO agent app free download, RTO agent software download for PC, RTO agent software for Windows, RTO agent software for Android, RTO software download, RTO management software free download, RTO consultant software free download, free RTO software India, best free RTO agent software',
+  },
   '/sitemap': {
     title: `Sitemap | RTO Sarthi - ${TAGLINE}`,
-    description: 'Sitemap of RTO Sarthi website — Home, Features, RTO Management Software, PUC Agent Software, About, and Contact pages.',
+    description: 'Sitemap of RTO Sarthi website — Home, Features, RTO Management Software, Vehicle Information Software, RC Download Software, RTO Agent Software Free Download, PUC Agent Software, About, and Contact pages.',
     path: '/sitemap',
   },
 }

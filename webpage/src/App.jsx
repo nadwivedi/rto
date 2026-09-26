@@ -7,6 +7,9 @@ import Contact from './pages/Contact'
 import Sitemap from './pages/Sitemap'
 import PucAgent from './pages/PucAgent'
 import RtoManagementSoftware from './pages/RtoManagementSoftware'
+import VehicleInformationSoftware from './pages/VehicleInformationSoftware'
+import RcDownloadSoftware from './pages/RcDownloadSoftware'
+import RtoAgentSoftwareFreeDownload from './pages/RtoAgentSoftwareFreeDownload'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 
@@ -21,6 +24,9 @@ export default function App() {
           <Route path="contact" element={<Contact />} />
           <Route path="puc-agent-software" element={<PucAgent />} />
           <Route path="rto-management-software" element={<RtoManagementSoftware />} />
+          <Route path="vehicle-information-software" element={<VehicleInformationSoftware />} />
+          <Route path="rc-download-software" element={<RcDownloadSoftware />} />
+          <Route path="rto-agent-software-free-download" element={<RtoAgentSoftwareFreeDownload />} />
           <Route path="sitemap" element={<Sitemap />} />
           <Route path="blog" element={<Blog />} />
           <Route path="blog/:slug" element={<BlogPost />} />
