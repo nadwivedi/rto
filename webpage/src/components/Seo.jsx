@@ -12,6 +12,10 @@ import { nationalPermitFaqs, NATIONAL_PERMIT_PATH } from '../data/nationalPermit
 import { drivingLicenceFaqs, DRIVING_LICENCE_PATH } from '../data/drivingLicence'
 import { learningLicenceFaqs, LEARNING_LICENCE_PATH } from '../data/learningLicence'
 import { dlManagementSystemFaqs, DL_MANAGEMENT_SYSTEM_PATH } from '../data/dlManagementSystem'
+import { drivingSchoolManagementFaqs, DRIVING_SCHOOL_MANAGEMENT_PATH } from '../data/drivingSchoolManagement'
+import { drivingSchoolSystemFaqs, DRIVING_SCHOOL_SYSTEM_PATH } from '../data/drivingSchoolSystem'
+import { bestDrivingSchoolFaqs, BEST_DRIVING_SCHOOL_PATH } from '../data/bestDrivingSchool'
+import { drivingSchoolCrmFaqs, DRIVING_SCHOOL_CRM_PATH } from '../data/drivingSchoolCrm'
 import {
   SITE_URL,
   SITE_NAME,
@@ -59,6 +63,61 @@ const PRODUCT_PAGES = {
       'Multi-agent access',
       'Applicant document storage',
       'Vehicle, tax, permit, PUC and insurance RTO work',
+    ],
+  },
+  [DRIVING_SCHOOL_MANAGEMENT_PATH]: {
+    name: 'Driving School Management Software',
+    faqs: drivingSchoolManagementFaqs,
+    alternateName: ['Motor Driving School Software', 'Driving School Admission & Fee Software'],
+    features: [
+      'Digital student admissions register',
+      'Fee collection, pending dues and profit tracking',
+      'Automatic WhatsApp message 30 days after learning licence for DL eligibility',
+      'Learning licence expiry dashboard',
+      'Student document storage',
+      'Referral tracking',
+      'Multi-user access for owner and staff',
+      'Vehicle registration, transfer, insurance and PUC RTO work',
+    ],
+  },
+  [DRIVING_SCHOOL_SYSTEM_PATH]: {
+    name: 'Driving School Management System',
+    faqs: drivingSchoolSystemFaqs,
+    alternateName: ['Driving School System', 'Motor Driving School Management System'],
+    features: [
+      'Connected student lifecycle from admission to permanent driving licence',
+      'Automatic WhatsApp message 30 days after learning licence for DL eligibility',
+      'Learning licence expiry dashboard',
+      'Fee instalments, pending balance and profit tracking',
+      'Multi-user access with referral tracking',
+      'Central student document storage',
+      'Vehicle RTO work with WhatsApp expiry reminders',
+    ],
+  },
+  [BEST_DRIVING_SCHOOL_PATH]: {
+    name: 'Best Driving School Software India',
+    faqs: bestDrivingSchoolFaqs,
+    alternateName: ['Top Driving School Software India'],
+    features: [
+      'Learner licence and driving licence records',
+      'Automatic WhatsApp message 30 days after learning licence for DL eligibility',
+      'Learning licence expiry dashboard',
+      'Fee instalments and pending balance',
+      'Mobile and multi-user access',
+      'RTO work with WhatsApp expiry reminders',
+    ],
+  },
+  [DRIVING_SCHOOL_CRM_PATH]: {
+    name: 'Driving School CRM',
+    faqs: drivingSchoolCrmFaqs,
+    alternateName: ['CRM for Driving Schools', 'Driving School WhatsApp CRM'],
+    features: [
+      'Complete student record with contact, documents, fees and licence history',
+      'Automatic WhatsApp message 30 days after learning licence for DL eligibility',
+      'Learning licence expiry dashboard',
+      'Referral source tracking',
+      'Pending fee follow-up',
+      'WhatsApp renewal reminders for tax, fitness, permit, insurance and PUC',
     ],
   },
 }

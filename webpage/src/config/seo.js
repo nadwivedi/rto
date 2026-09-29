@@ -142,12 +142,40 @@ export const PAGE_SEO = {
     path: '/driving-licence-management-system',
     keywords: 'driving licence management system, driving license management system, driving licence management system for RTO agents, DL management system, driving licence management software, driving license management software, licence management system for RTO agents, LL DL management system, learner licence management system, driving licence record management system, online driving licence management system, RTO agent driving licence system, driving licence tracking system, DL application tracking, RTO Sarthi driving licence management',
   },
+  '/driving-school-management-software': {
+    title: `Driving School Management Software India | RTO Sarthi`,
+    description:
+      'Driving school management software: admissions, fee dues, student documents, LL & DL tracking, auto WhatsApp for DL eligibility & LL expiry dashboard.',
+    path: '/driving-school-management-software',
+    keywords: 'driving school management software, driving school management software India, motor driving school management software, driving school admission management software, driving school fee management software, driving school student management software, driving school billing software, driving school record software, driving school software with WhatsApp, learner licence tracking for driving schools, best driving school management software, online driving school management software, RTO Sarthi driving school management',
+  },
+  '/driving-school-management-system': {
+    title: `Driving School Management System - Admission to DL | RTO Sarthi`,
+    description:
+      'Driving school management system: admission, fee instalments, LL & DL in one record, auto WhatsApp for DL eligibility, LL expiry dashboard & multi-user.',
+    path: '/driving-school-management-system',
+    keywords: 'driving school management system, driving school management system India, motor driving school management system, driving school system, online driving school management system, driving school student management system, driving school admission system, driving school fee management system, driving school record management system, driving school ERP, driving school automation, learner licence follow-up system, best driving school management system, RTO Sarthi driving school system',
+  },
+  '/best-driving-school-software-india': {
+    title: `Best Driving School Software in India (2026) | RTO Sarthi`,
+    description:
+      'Best driving school software in India for LL & DL work, fee dues, auto WhatsApp follow-ups and RTO work. See the buyer checklist and start a free trial.',
+    path: '/best-driving-school-software-india',
+    keywords: 'best driving school software India, best driving school software, best driving school management software India, top driving school software India, driving school software India, driving school software for Indian driving schools, which driving school software is best, driving school software comparison, driving school software checklist, driving school software with WhatsApp, driving school software with licence tracking, affordable driving school software India, RTO Sarthi best driving school software',
+  },
+  '/driving-school-crm': {
+    title: `Driving School CRM with WhatsApp Follow-ups | RTO Sarthi`,
+    description:
+      'Driving school CRM: student records, automatic WhatsApp follow-ups for DL eligibility, LL expiry dashboard, fee dues, referral sources & repeat RTO work.',
+    path: '/driving-school-crm',
+    keywords: 'driving school CRM, CRM for driving schools, driving school CRM software, driving school CRM India, best CRM for driving school, driving school customer management software, driving school student follow-up software, driving school WhatsApp CRM, driving school WhatsApp follow-up, driving school referral tracking, driving school student relationship management, driving school customer retention, RTO Sarthi driving school CRM',
+  },
   '/driving-school-software': {
     title: `Driving School Software - Admissions, Fees, Licence & RTO Work | RTO Sarthi`,
     description:
       'Driving school software for driving school owners: manage student admissions, fees and documents, track learner licence and DL, and manage RTO work like registration, transfer, insurance and PUC in one software. Free trial.',
     path: '/driving-school-software',
-    keywords: 'driving school software, driving school management software, driving school software India, driving school admission software, driving school fees management software, motor driving school software, driving school software with RTO work, driving school and RTO software, driving school licence management software, learner licence tracking software, driving school app, best driving school software, RTO Sarthi driving school',
+    keywords: 'driving school software, driving school software India, driving school admission software, driving school fees management software, motor driving school software, driving school software with RTO work, driving school and RTO software, driving school licence management software, learner licence tracking software, driving school app, RTO Sarthi driving school',
   },
   '/document-expiry-reminder-software': {
     title: `Document Expiry Reminder Software - WhatsApp Reminders for Any Document | RTO Sarthi`,
@@ -158,7 +186,7 @@ export const PAGE_SEO = {
   },
   '/sitemap': {
     title: `Sitemap | RTO Sarthi - ${TAGLINE}`,
-    description: 'Sitemap of RTO Sarthi website — Home, Features, RTO Management Software, Vehicle Information Software, RC Download Software, RTO Agent Software Free Download, Vehicle Document Expiry Reminder Software, RC Verification Software, National Permit Renewal Reminder Software, Driving Licence Software, Learning Licence Software, Driving Licence Management System, Driving School Software, Document Expiry Reminder Software, PUC Agent Software, About, and Contact pages.',
+    description: 'Sitemap of RTO Sarthi website — Home, Features, RTO Management Software, Vehicle Information Software, RC Download Software, RTO Agent Software Free Download, Vehicle Document Expiry Reminder Software, RC Verification Software, National Permit Renewal Reminder Software, Driving Licence Software, Learning Licence Software, Driving Licence Management System, Driving School Software, Driving School Management Software, Driving School Management System, Best Driving School Software India, Driving School CRM, Document Expiry Reminder Software, PUC Agent Software, About, and Contact pages.',
     path: '/sitemap',
   },
 }

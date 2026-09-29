@@ -94,6 +94,26 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/driving-school-management-software" className="hover:text-brand-800">
+                  Driving School Management
+                </Link>
+              </li>
+              <li>
+                <Link to="/driving-school-management-system" className="hover:text-brand-800">
+                  Driving School System
+                </Link>
+              </li>
+              <li>
+                <Link to="/best-driving-school-software-india" className="hover:text-brand-800">
+                  Best Driving School Software
+                </Link>
+              </li>
+              <li>
+                <Link to="/driving-school-crm" className="hover:text-brand-800">
+                  Driving School CRM
+                </Link>
+              </li>
+              <li>
                 <Link to="/document-expiry-reminder-software" className="hover:text-brand-800">
                   Document Expiry Reminder
                 </Link>

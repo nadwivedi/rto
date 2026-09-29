@@ -74,6 +74,8 @@ export default function DrivingSchoolSoftware() {
       related={[
         { to: '/driving-licence-software', label: 'Driving licence software' },
         { to: '/learning-licence-software', label: 'Learning licence software' },
+        { to: '/driving-school-management-software', label: 'Driving school management software' },
+        { to: '/best-driving-school-software-india', label: 'Best driving school software India' },
         { to: '/rto-management-software', label: 'RTO management software' },
       ]}
       faq={{

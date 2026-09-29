@@ -18,6 +18,10 @@ import NationalPermitSoftware from './pages/NationalPermitSoftware'
 import DrivingLicenceSoftware from './pages/DrivingLicenceSoftware'
 import LearningLicenceSoftware from './pages/LearningLicenceSoftware'
 import DrivingLicenceManagementSystem from './pages/DrivingLicenceManagementSystem'
+import DrivingSchoolManagementSoftware from './pages/DrivingSchoolManagementSoftware'
+import DrivingSchoolManagementSystem from './pages/DrivingSchoolManagementSystem'
+import BestDrivingSchoolSoftwareIndia from './pages/BestDrivingSchoolSoftwareIndia'
+import DrivingSchoolCrm from './pages/DrivingSchoolCrm'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 
@@ -43,6 +47,10 @@ export default function App() {
           <Route path="driving-licence-software" element={<DrivingLicenceSoftware />} />
           <Route path="learning-licence-software" element={<LearningLicenceSoftware />} />
           <Route path="driving-licence-management-system" element={<DrivingLicenceManagementSystem />} />
+          <Route path="driving-school-management-software" element={<DrivingSchoolManagementSoftware />} />
+          <Route path="driving-school-management-system" element={<DrivingSchoolManagementSystem />} />
+          <Route path="best-driving-school-software-india" element={<BestDrivingSchoolSoftwareIndia />} />
+          <Route path="driving-school-crm" element={<DrivingSchoolCrm />} />
           <Route path="sitemap" element={<Sitemap />} />
           <Route path="blog" element={<Blog />} />
           <Route path="blog/:slug" element={<BlogPost />} />
