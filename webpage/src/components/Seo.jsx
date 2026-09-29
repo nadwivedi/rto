@@ -10,6 +10,7 @@ import { expiryReminderFaqs, EXPIRY_REMINDER_PATH } from '../data/expiryReminder
 import { rcVerificationFaqs, RC_VERIFICATION_PATH } from '../data/rcVerification'
 import { nationalPermitFaqs, NATIONAL_PERMIT_PATH } from '../data/nationalPermit'
 import { drivingLicenceFaqs, DRIVING_LICENCE_PATH } from '../data/drivingLicence'
+import { learningLicenceFaqs, LEARNING_LICENCE_PATH } from '../data/learningLicence'
 import {
   SITE_URL,
   SITE_NAME,
@@ -32,6 +33,7 @@ const PRODUCT_PAGES = {
   [RC_VERIFICATION_PATH]: { name: 'RC Verification Software', faqs: rcVerificationFaqs },
   [NATIONAL_PERMIT_PATH]: { name: 'National Permit Renewal Reminder Software', faqs: nationalPermitFaqs },
   [DRIVING_LICENCE_PATH]: { name: 'Driving Licence Software', faqs: drivingLicenceFaqs },
+  [LEARNING_LICENCE_PATH]: { name: 'Learning Licence Software', faqs: learningLicenceFaqs },
 }
 
 function upsertMeta(attr, key, content) {

@@ -14,6 +14,7 @@ const pages = [
   { to: '/rc-verification-software', label: 'RC Verification Software', desc: 'Verify RC of any vehicle at ₹1.5 — owner, chassis, engine, HP & blacklist, plus bulk verification' },
   { to: '/national-permit-renewal-reminder-software', label: 'National Permit Renewal Reminder Software', desc: 'Track national permit Part A & Part B validity with WhatsApp renewal reminders' },
   { to: '/driving-licence-software', label: 'Driving Licence Software', desc: 'Manage learner licence and DL applications, documents, fees and LL to DL alerts' },
+  { to: '/learning-licence-software', label: 'Learning Licence Software', desc: 'Automatic WhatsApp 30 days after LL for DL eligibility, LL expiry dashboard and pending balance' },
   { to: '/driving-school-software', label: 'Driving School Software', desc: 'Manage driving school admissions, fees, documents, LL / DL and RTO work' },
   { to: '/document-expiry-reminder-software', label: 'Document Expiry Reminder Software', desc: 'Automatic WhatsApp reminders for every type of document with an expiry date' },
   { to: '/puc-agent-software', label: 'PUC Agent Software', desc: 'Bulk Excel upload, PDF auto-entry, WhatsApp PUC reminders & complete RTO/insurance management' },

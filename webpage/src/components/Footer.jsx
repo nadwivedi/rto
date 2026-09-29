@@ -79,6 +79,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/learning-licence-software" className="hover:text-brand-800">
+                  Learning Licence Software
+                </Link>
+              </li>
+              <li>
                 <Link to="/driving-school-software" className="hover:text-brand-800">
                   Driving School Software
                 </Link>
