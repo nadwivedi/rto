@@ -135,6 +135,13 @@ export const PAGE_SEO = {
     path: '/learning-licence-software',
     keywords: 'learning licence software, learning licence software for RTO agents, learning license software, learner licence software, learner license software, LL software, LL management software, learning licence management software, LL DL software for RTO agents, learning licence and driving licence software, LL to DL reminder, learning licence 30 days DL eligibility, DL eligibility WhatsApp reminder, learning licence expiry reminder, learner licence expiry dashboard, LL expiry tracking, RTO agent pending balance software, RTO agent software, RTO agent LL DL management, best learning licence software India, RTO Sarthi learning licence',
   },
+  '/driving-licence-management-system': {
+    title: `Driving Licence Management System for RTO Agents | RTO Sarthi`,
+    description:
+      'Driving licence management system for RTO agents: LL & DL records, auto WhatsApp for DL eligibility, LL expiry dashboard, pending balance. Free trial.',
+    path: '/driving-licence-management-system',
+    keywords: 'driving licence management system, driving license management system, driving licence management system for RTO agents, DL management system, driving licence management software, driving license management software, licence management system for RTO agents, LL DL management system, learner licence management system, driving licence record management system, online driving licence management system, RTO agent driving licence system, driving licence tracking system, DL application tracking, RTO Sarthi driving licence management',
+  },
   '/driving-school-software': {
     title: `Driving School Software - Admissions, Fees, Licence & RTO Work | RTO Sarthi`,
     description:
@@ -151,7 +158,7 @@ export const PAGE_SEO = {
   },
   '/sitemap': {
     title: `Sitemap | RTO Sarthi - ${TAGLINE}`,
-    description: 'Sitemap of RTO Sarthi website — Home, Features, RTO Management Software, Vehicle Information Software, RC Download Software, RTO Agent Software Free Download, Vehicle Document Expiry Reminder Software, RC Verification Software, National Permit Renewal Reminder Software, Driving Licence Software, Learning Licence Software, Driving School Software, Document Expiry Reminder Software, PUC Agent Software, About, and Contact pages.',
+    description: 'Sitemap of RTO Sarthi website — Home, Features, RTO Management Software, Vehicle Information Software, RC Download Software, RTO Agent Software Free Download, Vehicle Document Expiry Reminder Software, RC Verification Software, National Permit Renewal Reminder Software, Driving Licence Software, Learning Licence Software, Driving Licence Management System, Driving School Software, Document Expiry Reminder Software, PUC Agent Software, About, and Contact pages.',
     path: '/sitemap',
   },
 }

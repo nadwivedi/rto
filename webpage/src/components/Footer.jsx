@@ -84,6 +84,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/driving-licence-management-system" className="hover:text-brand-800">
+                  DL Management System
+                </Link>
+              </li>
+              <li>
                 <Link to="/driving-school-software" className="hover:text-brand-800">
                   Driving School Software
                 </Link>

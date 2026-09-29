@@ -11,6 +11,7 @@ import { rcVerificationFaqs, RC_VERIFICATION_PATH } from '../data/rcVerification
 import { nationalPermitFaqs, NATIONAL_PERMIT_PATH } from '../data/nationalPermit'
 import { drivingLicenceFaqs, DRIVING_LICENCE_PATH } from '../data/drivingLicence'
 import { learningLicenceFaqs, LEARNING_LICENCE_PATH } from '../data/learningLicence'
+import { dlManagementSystemFaqs, DL_MANAGEMENT_SYSTEM_PATH } from '../data/dlManagementSystem'
 import {
   SITE_URL,
   SITE_NAME,
@@ -43,6 +44,20 @@ const PRODUCT_PAGES = {
       'Pending balance and profit tracking',
       'Learning licence to driving licence in one record',
       'Aadhaar, photo and signature document storage',
+      'Vehicle, tax, permit, PUC and insurance RTO work',
+    ],
+  },
+  [DL_MANAGEMENT_SYSTEM_PATH]: {
+    name: 'Driving Licence Management System',
+    faqs: dlManagementSystemFaqs,
+    alternateName: ['DL Management System', 'Driving License Management System for RTO Agents'],
+    features: [
+      'Learner licence, driving licence and DL renewal records',
+      'Automatic WhatsApp message 30 days after learning licence for DL eligibility',
+      'Learning licence expiry dashboard',
+      'Fees, pending balance and profit tracking',
+      'Multi-agent access',
+      'Applicant document storage',
       'Vehicle, tax, permit, PUC and insurance RTO work',
     ],
   },

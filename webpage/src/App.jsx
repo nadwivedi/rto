@@ -17,6 +17,7 @@ import RcVerificationSoftware from './pages/RcVerificationSoftware'
 import NationalPermitSoftware from './pages/NationalPermitSoftware'
 import DrivingLicenceSoftware from './pages/DrivingLicenceSoftware'
 import LearningLicenceSoftware from './pages/LearningLicenceSoftware'
+import DrivingLicenceManagementSystem from './pages/DrivingLicenceManagementSystem'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 
@@ -41,6 +42,7 @@ export default function App() {
           <Route path="national-permit-renewal-reminder-software" element={<NationalPermitSoftware />} />
           <Route path="driving-licence-software" element={<DrivingLicenceSoftware />} />
           <Route path="learning-licence-software" element={<LearningLicenceSoftware />} />
+          <Route path="driving-licence-management-system" element={<DrivingLicenceManagementSystem />} />
           <Route path="sitemap" element={<Sitemap />} />
           <Route path="blog" element={<Blog />} />
           <Route path="blog/:slug" element={<BlogPost />} />

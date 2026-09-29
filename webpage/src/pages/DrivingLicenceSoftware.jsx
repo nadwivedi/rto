@@ -74,6 +74,7 @@ export default function DrivingLicenceSoftware() {
       }}
       related={[
         { to: '/learning-licence-software', label: 'Learning licence software' },
+        { to: '/driving-licence-management-system', label: 'Driving licence management system' },
         { to: '/rto-management-software', label: 'RTO management software' },
         { to: '/driving-school-software', label: 'Driving school software' },
       ]}
