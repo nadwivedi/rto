@@ -33,7 +33,19 @@ const PRODUCT_PAGES = {
   [RC_VERIFICATION_PATH]: { name: 'RC Verification Software', faqs: rcVerificationFaqs },
   [NATIONAL_PERMIT_PATH]: { name: 'National Permit Renewal Reminder Software', faqs: nationalPermitFaqs },
   [DRIVING_LICENCE_PATH]: { name: 'Driving Licence Software', faqs: drivingLicenceFaqs },
-  [LEARNING_LICENCE_PATH]: { name: 'Learning Licence Software', faqs: learningLicenceFaqs },
+  [LEARNING_LICENCE_PATH]: {
+    name: 'Learning Licence Software',
+    faqs: learningLicenceFaqs,
+    alternateName: ['Learner Licence Software', 'LL DL Software for RTO Agents'],
+    features: [
+      'Automatic WhatsApp message 30 days after learning licence for DL eligibility',
+      'Learning licence expiry dashboard',
+      'Pending balance and profit tracking',
+      'Learning licence to driving licence in one record',
+      'Aadhaar, photo and signature document storage',
+      'Vehicle, tax, permit, PUC and insurance RTO work',
+    ],
+  },
 }
 
 function upsertMeta(attr, key, content) {
@@ -79,11 +91,13 @@ function removeJsonLd(id) {
   if (el) el.remove()
 }
 
-function getSoftwareJsonLd(name, description, url) {
+function getSoftwareJsonLd(name, description, url, { alternateName, features } = {}) {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name,
+    ...(alternateName && { alternateName }),
+    ...(features && { featureList: features }),
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     description,
@@ -178,7 +192,7 @@ export default function Seo() {
 
     const product = PRODUCT_PAGES[pathname]
     if (product) {
-      upsertJsonLd('software', getSoftwareJsonLd(`RTO Sarthi - ${product.name}`, seo.description, url))
+      upsertJsonLd('software', getSoftwareJsonLd(`RTO Sarthi - ${product.name}`, seo.description, url, product))
     } else {
       removeJsonLd('software')
     }

@@ -73,6 +73,7 @@ export default function DrivingLicenceSoftware() {
         items: ['RTO agents and consultants', 'Driving licence consultants', 'Driving schools doing LL / DL paperwork', 'Multi-agent RTO offices', 'CSC and online service centers', 'Sub-agents working with RTO agents'],
       }}
       related={[
+        { to: '/learning-licence-software', label: 'Learning licence software' },
         { to: '/rto-management-software', label: 'RTO management software' },
         { to: '/driving-school-software', label: 'Driving school software' },
       ]}
