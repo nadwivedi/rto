@@ -21,6 +21,7 @@ const pages = [
   { to: '/driving-school-management-system', label: 'Driving School Management System', desc: 'Connected system from admission to DL with fee instalments, automatic WhatsApp follow-ups and LL expiry dashboard' },
   { to: '/best-driving-school-software-india', label: 'Best Driving School Software India', desc: 'Buyer guide: what the best driving school software in India needs, and how RTO Sarthi covers it' },
   { to: '/driving-school-crm', label: 'Driving School CRM', desc: 'Student records, automatic WhatsApp follow-ups, referral sources, fee dues and repeat RTO work' },
+  { to: '/rto-agent-crm-software', label: 'RTO Agent CRM Software', desc: 'Client & vehicle CRM for RTO agents with WhatsApp expiry reminders, pending balance and LL / DL clients' },
   { to: '/document-expiry-reminder-software', label: 'Document Expiry Reminder Software', desc: 'Automatic WhatsApp reminders for every type of document with an expiry date' },
   { to: '/puc-agent-software', label: 'PUC Agent Software', desc: 'Bulk Excel upload, PDF auto-entry, WhatsApp PUC reminders & complete RTO/insurance management' },
   { to: '/about', label: 'About', desc: 'About RTO Sarthi and SoftwareBytes, Raipur' },

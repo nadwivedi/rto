@@ -80,6 +80,7 @@ export default function DrivingSchoolCrm() {
         { to: '/driving-school-management-system', label: 'Driving school management system' },
         { to: '/best-driving-school-software-india', label: 'Best driving school software India' },
         { to: '/learning-licence-software', label: 'Learning licence software' },
+        { to: '/rto-agent-crm-software', label: 'RTO agent CRM software' },
       ]}
       faq={{
         title: 'Driving school CRM — FAQ',

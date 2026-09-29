@@ -16,6 +16,7 @@ import { drivingSchoolManagementFaqs, DRIVING_SCHOOL_MANAGEMENT_PATH } from '../
 import { drivingSchoolSystemFaqs, DRIVING_SCHOOL_SYSTEM_PATH } from '../data/drivingSchoolSystem'
 import { bestDrivingSchoolFaqs, BEST_DRIVING_SCHOOL_PATH } from '../data/bestDrivingSchool'
 import { drivingSchoolCrmFaqs, DRIVING_SCHOOL_CRM_PATH } from '../data/drivingSchoolCrm'
+import { rtoAgentCrmFaqs, RTO_AGENT_CRM_PATH } from '../data/rtoAgentCrm'
 import {
   SITE_URL,
   SITE_NAME,
@@ -118,6 +119,21 @@ const PRODUCT_PAGES = {
       'Referral source tracking',
       'Pending fee follow-up',
       'WhatsApp renewal reminders for tax, fitness, permit, insurance and PUC',
+    ],
+  },
+  [RTO_AGENT_CRM_PATH]: {
+    name: 'RTO Agent CRM Software',
+    faqs: rtoAgentCrmFaqs,
+    alternateName: ['CRM for RTO Agents', 'RTO CRM Software'],
+    features: [
+      'Client and vehicle records with search by vehicle number, owner or mobile',
+      'Automatic WhatsApp reminders for tax, fitness, permit, PUC and insurance expiry',
+      'Client payments and pending balance',
+      'Learner licence and driving licence clients with 30-day DL eligibility WhatsApp',
+      'Automatic document entry from RC, insurance and permit copies',
+      'Bulk Excel import for PUC and insurance records',
+      'Dashboard analytics',
+      'Multi-agent access for RTO agents, insurance agents and PUC centers',
     ],
   },
 }
