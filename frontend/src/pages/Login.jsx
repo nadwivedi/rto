@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { Mail, Lock, User, ShieldCheck, ArrowRight, Loader2 } from 'lucide-react'
+import { Mail, Lock, User, ShieldCheck, ArrowRight, Loader2, Download, Smartphone } from 'lucide-react'
 import axios from 'axios'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
@@ -17,11 +17,58 @@ const Login = () => {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  // PWA Install State
+  const [deferredPrompt, setDeferredPrompt] = useState(null)
+  const [showInstallBtn, setShowInstallBtn] = useState(false)
+  const [isInstalled, setIsInstalled] = useState(false)
+  const [installDismissed, setInstallDismissed] = useState(false)
+
   useEffect(() => {
     if (!authLoading && isAuthenticated) {
       navigate('/')
     }
   }, [isAuthenticated, authLoading, navigate])
+
+  // Check if app is already installed (standalone mode)
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone) {
+      setIsInstalled(true)
+    }
+  }, [])
+
+  // Capture the beforeinstallprompt event
+  useEffect(() => {
+    const handler = (e) => {
+      e.preventDefault()
+      setDeferredPrompt(e)
+      setShowInstallBtn(true)
+    }
+
+    window.addEventListener('beforeinstallprompt', handler)
+
+    // Listen for successful install
+    const installedHandler = () => {
+      setIsInstalled(true)
+      setShowInstallBtn(false)
+      setDeferredPrompt(null)
+    }
+    window.addEventListener('appinstalled', installedHandler)
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handler)
+      window.removeEventListener('appinstalled', installedHandler)
+    }
+  }, [])
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    if (outcome === 'accepted') {
+      setShowInstallBtn(false)
+    }
+    setDeferredPrompt(null)
+  }
 
   const handleChange = (e) => {
     setFormData({
@@ -208,6 +255,38 @@ const Login = () => {
             </a>
           </div>
         </div>
+
+        {/* PWA Install Banner */}
+        {showInstallBtn && !installDismissed && !isInstalled && (
+          <div className='mt-4 w-full animate-in fade-in slide-in-from-bottom-2 duration-500'>
+            <div className='bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-4 shadow-xl shadow-blue-600/20 border border-blue-500/30'>
+              <div className='flex items-center gap-3'>
+                <div className='bg-white/20 backdrop-blur-sm rounded-xl p-2.5 flex-shrink-0'>
+                  <Smartphone className='w-5 h-5 text-white' />
+                </div>
+                <div className='flex-1 min-w-0'>
+                  <p className='text-white font-bold text-sm leading-tight'>Install RTO Sarthi</p>
+                  <p className='text-blue-100 text-[10px] mt-0.5 leading-tight'>Get quick access from your home screen</p>
+                </div>
+                <button
+                  onClick={handleInstallClick}
+                  id='pwa-install-btn'
+                  className='bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-50 transition-all duration-200 active:scale-95 flex items-center gap-1.5 flex-shrink-0 shadow-lg'
+                >
+                  <Download className='w-3.5 h-3.5' />
+                  Install
+                </button>
+                <button
+                  onClick={() => setInstallDismissed(true)}
+                  className='text-white/60 hover:text-white transition-colors p-1 flex-shrink-0'
+                  aria-label='Dismiss install prompt'
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
