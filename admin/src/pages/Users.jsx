@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://app.rtosarthi.com'
@@ -21,6 +21,24 @@ const formatDate = (value) => {
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
   return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+}
+
+const formatTime = (value) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+}
+
+const getDaysAgo = (value) => {
+  if (!value) return ''
+  const days = Math.floor((new Date() - new Date(value)) / (1000 * 60 * 60 * 24))
+  if (Number.isNaN(days)) return ''
+  if (days <= 0) return 'Today'
+  if (days === 1) return 'Yesterday'
+  if (days < 30) return `${days}d ago`
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`
+  return `${Math.floor(days / 365)}y ago`
 }
 
 const getDaysLeft = (expiryDate) => {
@@ -74,6 +92,7 @@ const Users = () => {
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [stateFilter, setStateFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('default')
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 })
   const [stateCounts, setStateCounts] = useState([])
   const [showModal, setShowModal] = useState(false)
@@ -169,6 +188,12 @@ const Users = () => {
     fetchStats()
     fetchStateCounts()
   }, [fetchUsers, fetchStats, fetchStateCounts])
+
+  const sortedUsers = useMemo(() => {
+    if (sortBy === 'default') return users
+    const time = (u) => new Date(u.createdAt).getTime() || 0
+    return [...users].sort((a, b) => sortBy === 'newest' ? time(b) - time(a) : time(a) - time(b))
+  }, [users, sortBy])
 
   const copyToClipboard = (userId) => {
     navigator.clipboard.writeText(userId)
@@ -415,6 +440,66 @@ const Users = () => {
     }
   }
 
+  const renderActions = (user) => (
+    <div className='flex items-center justify-end gap-0.5'>
+      <button
+        onClick={() => handleToggleActive(user)}
+        disabled={togglingId === user._id}
+        className={`p-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer ${
+          user.isActive ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'
+        }`}
+        title={user.isActive ? 'Deactivate user' : 'Activate user'}
+      >
+        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' />
+        </svg>
+      </button>
+      <button
+        onClick={() => handleAccess(user)}
+        disabled={accessingId === user._id}
+        className='p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer'
+        title='Access as user'
+      >
+        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
+        </svg>
+      </button>
+      <button
+        onClick={() => handleEdit(user)}
+        className='p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
+        title='Edit user'
+      >
+        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
+        </svg>
+      </button>
+      <button
+        onClick={() => handleDelete(user._id)}
+        className='p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors cursor-pointer'
+        title='Delete user'
+      >
+        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+        </svg>
+      </button>
+    </div>
+  )
+
+  const renderRcBadge = (user) => {
+    if (!user.features?.rcDetails) return null
+    const left = Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0))
+    return (
+      <span
+        className={`inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+          left <= 0 ? 'bg-rose-50 text-rose-700' : 'bg-indigo-50 text-indigo-700'
+        }`}
+        title={`${user.rcSearchCount || 0} searches done`}
+      >
+        RC {left}/{user.rcSearchLimit || 0} left
+      </span>
+    )
+  }
+
   return (
     <div>
       {/* Header */}
@@ -492,6 +577,15 @@ const Users = () => {
               <option key={state} value={state}>{`${state}  (${count})`}</option>
             ))}
           </select>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className='px-3 py-2 text-sm font-semibold rounded-lg border border-gray-200 bg-gray-50 text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+          >
+            <option value='default'>Sort: Default</option>
+            <option value='newest'>Joined: Newest first</option>
+            <option value='oldest'>Joined: Oldest first</option>
+          </select>
         </div>
       </div>
 
@@ -540,152 +634,102 @@ const Users = () => {
             <div className='hidden md:block overflow-x-auto'>
               <table className='w-full'>
                 <thead>
-                  <tr className='border-b border-gray-100 bg-gray-50/50'>
-                    <th className='px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>User</th>
-                    <th className='px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Contact</th>
-                    <th className='px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>State</th>
-                    <th className='px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Status</th>
-                    <th className='px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Subscription</th>
-                    <th className='px-5 py-3.5 text-left text-xs font-bold text-gray-500 uppercase tracking-wider'>Last Active</th>
-                    <th className='px-5 py-3.5 text-right text-xs font-bold text-gray-500 uppercase tracking-wider'>Actions</th>
+                  <tr className='border-b border-gray-100 bg-gray-50/60'>
+                    <th className='px-4 py-2.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider'>User</th>
+                    <th className='px-4 py-2.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider'>Location</th>
+                    <th className='px-4 py-2.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider'>Subscription</th>
+                    <th className='px-4 py-2.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider'>Joined</th>
+                    <th className='px-4 py-2.5 text-left text-[11px] font-semibold text-gray-500 uppercase tracking-wider'>Last Active</th>
+                    <th className='px-4 py-2.5 text-right text-[11px] font-semibold text-gray-500 uppercase tracking-wider'>Actions</th>
                   </tr>
                 </thead>
-                <tbody className='divide-y divide-gray-50'>
-                  {users.map((user) => {
+                <tbody className='divide-y divide-gray-100'>
+                  {sortedUsers.map((user) => {
                     const days = getDaysLeft(user.subscriptionExpiresAt)
                     return (
-                      <tr key={user._id} className='hover:bg-indigo-50/30 transition-colors'>
-                        <td className='px-5 py-3.5'>
-                          <div className='flex items-center gap-3'>
-                            <div className='w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm font-bold flex-shrink-0'>
-                              {user.name.charAt(0).toUpperCase()}
+                      <tr key={user._id} className='hover:bg-gray-50/80 transition-colors align-top'>
+                        <td className='px-4 py-3'>
+                          <div className='flex items-start gap-2.5 min-w-0'>
+                            <div className='relative flex-shrink-0'>
+                              <div className='w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold'>
+                                {user.name.charAt(0).toUpperCase()}
+                              </div>
+                              <span
+                                className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-white ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`}
+                                title={user.isActive ? 'Active' : 'Inactive'}
+                              ></span>
                             </div>
-                            <div>
-                              <div className='text-sm font-semibold text-gray-900'>{user.name}</div>
+                            <div className='min-w-0'>
+                              <div className='flex items-center gap-1.5'>
+                                <span className='text-[13px] font-semibold text-gray-900 truncate max-w-[180px]' title={user.name}>{user.name}</span>
+                                {!user.isActive && (
+                                  <span className='text-[9px] font-bold uppercase text-red-600 bg-red-50 px-1 rounded'>Inactive</span>
+                                )}
+                              </div>
+                              <div className='text-xs text-gray-600 mt-0.5'>
+                                {user.mobile1}
+                                {user.mobile2 && <span className='text-gray-400'> · {user.mobile2}</span>}
+                              </div>
+                              {user.email && (
+                                <div className='text-xs text-gray-400 truncate max-w-[220px]' title={user.email}>{user.email}</div>
+                              )}
                               <button
                                 onClick={() => copyToClipboard(user._id)}
-                                className='group flex items-center gap-1 mt-0.5'
+                                className='group flex items-center gap-1 mt-0.5 cursor-pointer'
+                                title='Copy user ID'
                               >
-                                <span className='text-[10px] text-gray-400 font-mono group-hover:text-indigo-600 transition-colors'>
-                                  {user._id.slice(-8)}
+                                <span className='text-[10px] text-gray-300 font-mono group-hover:text-indigo-600 transition-colors'>
+                                  #{user._id.slice(-8)}
                                 </span>
-                                {copiedId === user._id ? (
+                                {copiedId === user._id && (
                                   <svg className='w-3 h-3 text-green-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
-                                  </svg>
-                                ) : (
-                                  <svg className='w-3 h-3 text-gray-300 group-hover:text-indigo-500 transition-colors' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z' />
                                   </svg>
                                 )}
                               </button>
                             </div>
                           </div>
                         </td>
-                        <td className='px-5 py-3.5'>
-                          <div className='text-sm font-medium text-gray-800'>{user.mobile1}</div>
-                          <div className='text-xs text-gray-400'>{user.email || '-'}</div>
+                        <td className='px-4 py-3'>
+                          <div className='text-xs text-gray-700'>{user.state || '-'}</div>
+                          <div className='text-[11px] text-gray-400'>{user.rto || '-'}</div>
+                          {renderRcBadge(user)}
                         </td>
-                        <td className='px-5 py-3.5'>
-                          <div className='text-sm text-gray-700'>{user.state || '-'}</div>
-                          <div className='text-xs text-gray-400'>{user.rto || '-'}</div>
-                          {user.features?.rcDetails && (
-                            <div className='mt-1'>
-                              <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full ${
-                                Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0)) <= 0
-                                  ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                                  : 'bg-indigo-50 text-indigo-700 border border-indigo-200'
-                              }`}>
-                                🔍 RC: {Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0))} left / {user.rcSearchLimit || 0} ({user.rcSearchCount || 0} done)
-                              </span>
-                            </div>
-                          )}
-                        </td>
-                        <td className='px-5 py-3.5'>
-                          <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${
-                            user.isActive
-                              ? 'bg-green-50 text-green-700 border border-green-200'
-                              : 'bg-red-50 text-red-700 border border-red-200'
-                          }`}>
-                            <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                            {user.isActive ? 'Active' : 'Inactive'}
-                          </span>
-                        </td>
-                        <td className='px-5 py-3.5'>
-                          <div className='text-xs text-gray-700'>
-                            {formatDate(user.subscriptionExpiresAt)}
-                          </div>
-                          {user.yearlyPrice != null && (
-                            <div className='text-xs text-gray-500'>
-                              ₹{user.yearlyPrice}/yr
-                              {user.monthlyPrice != null && <span> (₹{user.monthlyPrice}/mo)</span>}
-                            </div>
-                          )}
+                        <td className='px-4 py-3'>
+                          <div className='text-xs text-gray-700'>{formatDate(user.subscriptionExpiresAt)}</div>
                           {days !== null && (
-                            <span className={`inline-block text-[10px] font-semibold mt-0.5 ${
+                            <div className={`text-[11px] font-semibold ${
                               days <= 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-emerald-600'
                             }`}>
                               {days <= 0 ? 'Expired' : `${days} days left`}
-                            </span>
+                            </div>
+                          )}
+                          {user.yearlyPrice != null && (
+                            <div className='text-[11px] text-gray-400'>
+                              ₹{user.yearlyPrice}/yr
+                              {user.monthlyPrice != null && <span> · ₹{user.monthlyPrice}/mo</span>}
+                            </div>
                           )}
                         </td>
-                        <td className='px-5 py-3.5'>
-                          <div className='text-xs space-y-1'>
-                            <div className={user.lastLogin ? 'text-gray-600' : 'text-gray-300'}>
-                              <span className='text-gray-400'>Login:</span>{' '}
-                              <span className='font-medium'>{formatDateTime(user.lastLogin)}</span>
-                            </div>
-                            <div className={user.lastActivity ? 'text-gray-600' : 'text-gray-300'}>
-                              <span className='text-gray-400'>Activity:</span>{' '}
-                              <span className='font-medium'>{formatDateTime(user.lastActivity)}</span>
-                            </div>
+                        <td className='px-4 py-3 whitespace-nowrap'>
+                          <div className='text-xs text-gray-700'>{formatDate(user.createdAt)}</div>
+                          <div className='text-[11px] text-gray-400'>
+                            {formatTime(user.createdAt)}
+                            {user.createdAt && <span> · {getDaysAgo(user.createdAt)}</span>}
                           </div>
                         </td>
-                        <td className='px-5 py-3.5'>
-                          <div className='flex items-center justify-end gap-1.5'>
-                            <button
-                              onClick={() => handleToggleActive(user)}
-                              disabled={togglingId === user._id}
-                              className={`p-2 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer ${
-                                user.isActive
-                                  ? 'text-red-500 hover:bg-red-50'
-                                  : 'text-emerald-600 hover:bg-emerald-50'
-                              }`}
-                              title={user.isActive ? 'Deactivate user' : 'Activate user'}
-                            >
-                              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleAccess(user)}
-                              disabled={accessingId === user._id}
-                              className='p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer'
-                              title='Access as user'
-                            >
-                              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleEdit(user)}
-                              className='p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer'
-                              title='Edit user'
-                            >
-                              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
-                              </svg>
-                            </button>
-                            <button
-                              onClick={() => handleDelete(user._id)}
-                              className='p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer'
-                              title='Delete user'
-                            >
-                              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
-                              </svg>
-                            </button>
+                        <td className='px-4 py-3 whitespace-nowrap'>
+                          <div className='text-[11px] leading-5'>
+                            <span className='text-gray-400'>Login </span>
+                            <span className={user.lastLogin ? 'text-gray-700' : 'text-gray-300'}>{formatDateTime(user.lastLogin)}</span>
                           </div>
+                          <div className='text-[11px] leading-5'>
+                            <span className='text-gray-400'>Activity </span>
+                            <span className={user.lastActivity ? 'text-gray-700' : 'text-gray-300'}>{formatDateTime(user.lastActivity)}</span>
+                          </div>
+                        </td>
+                        <td className='px-4 py-3'>
+                          {renderActions(user)}
                         </td>
                       </tr>
                     )
@@ -696,109 +740,60 @@ const Users = () => {
 
             {/* Mobile Card View */}
             <div className='md:hidden divide-y divide-gray-100'>
-              {users.map((user) => {
+              {sortedUsers.map((user) => {
                 const days = getDaysLeft(user.subscriptionExpiresAt)
                 return (
-                  <div key={user._id} className='p-4 hover:bg-indigo-50/30 transition-colors'>
-                    <div className='flex items-start justify-between mb-3'>
-                      <div className='flex items-center gap-3'>
-                        <div className='w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold flex-shrink-0'>
+                  <div key={user._id} className='p-3.5'>
+                    <div className='flex items-start gap-2.5'>
+                      <div className='relative flex-shrink-0'>
+                        <div className='w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold'>
                           {user.name.charAt(0).toUpperCase()}
                         </div>
-                        <div>
-                          <div className='font-semibold text-gray-900'>{user.name}</div>
-                          <div className='text-xs text-gray-400 font-mono'>{user._id.slice(-8)}</div>
+                        <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-white ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                      </div>
+                      <div className='min-w-0 flex-1'>
+                        <div className='flex items-center gap-1.5'>
+                          <span className='text-[13px] font-semibold text-gray-900 truncate'>{user.name}</span>
+                          {!user.isActive && (
+                            <span className='text-[9px] font-bold uppercase text-red-600 bg-red-50 px-1 rounded'>Inactive</span>
+                          )}
                         </div>
+                        <div className='text-xs text-gray-600'>
+                          {user.mobile1}
+                          {user.mobile2 && <span className='text-gray-400'> · {user.mobile2}</span>}
+                        </div>
+                        {user.email && <div className='text-xs text-gray-400 truncate'>{user.email}</div>}
                       </div>
-                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold ${
-                        user.isActive
-                          ? 'bg-green-50 text-green-700 border border-green-200'
-                          : 'bg-red-50 text-red-700 border border-red-200'
-                      }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                        {user.isActive ? 'Active' : 'Inactive'}
-                      </span>
+                      {renderActions(user)}
                     </div>
-                    <div className='grid grid-cols-2 gap-2 mb-3 text-xs'>
+
+                    <div className='grid grid-cols-2 gap-x-3 gap-y-2 mt-3 text-[11px]'>
                       <div>
-                        <span className='text-gray-400'>Mobile</span>
-                        <div className='font-medium text-gray-700'>{user.mobile1}</div>
+                        <div className='text-gray-400'>Location</div>
+                        <div className='text-gray-700'>{user.state || '-'}{user.rto && <span className='text-gray-400'> · {user.rto}</span>}</div>
+                        {renderRcBadge(user)}
                       </div>
                       <div>
-                        <span className='text-gray-400'>Email</span>
-                        <div className='font-medium text-gray-700 truncate'>{user.email || '-'}</div>
+                        <div className='text-gray-400'>Joined</div>
+                        <div className='text-gray-700'>{formatDate(user.createdAt)} <span className='text-gray-400'>{formatTime(user.createdAt)}</span></div>
                       </div>
                       <div>
-                        <span className='text-gray-400'>State</span>
-                        <div className='font-medium text-gray-700'>{user.state || '-'}</div>
-                      </div>
-                      <div>
-                        <span className='text-gray-400'>Sub Expires</span>
-                        <div className='font-medium text-gray-700'>
+                        <div className='text-gray-400'>Subscription</div>
+                        <div className='text-gray-700'>
                           {formatDate(user.subscriptionExpiresAt)}
+                          {days !== null && (
+                            <span className={`ml-1 font-semibold ${days <= 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-emerald-600'}`}>
+                              {days <= 0 ? 'Expired' : `${days}d`}
+                            </span>
+                          )}
                         </div>
                         {user.yearlyPrice != null && (
-                          <div className='text-gray-500'>
-                            ₹{user.yearlyPrice}/yr
-                            {user.monthlyPrice != null && <span> (₹{user.monthlyPrice}/mo)</span>}
-                          </div>
+                          <div className='text-gray-400'>₹{user.yearlyPrice}/yr{user.monthlyPrice != null && ` · ₹${user.monthlyPrice}/mo`}</div>
                         )}
                       </div>
                       <div>
-                        <span className='text-gray-400'>Days Left</span>
-                        <div className={`font-medium ${days === null ? 'text-gray-400' : days <= 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-emerald-600'}`}>
-                          {days === null ? '-' : days <= 0 ? 'Expired' : `${days}d`}
-                        </div>
-                      </div>
-                    </div>
-                      <div className='flex items-center justify-between pt-2 border-t border-gray-100'>
-                      <div className='text-[10px] text-gray-400'>
-                        Login: {formatDateTime(user.lastLogin)}{' '}
-                        | Activity: {formatDateTime(user.lastActivity)}
-                      </div>
-                      <div className='flex gap-1'>
-                        <button
-                          onClick={() => handleToggleActive(user)}
-                          disabled={togglingId === user._id}
-                          className={`p-1.5 rounded-lg transition-colors disabled:opacity-40 cursor-pointer ${
-                            user.isActive
-                              ? 'text-red-500 hover:bg-red-50'
-                              : 'text-emerald-600 hover:bg-emerald-50'
-                          }`}
-                          title={user.isActive ? 'Deactivate user' : 'Activate user'}
-                        >
-                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleAccess(user)}
-                          disabled={accessingId === user._id}
-                          className='p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors disabled:opacity-40 cursor-pointer'
-                          title='Access as user'
-                        >
-                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleEdit(user)}
-                          className='p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer'
-                          title='Edit user'
-                        >
-                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(user._id)}
-                          className='p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer'
-                          title='Delete user'
-                        >
-                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
-                          </svg>
-                        </button>
+                        <div className='text-gray-400'>Last Active</div>
+                        <div className='text-gray-700'>{formatDateTime(user.lastActivity || user.lastLogin)}</div>
                       </div>
                     </div>
                   </div>
