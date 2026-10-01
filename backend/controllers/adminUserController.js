@@ -99,7 +99,7 @@ exports.getUserById = async (req, res) => {
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, rcSearchLimit, planType } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, lifetimeFee, rcSearchLimit, planType } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -217,6 +217,8 @@ exports.createUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
 
+    const isLifetimePlan = planType === 'lifetime'
+
     // Create new user
     const newUser = new User({
       name: name.trim(),
@@ -230,9 +232,11 @@ exports.createUser = async (req, res) => {
       billDescription: billDescription && billDescription.trim() ? billDescription.trim() : undefined,
       password: hashedPassword,
       isActive: true,
-      planType: planType === 'lifetime' ? 'lifetime' : 'yearly',
-      monthlyPrice: monthlyPrice !== undefined && !Number.isNaN(Number(monthlyPrice)) ? Number(monthlyPrice) : undefined,
-      yearlyPrice: yearlyPrice !== undefined && !Number.isNaN(Number(yearlyPrice)) ? Number(yearlyPrice) : undefined,
+      planType: isLifetimePlan ? 'lifetime' : 'yearly',
+      // A lifetime plan has no recurring price, and a yearly plan has no lifetime fee
+      monthlyPrice: !isLifetimePlan && monthlyPrice !== undefined && !Number.isNaN(Number(monthlyPrice)) ? Number(monthlyPrice) : undefined,
+      yearlyPrice: !isLifetimePlan && yearlyPrice !== undefined && !Number.isNaN(Number(yearlyPrice)) ? Number(yearlyPrice) : undefined,
+      lifetimeFee: isLifetimePlan && lifetimeFee !== undefined && !Number.isNaN(Number(lifetimeFee)) ? Number(lifetimeFee) : undefined,
       features: features ? {
         greenTax: features.greenTax === true,
         professionalTax: features.professionalTax === true,
@@ -264,6 +268,7 @@ exports.createUser = async (req, res) => {
       planType: newUser.planType,
       monthlyPrice: newUser.monthlyPrice,
       yearlyPrice: newUser.yearlyPrice,
+      lifetimeFee: newUser.lifetimeFee,
       createdAt: newUser.createdAt
     }
 
@@ -288,7 +293,7 @@ exports.createUser = async (req, res) => {
 // Update user
 exports.updateUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, monthlyPrice, yearlyPrice, features, rcSearchLimit, rcSearchCount } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, monthlyPrice, yearlyPrice, lifetimeFee, features, rcSearchLimit, rcSearchCount } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -396,17 +401,30 @@ exports.updateUser = async (req, res) => {
         user.subscriptionExpiresAt = d
       }
     }
-    if (monthlyPrice !== undefined) {
-      const price = Number(monthlyPrice)
-      if (!Number.isNaN(price) && price >= 0) {
-        user.monthlyPrice = price
+    if (user.planType === 'lifetime') {
+      // One-time fee only - drop any recurring price left over from a yearly plan
+      if (lifetimeFee !== undefined) {
+        const fee = Number(lifetimeFee)
+        if (!Number.isNaN(fee) && fee >= 0) {
+          user.lifetimeFee = fee
+        }
       }
-    }
-    if (yearlyPrice !== undefined) {
-      const price = Number(yearlyPrice)
-      if (!Number.isNaN(price) && price >= 0) {
-        user.yearlyPrice = price
+      user.monthlyPrice = undefined
+      user.yearlyPrice = undefined
+    } else {
+      if (monthlyPrice !== undefined) {
+        const price = Number(monthlyPrice)
+        if (!Number.isNaN(price) && price >= 0) {
+          user.monthlyPrice = price
+        }
       }
+      if (yearlyPrice !== undefined) {
+        const price = Number(yearlyPrice)
+        if (!Number.isNaN(price) && price >= 0) {
+          user.yearlyPrice = price
+        }
+      }
+      user.lifetimeFee = undefined
     }
     if (password !== undefined && password.trim()) {
       if (password.length < 4) {
@@ -444,7 +462,8 @@ exports.updateUser = async (req, res) => {
         planType: user.planType,
         subscriptionExpiresAt: user.subscriptionExpiresAt,
         monthlyPrice: user.monthlyPrice,
-        yearlyPrice: user.yearlyPrice
+        yearlyPrice: user.yearlyPrice,
+        lifetimeFee: user.lifetimeFee
       }
     })
   } catch (error) {
@@ -610,11 +629,18 @@ exports.getRevenueDashboard = async (req, res) => {
     const IST = 'Asia/Kolkata'
     const months = Math.min(60, Math.max(1, parseInt(req.query.months, 10) || 12))
 
-    // Plan amount per user: yearlyPrice, else monthlyPrice x 12, else 0
+    // Plan amount per user: lifetime plans use lifetimeFee, recurring plans use
+    // yearlyPrice, else monthlyPrice x 12, else 0
     const amountExpr = {
-      $ifNull: [
-        '$yearlyPrice',
-        { $cond: [{ $ifNull: ['$monthlyPrice', false] }, { $multiply: ['$monthlyPrice', 12] }, 0] }
+      $cond: [
+        { $eq: ['$planType', 'lifetime'] },
+        { $ifNull: ['$lifetimeFee', 0] },
+        {
+          $ifNull: [
+            '$yearlyPrice',
+            { $cond: [{ $ifNull: ['$monthlyPrice', false] }, { $multiply: ['$monthlyPrice', 12] }, 0] }
+          ]
+        }
       ]
     }
 

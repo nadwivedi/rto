@@ -93,7 +93,13 @@ const userSchema = new mongoose.Schema({
   subscriptionExpiresAt: {
     type: Date
   },
+  // Recurring plans use monthlyPrice/yearlyPrice; lifetime plans use lifetimeFee.
+  // Only the pair matching planType is stored - the other is cleared on save.
   monthlyPrice: {
+    type: Number,
+    min: 0
+  },
+  lifetimeFee: {
     type: Number,
     min: 0
   },

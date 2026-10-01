@@ -140,6 +140,7 @@ const Users = () => {
     subscriptionExpiresAt: '',
     monthlyPrice: '',
     yearlyPrice: '',
+    lifetimeFee: '',
     password: '',
     features_greenTax: false,
     features_professionalTax: false,
@@ -311,7 +312,12 @@ const Users = () => {
       delete bodyData.features_forms
       bodyData.rcSearchLimit = formData.rcSearchLimit !== '' ? Number(formData.rcSearchLimit) : 0
       if (formData.planType === 'lifetime') {
+        // Lifetime: one-time fee only, no expiry and no recurring price
         delete bodyData.subscriptionExpiresAt
+        delete bodyData.monthlyPrice
+        delete bodyData.yearlyPrice
+      } else {
+        delete bodyData.lifetimeFee
       }
       if (isEditMode && !formData.password) {
         delete bodyData.password
@@ -331,7 +337,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, rcSearchLimit: 0, rcSearchCount: 0 })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, rcSearchLimit: 0, rcSearchCount: 0 })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -359,6 +365,7 @@ const Users = () => {
       subscriptionExpiresAt: toDateInputValue(user.subscriptionExpiresAt),
       monthlyPrice: user.monthlyPrice ?? '',
       yearlyPrice: user.yearlyPrice ?? '',
+      lifetimeFee: user.lifetimeFee ?? '',
       password: '',
       features_greenTax: user.features?.greenTax ?? false,
       features_professionalTax: user.features?.professionalTax ?? false,
@@ -379,7 +386,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, rcSearchLimit: 0, rcSearchCount: 0 })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, rcSearchLimit: 0, rcSearchCount: 0 })
   }
 
   const handleToggleActive = async (user) => {
@@ -498,6 +505,21 @@ const Users = () => {
       </span>
     )
   )
+
+  // Lifetime plans show their one-time fee; recurring plans show yearly/monthly
+  const renderPlanPrice = (user, className) => {
+    if (isLifetime(user)) {
+      return user.lifetimeFee != null ? (
+        <div className={className}>₹{user.lifetimeFee} one-time</div>
+      ) : null
+    }
+    return user.yearlyPrice != null ? (
+      <div className={className}>
+        ₹{user.yearlyPrice}/yr
+        {user.monthlyPrice != null && <span> · ₹{user.monthlyPrice}/mo</span>}
+      </div>
+    ) : null
+  }
 
   const renderRcBadge = (user) => {
     if (!user.features?.rcDetails) return null
@@ -725,12 +747,7 @@ const Users = () => {
                               )}
                             </>
                           )}
-                          {user.yearlyPrice != null && (
-                            <div className='text-[11px] text-gray-400'>
-                              ₹{user.yearlyPrice}/yr
-                              {user.monthlyPrice != null && <span> · ₹{user.monthlyPrice}/mo</span>}
-                            </div>
-                          )}
+                          {renderPlanPrice(user, 'text-[11px] text-gray-400')}
                         </td>
                         <td className='px-4 py-3 whitespace-nowrap'>
                           <div className='text-xs text-gray-700'>{formatDate(user.createdAt)}</div>
@@ -813,9 +830,7 @@ const Users = () => {
                             )}
                           </div>
                         )}
-                        {user.yearlyPrice != null && (
-                          <div className='text-gray-400'>₹{user.yearlyPrice}/yr{user.monthlyPrice != null && ` · ₹${user.monthlyPrice}/mo`}</div>
-                        )}
+                        {renderPlanPrice(user, 'text-gray-400')}
                       </div>
                       <div>
                         <div className='text-gray-400'>Last Active</div>
@@ -1054,6 +1069,28 @@ const Users = () => {
                 </div>
               </div>
 
+              {formData.planType === 'lifetime' ? (
+                <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                  <div>
+                    <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                      Lifetime Fee (₹)
+                    </label>
+                    <input
+                      type='number'
+                      name='lifetimeFee'
+                      value={formData.lifetimeFee}
+                      onChange={handleChange}
+                      placeholder='0'
+                      min='0'
+                      step='0.01'
+                      className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                    />
+                    <p className='text-[11px] text-gray-400 mt-1'>
+                      One-time charge. Monthly and yearly price are not used for lifetime plans.
+                    </p>
+                  </div>
+                </div>
+              ) : (
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                 <div>
                   <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
@@ -1087,6 +1124,7 @@ const Users = () => {
                   <p className='text-[11px] text-gray-400 mt-1'>Auto-calculated from monthly price (× 12) — editable, updates monthly price too.</p>
                 </div>
               </div>
+              )}
 
               <div className='border-t border-gray-200 pt-3'>
                 <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-2'>

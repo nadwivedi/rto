@@ -188,7 +188,7 @@ const Dashboard = () => {
               value={formatRupees(totals?.totalRevenue)}
               sub={`All time · ${totals?.totalUsers || 0} users`}
               accent='text-emerald-700'
-              hint="Sum of every user's plan price (yearly price, or monthly × 12)."
+              hint="Sum of every user's plan value: lifetime fee for lifetime plans, else yearly price (or monthly × 12)."
             />
             <StatTile
               label='Active Run Rate'
@@ -221,8 +221,9 @@ const Dashboard = () => {
               <span className='shrink-0'>⚠️</span>
               <span>
                 <strong>{totals.unpricedUsers}</strong> user
-                {totals.unpricedUsers > 1 ? 's have' : ' has'} no plan price set, so they count as
-                ₹0 here. Set a Yearly or Monthly Price on them in Manage Users for accurate revenue.
+                {totals.unpricedUsers > 1 ? 's have' : ' has'} no price set, so they count as ₹0
+                here — set a Lifetime Fee (lifetime plans) or Yearly/Monthly Price (yearly plans) on
+                them in Manage Users for accurate revenue.
               </span>
             </div>
           )}
@@ -233,7 +234,7 @@ const Dashboard = () => {
               <div>
                 <h2 className='text-sm font-bold text-gray-800'>Revenue by month</h2>
                 <p className='text-[11px] text-gray-500 mt-0.5'>
-                  Each user&apos;s plan price counted in the month they joined
+                  Each user&apos;s plan value counted in the month they joined
                 </p>
               </div>
               <div className='text-right'>
@@ -492,9 +493,10 @@ const Dashboard = () => {
           </div>
 
           <p className='text-[11px] text-gray-400 mt-4 leading-relaxed'>
-            Revenue counts each user&apos;s plan price once, in the month their account was created
-            (yearly price, or monthly price × 12 when no yearly price is set). Renewals are not
-            tracked separately, so this is new-business revenue per month, not cash collected.
+            Revenue counts each user&apos;s plan value once, in the month their account was created:
+            the one-time Lifetime Fee for lifetime plans, otherwise the yearly price (or monthly price
+            × 12 when no yearly price is set). Renewals are not tracked separately, so this is
+            new-business revenue per month, not cash collected.
             Months are bucketed in India time ({IST}).
           </p>
         </>
