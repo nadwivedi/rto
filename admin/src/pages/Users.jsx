@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import RcApiUsageCard from '../components/RcApiUsageCard'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
@@ -161,6 +162,7 @@ const Users = () => {
   const [success, setSuccess] = useState('')
   const [copiedId, setCopiedId] = useState(null)
   const [accessingId, setAccessingId] = useState(null)
+  const navigate = useNavigate()
   const [togglingId, setTogglingId] = useState(null)
   const [deleteTarget, setDeleteTarget] = useState(null)
   const [deletePassword, setDeletePassword] = useState('')
@@ -535,6 +537,15 @@ const Users = () => {
       >
         <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
+        </svg>
+      </button>
+      <button
+        onClick={() => navigate(`/api-credits?user=${user._id}`)}
+        className='p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors cursor-pointer'
+        title='Sell vehicle API calls / view API purchases'
+      >
+        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' />
         </svg>
       </button>
       <button

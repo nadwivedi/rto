@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Users from './pages/Users';
 import Dashboard from './pages/Dashboard';
+import ApiCredits from './pages/ApiCredits';
 import Blogs from './pages/Blogs';
 import VehicleRegistrations from './pages/VehicleRegistrations';
 import Export from './pages/Export';
@@ -73,6 +74,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Dashboard />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/api-credits"
+                element={
+                  <ProtectedRoute>
+                    <ApiCredits />
                   </ProtectedRoute>
                 }
               />
