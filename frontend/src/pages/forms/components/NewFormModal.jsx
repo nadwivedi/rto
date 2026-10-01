@@ -400,7 +400,7 @@ const NewFormModal = ({ onClose }) => {
                   padding: '18mm 22mm',
                   fontFamily: "'Times New Roman', Times, serif",
                   fontSize: '14px',
-                  lineHeight: '1.7',
+                  lineHeight: '1.6',
                   color: '#000'
                 }}
               >
@@ -697,20 +697,25 @@ const NewFormModal = ({ onClose }) => {
                 style={{
                   width: '210mm',
                   minHeight: '297mm',
-                  padding: '12mm 15mm',
+                  padding: '14mm 15mm',
                   fontFamily: 'Arial, Helvetica, sans-serif',
-                  fontSize: '12px',
-                  lineHeight: '1.45',
-                  color: '#000'
+                  fontSize: '12.5px',
+                  lineHeight: '1.7',
+                  color: '#000',
+                  // Flex column so the three flex-1 spacers below can spread this page over
+                  // the whole A4 sheet instead of bunching it into the top half on print.
+                  // They collapse to 0 if the content ever grows, so it can't spill to page 2.
+                  display: 'flex',
+                  flexDirection: 'column'
                 }}
               >
-                <div className="text-center mb-3">
-                  <h1 className="text-[17px] font-bold tracking-wide border-b-2 border-black inline-block pb-0.5">
+                <div className="text-center mb-6">
+                  <h1 className="text-[19px] font-bold tracking-wide border-b-2 border-black inline-block pb-1">
                     वाहन स्वामित्व हस्तांतरण से संबंधित -
                   </h1>
                 </div>
 
-                <div className="space-y-2 mb-3 text-[12px]">
+                <div className="space-y-4 mb-5 text-[12.5px]">
                   <div className="flex flex-wrap items-baseline gap-1 leading-6">
                     <span>1. मैं प्रमाणित करता हूँ कि वाहन संख्या</span>
                     <input
@@ -771,28 +776,37 @@ const NewFormModal = ({ onClose }) => {
                   </div>
                 </div>
 
-                <div className="mb-2 text-[11.5px] italic">
+                {/* Flexible spacer: absorbs leftover page height, collapses to 0 if content grows */}
+                <div className="flex-1 min-h-0" aria-hidden="true" />
+
+                <div className="mb-3 text-[12px] italic">
                   उपरोक्त कथन पूरी तरह सत्य एवं दुरुस्त है इसमें किसी भी प्रकार की गलती पाये जाने पर इसकी सारी जवाबदेही मेरी होगी तथा मुझपर कानूनी कार्रवाई की जा सकती है।
                 </div>
 
-                <div className="flex justify-end mb-3">
-                  <div className="text-right pt-4">
-                    <div className="font-bold text-[12px]">वाहन स्वामी का हस्ताक्षर</div>
+                <div className="flex justify-end mb-5">
+                  <div className="text-right pt-8">
+                    <div className="font-bold text-[12.5px]">वाहन स्वामी का हस्ताक्षर</div>
                   </div>
                 </div>
 
-                <div className="mb-1 text-[11.5px] italic">
+                {/* Flexible spacer: absorbs leftover page height, collapses to 0 if content grows */}
+                <div className="flex-1 min-h-0" aria-hidden="true" />
+
+                <div className="mb-3 text-[12px] italic">
                   वाहन मालिक का उपरोक्त कथन पूर्णतः सत्य एवं दुरुस्त है तथा मेरी जानकारी में है, मैं इससे सहमत हूँ। तथा सोच समझकर वाहन खरीदा हूँ।
                 </div>
 
-                <div className="flex justify-end mb-3">
-                  <div className="text-right pt-3">
-                    <div className="font-bold text-[12px]">वाहन क्रेता का हस्ताक्षर</div>
+                <div className="flex justify-end mb-5">
+                  <div className="text-right pt-8">
+                    <div className="font-bold text-[12.5px]">वाहन क्रेता का हस्ताक्षर</div>
                   </div>
                 </div>
 
                 {/* 2 Columns: Seller Left, Buyer Right */}
-                <div className="grid grid-cols-2 gap-3 border-t-2 border-black pt-3">
+                {/* Flexible spacer: absorbs leftover page height, collapses to 0 if content grows */}
+                <div className="flex-1 min-h-0" aria-hidden="true" />
+
+                <div className="grid grid-cols-2 gap-4 border-t-2 border-black pt-4">
                   {/* Left: Seller Details */}
                   <div className="border-r border-gray-400 pr-3">
                     <div className="font-bold text-[11px] mb-2 leading-tight">
