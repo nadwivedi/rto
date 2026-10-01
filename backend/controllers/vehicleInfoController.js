@@ -1,6 +1,46 @@
 const axios = require('axios')
 const VehicleSearchHistory = require('../models/VehicleSearchHistory')
 const User = require('../models/User')
+const ApiUsage = require('../models/ApiUsage')
+
+const VEHICLE_INFO_PROVIDER = 'vehicleInfo'
+
+/**
+ * The provider reports its own account quota on every response as
+ * `_usage: { total_limit, used, remaining }`. Keep the latest snapshot so the
+ * admin panel can show how many searches are left. Never throws - a failure
+ * here must not break the vehicle lookup.
+ */
+const recordProviderUsage = async (usage, { vehicleNumber, userId } = {}) => {
+  if (!usage || typeof usage !== 'object') return
+
+  const toNumber = (value) => {
+    const n = Number(value)
+    return value !== null && value !== '' && Number.isFinite(n) ? n : undefined
+  }
+  const totalLimit = toNumber(usage.total_limit)
+  const used = toNumber(usage.used)
+  const remaining = toNumber(usage.remaining)
+  if (totalLimit === undefined && used === undefined && remaining === undefined) return
+
+  // Only write the fields the provider actually sent, so a partial reply can't blank the rest
+  const snapshot = { checkedAt: new Date() }
+  if (totalLimit !== undefined) snapshot.totalLimit = totalLimit
+  if (used !== undefined) snapshot.used = used
+  if (remaining !== undefined) snapshot.remaining = remaining
+  if (vehicleNumber) snapshot.lastVehicleNumber = vehicleNumber
+  if (userId) snapshot.lastUserId = userId
+
+  try {
+    await ApiUsage.findOneAndUpdate(
+      { provider: VEHICLE_INFO_PROVIDER },
+      { $set: snapshot },
+      { upsert: true, setDefaultsOnInsert: true }
+    )
+  } catch (err) {
+    console.error('Failed to record vehicle API usage:', err.message)
+  }
+}
 
 /**
  * Controller to fetch vehicle details from external RTO Information API
@@ -87,6 +127,9 @@ const lookupVehicle = async (req, res) => {
         })
       }
     }
+
+    // Recorded before the error check so a "not found" reply still updates the quota
+    await recordProviderUsage(parsedData?._usage, { vehicleNumber: cleanVno, userId: targetUserId })
 
     if (!parsedData || parsedData.error || parsedData.status === 'error' || parsedData.status === false) {
       return res.status(404).json({

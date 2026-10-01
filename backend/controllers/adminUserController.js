@@ -1,4 +1,6 @@
 const User = require('../models/User')
+const ApiUsage = require('../models/ApiUsage')
+const VehicleSearchHistory = require('../models/VehicleSearchHistory')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
@@ -744,6 +746,84 @@ exports.getRevenueDashboard = async (req, res) => {
             null
           ),
           avgMonthlyRevenue: series.length ? Math.round(windowRevenue / series.length) : 0
+        }
+      }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: getSimplifiedTimestamp()
+    })
+  }
+}
+
+// Vehicle (RC details) API quota for the admin panel.
+// The provider only reports its quota on a search response, so this is the snapshot
+// from the most recent search - it is never fetched live (that would spend a credit).
+exports.getRcApiUsage = async (req, res) => {
+  try {
+    let usage = null
+
+    const snapshot = await ApiUsage.findOne({ provider: 'vehicleInfo' }).lean()
+    if (snapshot) {
+      usage = {
+        totalLimit: snapshot.totalLimit ?? null,
+        used: snapshot.used ?? null,
+        remaining: snapshot.remaining ?? null,
+        checkedAt: snapshot.checkedAt || snapshot.updatedAt || null,
+        lastVehicleNumber: snapshot.lastVehicleNumber || null
+      }
+    } else {
+      // Nothing recorded yet (no search since this was deployed): fall back to the
+      // newest saved search, which carries the provider's reply from that time
+      const last = await VehicleSearchHistory.findOne({ 'rawResponse._usage': { $exists: true } })
+        .sort({ lastSearchedAt: -1 })
+        .select('rawResponse._usage lastSearchedAt vehicleNumber')
+        .lean()
+      const raw = last?.rawResponse?._usage
+      if (raw) {
+        const toNumber = (value) => (Number.isFinite(Number(value)) ? Number(value) : null)
+        usage = {
+          totalLimit: toNumber(raw.total_limit),
+          used: toNumber(raw.used),
+          remaining: toNumber(raw.remaining),
+          checkedAt: last.lastSearchedAt || null,
+          lastVehicleNumber: last.vehicleNumber || null
+        }
+      }
+    }
+
+    // Searches still promised to users who have the RC Details feature switched on
+    const [allocation] = await User.aggregate([
+      { $match: { 'features.rcDetails': true } },
+      {
+        $group: {
+          _id: null,
+          users: { $sum: 1 },
+          allocatedRemaining: {
+            $sum: {
+              $max: [
+                0,
+                { $subtract: [{ $ifNull: ['$rcSearchLimit', 0] }, { $ifNull: ['$rcSearchCount', 0] }] }
+              ]
+            }
+          }
+        }
+      }
+    ])
+
+    res.json({
+      success: true,
+      data: {
+        usage,
+        allocation: {
+          users: allocation?.users || 0,
+          allocatedRemaining: allocation?.allocatedRemaining || 0
         }
       }
     })

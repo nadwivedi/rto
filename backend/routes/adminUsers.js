@@ -14,6 +14,9 @@ router.get('/state-counts', adminUserController.getUserStateCounts)
 // Month-wise joins & revenue for the dashboard
 router.get('/revenue-dashboard', adminUserController.getRevenueDashboard)
 
+// Vehicle (RC details) API quota left with the provider
+router.get('/rc-api-usage', adminUserController.getRcApiUsage)
+
 // Get all users
 router.get('/', adminUserController.getAllUsers)
 

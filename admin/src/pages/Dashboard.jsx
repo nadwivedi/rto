@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import RcApiUsageCard from '../components/RcApiUsageCard'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -214,6 +215,9 @@ const Dashboard = () => {
               }
             />
           </div>
+
+          {/* Vehicle (RC details) API quota left with the provider */}
+          <RcApiUsageCard className='mb-5' />
 
           {/* Warning when some users have no price set — revenue would undercount */}
           {totals?.unpricedUsers > 0 && (

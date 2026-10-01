@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import RcApiUsageCard from '../components/RcApiUsageCard'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://app.rtosarthi.com'
@@ -636,6 +637,9 @@ const Users = () => {
           <p className='text-2xl font-bold text-red-500 mt-1'>{stats.inactive}</p>
         </div>
       </div>
+
+      {/* Vehicle (RC details) API quota left with the provider */}
+      <RcApiUsageCard className='mb-5' />
 
       {/* Search & Filter Bar */}
       <div className='bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-5'>
