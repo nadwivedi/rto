@@ -99,7 +99,7 @@ exports.getUserById = async (req, res) => {
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, rcSearchLimit } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, rcSearchLimit, planType } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -230,6 +230,7 @@ exports.createUser = async (req, res) => {
       billDescription: billDescription && billDescription.trim() ? billDescription.trim() : undefined,
       password: hashedPassword,
       isActive: true,
+      planType: planType === 'lifetime' ? 'lifetime' : 'yearly',
       monthlyPrice: monthlyPrice !== undefined && !Number.isNaN(Number(monthlyPrice)) ? Number(monthlyPrice) : undefined,
       yearlyPrice: yearlyPrice !== undefined && !Number.isNaN(Number(yearlyPrice)) ? Number(yearlyPrice) : undefined,
       features: features ? {
@@ -260,6 +261,7 @@ exports.createUser = async (req, res) => {
       billName: newUser.billName,
       billDescription: newUser.billDescription,
       isActive: newUser.isActive,
+      planType: newUser.planType,
       monthlyPrice: newUser.monthlyPrice,
       yearlyPrice: newUser.yearlyPrice,
       createdAt: newUser.createdAt
@@ -286,7 +288,7 @@ exports.createUser = async (req, res) => {
 // Update user
 exports.updateUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, subscriptionExpiresAt, monthlyPrice, yearlyPrice, features, rcSearchLimit, rcSearchCount } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, monthlyPrice, yearlyPrice, features, rcSearchLimit, rcSearchCount } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -382,7 +384,13 @@ exports.updateUser = async (req, res) => {
         user.rcSearchLimit = parsedLimit
       }
     }
-    if (subscriptionExpiresAt !== undefined) {
+    if (planType !== undefined) {
+      user.planType = planType === 'lifetime' ? 'lifetime' : 'yearly'
+    }
+    if (user.planType === 'lifetime') {
+      // Lifetime plans never expire
+      user.subscriptionExpiresAt = undefined
+    } else if (subscriptionExpiresAt !== undefined) {
       const d = new Date(subscriptionExpiresAt)
       if (!Number.isNaN(d.getTime())) {
         user.subscriptionExpiresAt = d
@@ -433,6 +441,7 @@ exports.updateUser = async (req, res) => {
         rcSearchLimit: user.rcSearchLimit || 0,
         rcSearchCount: user.rcSearchCount || 0,
         rcSearchRemaining: Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0)),
+        planType: user.planType,
         subscriptionExpiresAt: user.subscriptionExpiresAt,
         monthlyPrice: user.monthlyPrice,
         yearlyPrice: user.yearlyPrice

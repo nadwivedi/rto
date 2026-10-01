@@ -85,6 +85,11 @@ const userSchema = new mongoose.Schema({
   lastActivity: {
     type: Date
   },
+  planType: {
+    type: String,
+    enum: ['yearly', 'lifetime'],
+    default: 'yearly'
+  },
   subscriptionExpiresAt: {
     type: Date
   },

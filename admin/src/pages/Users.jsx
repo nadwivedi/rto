@@ -108,6 +108,7 @@ const Users = () => {
     rto: '',
     billName: '',
     billDescription: '',
+    planType: 'yearly',
     subscriptionExpiresAt: '',
     monthlyPrice: '',
     yearlyPrice: '',
@@ -281,6 +282,9 @@ const Users = () => {
       delete bodyData.features_rcDetails
       delete bodyData.features_forms
       bodyData.rcSearchLimit = formData.rcSearchLimit !== '' ? Number(formData.rcSearchLimit) : 0
+      if (formData.planType === 'lifetime') {
+        delete bodyData.subscriptionExpiresAt
+      }
       if (isEditMode && !formData.password) {
         delete bodyData.password
       }
@@ -299,7 +303,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, rcSearchLimit: 0, rcSearchCount: 0 })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, rcSearchLimit: 0, rcSearchCount: 0 })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -323,6 +327,7 @@ const Users = () => {
       rto: user.rto || '',
       billName: user.billName || '',
       billDescription: user.billDescription || '',
+      planType: user.planType === 'lifetime' ? 'lifetime' : 'yearly',
       subscriptionExpiresAt: user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString().split('T')[0] : '',
       monthlyPrice: user.monthlyPrice ?? '',
       yearlyPrice: user.yearlyPrice ?? '',
@@ -346,7 +351,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, rcSearchLimit: 0, rcSearchCount: 0 })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, rcSearchLimit: 0, rcSearchCount: 0 })
   }
 
   const handleToggleActive = async (user) => {
@@ -450,6 +455,20 @@ const Users = () => {
         </svg>
       </button>
     </div>
+  )
+
+  const isLifetime = (user) => user?.planType === 'lifetime'
+
+  const renderPlanBadge = (user) => (
+    isLifetime(user) ? (
+      <span className='inline-flex items-center gap-1 px-1.5 py-0.5 mb-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-violet-50 text-violet-700 border border-violet-200'>
+        ♾️ Lifetime
+      </span>
+    ) : (
+      <span className='inline-flex items-center gap-1 px-1.5 py-0.5 mb-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-sky-50 text-sky-700 border border-sky-200'>
+        Yearly
+      </span>
+    )
   )
 
   const renderRcBadge = (user) => {
@@ -663,13 +682,20 @@ const Users = () => {
                           {renderRcBadge(user)}
                         </td>
                         <td className='px-4 py-3'>
-                          <div className='text-xs text-gray-700'>{formatDate(user.subscriptionExpiresAt)}</div>
-                          {days !== null && (
-                            <div className={`text-[11px] font-semibold ${
-                              days <= 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-emerald-600'
-                            }`}>
-                              {days <= 0 ? 'Expired' : `${days} days left`}
-                            </div>
+                          {renderPlanBadge(user)}
+                          {isLifetime(user) ? (
+                            <div className='text-[11px] text-violet-600 font-semibold'>Never expires</div>
+                          ) : (
+                            <>
+                              <div className='text-xs text-gray-700'>{formatDate(user.subscriptionExpiresAt)}</div>
+                              {days !== null && (
+                                <div className={`text-[11px] font-semibold ${
+                                  days <= 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-emerald-600'
+                                }`}>
+                                  {days <= 0 ? 'Expired' : `${days} days left`}
+                                </div>
+                              )}
+                            </>
                           )}
                           {user.yearlyPrice != null && (
                             <div className='text-[11px] text-gray-400'>
@@ -746,14 +772,19 @@ const Users = () => {
                       </div>
                       <div>
                         <div className='text-gray-400'>Subscription</div>
-                        <div className='text-gray-700'>
-                          {formatDate(user.subscriptionExpiresAt)}
-                          {days !== null && (
-                            <span className={`ml-1 font-semibold ${days <= 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-emerald-600'}`}>
-                              {days <= 0 ? 'Expired' : `${days}d`}
-                            </span>
-                          )}
-                        </div>
+                        {renderPlanBadge(user)}
+                        {isLifetime(user) ? (
+                          <div className='text-violet-600 font-semibold'>Never expires</div>
+                        ) : (
+                          <div className='text-gray-700'>
+                            {formatDate(user.subscriptionExpiresAt)}
+                            {days !== null && (
+                              <span className={`ml-1 font-semibold ${days <= 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-emerald-600'}`}>
+                                {days <= 0 ? 'Expired' : `${days}d`}
+                              </span>
+                            )}
+                          </div>
+                        )}
                         {user.yearlyPrice != null && (
                           <div className='text-gray-400'>₹{user.yearlyPrice}/yr{user.monthlyPrice != null && ` · ₹${user.monthlyPrice}/mo`}</div>
                         )}
@@ -956,15 +987,42 @@ const Users = () => {
               <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
                 <div>
                   <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Subscription Expires <span className='text-gray-400'>(Opt)</span>
+                    Plan Type
                   </label>
-                  <input
-                    type='date'
-                    name='subscriptionExpiresAt'
-                    value={formData.subscriptionExpiresAt}
+                  <select
+                    name='planType'
+                    value={formData.planType}
                     onChange={handleChange}
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  />
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+                  >
+                    <option value='yearly'>Yearly</option>
+                    <option value='lifetime'>Lifetime</option>
+                  </select>
+                </div>
+                <div>
+                  {formData.planType === 'lifetime' ? (
+                    <>
+                      <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                        Subscription Expires
+                      </label>
+                      <div className='w-full px-3 py-2 text-sm rounded-lg bg-violet-50 border border-violet-200 text-violet-700 font-semibold'>
+                        ♾️ Lifetime plan — never expires
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                        Subscription Expires <span className='text-gray-400'>(Opt)</span>
+                      </label>
+                      <input
+                        type='date'
+                        name='subscriptionExpiresAt'
+                        value={formData.subscriptionExpiresAt}
+                        onChange={handleChange}
+                        className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                      />
+                    </>
+                  )}
                 </div>
               </div>
 

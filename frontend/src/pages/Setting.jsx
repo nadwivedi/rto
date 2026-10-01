@@ -113,7 +113,18 @@ const Setting = () => {
               <p className='text-xs text-gray-500'>Your subscription plan and status</p>
             </div>
           </div>
+          {user?.planType === 'lifetime' ? (
+            <div className='p-4 bg-violet-50 border border-violet-200 rounded-lg'>
+              <p className='text-xs text-violet-500 font-semibold uppercase tracking-wide'>Plan Type</p>
+              <p className='text-lg font-bold text-violet-700 mt-1'>♾️ Lifetime Plan</p>
+              <p className='text-xs text-violet-600 mt-1'>This is a lifetime plan — it never expires.</p>
+            </div>
+          ) : (
           <div className='grid grid-cols-1 sm:grid-cols-2 gap-4'>
+            <div className='p-4 bg-gray-50 rounded-lg'>
+              <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>Plan Type</p>
+              <p className='text-lg font-bold text-gray-800 mt-1'>Yearly Plan</p>
+            </div>
             <div className='p-4 bg-gray-50 rounded-lg'>
               <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>Expires On</p>
               <p className='text-lg font-bold text-gray-800 mt-1'>
@@ -141,6 +152,7 @@ const Setting = () => {
               </p>
             </div>
           </div>
+          )}
         </div>
 
         {/* Theme Settings */}
