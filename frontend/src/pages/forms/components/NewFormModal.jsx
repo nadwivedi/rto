@@ -525,7 +525,8 @@ const NewFormModal = ({ onClose }) => {
                 <div style={{ ...p1Row, marginTop: '2px' }}><span>The Registering Authority</span>{p1In(3000, 'rtoLocation')}<span>(in whose jurisdiction the Transferee resides)</span></div>
 
                 <div style={{ ...p1Row, marginTop: '14px' }}><span>I/We</span>{p1In(3001, 'sellerName')}<span>resident of</span>{p1In(3002, 'sellerResidence')}</div>
-                <div style={p1Row}><span>have on the</span>{p1In(3003, 'saleDay', { flex: 'none', width: '110px', textAlign: 'center' })}<span>day of the year</span>{p1In(3004, 'saleMonthYear', { flex: 'none', width: '170px', textAlign: 'center' })}<span>Sold and delivered my / our Vehicle No</span>{p1In(3005, 'vehicleNumber')}</div>
+                <div style={p1Row}><span>have on the</span>{p1In(3003, 'saleDay', { flex: 'none', width: '110px', textAlign: 'center' })}<span>day of the year</span>{p1In(3004, 'saleMonthYear', { flex: 'none', width: '170px', textAlign: 'center' })}</div>
+                <div style={p1Row}><span>Sold and delivered my / our Vehicle No</span>{p1In(3005, 'vehicleNumber', { minWidth: '150px' })}</div>
                 <div style={p1Row}><span>make</span>{p1In(3006, 'vehicleMake')}<span>Chassis No</span>{p1In(3007, 'chassisNumber')}</div>
                 <div style={p1Row}><span>[Engine number or motor number in the case of Battery Operated Vehicles]</span>{p1In(3008, 'engineNumber')}<span>to</span></div>
                 <div style={p1Row}><span>Shri / Smt</span>{p1In(3009, 'buyerName')}<span>(Name) Son/Wife/Daughter of</span>{p1In(3010, 'buyerFather')}</div>
