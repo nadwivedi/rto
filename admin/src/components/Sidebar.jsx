@@ -57,6 +57,21 @@ const Sidebar = ({ isOpen, onClose }) => {
         {/* Menu */}
         <nav className="p-3 space-y-1.5">
           <Link
+            to="/dashboard"
+            onClick={handleLinkClick}
+            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
+              location.pathname === '/dashboard'
+                ? 'bg-white text-indigo-800 font-bold'
+                : 'text-indigo-200 hover:bg-indigo-800'
+            }`}
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a1 1 0 00-1-1H5a1 1 0 00-1 1v6a1 1 0 001 1h3a1 1 0 001-1zm0 0V9a1 1 0 011-1h3a1 1 0 011 1v10m0 0h3a1 1 0 001-1V5a1 1 0 00-1-1h-3a1 1 0 00-1 1v14z" />
+            </svg>
+            <span className="truncate">Dashboard</span>
+          </Link>
+
+          <Link
             to="/"
             onClick={handleLinkClick}
             className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${

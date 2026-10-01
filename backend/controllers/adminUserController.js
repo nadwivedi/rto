@@ -601,3 +601,135 @@ exports.generateUserAccessToken = async (req, res) => {
     })
   }
 }
+
+// Month-wise joins & subscription revenue for the admin dashboard.
+// Months are bucketed on createdAt in India time, so a user created at 02:00 IST
+// counts in the correct month rather than slipping into the previous one.
+exports.getRevenueDashboard = async (req, res) => {
+  try {
+    const IST = 'Asia/Kolkata'
+    const months = Math.min(60, Math.max(1, parseInt(req.query.months, 10) || 12))
+
+    // Plan amount per user: yearlyPrice, else monthlyPrice x 12, else 0
+    const amountExpr = {
+      $ifNull: [
+        '$yearlyPrice',
+        { $cond: [{ $ifNull: ['$monthlyPrice', false] }, { $multiply: ['$monthlyPrice', 12] }, 0] }
+      ]
+    }
+
+    const pipeline = [
+      {
+        $addFields: {
+          planAmount: amountExpr,
+          isLifetime: { $eq: ['$planType', 'lifetime'] }
+        }
+      },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m', date: '$createdAt', timezone: IST } },
+          users: { $sum: 1 },
+          revenue: { $sum: '$planAmount' },
+          yearlyUsers: { $sum: { $cond: ['$isLifetime', 0, 1] } },
+          lifetimeUsers: { $sum: { $cond: ['$isLifetime', 1, 0] } },
+          yearlyRevenue: { $sum: { $cond: ['$isLifetime', 0, '$planAmount'] } },
+          lifetimeRevenue: { $sum: { $cond: ['$isLifetime', '$planAmount', 0] } },
+          activeUsers: { $sum: { $cond: ['$isActive', 1, 0] } },
+          unpricedUsers: { $sum: { $cond: [{ $gt: ['$planAmount', 0] }, 0, 1] } }
+        }
+      },
+      { $sort: { _id: 1 } }
+    ]
+
+    const [grouped, totals] = await Promise.all([
+      User.aggregate(pipeline),
+      User.aggregate([
+        { $addFields: { planAmount: amountExpr, isLifetime: { $eq: ['$planType', 'lifetime'] } } },
+        {
+          $group: {
+            _id: null,
+            totalUsers: { $sum: 1 },
+            activeUsers: { $sum: { $cond: ['$isActive', 1, 0] } },
+            totalRevenue: { $sum: '$planAmount' },
+            yearlyRevenue: { $sum: { $cond: ['$isLifetime', 0, '$planAmount'] } },
+            lifetimeRevenue: { $sum: { $cond: ['$isLifetime', '$planAmount', 0] } },
+            lifetimeUsers: { $sum: { $cond: ['$isLifetime', 1, 0] } },
+            unpricedUsers: { $sum: { $cond: [{ $gt: ['$planAmount', 0] }, 0, 1] } },
+            // Recurring run rate: yearly plans on active users only
+            activeYearlyRevenue: {
+              $sum: { $cond: [{ $and: ['$isActive', { $not: '$isLifetime' }] }, '$planAmount', 0] }
+            }
+          }
+        }
+      ])
+    ])
+
+    const byMonth = new Map(grouped.map((g) => [g._id, g]))
+
+    // Build a continuous month axis (no gaps) ending with the current IST month
+    const nowKey = new Date().toLocaleDateString('en-CA', { timeZone: IST }) // YYYY-MM-DD
+    const [nowYear, nowMonth] = nowKey.split('-').map(Number)
+    const series = []
+    for (let i = months - 1; i >= 0; i--) {
+      const d = new Date(Date.UTC(nowYear, nowMonth - 1 - i, 1))
+      const key = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`
+      const row = byMonth.get(key)
+      series.push({
+        month: key,
+        users: row?.users || 0,
+        revenue: row?.revenue || 0,
+        yearlyUsers: row?.yearlyUsers || 0,
+        lifetimeUsers: row?.lifetimeUsers || 0,
+        yearlyRevenue: row?.yearlyRevenue || 0,
+        lifetimeRevenue: row?.lifetimeRevenue || 0,
+        activeUsers: row?.activeUsers || 0,
+        unpricedUsers: row?.unpricedUsers || 0
+      })
+    }
+
+    const t = totals[0] || {}
+    const windowUsers = series.reduce((sum, m) => sum + m.users, 0)
+    const windowRevenue = series.reduce((sum, m) => sum + m.revenue, 0)
+
+    res.json({
+      success: true,
+      data: {
+        months,
+        timezone: IST,
+        series,
+        // All-time, across every user in the database
+        totals: {
+          totalUsers: t.totalUsers || 0,
+          activeUsers: t.activeUsers || 0,
+          totalRevenue: t.totalRevenue || 0,
+          yearlyRevenue: t.yearlyRevenue || 0,
+          lifetimeRevenue: t.lifetimeRevenue || 0,
+          lifetimeUsers: t.lifetimeUsers || 0,
+          unpricedUsers: t.unpricedUsers || 0,
+          activeYearlyRunRate: t.activeYearlyRevenue || 0,
+          avgRevenuePerUser: t.totalUsers ? Math.round((t.totalRevenue || 0) / t.totalUsers) : 0
+        },
+        // Just the selected window
+        window: {
+          users: windowUsers,
+          revenue: windowRevenue,
+          bestMonth: series.reduce(
+            (best, m) => (best === null || m.revenue > best.revenue ? m : best),
+            null
+          ),
+          avgMonthlyRevenue: series.length ? Math.round(windowRevenue / series.length) : 0
+        }
+      }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: getSimplifiedTimestamp()
+    })
+  }
+}
