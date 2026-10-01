@@ -178,70 +178,70 @@ const Home2 = () => {
           {!isWhatsAppConnected && user?.type !== 'staff' ? (
             <div 
               onClick={() => navigate('/whatsapp')}
-              className='flex items-center gap-2 px-3.5 py-2 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl shadow-inner text-xs sm:text-sm font-bold animate-pulse hover:shadow-md hover:scale-[1.01] hover:bg-rose-100/80 transition-all duration-300 cursor-pointer w-full md:w-auto'
+              className='flex items-center gap-1.5 px-2.5 py-1.5 bg-rose-50 border border-rose-200 text-rose-700 rounded-lg shadow-inner text-[11px] sm:text-xs font-bold animate-pulse hover:shadow-md hover:bg-rose-100/80 transition-all duration-300 cursor-pointer w-full md:w-auto md:flex-1 md:min-w-0'
             >
-              <span className='text-sm sm:text-base animate-bounce'>⚠️</span>
-              <span>Your WhatsApp is not connected. Please connect your WhatsApp to send message</span>
+              <span className='text-xs sm:text-sm animate-bounce shrink-0'>⚠️</span>
+              <span className='md:truncate'>WhatsApp not connected — tap to connect and send messages</span>
             </div>
           ) : (
-            <div className="hidden md:block"></div>
+            <div className="hidden md:block md:flex-1"></div>
           )}
 
           {/* Buttons Group */}
-          <div className='grid grid-cols-2 sm:flex sm:flex-wrap items-stretch sm:items-center sm:justify-end gap-2 sm:gap-3 w-full md:w-auto'>
+          <div className='grid grid-cols-2 sm:flex sm:flex-nowrap items-stretch sm:items-center sm:justify-end gap-2 sm:gap-1.5 lg:gap-2 w-full md:w-auto md:shrink-0'>
             {user?.type !== 'staff' && (
               <button
                 onClick={() => navigate('/whatsapp')}
-                className={`flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 rounded-lg sm:rounded-xl shadow-sm transition-all duration-300 font-bold text-xs sm:text-base ${
+                className={`flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-2 sm:px-2.5 sm:py-1.5 lg:px-3 shrink-0 whitespace-nowrap rounded-lg sm:rounded-xl shadow-sm transition-all duration-300 font-bold text-xs sm:text-[13px] lg:text-sm ${
                   isWhatsAppConnected 
                     ? 'bg-emerald-500 text-white hover:bg-emerald-600 hover:shadow-md' 
                     : 'bg-red-500 text-white hover:bg-red-600 hover:shadow-md animate-pulse border border-red-300'
                 }`}
               >
-                <span className='text-base sm:text-xl'>💬</span>
+                <span className='text-base sm:text-[15px] lg:text-base'>💬</span>
                 {isWhatsAppConnected ? 'WhatsApp' : 'Connect WA'}
               </button>
             )}
           {user?.features?.forms && (!isStaff || enabledSections.forms !== false) && (
             <button
               onClick={() => navigate('/forms')}
-              className='flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-bold text-xs sm:text-base cursor-pointer'
+              className='flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-2 sm:px-2.5 sm:py-1.5 lg:px-3 shrink-0 whitespace-nowrap bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg sm:rounded-xl shadow-md hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 font-bold text-xs sm:text-[13px] lg:text-sm cursor-pointer'
             >
-              <span className='text-base sm:text-xl'>📋</span>
+              <span className='text-base sm:text-[15px] lg:text-base'>📋</span>
               Forms
             </button>
           )}
           {(!isStaff || enabledSections.javak !== false) && (
             <button
               onClick={() => navigate('/javak')}
-              className='flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 bg-indigo-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold text-xs sm:text-base'
+              className='flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-2 sm:px-2.5 sm:py-1.5 lg:px-3 shrink-0 whitespace-nowrap bg-indigo-500 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-600 transition-all duration-300 font-bold text-xs sm:text-[13px] lg:text-sm'
             >
-              <span className='text-base sm:text-xl'>📋</span>
+              <span className='text-base sm:text-[15px] lg:text-base'>📋</span>
               Javak(notes)
             </button>
           )}
           {user?.features?.rcDetails && (
             <button
               onClick={() => navigate('/vehicle-details')}
-              className='flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 bg-indigo-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-700 transition-all duration-300 font-bold text-xs sm:text-base cursor-pointer'
+              className='flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-2 sm:px-2.5 sm:py-1.5 lg:px-3 shrink-0 whitespace-nowrap bg-indigo-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-indigo-700 transition-all duration-300 font-bold text-xs sm:text-[13px] lg:text-sm cursor-pointer'
             >
-              <span className='text-base sm:text-xl'>🔍</span>
+              <span className='text-base sm:text-[15px] lg:text-base'>🔍</span>
               RC Details
             </button>
           )}
           <button
             onClick={() => navigate('/setting')}
-            className='flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 bg-slate-700 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-slate-800 transition-all duration-300 font-bold text-xs sm:text-base'
+            className='flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-2 sm:px-2.5 sm:py-1.5 lg:px-3 shrink-0 whitespace-nowrap bg-slate-700 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-slate-800 transition-all duration-300 font-bold text-xs sm:text-[13px] lg:text-sm'
           >
-            <span className='text-base sm:text-xl'>⚙️</span>
+            <span className='text-base sm:text-[15px] lg:text-base'>⚙️</span>
             Setting
           </button>
           {(!isStaff || enabledSections.cashflow !== false) && (
             <button
               onClick={() => navigate('/cashflow-report')}
-              className='flex items-center justify-center gap-1.5 sm:gap-2 px-2.5 py-2 sm:px-4 sm:py-2 bg-emerald-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-emerald-700 transition-all duration-300 font-bold text-xs sm:text-base'
+              className='flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-2 sm:px-2.5 sm:py-1.5 lg:px-3 shrink-0 whitespace-nowrap bg-emerald-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-emerald-700 transition-all duration-300 font-bold text-xs sm:text-[13px] lg:text-sm'
             >
-              <span className='text-base sm:text-xl'>💰</span>
+              <span className='text-base sm:text-[15px] lg:text-base'>💰</span>
               Cashflow
             </button>
           )}
