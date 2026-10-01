@@ -3,11 +3,29 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://app.rtosarthi.com'
 
+// All dates are shown in India time regardless of the admin's device timezone.
+// Without this the browser's own timezone is used (UTC on a server/VM), which
+// shifts dates by a day for anything created after 05:30 IST.
+const IST = 'Asia/Kolkata'
+
+// Calendar day in IST as 'YYYY-MM-DD' (en-CA gives ISO-ordered parts)
+const istDayKey = (date) => date.toLocaleDateString('en-CA', { timeZone: IST })
+
+// Whole IST calendar days between two instants (b - a), ignoring time of day
+const istDayDiff = (a, b) => {
+  const toUTCDay = (d) => {
+    const [y, m, day] = istDayKey(d).split('-').map(Number)
+    return Date.UTC(y, m - 1, day)
+  }
+  return Math.round((toUTCDay(b) - toUTCDay(a)) / (1000 * 60 * 60 * 24))
+}
+
 const formatDateTime = (value) => {
   if (!value) return 'Never'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return 'Never'
   return date.toLocaleString('en-IN', {
+    timeZone: IST,
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -20,20 +38,29 @@ const formatDate = (value) => {
   if (!value) return '-'
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return '-'
-  return date.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+  return date.toLocaleDateString('en-IN', { timeZone: IST, day: '2-digit', month: 'short', year: 'numeric' })
 }
 
 const formatTime = (value) => {
   if (!value) return ''
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })
+  return date.toLocaleTimeString('en-IN', { timeZone: IST, hour: '2-digit', minute: '2-digit' })
+}
+
+// 'YYYY-MM-DD' in IST, for prefilling <input type='date'>
+const toDateInputValue = (value) => {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  return istDayKey(date)
 }
 
 const getDaysAgo = (value) => {
   if (!value) return ''
-  const days = Math.floor((new Date() - new Date(value)) / (1000 * 60 * 60 * 24))
-  if (Number.isNaN(days)) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return ''
+  const days = istDayDiff(date, new Date())
   if (days <= 0) return 'Today'
   if (days === 1) return 'Yesterday'
   if (days < 30) return `${days}d ago`
@@ -43,8 +70,9 @@ const getDaysAgo = (value) => {
 
 const getDaysLeft = (expiryDate) => {
   if (!expiryDate) return null
-  const days = Math.ceil((new Date(expiryDate) - new Date()) / (1000 * 60 * 60 * 24))
-  return days
+  const date = new Date(expiryDate)
+  if (Number.isNaN(date.getTime())) return null
+  return istDayDiff(new Date(), date)
 }
 
 const INDIAN_STATES = [
@@ -328,7 +356,7 @@ const Users = () => {
       billName: user.billName || '',
       billDescription: user.billDescription || '',
       planType: user.planType === 'lifetime' ? 'lifetime' : 'yearly',
-      subscriptionExpiresAt: user.subscriptionExpiresAt ? new Date(user.subscriptionExpiresAt).toISOString().split('T')[0] : '',
+      subscriptionExpiresAt: toDateInputValue(user.subscriptionExpiresAt),
       monthlyPrice: user.monthlyPrice ?? '',
       yearlyPrice: user.yearlyPrice ?? '',
       password: '',
