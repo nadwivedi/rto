@@ -229,9 +229,8 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
 
     const candidateModels = [
       'openai/gpt-oss-20b',
-      'qwen/qwen3.6-27b',
-      'groq/compound-mini',
-      'groq/compound'
+      'qwen/qwen3.8-27b',
+      'openai/gpt-oss-120b'
     ];
 
     const makeRequest = async (withFormat) => {
@@ -299,7 +298,7 @@ const callGroqAPI = async (imageBase64, textPrompt, isPdf = false, backImageBase
 
     const makeVisionRequest = (withFormat) => {
       const body = {
-        model: 'qwen/qwen3.6-27b',
+        model: 'qwen/qwen3.8-27b',
         messages: [{ role: 'user', content: contentArray }],
         temperature: 0.1,
         // Increased from 2048 → 4096: at 2048 the think block can consume all tokens
@@ -954,7 +953,7 @@ const processOcrRequest = async (req, res, promptText, jsonTemplate, maxPages = 
     if (!messageContent.trim()) {
       console.warn(`[OCR] Response was empty from ${usedProvider.toUpperCase()}. Retrying in free-text mode...`);
       const fallbackBody = {
-        model: usedProvider === 'groq' ? 'qwen/qwen3.6-27b' : OPENAI_OCR_MODEL,
+        model: usedProvider === 'groq' ? 'qwen/qwen3.8-27b' : OPENAI_OCR_MODEL,
         messages: [{ role: 'user', content: fullPrompt }],
         temperature: 0.1,
         max_tokens: usedProvider === 'groq' ? 4096 : 1024
