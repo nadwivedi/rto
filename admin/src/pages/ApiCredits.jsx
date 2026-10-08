@@ -17,6 +17,17 @@ const formatDate = (value) => {
   return date.toLocaleDateString('en-IN', { timeZone: IST, day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+// 'YYYY-MM-DD' -> 'Thu, 08 Oct'
+const formatDay = (key) => {
+  const [y, m, d] = key.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('en-IN', {
+    timeZone: 'UTC',
+    weekday: 'short',
+    day: '2-digit',
+    month: 'short'
+  })
+}
+
 const formatMonth = (key) => {
   const [y, m] = key.split('-').map(Number)
   return new Date(Date.UTC(y, m - 1, 1)).toLocaleDateString('en-IN', {
@@ -58,6 +69,7 @@ const ApiCredits = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [summary, setSummary] = useState(null)
+  const [usage, setUsage] = useState(null)
   const [transactions, setTransactions] = useState([])
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalRecords: 0 })
   const [users, setUsers] = useState([])
@@ -84,6 +96,13 @@ const ApiCredits = () => {
     setSummary(json.data)
   }, [])
 
+  const fetchUsage = useCallback(async () => {
+    const res = await fetch(`${BACKEND_URL}/api/admin/api-credits/usage`, { credentials: 'include' })
+    const json = await res.json()
+    if (!json.success) throw new Error(json.message || 'Failed to load usage')
+    setUsage(json.data)
+  }, [])
+
   const fetchTransactions = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) })
     if (typeFilter !== 'all') params.set('type', typeFilter)
@@ -105,13 +124,13 @@ const ApiCredits = () => {
   const loadAll = useCallback(async () => {
     try {
       setError('')
-      await Promise.all([fetchSummary(), fetchTransactions(), fetchUsers()])
+      await Promise.all([fetchSummary(), fetchUsage(), fetchTransactions(), fetchUsers()])
     } catch (err) {
       setError(err.message || 'Failed to load API sales')
     } finally {
       setLoading(false)
     }
-  }, [fetchSummary, fetchTransactions, fetchUsers])
+  }, [fetchSummary, fetchUsage, fetchTransactions, fetchUsers])
 
   useEffect(() => {
     loadAll()
@@ -119,6 +138,8 @@ const ApiCredits = () => {
 
   const usersById = useMemo(() => new Map(users.map((u) => [u._id, u])), [users])
   const selectedUser = usersById.get(formData.userId)
+  // What the user picked in the sell form has bought so far
+  const selectedUserSales = summary?.users?.find((u) => String(u.userId) === formData.userId)
   const filteredUser = usersById.get(userFilter)
 
   const openModal = useCallback(
@@ -296,8 +317,8 @@ const ApiCredits = () => {
 
       {loading ? (
         <div className='space-y-4'>
-          <div className='grid grid-cols-2 lg:grid-cols-4 gap-3'>
-            {[0, 1, 2, 3].map((i) => (
+          <div className='grid grid-cols-2 lg:grid-cols-5 gap-3'>
+            {[0, 1, 2, 3, 4].map((i) => (
               <div key={i} className='h-24 bg-white rounded-xl border border-gray-100 animate-pulse' />
             ))}
           </div>
@@ -306,7 +327,7 @@ const ApiCredits = () => {
       ) : (
         <>
           {/* Totals */}
-          <div className='grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5'>
+          <div className='grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5'>
             <Tile
               label='You Bought'
               value={formatRupees(totals?.boughtAmount)}
@@ -317,12 +338,21 @@ const ApiCredits = () => {
               }
             />
             <Tile
-              label='You Sold'
+              label='Total Sale Amount'
               value={formatRupees(totals?.soldAmount)}
               sub={
                 totals?.soldQty
-                  ? `${formatNumber(totals.soldQty)} API calls · avg ${formatRupees(totals.avgSellRate)} each`
+                  ? `Received from users · avg ${formatRupees(totals.avgSellRate)} per search`
                   : 'No sale recorded yet'
+              }
+            />
+            <Tile
+              label='RC Searches Sold'
+              value={formatNumber(totals?.soldQty)}
+              sub={
+                totals?.boughtQty
+                  ? `of ${formatNumber(totals.boughtQty)} bought · ${formatNumber(totals.unsoldQty)} not yet sold`
+                  : 'Total searches sold to users'
               }
             />
             <Tile
@@ -345,6 +375,101 @@ const ApiCredits = () => {
 
           {/* Provider quota actually left */}
           <RcApiUsageCard key={refreshKey} className='mb-5' />
+
+          {/* Searches users actually made */}
+          <div className='mb-5'>
+            <div className='flex flex-wrap items-baseline justify-between gap-2 mb-2'>
+              <h2 className='text-sm font-bold text-gray-800'>API Usage</h2>
+              <p className='text-[11px] text-gray-400'>
+                {usage?.trackingSince
+                  ? `Counting since ${formatDay(usage.trackingSince)} · searches before that are not included`
+                  : 'No search has been counted yet · counting starts with the next search'}
+              </p>
+            </div>
+            <div className='grid grid-cols-3 gap-3 mb-3'>
+              <Tile label='Today' value={formatNumber(usage?.totals?.today)} sub='searches so far today' />
+              <Tile
+                label='Last 7 Days'
+                value={formatNumber(usage?.totals?.last7)}
+                sub={`avg ${formatNumber(usage?.totals?.avg7)} per day`}
+              />
+              <Tile
+                label='Last 28 Days'
+                value={formatNumber(usage?.totals?.last28)}
+                sub={`avg ${formatNumber(usage?.totals?.avg28)} per day`}
+              />
+            </div>
+
+            <div className='grid grid-cols-1 xl:grid-cols-2 gap-5'>
+              {/* Day-wise */}
+              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
+                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Day-wise usage · last 7 days</h3>
+                <table className='w-full'>
+                  <thead>
+                    <tr className='border-b border-gray-100 bg-gray-50/60'>
+                      <th className={`${th} text-left`}>Day</th>
+                      <th className={`${th} text-right`}>Searches</th>
+                      <th className={`${th} text-right`}>Users Active</th>
+                    </tr>
+                  </thead>
+                  <tbody className='divide-y divide-gray-100'>
+                    {(usage?.days || []).slice(0, 7).map((day) => (
+                      <tr key={day.date} className='hover:bg-gray-50/80 transition-colors'>
+                        <td className='px-4 py-2.5 text-xs text-gray-700 whitespace-nowrap'>
+                          {formatDay(day.date)}
+                          {day.date === usage.today && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
+                        </td>
+                        <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
+                          {formatNumber(day.count)}
+                        </td>
+                        <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.users)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* User-wise */}
+              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
+                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Usage by user</h3>
+                {usage?.users?.length ? (
+                  <div className='overflow-x-auto'>
+                    <table className='w-full'>
+                      <thead>
+                        <tr className='border-b border-gray-100 bg-gray-50/60'>
+                          <th className={`${th} text-left`}>User</th>
+                          <th className={`${th} text-right`}>Today</th>
+                          <th className={`${th} text-right`}>Last 7 Days</th>
+                          <th className={`${th} text-right`}>Last 28 Days</th>
+                          <th className={`${th} text-right`}>Left</th>
+                        </tr>
+                      </thead>
+                      <tbody className='divide-y divide-gray-100'>
+                        {usage.users.map((u) => (
+                          <tr key={u.userId} className='hover:bg-gray-50/80 transition-colors'>
+                            <td className='px-4 py-2.5 text-xs'>
+                              <div className='font-semibold text-gray-900'>{u.name || 'Deleted user'}</div>
+                              <div className='text-gray-400'>{u.mobile1 || ''}</div>
+                            </td>
+                            <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${u.today ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
+                              {formatNumber(u.today)}
+                            </td>
+                            <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last7)}</td>
+                            <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last28)}</td>
+                            <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${u.rcSearchRemaining <= 0 ? 'font-bold text-rose-600' : 'text-gray-700'}`}>
+                              {formatNumber(u.rcSearchRemaining)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className='p-6 text-center text-sm text-gray-500'>No user has searched in the last 28 days.</p>
+                )}
+              </div>
+            </div>
+          </div>
 
           {/* History */}
           <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-5'>
@@ -625,6 +750,13 @@ const ApiCredits = () => {
                         Now: {formatNumber(selectedUser.rcSearchCount)} used of {formatNumber(selectedUser.rcSearchLimit)} ·{' '}
                         {formatNumber(Math.max(0, (selectedUser.rcSearchLimit || 0) - (selectedUser.rcSearchCount || 0)))} left
                         {!selectedUser.features?.rcDetails && ' · RC Details is off and will be switched on'}
+                      </p>
+                    )}
+                    {selectedUser && (
+                      <p className='text-[11px] text-gray-500 mt-0.5'>
+                        {selectedUserSales
+                          ? `Bought so far: ${formatNumber(selectedUserSales.quantity)} searches for ${formatRupees(selectedUserSales.amount)}`
+                          : 'Has not bought any searches yet'}
                       </p>
                     )}
                   </div>

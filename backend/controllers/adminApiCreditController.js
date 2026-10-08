@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const ApiCreditTransaction = require('../models/ApiCreditTransaction')
 const User = require('../models/User')
+const RcSearchUsage = require('../models/RcSearchUsage')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 
 const IST = 'Asia/Kolkata'
@@ -184,6 +185,101 @@ exports.deleteTransaction = async (req, res) => {
           ? `Sale deleted. User limit reduced by ${limitReducedBy}.`
           : 'Purchase deleted',
       data: { limitReducedBy }
+    })
+  } catch (error) {
+    sendError(res, req, error)
+  }
+}
+
+// 'YYYY-MM-DD' moved by a number of days
+const shiftDate = (iso, days) => {
+  const [y, m, d] = iso.split('-').map(Number)
+  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10)
+}
+
+// How many searches users actually made: day-wise for the last 28 days, and per user for today / 7 / 28 days
+exports.getUsage = async (req, res) => {
+  try {
+    const today = RcSearchUsage.todayIST()
+    const from7 = shiftDate(today, -6)
+    const from28 = shiftDate(today, -27)
+
+    const [rows, firstRow] = await Promise.all([
+      RcSearchUsage.find({ date: { $gte: from28, $lte: today } }).select('userId date count').lean(),
+      RcSearchUsage.findOne({}).sort({ date: 1 }).select('date').lean()
+    ])
+
+    // One entry per day, newest first, including days with no searches
+    const dayMap = new Map()
+    for (let i = 0; i < 28; i++) {
+      const date = shiftDate(today, -i)
+      dayMap.set(date, { date, count: 0, users: 0 })
+    }
+
+    const userMap = new Map()
+    const totals = { today: 0, last7: 0, last28: 0 }
+    for (const row of rows) {
+      const day = dayMap.get(row.date)
+      if (!day || !row.count) continue
+      day.count += row.count
+      day.users += 1
+
+      const key = String(row.userId)
+      if (!userMap.has(key)) userMap.set(key, { userId: row.userId, today: 0, last7: 0, last28: 0 })
+      const usage = userMap.get(key)
+      usage.last28 += row.count
+      totals.last28 += row.count
+      if (row.date >= from7) {
+        usage.last7 += row.count
+        totals.last7 += row.count
+      }
+      if (row.date === today) {
+        usage.today += row.count
+        totals.today += row.count
+      }
+    }
+
+    const users = await User.find({ _id: { $in: Array.from(userMap.values()).map((u) => u.userId) } })
+      .select('name mobile1 rcSearchLimit rcSearchCount')
+      .lean()
+    const usersById = new Map(users.map((u) => [String(u._id), u]))
+
+    // Counting started when this feature went live, so averages only use the days that were counted
+    const trackingSince = firstRow?.date || null
+    const trackedDays = trackingSince
+      ? Math.round((Date.parse(today) - Date.parse(trackingSince)) / 86400000) + 1
+      : 0
+    const average = (total, windowDays) => {
+      const days = Math.min(windowDays, trackedDays)
+      return days > 0 ? Math.round((total / days) * 10) / 10 : 0
+    }
+
+    res.json({
+      success: true,
+      data: {
+        today,
+        trackingSince,
+        trackedDays,
+        totals: {
+          ...totals,
+          avg7: average(totals.last7, 7),
+          avg28: average(totals.last28, 28)
+        },
+        days: Array.from(dayMap.values()),
+        users: Array.from(userMap.values())
+          .map((usage) => {
+            const user = usersById.get(String(usage.userId))
+            return {
+              ...usage,
+              name: user?.name,
+              mobile1: user?.mobile1,
+              rcSearchLimit: user?.rcSearchLimit || 0,
+              rcSearchCount: user?.rcSearchCount || 0,
+              rcSearchRemaining: Math.max(0, (user?.rcSearchLimit || 0) - (user?.rcSearchCount || 0))
+            }
+          })
+          .sort((a, b) => b.last28 - a.last28 || b.last7 - a.last7)
+      }
     })
   } catch (error) {
     sendError(res, req, error)

@@ -8,6 +8,9 @@ router.use(adminAuthMiddleware)
 // Totals, month-wise cashflow and per-user sales
 router.get('/summary', adminApiCreditController.getSummary)
 
+// Searches actually made: day-wise and per user
+router.get('/usage', adminApiCreditController.getUsage)
+
 // List purchases / sales
 router.get('/', adminApiCreditController.getTransactions)
 

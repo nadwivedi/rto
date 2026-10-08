@@ -3,6 +3,7 @@ const mongoose = require('mongoose')
 const VehicleSearchHistory = require('../models/VehicleSearchHistory')
 const User = require('../models/User')
 const ApiUsage = require('../models/ApiUsage')
+const RcSearchUsage = require('../models/RcSearchUsage')
 const Lead = require('../models/Lead')
 const { VEHICLE_DOC_TYPES, getVehicleDocuments, matchExpiry, leadPriorityFor } = require('../utils/vehicleExpiry')
 
@@ -186,6 +187,9 @@ const lookupVehicle = async (req, res) => {
       { $inc: { rcSearchCount: 1 } },
       { new: true }
     ).select('rcSearchLimit rcSearchCount')
+
+    // Day-wise usage for the admin's Vehicle API Sales page
+    await RcSearchUsage.recordSearch(targetUserId)
 
     const newLimit = updatedUser?.rcSearchLimit || currentLimit
     const newCount = updatedUser?.rcSearchCount || (currentCount + 1)
