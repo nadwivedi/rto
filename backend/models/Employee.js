@@ -61,6 +61,7 @@ const employeeSchema = new mongoose.Schema({
     hpaHpt: { type: Boolean, default: true },
     kyc: { type: Boolean, default: true },
     javak: { type: Boolean, default: true },
+    leads: { type: Boolean, default: true },
     cashflow: { type: Boolean, default: true }
   },
   isActive: {

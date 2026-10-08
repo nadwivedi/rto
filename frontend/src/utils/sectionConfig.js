@@ -40,6 +40,7 @@ const sectionGroups = [
       { key: 'forms', label: 'RTO Forms', path: '/forms', icon: '📋' },
       { key: 'kyc', label: 'KYC Zone', path: '/kyc', icon: '🛡️' },
       { key: 'javak', label: 'Javak (Notes)', path: '/javak', icon: '📋' },
+      { key: 'leads', label: 'Lead Management', path: '/leads', icon: '🎯' },
       { key: 'cashflow', label: 'Cashflow Reports', path: '/cashflow-report', icon: '💰' }
     ]
   }
@@ -71,6 +72,7 @@ export const sectionKeyToRoute = {
   hpaHpt: '/hpa-hpt',
   kyc: '/kyc',
   javak: '/javak',
+  leads: '/leads',
   cashflow: '/cashflow-report'
 }
 

@@ -40,6 +40,7 @@ import Sarthi from './pages/Sarthi'
 import KycZone from './pages/KycZone/KycZone'
 import WhatsApp from './pages/WhatsApp/WhatsApp'
 import Javak from './pages/Javak/Javak'
+import Leads from './pages/Leads/Leads'
 import CashflowReport from './pages/Reports/CashflowReport'
 import SpeedGovernor from './pages/SpeedGovernor/SpeedGovernor'
 import MoneyReceived from './pages/MoneyReceived/MoneyReceived'
@@ -110,7 +111,7 @@ function ProtectedLayout() {
         const isModalOpen = document.querySelector('.bg-slate-900\\/60, .fixed.inset-0, [role="dialog"]') !== null;
         if (isModalOpen) return;
 
-        const vahanHubPages = ['/vahan', '/forms', '/whatsapp', '/setting', '/javak', '/kyc', '/vehicle-details', '/vehicle-detail', '/vehicle-search-history', '/vehicle-details/history'];
+        const vahanHubPages = ['/vahan', '/forms', '/whatsapp', '/setting', '/javak', '/leads', '/kyc', '/vehicle-details', '/vehicle-detail', '/vehicle-search-history', '/vehicle-details/history'];
         const sarthiHubPages = ['/sarthi'];
         const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal', '/hpa-hpt', '/cashflow-report'];
 
@@ -201,6 +202,7 @@ function ProtectedLayout() {
                 <Route path='/parties/:partyId' element={<LegacyPartyDetailRedirect />} />
                 <Route path='/whatsapp' element={<WhatsApp />} />
                 <Route path='/javak' element={<Javak />} />
+                <Route path='/leads' element={<Leads />} />
                 <Route path='/cashflow-report' element={<CashflowReport />} />
                 <Route path='/speed-governor' element={<SpeedGovernor />} />
                 <Route path='/money-received' element={<MoneyReceived />} />
