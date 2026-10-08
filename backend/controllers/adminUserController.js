@@ -101,7 +101,7 @@ exports.getUserById = async (req, res) => {
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, lifetimeFee, rcSearchLimit, planType } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, lifetimeFee, planType } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -248,7 +248,8 @@ exports.createUser = async (req, res) => {
         rcDetails: features.rcDetails === true,
         forms: features.forms === true
       } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false },
-      rcSearchLimit: rcSearchLimit !== undefined && !Number.isNaN(Number(rcSearchLimit)) ? Math.max(0, Number(rcSearchLimit)) : 0,
+      // Starts at 0; the limit only grows when a sale is recorded in Vehicle API Sales
+      rcSearchLimit: 0,
       rcSearchCount: 0
     })
 
@@ -295,7 +296,8 @@ exports.createUser = async (req, res) => {
 // Update user
 exports.updateUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, monthlyPrice, yearlyPrice, lifetimeFee, features, rcSearchLimit, rcSearchCount } = req.body
+    // rcSearchLimit is deliberately not accepted here: it changes only through Vehicle API Sales
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, monthlyPrice, yearlyPrice, lifetimeFee, features } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -383,12 +385,6 @@ exports.updateUser = async (req, res) => {
         moneyReceived: features.moneyReceived === true,
         rcDetails: features.rcDetails === true,
         forms: features.forms === true
-      }
-    }
-    if (rcSearchLimit !== undefined) {
-      const parsedLimit = Number(rcSearchLimit)
-      if (!Number.isNaN(parsedLimit) && parsedLimit >= 0) {
-        user.rcSearchLimit = parsedLimit
       }
     }
     if (planType !== undefined) {
