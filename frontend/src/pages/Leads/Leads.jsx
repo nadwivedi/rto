@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
 import useLeads from './useLeads'
-import { Icon, LeadModals } from './LeadUI'
+import { DocAlerts, Icon, LeadModals } from './LeadUI'
 import {
   API_URL, BUCKETS, ICON_PATHS, LEAD_STATUSES, LEAD_TYPES, SOURCES,
   followUpLabel, followUpTone, initials, isClosedStatus, statusInfo,
@@ -29,6 +29,7 @@ const SOURCE_STYLES = {
   WhatsApp: 'bg-green-50 text-green-700',
   'Social Media': 'bg-pink-50 text-pink-700',
   'Existing Customer': 'bg-blue-50 text-blue-700',
+  'RC Search': 'bg-indigo-50 text-indigo-700',
   Other: 'bg-slate-100 text-slate-600',
 }
 
@@ -565,6 +566,7 @@ const Leads = () => {
                                 <span className={`rounded-md px-2 py-0.5 text-[11px] font-semibold ${SOURCE_STYLES[lead.source] || SOURCE_STYLES.Other}`}>{lead.source}</span>
                               )}
                             </div>
+                            <DocAlerts lead={lead} className='mt-1.5' />
                           </td>
                           <td className='px-3 py-3.5'><StatusTag status={lead.status} /></td>
                           <td className={`whitespace-nowrap px-3 py-3.5 text-xs font-semibold ${isClosedStatus(lead.status) ? 'text-slate-300' : followUpTone(lead.nextFollowUpDate)}`}>
@@ -603,6 +605,7 @@ const Leads = () => {
                               <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${SOURCE_STYLES[lead.source] || SOURCE_STYLES.Other}`}>{lead.source}</span>
                             )}
                           </span>
+                          <DocAlerts lead={lead} className='mt-1.5' />
                         </span>
                       </span>
                     </button>

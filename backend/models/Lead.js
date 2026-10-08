@@ -15,6 +15,12 @@ const followUpSchema = new mongoose.Schema({
   nextFollowUpTime: { type: String, default: '' }
 }, { timestamps: true })
 
+// One document of the vehicle with its expiry date ('YYYY-MM-DD')
+const leadDocumentSchema = new mongoose.Schema({
+  type: { type: String, enum: LEAD_TYPES, required: true },
+  expiryDate: { type: String, default: '' }
+}, { _id: false })
+
 const leadSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.Types.ObjectId,
@@ -31,6 +37,9 @@ const leadSchema = new mongoose.Schema({
   leadType: { type: String, enum: LEAD_TYPES, required: true },
   // Expiry date of the customer's current permit / tax / fitness / PUC / insurance
   expiryDate: { type: String, default: '' },
+  // Leads moved from RC search carry the expiry of every document of the vehicle, so the
+  // lead can show e.g. "Insurance expired, PUC expired". Empty for leads added by hand.
+  documents: { type: [leadDocumentSchema], default: [] },
   expectedAmount: { type: Number, default: null },
   source: { type: String, trim: true, default: '' },
   priority: { type: String, enum: LEAD_PRIORITIES, default: 'warm' },

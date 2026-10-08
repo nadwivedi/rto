@@ -26,17 +26,78 @@ import {
   Fuel,
   CheckCircle2,
   AlertTriangle,
-  Phone
+  Phone,
+  UserPlus,
+  Users
 } from 'lucide-react'
+import { useAuth } from '../../context/AuthContext'
+import { toInputDate } from '../../utils/dateHelpers'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
+// Expiry filters. Keep the values in sync with backend/controllers/vehicleInfoController.js
+const DOC_OPTIONS = [
+  { value: 'all', label: 'All documents' },
+  { value: 'Insurance', label: 'Insurance' },
+  { value: 'Fitness', label: 'Fitness' },
+  { value: 'Tax', label: 'Road Tax' },
+  { value: 'PUC', label: 'PUC' }
+]
+const EXPIRY_OPTIONS = [
+  { value: 'any', label: 'Any expiry date' },
+  { value: 'expired', label: 'Already expired' },
+  { value: '30', label: 'Expiring in 30 days' },
+  { value: '60', label: 'Expiring in 60 days' },
+  { value: '90', label: 'Expiring in 90 days' },
+  { value: '180', label: 'Expiring in 180 days' },
+  { value: '365', label: 'Expiring in 365 days' }
+]
+const LEAD_OPTIONS = [
+  { value: 'all', label: 'All vehicles' },
+  { value: 'notIn', label: 'Not in leads' },
+  { value: 'in', label: 'Already in leads' }
+]
+const NO_FILTERS = { docType: 'all', expiry: 'any', leadFilter: 'all' }
+
+const filterSelectClass = (isActive) =>
+  `px-3 py-2.5 border rounded-xl text-xs font-semibold outline-none cursor-pointer ${
+    isActive ? 'bg-indigo-50 border-indigo-400 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-700'
+  }`
+
+// Expiry date of one document, coloured red when expired and amber when 30 days or less are left
+const ExpiryCell = ({ item, type, value }) => {
+  const doc = item.documents?.find((d) => d.type === type)
+  const isExpired = doc && doc.daysLeft < 0
+  const isSoon = doc && doc.daysLeft >= 0 && doc.daysLeft <= 30
+  return (
+    <span className={`font-semibold ${isExpired ? 'text-red-600' : isSoon ? 'text-amber-600' : 'text-slate-800'}`}>
+      {value || 'NA'}
+      {(isExpired || isSoon) && (
+        <span className="block text-[10px] font-bold uppercase">
+          {isExpired ? 'Expired' : doc.daysLeft === 0 ? 'Today' : `${doc.daysLeft}d left`}
+        </span>
+      )}
+    </span>
+  )
+}
+
 const VehicleSearchHistory = () => {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  // Moving vehicles to leads adds records, so staff need the add permission and the leads section
+  const isStaff = user?.type === 'staff'
+  const canOpenLeads = !isStaff || user?.sections?.leads !== false
+  const canMoveToLeads = !isStaff || (Boolean(user?.permissions?.add) && canOpenLeads)
+
   const [historyList, setHistoryList] = useState([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [searchType, setSearchType] = useState('all')
+  const [filters, setFilters] = useState(NO_FILTERS)
+  // Rows ticked on this page; selectAllMatching means every record matching the filters, on all pages
+  const [selected, setSelected] = useState(() => new Set())
+  const [selectAllMatching, setSelectAllMatching] = useState(false)
+  const [moving, setMoving] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [limit, setLimit] = useState(20)
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 20 })
@@ -91,13 +152,19 @@ const VehicleSearchHistory = () => {
   }
   const [quota, setQuota] = useState({ rcSearchLimit: 0, rcSearchCount: 0, rcSearchRemaining: 0 })
 
-  const fetchHistory = async (page = currentPage, search = searchTerm, pageLimit = limit, type = searchType) => {
+  const fetchHistory = async (page = currentPage, search = searchTerm, pageLimit = limit, type = searchType, activeFilters = filters) => {
     try {
       setLoading(true)
-      let url = `${API_URL}/api/vehicle-info/history?page=${page}&limit=${pageLimit}`
+      // The list is about to change, so ticks from the old list no longer apply
+      setSelected(new Set())
+      setSelectAllMatching(false)
+      let url = `${API_URL}/api/vehicle-info/history?page=${page}&limit=${pageLimit}&today=${toInputDate(new Date())}`
       if (search) {
         url += `&search=${encodeURIComponent(search)}&searchType=${encodeURIComponent(type)}`
       }
+      if (activeFilters.docType !== 'all') url += `&docType=${activeFilters.docType}`
+      if (activeFilters.expiry !== 'any') url += `&expiry=${activeFilters.expiry}`
+      if (activeFilters.leadFilter !== 'all') url += `&leadFilter=${activeFilters.leadFilter}`
 
       const response = await axios.get(url, { withCredentials: true })
       if (response.data.success) {
@@ -153,6 +220,83 @@ const VehicleSearchHistory = () => {
     setSearchType('all')
     setCurrentPage(1)
     fetchHistory(1, '', limit, 'all')
+  }
+
+  const hasFilters = filters.docType !== 'all' || filters.expiry !== 'any' || filters.leadFilter !== 'all'
+
+  const handleFilterChange = (key, value) => {
+    const next = { ...filters, [key]: value }
+    setFilters(next)
+    setCurrentPage(1)
+    fetchHistory(1, searchTerm, limit, searchType, next)
+  }
+
+  // Clears the search box and every filter
+  const handleResetAll = () => {
+    if (debounceTimer.current) clearTimeout(debounceTimer.current)
+    setSearchTerm('')
+    setSearchType('all')
+    setFilters(NO_FILTERS)
+    setCurrentPage(1)
+    fetchHistory(1, '', limit, 'all', NO_FILTERS)
+  }
+
+  // A vehicle that already has an open lead can't be moved again, so it can't be ticked
+  const selectableIds = historyList.filter((item) => !item.lead?.isOpen).map((item) => item._id)
+  const allOnPageSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id))
+  const selectedCount = selectAllMatching ? pagination.total : selected.size
+
+  const toggleAllOnPage = () => {
+    setSelectAllMatching(false)
+    setSelected(allOnPageSelected ? new Set() : new Set(selectableIds))
+  }
+
+  const toggleOne = (id) => {
+    setSelectAllMatching(false)
+    setSelected((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const clearSelection = () => {
+    setSelected(new Set())
+    setSelectAllMatching(false)
+  }
+
+  const handleMoveToLeads = async () => {
+    if (!selectedCount) return
+    if (selectAllMatching && !window.confirm(`Move all ${pagination.total} matching vehicles to Lead Management?`)) return
+    try {
+      setMoving(true)
+      const res = await axios.post(
+        `${API_URL}/api/vehicle-info/history/move-to-leads`,
+        {
+          ...filters,
+          today: toInputDate(new Date()),
+          ...(selectAllMatching ? { selectAll: true, search: searchTerm, searchType } : { ids: [...selected] })
+        },
+        { withCredentials: true }
+      )
+      const { moved = 0, alreadyInLeads = 0, noExpiryDate = 0 } = res.data
+      const skipped = [
+        alreadyInLeads ? `${alreadyInLeads} already in leads` : '',
+        noExpiryDate ? `${noExpiryDate} skipped (no expiry date)` : ''
+      ].filter(Boolean).join(', ')
+      if (moved) {
+        toast.success(`${moved} vehicle${moved > 1 ? 's' : ''} moved to Lead Management${skipped ? ` · ${skipped}` : ''}`)
+      } else {
+        toast.info(skipped ? `Nothing moved: ${skipped}` : 'Nothing to move')
+      }
+      fetchHistory(currentPage, searchTerm, limit, searchType)
+    } catch (err) {
+      console.error('Move to leads error:', err)
+      toast.error(err.response?.data?.message || 'Failed to move vehicles to Lead Management')
+    } finally {
+      setMoving(false)
+    }
   }
 
   const handleDeleteItem = async (id, vehicleNumber) => {
@@ -219,17 +363,6 @@ const VehicleSearchHistory = () => {
     }
   }
 
-  const isExpired = (dateStr) => {
-    if (!dateStr || dateStr === 'NA') return false
-    try {
-      const parsed = new Date(dateStr)
-      if (isNaN(parsed.getTime())) return false
-      return parsed < new Date()
-    } catch {
-      return false
-    }
-  }
-
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6">
@@ -287,6 +420,15 @@ const VehicleSearchHistory = () => {
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto">
+            {canOpenLeads && (
+              <button
+                onClick={() => navigate('/leads')}
+                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl shadow-sm text-xs sm:text-sm font-bold transition cursor-pointer"
+              >
+                <Users className="w-4 h-4" />
+                Lead Management
+              </button>
+            )}
             <button
               onClick={() => navigate('/vehicle-details')}
               className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm text-xs sm:text-sm font-bold transition cursor-pointer"
@@ -372,14 +514,56 @@ const VehicleSearchHistory = () => {
               </select>
               <button
                 type="button"
-                onClick={handleResetSearch}
+                onClick={handleResetAll}
                 className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition cursor-pointer"
-                title="Reset / Clear Search"
+                title="Reset search and filters"
               >
                 <RefreshCw className="w-4 h-4" />
               </button>
             </div>
           </form>
+
+          {/* Expiry + lead filters */}
+          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
+            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mr-1">Expiry filter:</span>
+            <select
+              value={filters.docType}
+              onChange={(e) => handleFilterChange('docType', e.target.value)}
+              className={filterSelectClass(filters.docType !== 'all')}
+              aria-label="Document"
+            >
+              {DOC_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+            <select
+              value={filters.expiry}
+              onChange={(e) => handleFilterChange('expiry', e.target.value)}
+              className={filterSelectClass(filters.expiry !== 'any')}
+              aria-label="Expiry"
+            >
+              {EXPIRY_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+            <select
+              value={filters.leadFilter}
+              onChange={(e) => handleFilterChange('leadFilter', e.target.value)}
+              className={filterSelectClass(filters.leadFilter !== 'all')}
+              aria-label="Lead Management status"
+            >
+              {LEAD_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+            {hasFilters && (
+              <button
+                type="button"
+                onClick={() => {
+                  setFilters(NO_FILTERS)
+                  setCurrentPage(1)
+                  fetchHistory(1, searchTerm, limit, searchType, NO_FILTERS)
+                }}
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         </div>
 
         {/* TABLE VIEW CONTAINER */}
@@ -394,25 +578,75 @@ const VehicleSearchHistory = () => {
               <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3">
                 <Car className="w-7 h-7" />
               </div>
-              <h3 className="text-base font-bold text-slate-800 mb-1">No Search History Found</h3>
+              <h3 className="text-base font-bold text-slate-800 mb-1">{hasFilters ? 'No Vehicle Matches These Filters' : 'No Search History Found'}</h3>
               <p className="text-xs text-slate-500 max-w-sm mx-auto mb-4">
-                {searchTerm
+                {hasFilters
+                  ? 'Try a longer expiry period or a different document.'
+                  : searchTerm
                   ? 'No search history matches your query keyword.'
                   : 'You have not searched for any vehicle registration numbers yet.'}
               </p>
               <button
-                onClick={() => navigate('/vehicle-details')}
+                onClick={hasFilters ? handleResetAll : () => navigate('/vehicle-details')}
                 className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer"
               >
-                Lookup a Vehicle Now
+                {hasFilters ? 'Clear Filters' : 'Lookup a Vehicle Now'}
               </button>
             </div>
           ) : (
             <div>
+              {/* Selection bar: move the ticked vehicles to Lead Management */}
+              {canMoveToLeads && selectedCount > 0 && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 bg-indigo-50 border-b border-indigo-100 text-xs sm:text-sm">
+                  <span className="font-bold text-indigo-900">
+                    {selectAllMatching ? `All ${pagination.total} matching vehicles selected` : `${selected.size} selected`}
+                  </span>
+                  {!selectAllMatching && allOnPageSelected && pagination.total > historyList.length && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectAllMatching(true)}
+                      className="font-semibold text-indigo-700 hover:text-indigo-900 underline cursor-pointer"
+                    >
+                      Select all {pagination.total} matching vehicles
+                    </button>
+                  )}
+                  <div className="flex items-center gap-3 ml-auto">
+                    <button
+                      type="button"
+                      onClick={clearSelection}
+                      className="font-semibold text-slate-600 hover:text-slate-800 cursor-pointer"
+                    >
+                      Clear
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleMoveToLeads}
+                      disabled={moving}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition cursor-pointer disabled:opacity-60"
+                    >
+                      {moving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                      Move to Lead Management
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs sm:text-sm border-collapse">
                   <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider select-none">
                     <tr>
+                      {canMoveToLeads && (
+                        <th className="py-3.5 pl-4 pr-1 w-8">
+                          <input
+                            type="checkbox"
+                            checked={selectAllMatching || allOnPageSelected}
+                            onChange={toggleAllOnPage}
+                            disabled={selectableIds.length === 0}
+                            className="w-4 h-4 cursor-pointer accent-indigo-600 disabled:cursor-default"
+                            aria-label="Select all on this page"
+                          />
+                        </th>
+                      )}
                       <th className="py-3.5 px-4 text-center w-12">#</th>
                       <th className="py-3.5 px-4 min-w-[200px]">Vehicle & Owner</th>
                       <th className="py-3.5 px-4 min-w-[200px]">Maker & Model</th>
@@ -420,6 +654,7 @@ const VehicleSearchHistory = () => {
                       <th className="py-3.5 px-3 min-w-[110px] hidden lg:table-cell">Fitness Upto</th>
                       <th className="py-3.5 px-3 min-w-[110px] hidden lg:table-cell">Insurance Upto</th>
                       <th className="py-3.5 px-3 min-w-[110px] hidden xl:table-cell">Road Tax Upto</th>
+                      <th className="py-3.5 px-3 min-w-[110px] hidden xl:table-cell">PUC Upto</th>
                       <th className="py-3.5 px-4 min-w-[170px]">Search Time</th>
                       <th className="py-3.5 px-4 text-right min-w-[130px] sticky right-0 bg-slate-50">Actions</th>
                     </tr>
@@ -427,11 +662,29 @@ const VehicleSearchHistory = () => {
                   <tbody className="divide-y divide-slate-100">
                     {historyList.map((item, index) => {
                       const serialNumber = (currentPage - 1) * limit + index + 1
+                      const inLeads = Boolean(item.lead?.isOpen)
+                      const isSelected = !inLeads && (selectAllMatching || selected.has(item._id))
+                      // Documents that need attention: expired or 30 days or less left
+                      const alerts = (item.documents || []).filter((doc) => doc.daysLeft <= 30)
                       return (
                         <tr
                           key={item._id}
-                          className="hover:bg-indigo-50/40 transition group"
+                          className={`transition group ${isSelected ? 'bg-indigo-50/70' : 'hover:bg-indigo-50/40'}`}
                         >
+                          {canMoveToLeads && (
+                            <td className="py-3.5 pl-4 pr-1">
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => toggleOne(item._id)}
+                                disabled={inLeads}
+                                className="w-4 h-4 cursor-pointer accent-indigo-600 disabled:cursor-default"
+                                aria-label={`Select ${item.vehicleNumber}`}
+                                title={inLeads ? 'Already in Lead Management' : undefined}
+                              />
+                            </td>
+                          )}
+
                           {/* Serial Number */}
                           <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-xs">
                             {serialNumber}
@@ -457,6 +710,43 @@ const VehicleSearchHistory = () => {
                                   <span>{item.mobileNo || item.rawResponse?.MOBILE_NO}</span>
                                 </div>
                               )}
+                              {/* Is this vehicle already in Lead Management? */}
+                              {item.lead && (
+                                inLeads ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => canOpenLeads && navigate('/leads')}
+                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 ${canOpenLeads ? 'cursor-pointer hover:bg-emerald-200' : 'cursor-default'}`}
+                                    title="This vehicle is already in Lead Management"
+                                  >
+                                    <CheckCircle2 className="w-3 h-3" />
+                                    In Leads
+                                  </button>
+                                ) : (
+                                  <span
+                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200"
+                                    title="An earlier lead for this vehicle is closed, so it can be moved again"
+                                  >
+                                    Lead {item.lead.status === 'converted' ? 'converted' : 'lost'}
+                                  </span>
+                                )
+                              )}
+                              {/* Expiry alerts, for screens too narrow to show every date column */}
+                              {alerts.length > 0 && (
+                                <div className="flex flex-wrap gap-1 xl:hidden">
+                                  {alerts.map((doc) => (
+                                    <span
+                                      key={doc.type}
+                                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                                        doc.daysLeft < 0 ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
+                                      }`}
+                                    >
+                                      {doc.type === 'Tax' ? 'Road Tax' : doc.type}{' '}
+                                      {doc.daysLeft < 0 ? 'expired' : doc.daysLeft === 0 ? 'today' : `${doc.daysLeft}d left`}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
                             </div>
                           </td>
 
@@ -478,35 +768,22 @@ const VehicleSearchHistory = () => {
 
                           {/* Fitness */}
                           <td className="py-3.5 px-3 hidden lg:table-cell text-xs">
-                            <span
-                              className={`font-semibold ${
-                                isExpired(item.fitnessUpto) ? 'text-red-600' : 'text-slate-800'
-                              }`}
-                            >
-                              {item.fitnessUpto || 'NA'}
-                            </span>
+                            <ExpiryCell item={item} type="Fitness" value={item.fitnessUpto} />
                           </td>
 
                           {/* Insurance */}
                           <td className="py-3.5 px-3 hidden lg:table-cell text-xs">
-                            <span
-                              className={`font-semibold ${
-                                isExpired(item.insuranceUpto) ? 'text-red-600' : 'text-slate-800'
-                              }`}
-                            >
-                              {item.insuranceUpto || 'NA'}
-                            </span>
+                            <ExpiryCell item={item} type="Insurance" value={item.insuranceUpto} />
                           </td>
 
                           {/* Tax */}
                           <td className="py-3.5 px-3 hidden xl:table-cell text-xs">
-                            <span
-                              className={`font-semibold ${
-                                isExpired(item.taxUpto) ? 'text-red-600' : 'text-slate-800'
-                              }`}
-                            >
-                              {item.taxUpto || 'NA'}
-                            </span>
+                            <ExpiryCell item={item} type="Tax" value={item.taxUpto} />
+                          </td>
+
+                          {/* PUC */}
+                          <td className="py-3.5 px-3 hidden xl:table-cell text-xs">
+                            <ExpiryCell item={item} type="PUC" value={item.pucUpto || item.rawResponse?.PUCC_UPTO || item.rawResponse?.PUC_UPTO} />
                           </td>
 
                           {/* Search Date on top & Time on bottom */}

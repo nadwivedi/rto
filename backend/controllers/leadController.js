@@ -60,6 +60,16 @@ const validateLeadFields = (fields) => {
   return null
 }
 
+// Leads moved from RC search list every document of the vehicle. The edit form only shows the
+// expiry of the document the lead is for, so keep that entry in step with what was saved.
+const syncPrimaryDocument = (lead) => {
+  if (!lead.documents.length) return
+  const others = lead.documents.filter(doc => doc.type !== lead.leadType)
+  lead.documents = lead.expiryDate
+    ? [...others, { type: lead.leadType, expiryDate: lead.expiryDate }]
+    : others
+}
+
 const sendError = (res, error, fallbackMessage) => {
   if (error.name === 'CastError') {
     return res.status(400).json({ success: false, message: 'Invalid lead id' })
@@ -167,6 +177,7 @@ exports.updateLead = async (req, res) => {
     if (!existing) return res.status(404).json({ success: false, message: 'Lead not found' })
 
     Object.assign(existing, fields)
+    syncPrimaryDocument(existing)
     if (ALL_STATUSES.includes(req.body.status) && req.body.status !== existing.status) {
       existing.status = req.body.status
       existing.statusChangedAt = new Date()

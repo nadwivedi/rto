@@ -3,7 +3,7 @@ import { enforceVehicleNumberFormat } from '../../utils/vehicleNoCheck'
 import {
   ICON_PATHS, LEAD_STATUSES, LEAD_TYPES, LOST_REASONS, PRIORITIES, SOURCES,
   addDays, focusNextOnEnter, formatDate, formatTime, inputCls, isClosedStatus, labelCls,
-  priorityInfo, statusInfo, toISODate, todayISO, typeInfo,
+  leadDocuments, priorityInfo, statusInfo, toISODate, todayISO, typeInfo,
 } from './leadUtils'
 
 export const Icon = ({ d, className = 'h-4 w-4', strokeWidth = 2 }) => (
@@ -36,6 +36,22 @@ export const PriorityDot = ({ priority }) => (
     {priority === 'hot' ? '🔥' : priority === 'cold' ? '❄️' : '☀️'}
   </span>
 )
+
+// Documents needing attention, e.g. "Insurance expired", "PUC 12d left". Nothing is shown once a lead is closed.
+export const DocAlerts = ({ lead, className = '' }) => {
+  if (isClosedStatus(lead.status)) return null
+  const urgent = leadDocuments(lead).filter((doc) => doc.status?.urgent)
+  if (!urgent.length) return null
+  return (
+    <span className={`flex flex-wrap items-center gap-1 ${className}`}>
+      {urgent.map((doc) => (
+        <span key={doc.type} className={`whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-bold ring-1 ring-inset ${doc.status.cls}`}>
+          {doc.type} {doc.status.text}
+        </span>
+      ))}
+    </span>
+  )
+}
 
 export const PlateChip = ({ value }) => (value ? (
   <span className='inline-block rounded-md border border-stone-300 bg-amber-50 px-1.5 py-0.5 font-mono text-[10px] font-black uppercase tracking-wider text-stone-800'>{value}</span>
@@ -149,6 +165,7 @@ const FollowUpDateTime = ({ label, date, time, onDate, onTime }) => (
 
 export const LeadDetail = ({ leads: L, lead }) => {
   const closed = isClosedStatus(lead.status)
+  const documents = leadDocuments(lead)
   return (
     <div className='space-y-4'>
       <div className='flex items-start justify-between gap-3'>
@@ -180,7 +197,6 @@ export const LeadDetail = ({ leads: L, lead }) => {
           ['City', lead.city],
           ['Next Follow-up', lead.nextFollowUpDate ? `${formatDate(lead.nextFollowUpDate)}${lead.nextFollowUpTime ? `, ${formatTime(lead.nextFollowUpTime)}` : ''}` : ''],
           ['Expected Amount', lead.expectedAmount != null ? `₹${Number(lead.expectedAmount).toLocaleString('en-IN')}` : ''],
-          [`${lead.leadType || 'Current'} Expiry`, lead.expiryDate ? formatDate(lead.expiryDate) : ''],
           ['Lead Type', priorityInfo(lead.priority).label],
         ].map(([k, v]) => (
           <div key={k} className='rounded-xl bg-stone-50 px-3 py-2'>
@@ -189,6 +205,26 @@ export const LeadDetail = ({ leads: L, lead }) => {
           </div>
         ))}
       </div>
+
+      {/* Expiry of each document of the vehicle, soonest first */}
+      {documents.length > 0 && (
+        <div className='rounded-2xl bg-stone-50 p-3 ring-1 ring-inset ring-stone-100'>
+          <p className='mb-2 text-[11px] font-bold uppercase tracking-wider text-stone-500'>Documents</p>
+          <ul className='space-y-1.5'>
+            {documents.map((doc) => (
+              <li key={doc.type} className='flex items-center justify-between gap-2 text-sm'>
+                <span className='font-semibold text-stone-800'>{doc.type}</span>
+                <span className='flex items-center gap-2'>
+                  <span className='text-xs text-stone-500'>{formatDate(doc.expiryDate)}</span>
+                  {doc.status && (
+                    <span className={`whitespace-nowrap rounded-md px-1.5 py-0.5 text-[10px] font-bold ring-1 ring-inset ${doc.status.cls}`}>{doc.status.text}</span>
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {lead.notes && (
         <div className='rounded-xl bg-amber-50/60 px-3 py-2 text-sm text-stone-700 ring-1 ring-inset ring-amber-100'>{lead.notes}</div>
@@ -310,7 +346,12 @@ export const LeadModals = ({ leads: L }) => {
                     key={t.value}
                     type='button'
                     tabIndex={-1}
-                    onClick={() => setForm((f) => ({ ...f, leadType: t.value }))}
+                    onClick={() => setForm((f) => ({
+                      ...f,
+                      leadType: t.value,
+                      // A lead moved from RC search knows each document's expiry; show the one for the picked type
+                      expiryDate: f.documents.length ? (f.documents.find((d) => d.type === t.value)?.expiryDate || '') : f.expiryDate,
+                    }))}
                     className={`flex flex-col items-center gap-0.5 rounded-xl py-2 text-xs font-bold ring-1 ring-inset transition-all ${form.leadType === t.value ? 'bg-violet-50 text-violet-700 ring-2 ring-violet-500' : 'bg-white text-stone-500 ring-stone-200 hover:ring-violet-300'}`}
                   >
                     <span className='text-base leading-none'>{t.icon}</span>

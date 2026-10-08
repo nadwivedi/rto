@@ -17,6 +17,9 @@ router.get('/history', vehicleInfoController.getSearchHistory)
 // DELETE clear all search history
 router.delete('/history', vehicleInfoController.clearSearchHistory)
 
+// POST move saved lookups into Lead Management (NO API call)
+router.post('/history/move-to-leads', vehicleInfoController.moveHistoryToLeads)
+
 // GET RC card PDF for a saved history item (NO API call)
 router.get('/history/:id/rc-pdf', vehicleInfoController.downloadHistoryRcPdf)
 

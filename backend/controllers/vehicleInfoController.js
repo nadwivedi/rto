@@ -1,9 +1,21 @@
 const axios = require('axios')
+const mongoose = require('mongoose')
 const VehicleSearchHistory = require('../models/VehicleSearchHistory')
 const User = require('../models/User')
 const ApiUsage = require('../models/ApiUsage')
+const Lead = require('../models/Lead')
+const { VEHICLE_DOC_TYPES, getVehicleDocuments, matchExpiry, leadPriorityFor } = require('../utils/vehicleExpiry')
 
 const VEHICLE_INFO_PROVIDER = 'vehicleInfo'
+
+const EXPIRY_FILTERS = ['expired', '30', '60', '90', '180', '365']
+const LEAD_FILTERS = ['in', 'notIn']
+// Expiry dates are stored as text, so the expiry / lead filters are applied in memory.
+// This caps how many of a user's saved lookups one request will scan.
+const HISTORY_SCAN_LIMIT = 5000
+const MOVE_TO_LEADS_LIMIT = 1000
+// Everything the history table and the lead builder need, without the heavy rawResponse
+const HISTORY_LIST_FIELDS = 'vehicleNumber ownerName mobileNo makerModel status registeredAt insuranceUpto fitnessUpto taxUpto pucUpto searchCount lastSearchedAt createdAt updatedAt rawResponse.MOBILE_NO rawResponse.PUCC_UPTO rawResponse.PUC_UPTO'
 
 /**
  * The provider reports its own account quota on every response as
@@ -260,8 +272,122 @@ const getSavedVehicleByVno = async (req, res) => {
   }
 }
 
+// Mongo query for a user's saved lookups, narrowed by the search box
+const buildHistoryQuery = (userId, rawSearch, searchType = 'all') => {
+  const search = String(rawSearch || '').trim()
+  const query = { userId }
+
+  if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(escaped, 'i')
+
+    // For vehicle number, also strip spaces/dashes so "CG 12 BU 5574" matches "CG12BU5574"
+    const cleanSearch = search.replace(/[\s-]/g, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const cleanRegex = new RegExp(cleanSearch, 'i')
+
+    if (searchType === 'vehicleNumber') {
+      // Match either cleaned (CG12BU5574) or original input
+      query.$or = [
+        { vehicleNumber: cleanRegex },
+        { vehicleNumber: regex }
+      ]
+    } else if (searchType === 'ownerName') {
+      query.ownerName = regex
+    } else if (searchType === 'rtoLocation') {
+      // registeredAt is a top-level flat field saved from API response
+      query.registeredAt = regex
+    } else if (searchType === 'mobileNo') {
+      query.mobileNo = regex
+    } else {
+      // "all" — search across all top-level string fields (reliable, no Mixed path queries)
+      query.$or = [
+        { vehicleNumber: cleanRegex },
+        { vehicleNumber: regex },
+        { ownerName: regex },
+        { mobileNo: regex },
+        { makerModel: regex },
+        { registeredAt: regex }
+      ]
+    }
+  }
+
+  return query
+}
+
+// Expiry / lead filters sent by the history page (query string or request body)
+const readHistoryFilters = (source = {}) => {
+  const docType = VEHICLE_DOC_TYPES.includes(source.docType) ? source.docType : 'all'
+  const expiry = EXPIRY_FILTERS.includes(String(source.expiry)) ? String(source.expiry) : 'any'
+  const leadFilter = LEAD_FILTERS.includes(source.leadFilter) ? source.leadFilter : 'all'
+  // The client sends its local date so "expired" matches the user's calendar, not the server's
+  const today = /^\d{4}-\d{2}-\d{2}$/.test(source.today || '') ? source.today : new Date().toISOString().slice(0, 10)
+  return {
+    docType,
+    expiry,
+    leadFilter,
+    today,
+    isActive: docType !== 'all' || expiry !== 'any' || leadFilter !== 'all'
+  }
+}
+
+// Lead already made for each vehicle number: { _id, status, isOpen }. An open lead wins over a closed one.
+const findLeadsByVehicle = async (userId, vehicleNumbers) => {
+  const byVehicle = new Map()
+  if (!vehicleNumbers.length) return byVehicle
+
+  const leads = await Lead.find({ userId, vehicleNumber: { $in: vehicleNumbers } })
+    .select('vehicleNumber status createdAt')
+    .sort({ createdAt: -1 })
+    .lean()
+
+  leads.forEach((lead) => {
+    const isOpen = Lead.OPEN_STATUSES.includes(lead.status)
+    const current = byVehicle.get(lead.vehicleNumber)
+    if (!current || (isOpen && !current.isOpen)) {
+      byVehicle.set(lead.vehicleNumber, { _id: lead._id, status: lead.status, isOpen })
+    }
+  })
+  return byVehicle
+}
+
+// Adds what the page shows next to each record: parsed document expiries and its lead, if any
+const annotateHistory = async (userId, records, today) => {
+  const leads = await findLeadsByVehicle(userId, records.map(record => record.vehicleNumber))
+  return records.map(record => ({
+    ...record,
+    documents: getVehicleDocuments(record, today),
+    lead: leads.get(record.vehicleNumber) || null
+  }))
+}
+
+// All saved lookups that pass the expiry / lead filters. With an expiry filter on, the ones expiring first come first.
+const scanHistory = async (userId, query, filters) => {
+  const records = await VehicleSearchHistory.find(query)
+    .select(HISTORY_LIST_FIELDS)
+    .sort({ lastSearchedAt: -1 })
+    .limit(HISTORY_SCAN_LIMIT)
+    .lean()
+
+  const matches = []
+  for (const record of await annotateHistory(userId, records, filters.today)) {
+    if (filters.leadFilter === 'in' && !record.lead?.isOpen) continue
+    if (filters.leadFilter === 'notIn' && record.lead?.isOpen) continue
+
+    const matched = matchExpiry(record.documents, filters)
+    if (!matched) continue
+    matches.push({ record, soonest: matched.map(doc => doc.expiryDate).sort()[0] || '' })
+  }
+
+  if (filters.docType !== 'all' || filters.expiry !== 'any') {
+    matches.sort((a, b) => a.soonest.localeCompare(b.soonest))
+  }
+  return matches.map(match => match.record)
+}
+
 /**
- * Get paginated full search history for user
+ * Get paginated full search history for user.
+ * Optional filters: docType (Insurance | Fitness | Tax | PUC), expiry (expired | 30 | 60 | 90 | 180 | 365 days),
+ * leadFilter (in | notIn lead management).
  */
 const getSearchHistory = async (req, res) => {
   try {
@@ -271,51 +397,24 @@ const getSearchHistory = async (req, res) => {
 
     const page = Math.max(1, parseInt(req.query.page) || 1)
     const limit = Math.min(100, Math.max(1, parseInt(req.query.limit) || 20))
-    const search = (req.query.search || '').trim()
+    const query = buildHistoryQuery(req.user.id, req.query.search, req.query.searchType)
+    const filters = readHistoryFilters(req.query)
 
-    const searchType = req.query.searchType || 'all'
-    const query = { userId: req.user.id }
-
-    if (search) {
-      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      const regex = new RegExp(escaped, 'i')
-
-      // For vehicle number, also strip spaces/dashes so "CG 12 BU 5574" matches "CG12BU5574"
-      const cleanSearch = search.replace(/[\s-]/g, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      const cleanRegex = new RegExp(cleanSearch, 'i')
-
-      if (searchType === 'vehicleNumber') {
-        // Match either cleaned (CG12BU5574) or original input
-        query.$or = [
-          { vehicleNumber: cleanRegex },
-          { vehicleNumber: regex }
-        ]
-      } else if (searchType === 'ownerName') {
-        query.ownerName = regex
-      } else if (searchType === 'rtoLocation') {
-        // registeredAt is a top-level flat field saved from API response
-        query.registeredAt = regex
-      } else if (searchType === 'mobileNo') {
-        query.mobileNo = regex
-      } else {
-        // "all" — search across all top-level string fields (reliable, no Mixed path queries)
-        query.$or = [
-          { vehicleNumber: cleanRegex },
-          { vehicleNumber: regex },
-          { ownerName: regex },
-          { mobileNo: regex },
-          { makerModel: regex },
-          { registeredAt: regex }
-        ]
-      }
+    let total
+    let records
+    if (filters.isActive) {
+      const matches = await scanHistory(req.user.id, query, filters)
+      total = matches.length
+      records = matches.slice((page - 1) * limit, page * limit)
+    } else {
+      total = await VehicleSearchHistory.countDocuments(query)
+      const pageRecords = await VehicleSearchHistory.find(query)
+        .sort({ lastSearchedAt: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean()
+      records = await annotateHistory(req.user.id, pageRecords, filters.today)
     }
-
-    const total = await VehicleSearchHistory.countDocuments(query)
-    const records = await VehicleSearchHistory.find(query)
-      .sort({ lastSearchedAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
-      .lean()
 
     const targetUserId = req.user?.type === 'staff' ? (req.user?.adminId || req.user?.id) : req.user?.id
     const userDoc = await User.findById(targetUserId).select('features rcSearchLimit rcSearchCount').lean()
@@ -347,6 +446,99 @@ const getSearchHistory = async (req, res) => {
       message: 'Failed to fetch vehicle search history',
       error: error.message
     })
+  }
+}
+
+// Lead for one saved lookup, or null when the vehicle has no document with an expiry date to make a lead for
+const buildLeadFromHistory = (record, filters) => {
+  // The lead is for the document chosen in the filter; with "All" it is for whichever matching document expires first
+  const byExpiry = (a, b) => a.expiryDate.localeCompare(b.expiryDate)
+  const matched = matchExpiry(record.documents, filters) || []
+  const soonest = [...matched].sort(byExpiry)[0] || [...record.documents].sort(byExpiry)[0]
+  const leadType = filters.docType !== 'all' ? filters.docType : soonest?.type
+  if (!leadType) return null
+
+  const primary = record.documents.find(doc => doc.type === leadType)
+  const mobile = String(record.mobileNo || record.rawResponse?.MOBILE_NO || '').trim()
+
+  return {
+    name: record.ownerName || record.vehicleNumber,
+    // The lookup often masks the mobile number; only keep a full one
+    mobile: /^[0-9]{10}$/.test(mobile) ? mobile : '',
+    vehicleNumber: record.vehicleNumber,
+    leadType,
+    expiryDate: primary?.expiryDate || '',
+    documents: record.documents.map(({ type, expiryDate }) => ({ type, expiryDate })),
+    priority: primary ? leadPriorityFor(primary.daysLeft) : 'warm',
+    source: 'RC Search',
+    notes: [record.makerModel, record.registeredAt].filter(Boolean).join(' · '),
+    status: 'new'
+  }
+}
+
+/**
+ * Turn saved lookups into leads (Lead Management).
+ * Body: { ids: [...] } for picked rows, or { selectAll: true, search, searchType } for everything matching
+ * the filters; plus docType / expiry / leadFilter / today as used on the history page.
+ * A vehicle that already has an open lead is skipped, so moving twice never makes duplicates.
+ */
+const moveHistoryToLeads = async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' })
+    }
+
+    const filters = readHistoryFilters(req.body)
+    let records
+
+    if (req.body.selectAll === true) {
+      const query = buildHistoryQuery(req.user.id, req.body.search, req.body.searchType)
+      records = await scanHistory(req.user.id, query, filters)
+    } else {
+      const ids = (Array.isArray(req.body.ids) ? req.body.ids : []).filter(id => mongoose.isValidObjectId(id))
+      if (!ids.length) {
+        return res.status(400).json({ success: false, message: 'Select at least one vehicle to move' })
+      }
+      const picked = await VehicleSearchHistory.find({ userId: req.user.id, _id: { $in: ids } })
+        .select(HISTORY_LIST_FIELDS)
+        .lean()
+      records = await annotateHistory(req.user.id, picked, filters.today)
+    }
+
+    if (records.length > MOVE_TO_LEADS_LIMIT) {
+      return res.status(400).json({
+        success: false,
+        message: `You can move up to ${MOVE_TO_LEADS_LIMIT} vehicles at a time. Narrow the filters and try again.`
+      })
+    }
+
+    const leads = []
+    let alreadyInLeads = 0
+    let noExpiryDate = 0
+    records.forEach((record) => {
+      if (record.lead?.isOpen) {
+        alreadyInLeads++
+        return
+      }
+      const lead = buildLeadFromHistory(record, filters)
+      if (!lead) {
+        noExpiryDate++
+        return
+      }
+      leads.push({ ...lead, userId: req.user.id })
+    })
+
+    if (leads.length) await Lead.insertMany(leads)
+
+    return res.status(200).json({
+      success: true,
+      moved: leads.length,
+      alreadyInLeads,
+      noExpiryDate
+    })
+  } catch (error) {
+    console.error('Error moving search history to leads:', error)
+    return res.status(500).json({ success: false, message: 'Failed to move vehicles to lead management' })
   }
 }
 
@@ -588,6 +780,7 @@ module.exports = {
   lookupVehicle,
   getSavedVehicleByVno,
   getSearchHistory,
+  moveHistoryToLeads,
   getHistoryById,
   deleteHistoryItem,
   clearSearchHistory,

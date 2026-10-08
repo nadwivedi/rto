@@ -51,6 +51,27 @@ export const followUpTone = (iso) => {
   return 'text-stone-600'
 }
 
+// How close a document is to expiring. `urgent` documents (expired or 30 days or less left) are shown in the leads list.
+export const docStatus = (iso) => {
+  const diff = daysFromToday(iso)
+  if (diff === null) return null
+  if (diff < 0) return { text: 'expired', cls: 'bg-rose-50 text-rose-700 ring-rose-200', urgent: true }
+  if (diff === 0) return { text: 'expires today', cls: 'bg-rose-50 text-rose-700 ring-rose-200', urgent: true }
+  if (diff <= 30) return { text: `${diff}d left`, cls: 'bg-amber-50 text-amber-700 ring-amber-200', urgent: true }
+  return { text: 'valid', cls: 'bg-emerald-50 text-emerald-700 ring-emerald-200', urgent: false }
+}
+// Every document of the lead that has an expiry date, soonest first. Leads moved from RC search
+// list all of the vehicle's documents; a lead added by hand has only the one it is for.
+export const leadDocuments = (lead) => {
+  const docs = lead.documents?.length
+    ? lead.documents
+    : lead.expiryDate ? [{ type: lead.leadType, expiryDate: lead.expiryDate }] : []
+  return docs
+    .filter((doc) => doc.expiryDate)
+    .map((doc) => ({ ...doc, status: docStatus(doc.expiryDate) }))
+    .sort((a, b) => a.expiryDate.localeCompare(b.expiryDate))
+}
+
 export const initials = (name = '') =>
   name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '?'
 
@@ -105,7 +126,8 @@ export const LEAD_STATUSES = [
 export const statusInfo = (value) => LEAD_STATUSES.find((st) => st.value === value) || LEAD_STATUSES[0]
 export const isClosedStatus = (value) => value === 'converted' || value === 'lost'
 
-export const SOURCES = ['Walk-in', 'Referral', 'Phone Call', 'WhatsApp', 'Social Media', 'Existing Customer', 'Other']
+// 'RC Search' is set on leads moved from the vehicle search history
+export const SOURCES = ['Walk-in', 'Referral', 'Phone Call', 'WhatsApp', 'Social Media', 'Existing Customer', 'RC Search', 'Other']
 export const LOST_REASONS = ['Price too high', 'Done elsewhere', 'Not interested', 'Not reachable', 'Vehicle sold', 'Other']
 export const PRIORITIES = [
   { value: 'hot', label: '🔥 Hot', cls: 'bg-rose-50 text-rose-600 ring-rose-200' },
@@ -116,6 +138,8 @@ export const priorityInfo = (value) => PRIORITIES.find((p) => p.value === value)
 
 export const EMPTY_FORM = {
   name: '', mobile: '', email: '', city: '', vehicleNumber: '', leadType: '', expiryDate: '',
+  // Read-only here: used to fill the expiry date when the lead type is switched
+  documents: [],
   expectedAmount: '', source: '', priority: 'warm', status: 'new', notes: '', nextFollowUpDate: '', nextFollowUpTime: '',
 }
 export const EMPTY_FILTERS = { type: '', status: '', priority: '', source: '', createdFrom: '', createdTo: '' }
