@@ -1,51 +1,26 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { SITE_NAME, absoluteUrl } from '../config/seo'
-
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
-
-const formatDate = (value) => {
-  if (!value) return ''
-  const d = new Date(value)
-  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
-}
-
-function upsertMeta(attr, key, content) {
-  if (!content) return
-  let el = document.querySelector(`meta[${attr}="${key}"]`)
-  if (!el) {
-    el = document.createElement('meta')
-    el.setAttribute(attr, key)
-    document.head.appendChild(el)
-  }
-  el.setAttribute('content', content)
-}
-
-function upsertLink(rel, href) {
-  if (!href) return
-  let el = document.querySelector(`link[rel="${rel}"]`)
-  if (!el) {
-    el = document.createElement('link')
-    el.setAttribute('rel', rel)
-    document.head.appendChild(el)
-  }
-  el.setAttribute('href', href)
-}
-
-function removeLink(rel) {
-  const el = document.querySelector(`link[rel="${rel}"]`)
-  if (el) el.remove()
-}
+import { API_URL, blogImageUrl, formatDate } from '../config/blog'
+import { htmlToText, removeLink, upsertLink, upsertMeta } from '../lib/head'
+import { getInitialData } from '../lib/initialData'
 
 const PAGE_DESC = 'Read the latest blogs on RTO agent software, PUC center management, vehicle registration tips, insurance renewal guides, and WhatsApp alert strategies. Stay updated with RTO Sarthi.'
 
 const Blog = () => {
-  const [blogs, setBlogs] = useState([])
-  const [loading, setLoading] = useState(true)
+  // Prerendered with the first page of posts (see src/prerender.jsx)
+  const initial = getInitialData('/blog')
+  const [blogs, setBlogs] = useState(initial?.blogs ?? [])
+  const [loading, setLoading] = useState(!initial)
   const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
+  const [totalPages, setTotalPages] = useState(initial?.totalPages ?? 1)
+  const skipFirstFetch = useRef(!!initial)
 
   useEffect(() => {
+    if (skipFirstFetch.current) {
+      skipFirstFetch.current = false
+      return
+    }
     fetchBlogs()
   }, [page])
 
@@ -87,10 +62,7 @@ const Blog = () => {
   }
 
   const truncate = (str, len) => {
-    if (!str) return ''
-    const div = document.createElement('div')
-    div.innerHTML = str
-    const text = div.textContent || div.innerText || ''
+    const text = htmlToText(str)
     return text.length > len ? text.substring(0, len) + '...' : text
   }
 
@@ -133,7 +105,7 @@ const Blog = () => {
               >
                 <div className='h-48 bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center overflow-hidden'>
                   {blog.coverImage ? (
-                    <img src={blog.coverImage?.startsWith('/uploads') ? `${API_URL}${blog.coverImage}` : blog.coverImage} alt={`${blog.title} - RTO Sarthi`} loading='lazy' className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500' />
+                    <img src={blogImageUrl(blog.coverImage)} alt={`${blog.title} - RTO Sarthi`} loading='lazy' className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500' />
                   ) : (
                     <svg className='w-16 h-16 text-indigo-300' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                       <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={1.5} d='M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z' />

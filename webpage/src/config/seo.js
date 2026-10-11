@@ -204,5 +204,5 @@ export function getPageSeo(pathname) {
 
 export function absoluteUrl(path = '/') {
   const p = path.startsWith('/') ? path : `/${path}`
-  return `${SITE_URL}${p === '/' ? '' : p}` || SITE_URL
+  return `${SITE_URL}${p}`
 }

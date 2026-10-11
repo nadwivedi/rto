@@ -1,73 +1,41 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { SITE_NAME, absoluteUrl } from '../config/seo'
-
-const API_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
-
-const formatDate = (value) => {
-  if (!value) return ''
-  const d = new Date(value)
-  return d.toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })
-}
-
-function upsertMeta(attr, key, content) {
-  if (!content) return
-  let el = document.querySelector(`meta[${attr}="${key}"]`)
-  if (!el) {
-    el = document.createElement('meta')
-    el.setAttribute(attr, key)
-    document.head.appendChild(el)
-  }
-  el.setAttribute('content', content)
-}
-
-function upsertJsonLd(id, data) {
-  let el = document.querySelector(`script[data-jsonld="${id}"]`)
-  if (!el) {
-    el = document.createElement('script')
-    el.setAttribute('type', 'application/ld+json')
-    el.setAttribute('data-jsonld', id)
-    document.head.appendChild(el)
-  }
-  el.textContent = JSON.stringify(data)
-}
-
-function removeLink(rel) {
-  const el = document.querySelector(`link[rel="${rel}"]`)
-  if (el) el.remove()
-}
-
-function upsertLink(rel, href) {
-  if (!href) return
-  let el = document.querySelector(`link[rel="${rel}"]`)
-  if (!el) {
-    el = document.createElement('link')
-    el.setAttribute('rel', rel)
-    document.head.appendChild(el)
-  }
-  el.setAttribute('href', href)
-}
+import { SITE_NAME } from '../config/seo'
+import { API_URL, blogImageUrl, formatDate, getBlogPostHead } from '../config/blog'
+import { applyHead, htmlToText, removeLink } from '../lib/head'
+import { getInitialData } from '../lib/initialData'
 
 const getReadingTime = (html) => {
-  if (!html) return 1
-  const div = document.createElement('div')
-  div.innerHTML = html
-  const text = div.textContent || ''
-  const words = text.trim() ? text.trim().split(/\s+/).length : 0
+  const text = htmlToText(html)
+  const words = text ? text.split(/\s+/).length : 0
   return Math.max(1, Math.ceil(words / 200))
+}
+
+const applyBlogHead = (blog, slug) => {
+  applyHead(getBlogPostHead(blog, slug))
+  removeLink('prev')
+  removeLink('next')
 }
 
 const BlogPost = () => {
   const { slug } = useParams()
-  const [blog, setBlog] = useState(null)
-  const [sidebarBlogs, setSidebarBlogs] = useState([])
-  const [loading, setLoading] = useState(true)
+  // Prerendered posts start with the post already loaded (see src/prerender.jsx)
+  const initial = getInitialData(`/blog/${slug}`)
+  const [blog, setBlog] = useState(initial?.blog ?? null)
+  const [sidebarBlogs, setSidebarBlogs] = useState(initial?.sidebarBlogs ?? [])
+  const [loading, setLoading] = useState(!initial)
   const [error, setError] = useState('')
+  const skipFirstFetch = useRef(!!initial)
 
   useEffect(() => {
+    window.scrollTo(0, 0)
+    // The prerendered HTML already has this post and its <head> tags
+    if (skipFirstFetch.current) {
+      skipFirstFetch.current = false
+      return
+    }
     fetchBlog()
     fetchSidebarBlogs()
-    window.scrollTo(0, 0)
   }, [slug])
 
   const fetchBlog = async () => {
@@ -78,64 +46,7 @@ const BlogPost = () => {
       const data = await res.json()
       if (data.success) {
         setBlog(data.data)
-        const title = data.data.seoTitle || `${data.data.title} - RTO Sarthi`
-        const desc = data.data.seoDescription || data.data.excerpt || ''
-        document.title = title
-        upsertMeta('name', 'description', desc)
-        upsertMeta('name', 'keywords', `RTO blog, ${data.data.tags?.join(', ') || ''}, RTO Sarthi, RTO agent software`)
-        upsertMeta('property', 'og:title', title)
-        upsertMeta('property', 'og:description', desc)
-        upsertMeta('property', 'og:url', absoluteUrl(`/blog/${slug}`))
-        upsertMeta('property', 'og:type', 'article')
-        upsertMeta('property', 'article:published_time', data.data.publishedAt || '')
-        if (data.data.tags) {
-          data.data.tags.forEach(tag => {
-            const el = document.createElement('meta')
-            el.setAttribute('property', 'article:tag')
-            el.setAttribute('content', tag)
-            document.head.appendChild(el)
-          })
-        }
-        if (data.data.coverImage) {
-          const img = data.data.coverImage.startsWith('/uploads') ? `${API_URL}${data.data.coverImage}` : data.data.coverImage
-          upsertMeta('property', 'og:image', img)
-          upsertMeta('name', 'twitter:image', img)
-        }
-        upsertMeta('name', 'twitter:title', title)
-        upsertMeta('name', 'twitter:description', desc)
-        upsertMeta('name', 'twitter:card', 'summary_large_image')
-        upsertMeta('property', 'og:locale', 'en_IN')
-        upsertMeta('property', 'article:modified_time', data.data.updatedAt || '')
-        upsertLink('canonical', absoluteUrl(`/blog/${slug}`))
-        removeLink('prev')
-        removeLink('next')
-        upsertJsonLd('breadcrumb', {
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Home', item: absoluteUrl('/') },
-            { '@type': 'ListItem', position: 2, name: 'Blog', item: absoluteUrl('/blog') },
-            { '@type': 'ListItem', position: 3, name: data.data.title, item: absoluteUrl(`/blog/${slug}`) },
-          ],
-        })
-        upsertJsonLd('blogposting', {
-          '@context': 'https://schema.org',
-          '@type': 'BlogPosting',
-          headline: data.data.title,
-          description: data.data.excerpt || '',
-          author: {
-            '@type': 'Person',
-            name: data.data.author || 'RTO Sarthi',
-          },
-          datePublished: data.data.publishedAt || '',
-          dateModified: data.data.updatedAt || data.data.publishedAt || '',
-          image: data.data.coverImage?.startsWith('/uploads') ? `${API_URL}${data.data.coverImage}` : data.data.coverImage,
-          publisher: {
-            '@type': 'Organization',
-            name: SITE_NAME,
-          },
-          mainEntityOfPage: absoluteUrl(`/blog/${slug}`),
-        })
+        applyBlogHead(data.data, slug)
       } else {
         setError('Blog post not found')
       }
@@ -200,7 +111,7 @@ const BlogPost = () => {
           <article>
             {blog.coverImage && (
               <div className='mb-4 sm:mb-5 md:mb-6 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm max-w-full md:max-w-[75%] lg:max-w-[100%] mx-auto'>
-                <img src={blog.coverImage?.startsWith('/uploads') ? `${API_URL}${blog.coverImage}` : blog.coverImage} alt={`${blog.title} - ${SITE_NAME}`} className='w-full h-auto' />
+                <img src={blogImageUrl(blog.coverImage)} alt={`${blog.title} - ${SITE_NAME}`} className='w-full h-auto' />
               </div>
             )}
 
@@ -250,7 +161,7 @@ const BlogPost = () => {
                       <div className='flex gap-2.5 xl:gap-3'>
                         {b.coverImage && (
                           <div className='w-14 h-14 xl:w-16 xl:h-16 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100'>
-                            <img src={b.coverImage?.startsWith('/uploads') ? `${API_URL}${b.coverImage}` : b.coverImage} alt={b.title} loading='lazy' className='w-full h-full object-cover' />
+                            <img src={blogImageUrl(b.coverImage)} alt={b.title} loading='lazy' className='w-full h-full object-cover' />
                           </div>
                         )}
                         <div className='flex-1 min-w-0'>
@@ -284,7 +195,7 @@ const BlogPost = () => {
               <Link key={b._id} to={`/blog/${b.slug}`} className='group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-md hover:-translate-y-0.5 transition-all duration-300'>
                 {b.coverImage && (
                   <div className='h-36 sm:h-40 bg-gray-100 overflow-hidden'>
-                    <img src={b.coverImage?.startsWith('/uploads') ? `${API_URL}${b.coverImage}` : b.coverImage} alt={b.title} loading='lazy' className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500' />
+                    <img src={blogImageUrl(b.coverImage)} alt={b.title} loading='lazy' className='w-full h-full object-cover group-hover:scale-105 transition-transform duration-500' />
                   </div>
                 )}
                 <div className='p-3 sm:p-4'>
