@@ -376,101 +376,6 @@ const ApiCredits = () => {
           {/* Provider quota actually left */}
           <RcApiUsageCard key={refreshKey} className='mb-5' />
 
-          {/* Searches users actually made */}
-          <div className='mb-5'>
-            <div className='flex flex-wrap items-baseline justify-between gap-2 mb-2'>
-              <h2 className='text-sm font-bold text-gray-800'>API Usage</h2>
-              <p className='text-[11px] text-gray-400'>
-                {usage?.trackingSince
-                  ? `Counting since ${formatDay(usage.trackingSince)} · searches before that are not included`
-                  : 'No search has been counted yet · counting starts with the next search'}
-              </p>
-            </div>
-            <div className='grid grid-cols-3 gap-3 mb-3'>
-              <Tile label='Today' value={formatNumber(usage?.totals?.today)} sub='searches so far today' />
-              <Tile
-                label='Last 7 Days'
-                value={formatNumber(usage?.totals?.last7)}
-                sub={`avg ${formatNumber(usage?.totals?.avg7)} per day`}
-              />
-              <Tile
-                label='Last 28 Days'
-                value={formatNumber(usage?.totals?.last28)}
-                sub={`avg ${formatNumber(usage?.totals?.avg28)} per day`}
-              />
-            </div>
-
-            <div className='grid grid-cols-1 xl:grid-cols-2 gap-5'>
-              {/* Day-wise */}
-              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
-                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Day-wise usage · last 7 days</h3>
-                <table className='w-full'>
-                  <thead>
-                    <tr className='border-b border-gray-100 bg-gray-50/60'>
-                      <th className={`${th} text-left`}>Day</th>
-                      <th className={`${th} text-right`}>Searches</th>
-                      <th className={`${th} text-right`}>Users Active</th>
-                    </tr>
-                  </thead>
-                  <tbody className='divide-y divide-gray-100'>
-                    {(usage?.days || []).slice(0, 7).map((day) => (
-                      <tr key={day.date} className='hover:bg-gray-50/80 transition-colors'>
-                        <td className='px-4 py-2.5 text-xs text-gray-700 whitespace-nowrap'>
-                          {formatDay(day.date)}
-                          {day.date === usage.today && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
-                        </td>
-                        <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
-                          {formatNumber(day.count)}
-                        </td>
-                        <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.users)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* User-wise */}
-              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
-                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Usage by user</h3>
-                {usage?.users?.length ? (
-                  <div className='overflow-x-auto'>
-                    <table className='w-full'>
-                      <thead>
-                        <tr className='border-b border-gray-100 bg-gray-50/60'>
-                          <th className={`${th} text-left`}>User</th>
-                          <th className={`${th} text-right`}>Today</th>
-                          <th className={`${th} text-right`}>Last 7 Days</th>
-                          <th className={`${th} text-right`}>Last 28 Days</th>
-                          <th className={`${th} text-right`}>Left</th>
-                        </tr>
-                      </thead>
-                      <tbody className='divide-y divide-gray-100'>
-                        {usage.users.map((u) => (
-                          <tr key={u.userId} className='hover:bg-gray-50/80 transition-colors'>
-                            <td className='px-4 py-2.5 text-xs'>
-                              <div className='font-semibold text-gray-900'>{u.name || 'Deleted user'}</div>
-                              <div className='text-gray-400'>{u.mobile1 || ''}</div>
-                            </td>
-                            <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${u.today ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
-                              {formatNumber(u.today)}
-                            </td>
-                            <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last7)}</td>
-                            <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last28)}</td>
-                            <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${u.rcSearchRemaining <= 0 ? 'font-bold text-rose-600' : 'text-gray-700'}`}>
-                              {formatNumber(u.rcSearchRemaining)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <p className='p-6 text-center text-sm text-gray-500'>No user has searched in the last 28 days.</p>
-                )}
-              </div>
-            </div>
-          </div>
-
           {/* History */}
           <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-5'>
             <div className='p-3 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center gap-3'>
@@ -607,6 +512,101 @@ const ApiCredits = () => {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Searches users actually made */}
+          <div className='mb-5'>
+            <div className='flex flex-wrap items-baseline justify-between gap-2 mb-2'>
+              <h2 className='text-sm font-bold text-gray-800'>API Usage</h2>
+              <p className='text-[11px] text-gray-400'>
+                {usage?.trackingSince
+                  ? `Counting since ${formatDay(usage.trackingSince)} · searches before that are not included`
+                  : 'No search has been counted yet · counting starts with the next search'}
+              </p>
+            </div>
+            <div className='grid grid-cols-3 gap-3 mb-3'>
+              <Tile label='Today' value={formatNumber(usage?.totals?.today)} sub='searches so far today' />
+              <Tile
+                label='Last 7 Days'
+                value={formatNumber(usage?.totals?.last7)}
+                sub={`avg ${formatNumber(usage?.totals?.avg7)} per day`}
+              />
+              <Tile
+                label='Last 28 Days'
+                value={formatNumber(usage?.totals?.last28)}
+                sub={`avg ${formatNumber(usage?.totals?.avg28)} per day`}
+              />
+            </div>
+
+            <div className='grid grid-cols-1 xl:grid-cols-2 gap-5'>
+              {/* Day-wise */}
+              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
+                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Day-wise usage · last 7 days</h3>
+                <table className='w-full'>
+                  <thead>
+                    <tr className='border-b border-gray-100 bg-gray-50/60'>
+                      <th className={`${th} text-left`}>Day</th>
+                      <th className={`${th} text-right`}>Searches</th>
+                      <th className={`${th} text-right`}>Users Active</th>
+                    </tr>
+                  </thead>
+                  <tbody className='divide-y divide-gray-100'>
+                    {(usage?.days || []).slice(0, 7).map((day) => (
+                      <tr key={day.date} className='hover:bg-gray-50/80 transition-colors'>
+                        <td className='px-4 py-2.5 text-xs text-gray-700 whitespace-nowrap'>
+                          {formatDay(day.date)}
+                          {day.date === usage.today && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
+                        </td>
+                        <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
+                          {formatNumber(day.count)}
+                        </td>
+                        <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.users)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* User-wise */}
+              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
+                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Usage by user</h3>
+                {usage?.users?.length ? (
+                  <div className='overflow-x-auto'>
+                    <table className='w-full'>
+                      <thead>
+                        <tr className='border-b border-gray-100 bg-gray-50/60'>
+                          <th className={`${th} text-left`}>User</th>
+                          <th className={`${th} text-right`}>Today</th>
+                          <th className={`${th} text-right`}>Last 7 Days</th>
+                          <th className={`${th} text-right`}>Last 28 Days</th>
+                          <th className={`${th} text-right`}>Left</th>
+                        </tr>
+                      </thead>
+                      <tbody className='divide-y divide-gray-100'>
+                        {usage.users.map((u) => (
+                          <tr key={u.userId} className='hover:bg-gray-50/80 transition-colors'>
+                            <td className='px-4 py-2.5 text-xs'>
+                              <div className='font-semibold text-gray-900'>{u.name || 'Deleted user'}</div>
+                              <div className='text-gray-400'>{u.mobile1 || ''}</div>
+                            </td>
+                            <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${u.today ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
+                              {formatNumber(u.today)}
+                            </td>
+                            <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last7)}</td>
+                            <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last28)}</td>
+                            <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${u.rcSearchRemaining <= 0 ? 'font-bold text-rose-600' : 'text-gray-700'}`}>
+                              {formatNumber(u.rcSearchRemaining)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className='p-6 text-center text-sm text-gray-500'>No user has searched in the last 28 days.</p>
+                )}
+              </div>
+            </div>
           </div>
 
           <div className='grid grid-cols-1 xl:grid-cols-2 gap-5'>
