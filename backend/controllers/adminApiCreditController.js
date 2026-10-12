@@ -177,6 +177,56 @@ exports.createTransaction = async (req, res) => {
   }
 }
 
+// Change the rate of an entry. Only the price moves: the quantity (and so the user's limit) stays as it is.
+exports.updateTransactionRate = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return badRequest(res, 'Invalid entry')
+
+    const { rate } = req.body || {}
+    const price = Number(rate)
+    if (rate === '' || rate === null || rate === undefined || Number.isNaN(price) || price < 0) {
+      return badRequest(res, 'Rate per API call is required')
+    }
+
+    const transaction = await ApiCreditTransaction.findById(req.params.id).populate('userId', 'name')
+    if (!transaction) {
+      return res.status(404).json({ success: false, message: 'Entry not found' })
+    }
+
+    const oldRate = transaction.rate
+    const oldAmount = transaction.amount
+    transaction.rate = price
+    transaction.amount = roundMoney(transaction.quantity * price)
+    await transaction.save()
+
+    if (oldRate !== transaction.rate) {
+      const userName = transaction.userId?.name
+      recordActivity(req, {
+        action: 'update',
+        entity: 'api_credit',
+        entityId: transaction._id,
+        entityName: transaction.type === 'sale' ? userName || 'Deleted user' : 'Provider purchase',
+        summary:
+          transaction.type === 'sale'
+            ? `Changed rate of sale of ${transaction.quantity} vehicle API calls to ${userName || 'a deleted user'}: ₹${oldRate} → ₹${transaction.rate}`
+            : `Changed rate of purchase of ${transaction.quantity} vehicle API calls: ₹${oldRate} → ₹${transaction.rate}`,
+        changes: [
+          { field: 'Rate', from: oldRate, to: transaction.rate },
+          { field: 'Amount', from: oldAmount, to: transaction.amount }
+        ]
+      })
+    }
+
+    res.json({
+      success: true,
+      message: `Rate updated to ₹${transaction.rate}. Amount is now ₹${transaction.amount}.`,
+      data: transaction
+    })
+  } catch (error) {
+    sendError(res, req, error, error.name === 'ValidationError' ? 400 : 500)
+  }
+}
+
 // Delete an entry. Deleting a sale takes the sold searches back off the user's limit.
 exports.deleteTransaction = async (req, res) => {
   try {

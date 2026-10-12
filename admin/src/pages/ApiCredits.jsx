@@ -86,6 +86,11 @@ const ApiCredits = () => {
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  // Entry whose rate is being changed (only the price can be edited)
+  const [editTxn, setEditTxn] = useState(null)
+  const [editRate, setEditRate] = useState('')
+  const [editError, setEditError] = useState('')
+  const [editSaving, setEditSaving] = useState(false)
   // Bumped after a sale/delete so the provider quota card and user limits re-read
   const [refreshKey, setRefreshKey] = useState(0)
 
@@ -272,6 +277,52 @@ const ApiCredits = () => {
     }
   }
 
+  const openEditRate = (txn) => {
+    setEditTxn(txn)
+    setEditRate(String(txn.rate))
+    setEditError('')
+  }
+
+  const closeEditRate = () => {
+    if (editSaving) return
+    setEditTxn(null)
+  }
+
+  const handleEditRate = async (e) => {
+    e.preventDefault()
+    const price = Number(editRate)
+    if (editRate === '' || Number.isNaN(price) || price < 0) {
+      setEditError('Enter a valid rate')
+      return
+    }
+    try {
+      setEditSaving(true)
+      setEditError('')
+      const res = await fetch(`${BACKEND_URL}/api/admin/api-credits/${editTxn._id}/rate`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ rate: price })
+      })
+      const json = await res.json()
+      if (!json.success) {
+        setEditError(json.message || 'Failed to update rate')
+        return
+      }
+      setEditTxn(null)
+      setError('')
+      setSuccess(json.message)
+      await loadAll()
+    } catch {
+      setEditError('Failed to update rate')
+    } finally {
+      setEditSaving(false)
+    }
+  }
+
+  const editAmount = Number(editRate)
+  const editAmountValid = editTxn && editRate !== '' && !Number.isNaN(editAmount) && editAmount >= 0
+
   const totals = summary?.totals
   const isSaleForm = formData.type === 'sale'
   const inputClass =
@@ -444,6 +495,15 @@ const ApiCredits = () => {
                     </div>
                     <div className='shrink-0 text-xs font-bold text-gray-900 tabular-nums'>{formatRupees(txn.amount)}</div>
                     <button
+                      onClick={() => openEditRate(txn)}
+                      className='shrink-0 p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
+                      title='Edit rate'
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
+                      </svg>
+                    </button>
+                    <button
                       onClick={() => handleDelete(txn)}
                       disabled={deletingId === txn._id}
                       className='shrink-0 p-1.5 -mr-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer'
@@ -501,7 +561,16 @@ const ApiCredits = () => {
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-500 max-w-[220px] truncate' title={txn.note || ''}>
                           {txn.note || '-'}
                         </td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-right'>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-right whitespace-nowrap'>
+                          <button
+                            onClick={() => openEditRate(txn)}
+                            className='p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
+                            title='Edit rate'
+                          >
+                            <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
+                            </svg>
+                          </button>
                           <button
                             onClick={() => handleDelete(txn)}
                             disabled={deletingId === txn._id}
@@ -740,6 +809,89 @@ const ApiCredits = () => {
             </div>
           </div>
         </>
+      )}
+
+      {/* Edit the rate of one entry */}
+      {editTxn && (
+        <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto' onMouseDown={closeEditRate}>
+          <div className='flex items-start justify-center min-h-full px-3 py-8 sm:py-16'>
+            <form
+              onSubmit={handleEditRate}
+              onMouseDown={(e) => e.stopPropagation()}
+              className='bg-white rounded-lg shadow-xl max-w-sm w-full p-4 sm:p-5'
+            >
+              <div className='flex justify-between items-start mb-3'>
+                <div>
+                  <h2 className='text-base sm:text-lg font-bold text-gray-800'>Edit Rate</h2>
+                  <p className='text-xs text-gray-500 mt-0.5'>
+                    {editTxn.type === 'sale'
+                      ? `Sale to ${editTxn.userId?.name || 'deleted user'}`
+                      : 'Purchase from provider'}{' '}
+                    · {formatDate(editTxn.date)} · {formatNumber(editTxn.quantity)} API calls
+                  </p>
+                </div>
+                <button
+                  type='button'
+                  onClick={closeEditRate}
+                  className='text-gray-500 hover:text-gray-700 p-1 -mr-1 cursor-pointer'
+                  aria-label='Close'
+                >
+                  <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
+                  </svg>
+                </button>
+              </div>
+
+              <label className={labelClass}>Rate per API call (₹)</label>
+              <input
+                type='number'
+                min='0'
+                step='any'
+                inputMode='decimal'
+                value={editRate}
+                onChange={(e) => setEditRate(e.target.value)}
+                className={inputClass}
+                autoFocus
+                required
+              />
+
+              <div className='mt-3 rounded-lg bg-gray-50 border border-gray-100 p-2.5 text-xs text-gray-600 space-y-1'>
+                <div className='flex justify-between'>
+                  <span>Current amount</span>
+                  <span className='tabular-nums'>{formatRupees(editTxn.amount)}</span>
+                </div>
+                <div className='flex justify-between font-semibold text-gray-900'>
+                  <span>New amount</span>
+                  <span className='tabular-nums'>
+                    {editAmountValid ? formatRupees(Math.round(editTxn.quantity * editAmount * 100) / 100) : '-'}
+                  </span>
+                </div>
+                <p className='text-[11px] text-gray-400 pt-0.5'>
+                  Only the price changes. API calls{editTxn.type === 'sale' ? " and the user's limit" : ''} stay the same.
+                </p>
+              </div>
+
+              {editError && <p className='mt-2 text-xs font-medium text-red-600'>{editError}</p>}
+
+              <div className='mt-4 grid grid-cols-2 gap-2'>
+                <button
+                  type='button'
+                  onClick={closeEditRate}
+                  className='px-3 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 cursor-pointer'
+                >
+                  Cancel
+                </button>
+                <button
+                  type='submit'
+                  disabled={editSaving}
+                  className='px-3 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 cursor-pointer'
+                >
+                  {editSaving ? 'Saving...' : 'Save Rate'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {/* Add purchase / sale */}
