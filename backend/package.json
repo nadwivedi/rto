@@ -8,8 +8,7 @@
     "dev": "nodemon index.js",
     "import:javak": "node scripts/importJavak.js --uri=mongodb://localhost:27017/rto2",
     "test": "node --test tests/*.test.js",
-    "whatsapp:smoke": "node scripts/whatsappSmokeTest.js",
-    "set:audit-password": "node scripts/setAuditPassword.js"
+    "whatsapp:smoke": "node scripts/whatsappSmokeTest.js"
   },
   "keywords": [
     "rto",

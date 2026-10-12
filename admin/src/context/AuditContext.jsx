@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 import { useAuth } from './AuthContext'
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const STORAGE_KEY = 'rs_ac'
 
 export const ACTIVITY_PATH = '/activity-center'
@@ -19,14 +18,14 @@ const writeFlag = (value) => {
     if (value) sessionStorage.setItem(STORAGE_KEY, '1')
     else sessionStorage.removeItem(STORAGE_KEY)
   } catch {
-    // Storage blocked: unlock still lasts until the tab reloads
+    // Storage blocked: it stays open until the tab reloads
   }
 }
 
 const AuditContext = createContext(null)
 
-// Whether the activity center is unlocked in this tab. The real check is the
-// server cookie; this flag only decides whether to show the page and its link.
+// Whether the activity center has been opened (Ctrl+Alt+Space) in this tab.
+// It only decides whether the page and its sidebar link are shown.
 export const AuditProvider = ({ children }) => {
   const { isAuthenticated, loading } = useAuth()
   const [unlocked, setUnlocked] = useState(readFlag)
@@ -47,32 +46,11 @@ export const AuditProvider = ({ children }) => {
     }
   }
 
-  const unlock = useCallback(async (password) => {
-    const res = await fetch(`${BACKEND_URL}/api/admin/audit/unlock`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ password })
-    })
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok || !data.success) throw new Error(data.message || 'Incorrect password')
-    setFlag(true)
-  }, [setFlag])
-
-  const lock = useCallback(async () => {
-    setFlag(false)
-    try {
-      await fetch(`${BACKEND_URL}/api/admin/audit/lock`, { method: 'POST', credentials: 'include' })
-    } catch {
-      // The cookie expires on its own anyway
-    }
-  }, [setFlag])
-
-  // Server said the session is gone (expired / logged out elsewhere)
-  const expire = useCallback(() => setFlag(false), [setFlag])
+  const unlock = useCallback(() => setFlag(true), [setFlag])
+  const lock = useCallback(() => setFlag(false), [setFlag])
 
   return (
-    <AuditContext.Provider value={{ unlocked, unlock, lock, expire }}>
+    <AuditContext.Provider value={{ unlocked, unlock, lock }}>
       {children}
     </AuditContext.Provider>
   )

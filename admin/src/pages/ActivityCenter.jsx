@@ -141,7 +141,7 @@ const ChangesTable = ({ changes }) => (
 
 const ActivityCenter = () => {
   const navigate = useNavigate()
-  const { lock, expire } = useAudit()
+  const { lock } = useAudit()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -161,9 +161,9 @@ const ActivityCenter = () => {
       try {
         const params = new URLSearchParams(range)
         const res = await fetch(`${BACKEND_URL}/api/admin/audit/activity?${params}`, { credentials: 'include' })
-        if (res.status === 404 || res.status === 401) {
-          // Unlock expired: hide the page again
-          expire()
+        if (res.status === 401) {
+          // Admin session ended: hide the page again
+          lock()
           navigate('/', { replace: true })
           return
         }
@@ -180,7 +180,7 @@ const ActivityCenter = () => {
     return () => {
       cancelled = true
     }
-  }, [range, expire, navigate])
+  }, [range, lock, navigate])
 
   const selectRange = (key) => {
     setRangeKey(key)
@@ -227,8 +227,8 @@ const ActivityCenter = () => {
       return next
     })
 
-  const handleLock = async () => {
-    await lock()
+  const handleLock = () => {
+    lock()
     navigate('/', { replace: true })
   }
 

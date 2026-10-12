@@ -10,7 +10,7 @@ import Export from './pages/Export';
 import CreateVehicleFromJson from './pages/CreateVehicleFromJson';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
-import QuickUnlock from './components/QuickUnlock';
+import ActivityShortcut from './components/ActivityShortcut';
 import { useAuth } from './context/AuthContext';
 import { useAudit, ACTIVITY_PATH } from './context/AuditContext';
 
@@ -31,7 +31,7 @@ function App() {
 
   return (
     <Router>
-      <QuickUnlock />
+      <ActivityShortcut />
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
 
