@@ -152,6 +152,8 @@ const ActivityCenter = () => {
   const [actionFilter, setActionFilter] = useState('')
   const [search, setSearch] = useState('')
   const [expanded, setExpanded] = useState(() => new Set())
+  // Bumped by the Refresh button to fetch the same period again
+  const [reloadKey, setReloadKey] = useState(0)
 
   useEffect(() => {
     let cancelled = false
@@ -186,7 +188,7 @@ const ActivityCenter = () => {
     return () => {
       cancelled = true
     }
-  }, [range, lock, navigate])
+  }, [range, reloadKey, lock, navigate])
 
   const selectRange = (key) => {
     setRangeKey(key)
@@ -233,6 +235,12 @@ const ActivityCenter = () => {
       return next
     })
 
+  // Pull the latest entries; a preset like "Today" is re-read so it follows the current date
+  const handleRefresh = () => {
+    if (rangeKey !== 'custom') setRange(rangeFor(rangeKey))
+    setReloadKey((k) => k + 1)
+  }
+
   const handleLock = () => {
     lock()
     navigate('/', { replace: true })
@@ -265,6 +273,19 @@ const ActivityCenter = () => {
               </button>
             ))}
           </div>
+          <button
+            type='button'
+            onClick={handleRefresh}
+            disabled={loading}
+            className='shrink-0 rounded-lg border border-gray-200 bg-white p-1.5 sm:px-3 text-xs font-semibold text-gray-600 hover:bg-gray-100 disabled:opacity-60 flex items-center gap-1.5 cursor-pointer'
+            title='Refresh'
+            aria-label='Refresh'
+          >
+            <svg className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' />
+            </svg>
+            <span className='hidden sm:inline'>Refresh</span>
+          </button>
           <button
             type='button'
             onClick={handleLock}
