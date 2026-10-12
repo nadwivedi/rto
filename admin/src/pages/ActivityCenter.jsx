@@ -167,6 +167,12 @@ const ActivityCenter = () => {
           navigate('/', { replace: true })
           return
         }
+        if (res.status === 404) {
+          // An older backend (still running the password version, or not restarted) answers 404 here
+          throw new Error(
+            'The server is running an older backend. Restart it with the latest code (git pull, then pm2 restart rto-backend) and reload this page.'
+          )
+        }
         const json = await res.json()
         if (!json.success) throw new Error(json.message || 'Failed to load activity')
         if (!cancelled) setData(json.data)
