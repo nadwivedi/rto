@@ -2,6 +2,20 @@ const Blog = require('../models/Blog')
 const fs = require('fs')
 const path = require('path')
 const sharp = require('sharp')
+const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
+
+// Blog fields tracked in the activity log (content is too long to store, it is flagged instead)
+const BLOG_FIELDS = [
+  { key: 'title', label: 'Title' },
+  { key: 'slug', label: 'Slug' },
+  { key: 'excerpt', label: 'Excerpt' },
+  { key: 'coverImage', label: 'Cover Image' },
+  { key: 'author', label: 'Author' },
+  { key: 'tags', label: 'Tags' },
+  { key: 'published', label: 'Published' },
+  { key: 'seoTitle', label: 'SEO Title' },
+  { key: 'seoDescription', label: 'SEO Description' }
+]
 
 const blogUploadsDir = path.join(__dirname, '..', 'uploads', 'blog-images')
 if (!fs.existsSync(blogUploadsDir)) {
@@ -121,6 +135,14 @@ exports.create = async (req, res) => {
     }
 
     const blog = await Blog.create(blogData)
+    recordActivity(req, {
+      action: 'create',
+      entity: 'blog',
+      entityId: blog._id,
+      entityName: blog.title,
+      summary: `Created blog "${blog.title}"${blog.published ? ' (published)' : ' (draft)'}`,
+      changes: diffSnapshots({}, snapshot(blog, BLOG_FIELDS), BLOG_FIELDS)
+    })
     res.status(201).json({ success: true, message: 'Blog created successfully', data: blog })
   } catch (error) {
     console.error('Create blog error:', error)
@@ -182,6 +204,8 @@ exports.update = async (req, res) => {
     }
 
     const { title, content, excerpt, coverImage, author, tags, published, seoTitle, seoDescription } = req.body
+    const before = snapshot(blog, BLOG_FIELDS)
+    const contentBefore = blog.content
 
     if (title !== undefined) {
       if (!title.trim()) {
@@ -210,6 +234,20 @@ exports.update = async (req, res) => {
     if (seoDescription !== undefined) blog.seoDescription = seoDescription
 
     await blog.save()
+
+    const changes = diffSnapshots(before, snapshot(blog, BLOG_FIELDS), BLOG_FIELDS)
+    if (blog.content !== contentBefore) changes.push({ field: 'Content', from: null, to: '(edited)' })
+    if (changes.length) {
+      recordActivity(req, {
+        action: 'update',
+        entity: 'blog',
+        entityId: blog._id,
+        entityName: blog.title,
+        summary: `Edited blog "${blog.title}" (${changes.map((c) => c.field).join(', ')})`,
+        changes
+      })
+    }
+
     res.json({ success: true, message: 'Blog updated successfully', data: blog })
   } catch (error) {
     console.error('Update blog error:', error)
@@ -223,6 +261,14 @@ exports.delete = async (req, res) => {
     if (!blog) {
       return res.status(404).json({ success: false, message: 'Blog not found' })
     }
+    recordActivity(req, {
+      action: 'delete',
+      entity: 'blog',
+      entityId: blog._id,
+      entityName: blog.title,
+      summary: `Deleted blog "${blog.title}"`,
+      changes: diffSnapshots(snapshot(blog, BLOG_FIELDS), {}, BLOG_FIELDS)
+    })
     res.json({ success: true, message: 'Blog deleted successfully' })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message })

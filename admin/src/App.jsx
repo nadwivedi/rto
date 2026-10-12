@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState, lazy, Suspense } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import Users from './pages/Users';
 import Dashboard from './pages/Dashboard';
@@ -10,11 +10,16 @@ import Export from './pages/Export';
 import CreateVehicleFromJson from './pages/CreateVehicleFromJson';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
+import QuickUnlock from './components/QuickUnlock';
 import { useAuth } from './context/AuthContext';
+import { useAudit, ACTIVITY_PATH } from './context/AuditContext';
+
+const ActivityCenter = lazy(() => import('./pages/ActivityCenter'));
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const { isAuthenticated, loading } = useAuth();
+  const { unlocked } = useAudit();
 
   const toggleSidebar = () => {
     setIsSidebarOpen(!isSidebarOpen);
@@ -26,6 +31,7 @@ function App() {
 
   return (
     <Router>
+      <QuickUnlock />
       <div className="flex min-h-screen bg-gray-50">
         <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
 
@@ -114,6 +120,20 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Export />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={ACTIVITY_PATH}
+                element={
+                  <ProtectedRoute>
+                    {unlocked ? (
+                      <Suspense fallback={null}>
+                        <ActivityCenter />
+                      </Suspense>
+                    ) : (
+                      <Navigate to="/" replace />
+                    )}
                   </ProtectedRoute>
                 }
               />

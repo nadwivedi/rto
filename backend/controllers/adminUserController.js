@@ -4,6 +4,32 @@ const VehicleSearchHistory = require('../models/VehicleSearchHistory')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
+const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
+
+// User fields tracked in the activity log, with the label shown there
+const USER_FIELDS = [
+  { key: 'name', label: 'Name' },
+  { key: 'mobile1', label: 'Mobile 1' },
+  { key: 'mobile2', label: 'Mobile 2' },
+  { key: 'email', label: 'Email' },
+  { key: 'address', label: 'Address' },
+  { key: 'state', label: 'State' },
+  { key: 'rto', label: 'RTO' },
+  { key: 'billName', label: 'Bill Name' },
+  { key: 'billDescription', label: 'Bill Description' },
+  { key: 'planType', label: 'Plan' },
+  { key: 'subscriptionExpiresAt', label: 'Subscription Expiry' },
+  { key: 'monthlyPrice', label: 'Monthly Price' },
+  { key: 'yearlyPrice', label: 'Yearly Price' },
+  { key: 'lifetimeFee', label: 'Lifetime Fee' },
+  { key: 'features.greenTax', label: 'Feature: Green Tax' },
+  { key: 'features.professionalTax', label: 'Feature: Professional Tax' },
+  { key: 'features.autoCreateRC', label: 'Feature: Auto Create RC' },
+  { key: 'features.expandAdditionalDetails', label: 'Feature: Expand Additional Details' },
+  { key: 'features.moneyReceived', label: 'Feature: Money Received' },
+  { key: 'features.rcDetails', label: 'Feature: RC Details' },
+  { key: 'features.forms', label: 'Feature: Forms' }
+]
 
 // Get all users
 exports.getAllUsers = async (req, res) => {
@@ -255,6 +281,15 @@ exports.createUser = async (req, res) => {
 
     await newUser.save()
 
+    recordActivity(req, {
+      action: 'create',
+      entity: 'user',
+      entityId: newUser._id,
+      entityName: newUser.name,
+      summary: `Created user ${newUser.name} (${newUser.mobile1})`,
+      changes: diffSnapshots({}, snapshot(newUser, USER_FIELDS), USER_FIELDS)
+    })
+
     // Return user without password
     const userResponse = {
       id: newUser._id,
@@ -307,6 +342,10 @@ exports.updateUser = async (req, res) => {
         message: 'User not found'
       })
     }
+
+    const before = snapshot(user, USER_FIELDS)
+    const wasActive = user.isActive
+    let passwordChanged = false
 
     // Update fields if provided
     if (name !== undefined) user.name = name.trim()
@@ -434,9 +473,38 @@ exports.updateUser = async (req, res) => {
       // Hash the new password
       const salt = await bcrypt.genSalt(10)
       user.password = await bcrypt.hash(password, salt)
+      passwordChanged = true
     }
 
     await user.save()
+
+    const changes = diffSnapshots(before, snapshot(user, USER_FIELDS), USER_FIELDS)
+    if (passwordChanged) changes.push({ field: 'Password', from: null, to: '(changed)' })
+    const nameChange = changes.find((c) => c.field === 'Name')
+    const label = nameChange ? `${nameChange.from} → ${nameChange.to}` : user.name
+
+    if (Boolean(wasActive) !== Boolean(user.isActive)) {
+      recordActivity(req, {
+        action: user.isActive ? 'activate' : 'deactivate',
+        entity: 'user',
+        entityId: user._id,
+        entityName: user.name,
+        summary: `${user.isActive ? 'Activated' : 'Deactivated'} user ${user.name} (${user.mobile1})`,
+        changes: [{ field: 'Status', from: wasActive ? 'Active' : 'Inactive', to: user.isActive ? 'Active' : 'Inactive' }]
+      })
+    }
+    if (changes.length) {
+      recordActivity(req, {
+        action: 'update',
+        entity: 'user',
+        entityId: user._id,
+        entityName: user.name,
+        summary: nameChange
+          ? `Renamed user ${label}`
+          : `Edited user ${label} (${changes.map((c) => c.field).join(', ')})`,
+        changes
+      })
+    }
 
     res.json({
       success: true,
@@ -488,6 +556,15 @@ exports.deleteUser = async (req, res) => {
         message: 'User not found'
       })
     }
+
+    recordActivity(req, {
+      action: 'delete',
+      entity: 'user',
+      entityId: user._id,
+      entityName: user.name,
+      summary: `Deleted user ${user.name} (${user.mobile1})`,
+      changes: diffSnapshots(snapshot(user, USER_FIELDS), {}, USER_FIELDS)
+    })
 
     res.json({
       success: true,
@@ -582,6 +659,14 @@ exports.generateUserAccessToken = async (req, res) => {
       process.env.JWT_SECRET || 'your-secret-key-change-this-in-production',
       { expiresIn: '10m' }
     )
+
+    recordActivity(req, {
+      action: 'access',
+      entity: 'user',
+      entityId: user._id,
+      entityName: user.name,
+      summary: `Opened the software as user ${user.name} (${user.mobile1})`
+    })
 
     const adminToken = jwt.sign(
       {

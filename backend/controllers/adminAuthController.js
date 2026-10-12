@@ -1,5 +1,6 @@
 const Admin = require('../models/Admin')
 const jwt = require('jsonwebtoken')
+const { recordActivity } = require('../utils/activityLog')
 
 
 // Admin login
@@ -55,6 +56,15 @@ exports.login = async (req, res) => {
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    })
+
+    recordActivity(req, {
+      action: 'login',
+      entity: 'admin',
+      entityId: admin._id,
+      entityName: admin.email,
+      summary: `Admin ${admin.email} logged in`,
+      admin: { id: admin._id, email: admin.email }
     })
 
     res.json({
@@ -118,6 +128,11 @@ exports.logout = async (req, res) => {
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
   })
   res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'
+  })
+  res.clearCookie('auditToken', {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax'

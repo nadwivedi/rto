@@ -20,7 +20,8 @@ const VehicleRegistrations = () => {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        credentials: 'include'
       })
       const data = await response.json()
       if (data.success) {
@@ -42,7 +43,8 @@ const VehicleRegistrations = () => {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        credentials: 'include'
       })
       const data = await response.json()
       if (data.success || response.ok) {

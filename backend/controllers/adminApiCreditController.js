@@ -3,6 +3,7 @@ const ApiCreditTransaction = require('../models/ApiCreditTransaction')
 const User = require('../models/User')
 const RcSearchUsage = require('../models/RcSearchUsage')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
+const { recordActivity } = require('../utils/activityLog')
 
 const IST = 'Asia/Kolkata'
 
@@ -133,6 +134,25 @@ exports.createTransaction = async (req, res) => {
       }
     }
 
+    recordActivity(req, {
+      action: 'create',
+      entity: 'api_credit',
+      entityId: transaction._id,
+      entityName: type === 'sale' ? user.name : 'Provider purchase',
+      summary:
+        type === 'sale'
+          ? `Sold ${qty} vehicle API calls to ${user.name} @ ₹${price} (₹${transaction.amount}). Limit +${qty}`
+          : `Recorded purchase of ${qty} vehicle API calls @ ₹${price} (₹${transaction.amount})`,
+      changes: [
+        { field: 'Type', from: null, to: type === 'sale' ? 'Sale' : 'Purchase' },
+        { field: 'Quantity', from: null, to: qty },
+        { field: 'Rate', from: null, to: price },
+        { field: 'Amount', from: null, to: transaction.amount },
+        ...(updatedUser ? [{ field: 'User RC Search Limit', from: updatedUser.rcSearchLimit - qty, to: updatedUser.rcSearchLimit }] : []),
+        ...(transaction.note ? [{ field: 'Note', from: null, to: transaction.note }] : [])
+      ]
+    })
+
     res.status(201).json({
       success: true,
       message:
@@ -168,15 +188,35 @@ exports.deleteTransaction = async (req, res) => {
     }
 
     let limitReducedBy = 0
+    let saleUserName = null
     if (transaction.type === 'sale' && transaction.userId) {
-      const user = await User.findById(transaction.userId).select('rcSearchLimit')
+      const user = await User.findById(transaction.userId).select('name rcSearchLimit')
       if (user) {
+        saleUserName = user.name
         // Never push the limit below zero if it was lowered by hand in the meantime
         limitReducedBy = Math.min(user.rcSearchLimit || 0, transaction.quantity)
         user.rcSearchLimit = (user.rcSearchLimit || 0) - limitReducedBy
         await user.save()
       }
     }
+
+    recordActivity(req, {
+      action: 'delete',
+      entity: 'api_credit',
+      entityId: transaction._id,
+      entityName: transaction.type === 'sale' ? saleUserName || 'Deleted user' : 'Provider purchase',
+      summary:
+        transaction.type === 'sale'
+          ? `Deleted sale of ${transaction.quantity} vehicle API calls to ${saleUserName || 'a deleted user'} (₹${transaction.amount}). Limit -${limitReducedBy}`
+          : `Deleted purchase of ${transaction.quantity} vehicle API calls (₹${transaction.amount})`,
+      changes: [
+        { field: 'Type', from: transaction.type === 'sale' ? 'Sale' : 'Purchase', to: null },
+        { field: 'Quantity', from: transaction.quantity, to: null },
+        { field: 'Rate', from: transaction.rate, to: null },
+        { field: 'Amount', from: transaction.amount, to: null },
+        { field: 'Date', from: transaction.date ? transaction.date.toISOString().slice(0, 10) : null, to: null }
+      ]
+    })
 
     res.json({
       success: true,
