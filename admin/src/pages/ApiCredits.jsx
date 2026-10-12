@@ -44,10 +44,10 @@ const formatNumber = (n) => Number(n || 0).toLocaleString('en-IN')
 
 const EMPTY_FORM = { type: 'sale', userId: '', quantity: '', rate: '', date: '', note: '' }
 
-const Tile = ({ label, value, sub, accent = 'text-gray-900' }) => (
-  <div className='bg-white rounded-xl border border-gray-100 p-4 shadow-sm'>
-    <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>{label}</p>
-    <p className={`text-2xl font-bold mt-1 tabular-nums ${accent}`}>{value}</p>
+const Tile = ({ label, value, sub, accent = 'text-gray-900', className = '' }) => (
+  <div className={`bg-white rounded-xl border border-gray-100 p-2.5 sm:p-4 shadow-sm ${className}`}>
+    <p className='text-[10px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wide'>{label}</p>
+    <p className={`text-lg sm:text-2xl font-bold mt-0.5 sm:mt-1 tabular-nums ${accent}`}>{value}</p>
     {sub && <p className='text-[11px] text-gray-400 mt-0.5'>{sub}</p>}
   </div>
 )
@@ -63,7 +63,7 @@ const TypeBadge = ({ type }) =>
     </span>
   )
 
-const th = 'px-4 py-2.5 text-[11px] font-semibold text-gray-500 uppercase tracking-wider'
+const th = 'px-2.5 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wider'
 
 const ApiCredits = () => {
   const [searchParams, setSearchParams] = useSearchParams()
@@ -281,23 +281,23 @@ const ApiCredits = () => {
   return (
     <div className='max-w-[1500px] mx-auto'>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6'>
+      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5 sm:gap-4 mb-3 sm:mb-6'>
         <div>
-          <h1 className='text-2xl sm:text-3xl font-bold text-gray-800'>Vehicle API Sales</h1>
-          <p className='text-sm sm:text-base text-gray-600 mt-1'>
+          <h1 className='text-xl sm:text-3xl font-bold text-gray-800'>Vehicle API Sales</h1>
+          <p className='text-xs sm:text-base text-gray-600 mt-0.5 sm:mt-1'>
             What you buy from the provider, what each user buys from you, and the cashflow
           </p>
         </div>
-        <div className='flex flex-wrap gap-2'>
+        <div className='grid grid-cols-2 sm:flex gap-2'>
           <button
             onClick={() => openModal('purchase')}
-            className='px-4 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold text-sm transition-colors cursor-pointer'
+            className='px-2 py-2 sm:px-4 sm:py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold text-sm transition-colors cursor-pointer'
           >
             + I Bought from Provider
           </button>
           <button
             onClick={() => openModal('sale', userFilter)}
-            className='px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all cursor-pointer'
+            className='px-2 py-2 sm:px-5 sm:py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all cursor-pointer'
           >
             + Sell to User
           </button>
@@ -327,7 +327,7 @@ const ApiCredits = () => {
       ) : (
         <>
           {/* Totals */}
-          <div className='grid grid-cols-2 lg:grid-cols-5 gap-3 mb-5'>
+          <div className='grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-3 sm:mb-5'>
             <Tile
               label='You Bought'
               value={formatRupees(totals?.boughtAmount)}
@@ -367,6 +367,7 @@ const ApiCredits = () => {
             />
             <Tile
               label='Net Cashflow'
+              className='col-span-2 lg:col-span-1'
               value={formatRupees(totals?.netCashflow)}
               accent={totals?.netCashflow < 0 ? 'text-red-600' : 'text-emerald-700'}
               sub={`Received minus paid · ${formatNumber(totals?.unsoldQty)} bought calls not yet sold`}
@@ -374,11 +375,11 @@ const ApiCredits = () => {
           </div>
 
           {/* Provider quota actually left */}
-          <RcApiUsageCard key={refreshKey} className='mb-5' />
+          <RcApiUsageCard key={refreshKey} className='mb-3 sm:mb-5' />
 
           {/* History */}
-          <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-5'>
-            <div className='p-3 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center gap-3'>
+          <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-3 sm:mb-5'>
+            <div className='p-2.5 sm:p-3 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center gap-2 sm:gap-3'>
               <h2 className='text-sm font-bold text-gray-800 lg:mr-auto'>
                 History
                 {filteredUser && <span className='font-normal text-gray-500'> · {filteredUser.name}</span>}
@@ -425,7 +426,37 @@ const ApiCredits = () => {
                   : 'Nothing recorded yet. Start with "I Bought from Provider", then "Sell to User".'}
               </p>
             ) : (
-              <div className='overflow-x-auto'>
+              <>
+              <ul className='md:hidden divide-y divide-gray-100'>
+                {transactions.map((txn) => (
+                  <li key={txn._id} className='flex items-center gap-2 px-2.5 py-2'>
+                    <div className='min-w-0 flex-1'>
+                      <div className='flex items-center gap-1.5 min-w-0'>
+                        <TypeBadge type={txn.type} />
+                        <span className='text-xs font-semibold text-gray-900 truncate'>
+                          {txn.type === 'purchase' ? 'API provider' : txn.userId ? txn.userId.name : 'Deleted user'}
+                        </span>
+                      </div>
+                      <div className='text-[11px] text-gray-500 truncate mt-0.5'>
+                        {formatDate(txn.date)} · {formatNumber(txn.quantity)} calls @ {formatRupees(txn.rate)}
+                        {txn.note && <span className='text-gray-400'> · {txn.note}</span>}
+                      </div>
+                    </div>
+                    <div className='shrink-0 text-xs font-bold text-gray-900 tabular-nums'>{formatRupees(txn.amount)}</div>
+                    <button
+                      onClick={() => handleDelete(txn)}
+                      disabled={deletingId === txn._id}
+                      className='shrink-0 p-1.5 -mr-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer'
+                      title='Delete entry'
+                    >
+                      <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                      </svg>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+              <div className='hidden md:block overflow-x-auto'>
                 <table className='w-full'>
                   <thead>
                     <tr className='border-b border-gray-100 bg-gray-50/60'>
@@ -442,11 +473,11 @@ const ApiCredits = () => {
                   <tbody className='divide-y divide-gray-100'>
                     {transactions.map((txn) => (
                       <tr key={txn._id} className='hover:bg-gray-50/80 transition-colors'>
-                        <td className='px-4 py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatDate(txn.date)}</td>
-                        <td className='px-4 py-2.5'>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatDate(txn.date)}</td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5'>
                           <TypeBadge type={txn.type} />
                         </td>
-                        <td className='px-4 py-2.5 text-xs'>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'>
                           {txn.type === 'purchase' ? (
                             <span className='text-gray-400'>API provider</span>
                           ) : txn.userId ? (
@@ -458,19 +489,19 @@ const ApiCredits = () => {
                             <span className='text-gray-400'>Deleted user</span>
                           )}
                         </td>
-                        <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>
                           {formatNumber(txn.quantity)}
                         </td>
-                        <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
                           {formatRupees(txn.rate)}
                         </td>
-                        <td className='px-4 py-2.5 text-xs font-bold text-gray-900 text-right tabular-nums whitespace-nowrap'>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-gray-900 text-right tabular-nums whitespace-nowrap'>
                           {formatRupees(txn.amount)}
                         </td>
-                        <td className='px-4 py-2.5 text-xs text-gray-500 max-w-[220px] truncate' title={txn.note || ''}>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-500 max-w-[220px] truncate' title={txn.note || ''}>
                           {txn.note || '-'}
                         </td>
-                        <td className='px-4 py-2.5 text-right'>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-right'>
                           <button
                             onClick={() => handleDelete(txn)}
                             disabled={deletingId === txn._id}
@@ -487,6 +518,7 @@ const ApiCredits = () => {
                   </tbody>
                 </table>
               </div>
+              </>
             )}
 
             {pagination.totalPages > 1 && (
@@ -515,8 +547,8 @@ const ApiCredits = () => {
           </div>
 
           {/* Searches users actually made */}
-          <div className='mb-5'>
-            <div className='flex flex-wrap items-baseline justify-between gap-2 mb-2'>
+          <div className='mb-3 sm:mb-5'>
+            <div className='flex flex-wrap items-baseline justify-between gap-x-2 mb-2'>
               <h2 className='text-sm font-bold text-gray-800'>API Usage</h2>
               <p className='text-[11px] text-gray-400'>
                 {usage?.trackingSince
@@ -524,7 +556,7 @@ const ApiCredits = () => {
                   : 'No search has been counted yet · counting starts with the next search'}
               </p>
             </div>
-            <div className='grid grid-cols-3 gap-3 mb-3'>
+            <div className='grid grid-cols-3 gap-2 sm:gap-3 mb-3'>
               <Tile label='Today' value={formatNumber(usage?.totals?.today)} sub='searches so far today' />
               <Tile
                 label='Last 7 Days'
@@ -538,7 +570,7 @@ const ApiCredits = () => {
               />
             </div>
 
-            <div className='grid grid-cols-1 xl:grid-cols-2 gap-5'>
+            <div className='grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-5'>
               {/* Day-wise */}
               <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
                 <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Day-wise usage · last 7 days</h3>
@@ -553,14 +585,14 @@ const ApiCredits = () => {
                   <tbody className='divide-y divide-gray-100'>
                     {(usage?.days || []).slice(0, 7).map((day) => (
                       <tr key={day.date} className='hover:bg-gray-50/80 transition-colors'>
-                        <td className='px-4 py-2.5 text-xs text-gray-700 whitespace-nowrap'>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>
                           {formatDay(day.date)}
                           {day.date === usage.today && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
                         </td>
-                        <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
+                        <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                           {formatNumber(day.count)}
                         </td>
-                        <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.users)}</td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.users)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -585,16 +617,16 @@ const ApiCredits = () => {
                       <tbody className='divide-y divide-gray-100'>
                         {usage.users.map((u) => (
                           <tr key={u.userId} className='hover:bg-gray-50/80 transition-colors'>
-                            <td className='px-4 py-2.5 text-xs'>
+                            <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'>
                               <div className='font-semibold text-gray-900'>{u.name || 'Deleted user'}</div>
                               <div className='text-gray-400'>{u.mobile1 || ''}</div>
                             </td>
-                            <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${u.today ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
+                            <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.today ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                               {formatNumber(u.today)}
                             </td>
-                            <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last7)}</td>
-                            <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last28)}</td>
-                            <td className={`px-4 py-2.5 text-xs text-right tabular-nums ${u.rcSearchRemaining <= 0 ? 'font-bold text-rose-600' : 'text-gray-700'}`}>
+                            <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last7)}</td>
+                            <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last28)}</td>
+                            <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.rcSearchRemaining <= 0 ? 'font-bold text-rose-600' : 'text-gray-700'}`}>
                               {formatNumber(u.rcSearchRemaining)}
                             </td>
                           </tr>
@@ -609,7 +641,7 @@ const ApiCredits = () => {
             </div>
           </div>
 
-          <div className='grid grid-cols-1 xl:grid-cols-2 gap-5'>
+          <div className='grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-5'>
             {/* Per-user totals */}
             <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
               <h2 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Bought by each user</h2>
@@ -629,7 +661,7 @@ const ApiCredits = () => {
                     <tbody className='divide-y divide-gray-100'>
                       {summary.users.map((u) => (
                         <tr key={u.userId} className='hover:bg-gray-50/80 transition-colors'>
-                          <td className='px-4 py-2.5 text-xs'>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'>
                             <button
                               onClick={() => changeUserFilter(String(u.userId))}
                               className='text-left cursor-pointer group'
@@ -641,19 +673,19 @@ const ApiCredits = () => {
                               <div className='text-gray-400'>{u.mobile1 || ''}</div>
                             </button>
                           </td>
-                          <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>
                             {formatNumber(u.quantity)}
                           </td>
-                          <td className='px-4 py-2.5 text-xs font-bold text-gray-900 text-right tabular-nums whitespace-nowrap'>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-gray-900 text-right tabular-nums whitespace-nowrap'>
                             {formatRupees(u.amount)}
                           </td>
-                          <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
                             {formatNumber(u.rcSearchCount)} / {formatNumber(u.rcSearchLimit)}
                           </td>
-                          <td className='px-4 py-2.5 text-xs text-gray-700 text-right tabular-nums'>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>
                             {formatNumber(u.rcSearchRemaining)}
                           </td>
-                          <td className='px-4 py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatDate(u.lastDate)}</td>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatDate(u.lastDate)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -681,17 +713,17 @@ const ApiCredits = () => {
                     <tbody className='divide-y divide-gray-100'>
                       {summary.months.map((m) => (
                         <tr key={m.month} className='hover:bg-gray-50/80 transition-colors'>
-                          <td className='px-4 py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatMonth(m.month)}</td>
-                          <td className='px-4 py-2.5 text-xs text-right tabular-nums whitespace-nowrap'>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatMonth(m.month)}</td>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums whitespace-nowrap'>
                             <div className='text-gray-700'>{m.boughtAmount ? formatRupees(m.boughtAmount) : '-'}</div>
                             {m.boughtQty > 0 && <div className='text-gray-400'>{formatNumber(m.boughtQty)} calls</div>}
                           </td>
-                          <td className='px-4 py-2.5 text-xs text-right tabular-nums whitespace-nowrap'>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums whitespace-nowrap'>
                             <div className='text-gray-700'>{m.soldAmount ? formatRupees(m.soldAmount) : '-'}</div>
                             {m.soldQty > 0 && <div className='text-gray-400'>{formatNumber(m.soldQty)} calls</div>}
                           </td>
                           <td
-                            className={`px-4 py-2.5 text-xs font-bold text-right tabular-nums whitespace-nowrap ${
+                            className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-right tabular-nums whitespace-nowrap ${
                               m.net < 0 ? 'text-red-600' : 'text-emerald-700'
                             }`}
                           >
@@ -712,7 +744,7 @@ const ApiCredits = () => {
 
       {/* Add purchase / sale */}
       {showModal && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto'>
+        <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto'>
           <div className='flex items-start justify-center min-h-full px-3 py-8 sm:py-16'>
             <div className='bg-white rounded-lg shadow-xl max-w-md w-full p-5'>
               <div className='flex justify-between items-start mb-4'>

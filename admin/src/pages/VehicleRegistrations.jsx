@@ -76,21 +76,21 @@ const VehicleRegistrations = () => {
   return (
     <div>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6'>
+      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-3 sm:mb-6'>
         <div>
-          <h1 className='text-2xl sm:text-3xl font-bold text-gray-800'>Vehicle Registrations</h1>
-          <p className='text-sm sm:text-base text-gray-600 mt-1'>View and manage vehicle registrations</p>
+          <h1 className='text-xl sm:text-3xl font-bold text-gray-800'>Vehicle Registrations</h1>
+          <p className='text-xs sm:text-base text-gray-600 mt-0.5 sm:mt-1'>View and manage vehicle registrations</p>
         </div>
       </div>
 
       {/* Search Bar */}
-      <div className='mb-6'>
+      <div className='mb-3 sm:mb-6'>
         <input
           type='text'
-          placeholder='Search by registration number, owner name, mobile, chassis or engine number...'
+          placeholder='Search vehicle number, owner, mobile, chassis...'
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+          className='w-full px-3 py-2 sm:px-4 sm:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
         />
       </div>
 
@@ -159,30 +159,24 @@ const VehicleRegistrations = () => {
             {/* Mobile Card View */}
             <div className='md:hidden divide-y divide-gray-200'>
               {filteredRegistrations.map((reg) => (
-                <div key={reg._id} className='p-4 hover:bg-gray-50'>
-                  <div className='flex justify-between items-start mb-3'>
-                    <div className='flex-1'>
-                      <h3 className='font-semibold text-gray-900 text-base'>{reg.registrationNumber}</h3>
-                      <p className='text-sm text-gray-600 mt-1'>{reg.ownerName}</p>
-                      {reg.mobileNumber && (
-                        <p className='text-sm text-gray-600 mt-0.5'>{reg.mobileNumber}</p>
-                      )}
-                      <p className='text-sm text-gray-600 mt-1'>
-                        {reg.makerName} {reg.makerModel}
-                      </p>
-                    </div>
+                <div key={reg._id} className='flex items-center gap-2 px-2.5 py-2 hover:bg-gray-50'>
+                  <div className='min-w-0 flex-1'>
+                    <h3 className='font-semibold text-gray-900 text-[13px]'>{reg.registrationNumber}</h3>
+                    <p className='text-[11px] text-gray-600 truncate'>
+                      {reg.ownerName}
+                      {reg.mobileNumber && <span className='text-gray-400'> · {reg.mobileNumber}</span>}
+                    </p>
+                    <p className='text-[11px] text-gray-400 truncate'>
+                      {[reg.makerName, reg.makerModel].filter(Boolean).join(' ')}
+                      {reg.dateOfRegistration && <span> · Reg. {reg.dateOfRegistration}</span>}
+                    </p>
                   </div>
-                  <div className='flex justify-between items-center pt-2 border-t border-gray-100'>
-                    <span className='text-xs text-gray-500'>
-                      Registered: {reg.dateOfRegistration}
-                    </span>
-                    <button
-                      onClick={() => handleDelete(reg._id)}
-                      className='text-red-600 hover:text-red-800 font-semibold text-sm px-3 py-1.5 rounded hover:bg-red-50 transition-colors cursor-pointer'
-                    >
-                      Delete
-                    </button>
-                  </div>
+                  <button
+                    onClick={() => handleDelete(reg._id)}
+                    className='shrink-0 text-red-600 hover:text-red-800 font-semibold text-xs px-2 py-1.5 rounded hover:bg-red-50 transition-colors cursor-pointer'
+                  >
+                    Delete
+                  </button>
                 </div>
               ))}
             </div>
@@ -192,7 +186,7 @@ const VehicleRegistrations = () => {
 
       {/* Results Count */}
       {!loading && filteredRegistrations.length > 0 && (
-        <div className='mt-4 text-sm text-gray-600 text-center'>
+        <div className='mt-3 sm:mt-4 text-xs sm:text-sm text-gray-600 text-center'>
           Showing {filteredRegistrations.length} of {registrations.length} vehicle registrations
         </div>
       )}

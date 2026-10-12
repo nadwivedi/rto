@@ -1,1 +1,7 @@
 @import "tailwindcss";
+/* Phones: everything (text, spacing, icons are rem-based) is drawn a bit smaller */
+@media (max-width: 767px) {
+  html {
+    font-size: 14px;
+  }
+}

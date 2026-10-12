@@ -110,9 +110,9 @@ const Icon = ({ name, className = 'w-4 h-4' }) => (
 )
 
 const Tile = ({ label, value, accent = 'text-gray-900' }) => (
-  <div className='bg-white rounded-xl border border-gray-100 p-4 shadow-sm'>
-    <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>{label}</p>
-    <p className={`text-2xl font-bold mt-1 tabular-nums ${accent}`}>{Number(value || 0).toLocaleString('en-IN')}</p>
+  <div className='bg-white rounded-xl border border-gray-100 p-2.5 sm:p-4 shadow-sm'>
+    <p className='text-[10px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wide'>{label}</p>
+    <p className={`text-lg sm:text-2xl font-bold mt-0.5 sm:mt-1 tabular-nums ${accent}`}>{Number(value || 0).toLocaleString('en-IN')}</p>
   </div>
 )
 
@@ -237,21 +237,21 @@ const ActivityCenter = () => {
     range.from === range.to ? formatShortDate(range.from) : `${formatShortDate(range.from)} – ${formatShortDate(range.to)}`
 
   return (
-    <div className='max-w-6xl mx-auto space-y-4 md:space-y-5'>
+    <div className='max-w-6xl mx-auto space-y-3 md:space-y-5'>
       {/* Header + period */}
       <div className='flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between'>
         <div>
-          <h1 className='text-2xl font-bold text-gray-900'>Activity Center</h1>
-          <p className='text-sm text-gray-500 mt-0.5'>Every change made in the admin panel · {periodText}</p>
+          <h1 className='text-xl sm:text-2xl font-bold text-gray-900'>Activity Center</h1>
+          <p className='text-xs sm:text-sm text-gray-500 mt-0.5'>Every change made in the admin panel · {periodText}</p>
         </div>
-        <div className='flex flex-wrap items-center gap-2'>
-          <div className='flex overflow-x-auto rounded-lg border border-gray-200 bg-white p-0.5'>
+        <div className='flex items-center gap-2'>
+          <div className='flex min-w-0 overflow-x-auto rounded-lg border border-gray-200 bg-white p-0.5'>
             {RANGES.map((r) => (
               <button
                 key={r.key}
                 type='button'
                 onClick={() => selectRange(r.key)}
-                className={`shrink-0 rounded-md px-3 py-1.5 text-xs font-semibold transition ${
+                className={`shrink-0 rounded-md px-2 sm:px-3 py-1.5 text-xs font-semibold transition ${
                   rangeKey === r.key ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'
                 }`}
               >
@@ -262,7 +262,7 @@ const ActivityCenter = () => {
           <button
             type='button'
             onClick={handleLock}
-            className='rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100'
+            className='shrink-0 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 hover:bg-gray-100'
           >
             Lock
           </button>
@@ -304,17 +304,17 @@ const ActivityCenter = () => {
       )}
 
       {/* Period totals */}
-      <section className='grid grid-cols-2 gap-2.5 md:gap-4 lg:grid-cols-5'>
+      <section className='grid grid-cols-3 gap-2 md:gap-4 lg:grid-cols-5'>
         <Tile label='All Activity' value={totals.total} />
         <Tile label='Created' value={totals.create} accent='text-emerald-700' />
         <Tile label='Edited' value={totals.update} accent='text-blue-700' />
         <Tile label='Deleted' value={totals.delete} accent='text-red-600' />
-        <Tile label='Activated / Deactivated' value={(totals.activate || 0) + (totals.deactivate || 0)} accent='text-amber-700' />
+        <Tile label='Status' value={(totals.activate || 0) + (totals.deactivate || 0)} accent='text-amber-700' />
       </section>
 
       {/* Activity list */}
       <section className='rounded-xl border border-gray-100 bg-white shadow-sm overflow-hidden'>
-        <div className='border-b border-gray-100 p-3 md:px-5'>
+        <div className='border-b border-gray-100 p-2.5 md:p-3 md:px-5'>
           <div className='flex flex-col gap-2 md:flex-row md:items-center md:justify-between'>
             <div className='flex gap-2 overflow-x-auto'>
               {['', ...Object.keys(ENTITIES)].map((entity) => {
@@ -390,17 +390,17 @@ const ActivityCenter = () => {
                     const hasChanges = item.changes?.length > 0
                     const isOpen = expanded.has(item._id)
                     return (
-                      <li key={item._id} className='px-4 py-3 md:px-5'>
+                      <li key={item._id} className='px-2.5 py-2.5 md:px-5 md:py-3'>
                         <button
                           type='button'
                           onClick={() => hasChanges && toggle(item._id)}
-                          className={`flex w-full items-center gap-3 text-left ${hasChanges ? 'cursor-pointer' : 'cursor-default'}`}
+                          className={`flex w-full items-center gap-2.5 md:gap-3 text-left ${hasChanges ? 'cursor-pointer' : 'cursor-default'}`}
                         >
-                          <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset ${a.tile}`}>
+                          <span className={`flex h-8 w-8 md:h-9 md:w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-inset ${a.tile}`}>
                             <Icon name={a.icon} />
                           </span>
                           <div className='min-w-0 flex-1'>
-                            <p className='text-sm font-semibold text-gray-800 break-words'>{item.summary}</p>
+                            <p className='text-[13px] md:text-sm font-semibold text-gray-800 break-words'>{item.summary}</p>
                             <p className='truncate text-xs text-gray-500'>
                               <span className='font-medium text-gray-600'>{a.label}</span>
                               {' · '}

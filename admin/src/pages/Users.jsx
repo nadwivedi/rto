@@ -619,45 +619,45 @@ const Users = () => {
   return (
     <div>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6'>
-        <div>
-          <h1 className='text-2xl sm:text-3xl font-bold text-gray-800'>Manage Users</h1>
-          <p className='text-sm sm:text-base text-gray-600 mt-1'>Create and manage user accounts</p>
+      <div className='flex justify-between items-center gap-3 mb-3 sm:mb-6'>
+        <div className='min-w-0'>
+          <h1 className='text-xl sm:text-3xl font-bold text-gray-800'>Manage Users</h1>
+          <p className='hidden sm:block text-base text-gray-600 mt-1'>Create and manage user accounts</p>
         </div>
         <button
           onClick={() => setShowModal(true)}
-          className='px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all cursor-pointer'
+          className='shrink-0 px-3 py-2 sm:px-5 sm:py-2.5 bg-indigo-600 text-white rounded-lg sm:rounded-xl hover:bg-indigo-700 font-semibold flex items-center justify-center gap-1.5 sm:gap-2 text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all cursor-pointer'
         >
-          <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <svg className='w-4 h-4 sm:w-5 sm:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
           </svg>
-          <span>Create New User</span>
+          <span>New User</span>
         </button>
       </div>
 
       {/* Stats Bar */}
-      <div className='grid grid-cols-3 gap-3 mb-5'>
-        <div className='bg-white rounded-xl p-4 shadow-sm border border-gray-100'>
-          <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>Total</p>
-          <p className='text-2xl font-bold text-gray-800 mt-1'>{stats.total}</p>
+      <div className='grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-5'>
+        <div className='bg-white rounded-xl p-2.5 sm:p-4 shadow-sm border border-gray-100'>
+          <p className='text-[10px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wide'>Total</p>
+          <p className='text-lg sm:text-2xl font-bold text-gray-800 sm:mt-1'>{stats.total}</p>
         </div>
-        <div className='bg-white rounded-xl p-4 shadow-sm border border-green-100'>
-          <p className='text-xs text-green-600 font-semibold uppercase tracking-wide'>Active</p>
-          <p className='text-2xl font-bold text-green-600 mt-1'>{stats.active}</p>
+        <div className='bg-white rounded-xl p-2.5 sm:p-4 shadow-sm border border-green-100'>
+          <p className='text-[10px] sm:text-xs text-green-600 font-semibold uppercase tracking-wide'>Active</p>
+          <p className='text-lg sm:text-2xl font-bold text-green-600 sm:mt-1'>{stats.active}</p>
         </div>
-        <div className='bg-white rounded-xl p-4 shadow-sm border border-red-100'>
-          <p className='text-xs text-red-500 font-semibold uppercase tracking-wide'>Inactive</p>
-          <p className='text-2xl font-bold text-red-500 mt-1'>{stats.inactive}</p>
+        <div className='bg-white rounded-xl p-2.5 sm:p-4 shadow-sm border border-red-100'>
+          <p className='text-[10px] sm:text-xs text-red-500 font-semibold uppercase tracking-wide'>Inactive</p>
+          <p className='text-lg sm:text-2xl font-bold text-red-500 sm:mt-1'>{stats.inactive}</p>
         </div>
       </div>
 
       {/* Vehicle (RC details) API quota left with the provider */}
-      <RcApiUsageCard className='mb-5' />
+      <RcApiUsageCard className='mb-3 sm:mb-5' />
 
       {/* Search & Filter Bar */}
-      <div className='bg-white rounded-xl shadow-sm border border-gray-100 p-3 mb-5'>
-        <div className='flex flex-col sm:flex-row gap-3'>
-          <div className='relative flex-1'>
+      <div className='bg-white rounded-xl shadow-sm border border-gray-100 p-2 sm:p-3 mb-3 sm:mb-5'>
+        <div className='flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3'>
+          <div className='relative w-full sm:w-auto sm:flex-1'>
             <svg className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
             </svg>
@@ -669,12 +669,12 @@ const Users = () => {
               className='w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50'
             />
           </div>
-          <div className='flex gap-2'>
+          <div className='flex gap-1 sm:gap-2'>
             {['all', 'true', 'false'].map((val) => (
               <button
                 key={val}
                 onClick={() => setStatusFilter(val)}
-                className={`px-3 py-2 text-sm font-semibold rounded-lg transition-all cursor-pointer ${
+                className={`px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer ${
                   statusFilter === val
                     ? val === 'all' ? 'bg-gray-800 text-white shadow-sm'
                       : val === 'true' ? 'bg-green-600 text-white shadow-sm'
@@ -689,7 +689,7 @@ const Users = () => {
           <select
             value={stateFilter}
             onChange={(e) => setStateFilter(e.target.value)}
-            className='px-3 py-2 text-sm font-semibold rounded-lg border border-gray-200 bg-gray-50 text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+            className='min-w-0 flex-1 sm:flex-none px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border border-gray-200 bg-gray-50 text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
           >
             <option value='all'>All States</option>
             {stateCounts.map(({ state, count }) => (
@@ -699,7 +699,7 @@ const Users = () => {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className='px-3 py-2 text-sm font-semibold rounded-lg border border-gray-200 bg-gray-50 text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+            className='w-full sm:w-auto px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border border-gray-200 bg-gray-50 text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
           >
             <option value='default'>Sort: Default</option>
             <option value='newest'>Joined: Newest first</option>
@@ -864,61 +864,57 @@ const Users = () => {
               {sortedUsers.map((user) => {
                 const days = getDaysLeft(user.subscriptionExpiresAt)
                 return (
-                  <div key={user._id} className='p-3.5'>
-                    <div className='flex items-start gap-2.5'>
-                      <div className='relative flex-shrink-0'>
-                        <div className='w-8 h-8 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-bold'>
+                  <div key={user._id} className='px-2.5 py-2.5'>
+                    <div className='flex items-start gap-2'>
+                      <div className='relative flex-shrink-0 mt-0.5'>
+                        <div className='w-7 h-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-[11px] font-bold'>
                           {user.name.charAt(0).toUpperCase()}
                         </div>
-                        <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full ring-2 ring-white ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`}></span>
+                        <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full ring-2 ring-white ${user.isActive ? 'bg-green-500' : 'bg-red-500'}`}></span>
                       </div>
                       <div className='min-w-0 flex-1'>
                         <div className='flex items-center gap-1.5'>
                           <span className='text-[13px] font-semibold text-gray-900 truncate'>{user.name}</span>
                           {!user.isActive && (
-                            <span className='text-[9px] font-bold uppercase text-red-600 bg-red-50 px-1 rounded'>Inactive</span>
+                            <span className='shrink-0 text-[9px] font-bold uppercase text-red-600 bg-red-50 px-1 rounded'>Inactive</span>
                           )}
                         </div>
-                        <div className='text-xs text-gray-600'>
+                        <div className='text-[11px] text-gray-600 truncate'>
                           {user.mobile1}
                           {user.mobile2 && <span className='text-gray-400'> · {user.mobile2}</span>}
+                          {user.email && <span className='text-gray-400'> · {user.email}</span>}
                         </div>
-                        {user.email && <div className='text-xs text-gray-400 truncate'>{user.email}</div>}
                       </div>
-                      {renderActions(user)}
                     </div>
 
-                    <div className='grid grid-cols-2 gap-x-3 gap-y-2 mt-3 text-[11px]'>
-                      <div>
-                        <div className='text-gray-400'>Location</div>
-                        <div className='text-gray-700'>{user.state || '-'}{user.rto && <span className='text-gray-400'> · {user.rto}</span>}</div>
-                        {renderRcBadge(user)}
+                    <div className='mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1 text-[11px]'>
+                      {renderPlanBadge(user)}
+                      {isLifetime(user) ? (
+                        <span className='text-violet-600 font-semibold'>Never expires</span>
+                      ) : (
+                        <span className='text-gray-700'>
+                          {formatDate(user.subscriptionExpiresAt)}
+                          {days !== null && (
+                            <span className={`ml-1 font-semibold ${days <= 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-emerald-600'}`}>
+                              {days <= 0 ? 'Expired' : `${days}d left`}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                      {renderPlanPrice(user, 'text-gray-400')}
+                      {renderRcBadge(user)}
+                    </div>
+
+                    <div className='mt-1 flex items-end justify-between gap-2'>
+                      <div className='min-w-0 text-[10.5px] leading-4 text-gray-400'>
+                        <div className='truncate'>
+                          <span className='text-gray-600'>{user.state || '-'}</span>
+                          {user.rto && <span> · {user.rto}</span>}
+                          <span> · Joined {formatDate(user.createdAt)}</span>
+                        </div>
+                        <div className='truncate'>Active {formatDateTime(user.lastActivity || user.lastLogin)}</div>
                       </div>
-                      <div>
-                        <div className='text-gray-400'>Joined</div>
-                        <div className='text-gray-700'>{formatDate(user.createdAt)} <span className='text-gray-400'>{formatTime(user.createdAt)}</span></div>
-                      </div>
-                      <div>
-                        <div className='text-gray-400'>Subscription</div>
-                        {renderPlanBadge(user)}
-                        {isLifetime(user) ? (
-                          <div className='text-violet-600 font-semibold'>Never expires</div>
-                        ) : (
-                          <div className='text-gray-700'>
-                            {formatDate(user.subscriptionExpiresAt)}
-                            {days !== null && (
-                              <span className={`ml-1 font-semibold ${days <= 0 ? 'text-red-600' : days <= 7 ? 'text-orange-500' : 'text-emerald-600'}`}>
-                                {days <= 0 ? 'Expired' : `${days}d`}
-                              </span>
-                            )}
-                          </div>
-                        )}
-                        {renderPlanPrice(user, 'text-gray-400')}
-                      </div>
-                      <div>
-                        <div className='text-gray-400'>Last Active</div>
-                        <div className='text-gray-700'>{formatDateTime(user.lastActivity || user.lastLogin)}</div>
-                      </div>
+                      <div className='shrink-0 -mr-1'>{renderActions(user)}</div>
                     </div>
                   </div>
                 )
@@ -930,7 +926,7 @@ const Users = () => {
 
       {/* Delete User Confirmation */}
       {deleteTarget && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto'>
+        <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto'>
           <div className='flex items-start justify-center min-h-full px-3 py-8 sm:py-16'>
             <div className='bg-white rounded-lg shadow-xl max-w-md w-full p-5'>
               <div className='flex items-start gap-3'>
@@ -1012,7 +1008,7 @@ const Users = () => {
 
       {/* Create User Modal */}
       {showModal && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto'>
+        <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto'>
           <div className='flex items-start justify-center min-h-full px-2 sm:px-4 py-4 sm:py-8'>
           <div className='bg-white rounded-lg shadow-xl max-w-xl sm:max-w-2xl w-full p-4 sm:p-6'>
             <div className='flex justify-between items-center mb-3 sm:mb-4'>
@@ -1051,7 +1047,7 @@ const Users = () => {
                 />
               </div>
 
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
                 <div>
                   <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
                     Mobile <span className='text-red-500'>*</span>
@@ -1083,7 +1079,7 @@ const Users = () => {
                 </div>
               </div>
 
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
                 <div>
                   <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
                     Email <span className='text-gray-400'>(Opt)</span>
@@ -1118,8 +1114,8 @@ const Users = () => {
                 </div>
               </div>
 
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
-                <div className='sm:col-span-2'>
+              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
+                <div className='col-span-2'>
                   <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
                     Address <span className='text-gray-400'>(Opt)</span>
                   </label>
@@ -1163,7 +1159,7 @@ const Users = () => {
                 </div>
               </div>
 
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
                 <div>
                   <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
                     Bill Name <span className='text-gray-400'>(Opt)</span>
@@ -1192,7 +1188,7 @@ const Users = () => {
                 </div>
               </div>
 
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
                 <div>
                   <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
                     Plan Type
@@ -1213,7 +1209,7 @@ const Users = () => {
                       <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
                         Subscription Expires
                       </label>
-                      <div className='w-full px-3 py-2 text-sm rounded-lg bg-violet-50 border border-violet-200 text-violet-700 font-semibold'>
+                      <div className='w-full px-2 sm:px-3 py-2 text-xs sm:text-sm rounded-lg bg-violet-50 border border-violet-200 text-violet-700 font-semibold'>
                         ♾️ Lifetime plan — never expires
                       </div>
                     </>
@@ -1235,7 +1231,7 @@ const Users = () => {
               </div>
 
               {formData.planType === 'lifetime' ? (
-                <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div className='grid grid-cols-2 gap-2 sm:gap-3'>
                   <div>
                     <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
                       Lifetime Fee (₹)
@@ -1256,7 +1252,7 @@ const Users = () => {
                   </div>
                 </div>
               ) : (
-              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
                 <div>
                   <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
                     Monthly Price (₹) <span className='text-gray-400'>(Opt)</span>
@@ -1295,7 +1291,7 @@ const Users = () => {
                 <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-2'>
                   Feature Access
                 </label>
-                <div className='flex flex-wrap gap-4 sm:gap-6'>
+                <div className='grid grid-cols-2 gap-x-3 gap-y-2 sm:flex sm:flex-wrap sm:gap-6'>
                   <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
                     <input
                       type='checkbox'

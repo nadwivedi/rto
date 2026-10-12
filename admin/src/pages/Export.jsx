@@ -139,50 +139,52 @@ const Export = () => {
   return (
     <div className='max-w-7xl mx-auto'>
       {/* Header */}
-      <div className='mb-8'>
-        <h1 className='text-3xl font-bold text-gray-900'>Data Export</h1>
-        <p className='mt-2 text-gray-600'>Export all RTO data in organized ZIP files</p>
+      <div className='mb-3 sm:mb-8'>
+        <h1 className='text-xl sm:text-3xl font-bold text-gray-900'>Data Export</h1>
+        <p className='mt-0.5 sm:mt-2 text-xs sm:text-base text-gray-600'>Export all RTO data in organized ZIP files</p>
       </div>
 
       {/* Statistics Grid */}
-      <div className='mb-8'>
-        <h2 className='text-2xl font-bold text-gray-800 mb-4'>Database Statistics</h2>
-        <div className='grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4'>
+      <div className='mb-4 sm:mb-8'>
+        <h2 className='text-sm sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-4'>Database Statistics</h2>
+        <div className='grid grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-2 sm:gap-4'>
           {statisticsCards.map((stat, index) => (
             <div
               key={index}
-              className={`${stat.color} rounded-lg p-4 text-white shadow-md hover:shadow-lg transition-shadow`}
+              className={`${stat.color} rounded-lg p-2 sm:p-4 text-white shadow-md hover:shadow-lg transition-shadow`}
             >
-              <div className='text-3xl mb-2'>{stat.icon}</div>
-              <div className='text-2xl font-bold'>{stat.value}</div>
-              <div className='text-xs opacity-90 mt-1'>{stat.label}</div>
+              <div className='flex items-center justify-between sm:block'>
+                <div className='text-base sm:text-3xl sm:mb-2'>{stat.icon}</div>
+                <div className='text-base sm:text-2xl font-bold'>{stat.value}</div>
+              </div>
+              <div className='text-[10px] sm:text-xs leading-tight opacity-90 mt-1'>{stat.label}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* Export Options */}
-      <div className='mb-8'>
-        <h2 className='text-2xl font-bold text-gray-800 mb-4'>Export &amp; Log Options</h2>
-        <div className='grid grid-cols-1 md:grid-cols-3 gap-6'>
+      <div className='mb-4 sm:mb-8'>
+        <h2 className='text-sm sm:text-2xl font-bold text-gray-800 mb-2 sm:mb-4'>Export &amp; Log Options</h2>
+        <div className='grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-6'>
           {/* Combined Export */}
           <div className='bg-white rounded-lg shadow-md hover:shadow-lg overflow-hidden border border-gray-200 transition-all'>
-            <div className='p-6'>
-              <div className='flex items-center gap-3 mb-4'>
-                <div className='w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0'>
+            <div className='p-3 sm:p-6'>
+              <div className='flex items-center gap-3 mb-3 sm:mb-4'>
+                <div className='w-9 h-9 sm:w-12 sm:h-12 bg-indigo-100 rounded-lg flex items-center justify-center shrink-0'>
                   <svg className='w-6 h-6 text-indigo-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10' />
                   </svg>
                 </div>
                 <div>
-                  <h3 className='text-lg font-bold text-gray-900'>All Data Combined</h3>
-                  <p className='text-sm text-gray-600'>Single ZIP with all JSON files</p>
+                  <h3 className='text-sm sm:text-lg font-bold text-gray-900'>All Data Combined</h3>
+                  <p className='text-xs sm:text-sm text-gray-600'>Single ZIP with all JSON files</p>
                 </div>
               </div>
               <button
                 onClick={() => handleExport('combined', 'all-combined')}
                 disabled={downloadingType === 'combined'}
-                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                className={`w-full py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
                   downloadingType === 'combined'
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-indigo-600 text-white hover:bg-indigo-700 active:scale-95'
@@ -210,22 +212,22 @@ const Export = () => {
 
           {/* User-Wise Export */}
           <div className='bg-white rounded-lg shadow-md hover:shadow-lg overflow-hidden border border-gray-200 transition-all'>
-            <div className='p-6'>
-              <div className='flex items-center gap-3 mb-4'>
-                <div className='w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center shrink-0'>
+            <div className='p-3 sm:p-6'>
+              <div className='flex items-center gap-3 mb-3 sm:mb-4'>
+                <div className='w-9 h-9 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center shrink-0'>
                   <svg className='w-6 h-6 text-green-600' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 19a2 2 0 01-2-2V7a2 2 0 012-2h4l2 2h4a2 2 0 012 2v1M5 19h14a2 2 0 002-2v-5a2 2 0 00-2-2H9a2 2 0 00-2 2v5a2 2 0 01-2 2z' />
                   </svg>
                 </div>
                 <div>
-                  <h3 className='text-lg font-bold text-gray-900'>User-Wise Organization</h3>
-                  <p className='text-sm text-gray-600'>ZIP with folders per user</p>
+                  <h3 className='text-sm sm:text-lg font-bold text-gray-900'>User-Wise Organization</h3>
+                  <p className='text-xs sm:text-sm text-gray-600'>ZIP with folders per user</p>
                 </div>
               </div>
               <button
                 onClick={() => handleExport('user-wise', 'all-user-wise')}
                 disabled={downloadingType === 'user-wise'}
-                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
+                className={`w-full py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base font-semibold transition-all duration-200 flex items-center justify-center gap-2 ${
                   downloadingType === 'user-wise'
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-green-600 text-white hover:bg-green-700 active:scale-95'
@@ -253,20 +255,20 @@ const Export = () => {
 
           {/* WhatsApp System Log Download (Admin Only) */}
           <div className='bg-white rounded-lg shadow-md hover:shadow-lg overflow-hidden border border-gray-200 transition-all'>
-            <div className='p-6'>
-              <div className='flex items-center gap-3 mb-4'>
-                <div className='w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center shrink-0'>
+            <div className='p-3 sm:p-6'>
+              <div className='flex items-center gap-3 mb-3 sm:mb-4'>
+                <div className='w-9 h-9 sm:w-12 sm:h-12 bg-amber-100 rounded-lg flex items-center justify-center shrink-0'>
                   <span className='text-2xl'>💬</span>
                 </div>
                 <div>
-                  <h3 className='text-lg font-bold text-gray-900'>WhatsApp System Logs</h3>
-                  <p className='text-sm text-gray-600'>Daily date-wise error &amp; RAM log</p>
+                  <h3 className='text-sm sm:text-lg font-bold text-gray-900'>WhatsApp System Logs</h3>
+                  <p className='text-xs sm:text-sm text-gray-600'>Daily date-wise error &amp; RAM log</p>
                 </div>
               </div>
               <button
                 onClick={() => handleExport('whatsapp-log-all', 'whatsapp-log/all')}
                 disabled={downloadingType === 'whatsapp-log-all' || waLogs.length === 0}
-                className={`w-full py-3 px-4 rounded-lg font-semibold transition-all duration-200 flex items-center justify-center gap-2 mb-3 ${
+                className={`w-full py-2 sm:py-3 px-4 rounded-lg text-sm sm:text-base font-semibold transition-all duration-200 flex items-center justify-center gap-2 mb-3 ${
                   downloadingType === 'whatsapp-log-all' || waLogs.length === 0
                     ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
                     : 'bg-amber-600 text-white hover:bg-amber-700 active:scale-95'

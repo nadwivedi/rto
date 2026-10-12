@@ -47,7 +47,7 @@ const niceMax = (value) => {
 }
 
 const StatTile = ({ label, value, sub, accent = 'text-gray-900', hint }) => (
-  <div className='bg-white rounded-xl border border-gray-200 p-4 shadow-sm'>
+  <div className='bg-white rounded-xl border border-gray-200 p-3 sm:p-4 shadow-sm'>
     <div className='flex items-start justify-between gap-2'>
       <p className='text-[11px] font-semibold text-gray-500 uppercase tracking-wide'>{label}</p>
       {hint && (
@@ -56,7 +56,7 @@ const StatTile = ({ label, value, sub, accent = 'text-gray-900', hint }) => (
         </span>
       )}
     </div>
-    <p className={`text-2xl font-bold mt-1 tabular-nums ${accent}`}>{value}</p>
+    <p className={`text-lg sm:text-2xl font-bold mt-0.5 sm:mt-1 tabular-nums ${accent}`}>{value}</p>
     {sub && <p className='text-[11px] text-gray-400 mt-0.5'>{sub}</p>}
   </div>
 )

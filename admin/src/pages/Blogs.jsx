@@ -351,19 +351,19 @@ const Blogs = () => {
 
   return (
     <div>
-      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6'>
-        <div>
-          <h1 className='text-2xl sm:text-3xl font-bold text-gray-800'>Manage Blogs</h1>
-          <p className='text-sm text-gray-600 mt-1'>Create and manage blog posts for your website</p>
+      <div className='flex justify-between items-center gap-3 mb-3 sm:mb-6'>
+        <div className='min-w-0'>
+          <h1 className='text-xl sm:text-3xl font-bold text-gray-800'>Manage Blogs</h1>
+          <p className='hidden sm:block text-sm text-gray-600 mt-1'>Create and manage blog posts for your website</p>
         </div>
         <button
           onClick={() => { resetForm(); setShowModal(true) }}
-          className='px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold flex items-center justify-center gap-2 text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all cursor-pointer'
+          className='shrink-0 px-3 py-2 sm:px-5 sm:py-2.5 bg-indigo-600 text-white rounded-lg sm:rounded-xl hover:bg-indigo-700 font-semibold flex items-center justify-center gap-1.5 sm:gap-2 text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all cursor-pointer'
         >
-          <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <svg className='w-4 h-4 sm:w-5 sm:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
           </svg>
-          New Blog Post
+          New Post
         </button>
       </div>
 
@@ -388,7 +388,50 @@ const Blogs = () => {
             <p className='text-gray-400 text-sm mt-1'>Click "New Blog Post" to create your first post</p>
           </div>
         ) : (
-          <div className='overflow-x-auto'>
+          <>
+          <ul className='md:hidden divide-y divide-gray-100'>
+            {blogs.map((blog) => (
+              <li key={blog._id} className='flex items-start gap-2 px-2.5 py-2.5'>
+                <div className='min-w-0 flex-1'>
+                  <div className='text-[13px] font-semibold text-gray-900 leading-snug'>{truncate(blog.title, 80)}</div>
+                  <div className='mt-1 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-gray-400'>
+                    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-semibold ${
+                      blog.published
+                        ? 'bg-green-50 text-green-700 border border-green-200'
+                        : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                    }`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${blog.published ? 'bg-green-500' : 'bg-yellow-500'}`}></span>
+                      {blog.published ? 'Published' : 'Draft'}
+                    </span>
+                    <span>{blog.author}</span>
+                    {blog.publishedAt && <span>· {formatDate(blog.publishedAt)}</span>}
+                    <span className='font-mono truncate max-w-full'>/{blog.slug}</span>
+                  </div>
+                </div>
+                <div className='shrink-0 flex items-center -mr-1'>
+                  <button
+                    onClick={() => handleEdit(blog)}
+                    className='p-1.5 text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors cursor-pointer'
+                    title='Edit blog'
+                  >
+                    <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(blog._id)}
+                    className='p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer'
+                    title='Delete blog'
+                  >
+                    <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
+                    </svg>
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
+          <div className='hidden md:block overflow-x-auto'>
             <table className='w-full'>
               <thead>
                 <tr className='border-b border-gray-100 bg-gray-50/50'>
@@ -445,11 +488,12 @@ const Blogs = () => {
               </tbody>
             </table>
           </div>
+          </>
         )}
       </div>
 
       {showModal && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 z-50 overflow-y-auto' onClick={() => setShowModal(false)}>
+        <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto' onClick={() => setShowModal(false)}>
           <div className='flex items-start justify-center min-h-full px-2 sm:px-4 py-4 sm:py-8' onClick={(e) => e.stopPropagation()}>
             <div className='bg-white rounded-xl shadow-xl w-full max-w-3xl p-4 sm:p-6'>
               <div className='flex justify-between items-center mb-4'>

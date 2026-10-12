@@ -115,8 +115,8 @@ const CreateVehicleFromJson = () => {
 
   return (
     <div className='max-w-5xl mx-auto'>
-      <div className='bg-white rounded-lg shadow-md p-6'>
-        <h1 className='text-2xl font-bold text-gray-800 mb-6'>Create Vehicle Registration from JSON</h1>
+      <div className='bg-white rounded-lg shadow-md p-3 sm:p-6'>
+        <h1 className='text-lg sm:text-2xl font-bold text-gray-800 mb-3 sm:mb-6'>Create Vehicle from JSON</h1>
 
         <form onSubmit={handleSubmit}>
           {/* JSON Input */}
@@ -128,17 +128,17 @@ const CreateVehicleFromJson = () => {
               value={jsonInput}
               onChange={(e) => setJsonInput(e.target.value)}
               className='w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 font-mono text-sm'
-              rows={20}
+              rows={14}
               placeholder='Paste your JSON data here...'
             />
           </div>
 
           {/* Action Buttons */}
-          <div className='flex flex-wrap gap-3 mb-4'>
+          <div className='flex flex-wrap gap-2 sm:gap-3 mb-4'>
             <button
               type='submit'
               disabled={loading}
-              className='px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
+              className='px-3 sm:px-6 py-2 text-sm sm:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors'
             >
               {loading ? 'Creating...' : 'Create Vehicle Registration'}
             </button>
@@ -146,7 +146,7 @@ const CreateVehicleFromJson = () => {
             <button
               type='button'
               onClick={handleLoadExample}
-              className='px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors'
+              className='px-3 sm:px-6 py-2 text-sm sm:text-base bg-gray-600 text-white rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 transition-colors'
             >
               Load Example
             </button>
@@ -154,7 +154,7 @@ const CreateVehicleFromJson = () => {
             <button
               type='button'
               onClick={handleClear}
-              className='px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors'
+              className='px-3 sm:px-6 py-2 text-sm sm:text-base bg-red-600 text-white rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 transition-colors'
             >
               Clear
             </button>
@@ -176,7 +176,7 @@ const CreateVehicleFromJson = () => {
         </form>
 
         {/* Instructions */}
-        <div className='mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg'>
+        <div className='mt-4 sm:mt-8 p-3 sm:p-4 bg-blue-50 border border-blue-200 rounded-lg'>
           <h3 className='font-semibold text-blue-900 mb-2'>Instructions:</h3>
           <ul className='list-disc list-inside text-sm text-blue-800 space-y-1'>
             <li>Paste valid JSON data in the textarea above</li>
