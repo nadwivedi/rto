@@ -1,11 +1,9 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { useAudit, ACTIVITY_PATH } from '../context/AuditContext';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { isAuthenticated, loading } = useAuth();
-  const { unlocked } = useAudit();
 
   const handleLinkClick = () => {
     // Close sidebar on mobile when a link is clicked
@@ -162,23 +160,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             </svg>
             <span className="truncate">Export Data</span>
           </Link>
-
-          {unlocked && (
-            <Link
-              to={ACTIVITY_PATH}
-              onClick={handleLinkClick}
-              className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                location.pathname === ACTIVITY_PATH
-                  ? 'bg-white text-indigo-800 font-bold'
-                  : 'text-indigo-200 hover:bg-indigo-800'
-              }`}
-            >
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12h4l3-8 4 16 3-8h4" />
-              </svg>
-              <span className="truncate">Activity Center</span>
-            </Link>
-          )}
         </nav>
       </div>
     </>
