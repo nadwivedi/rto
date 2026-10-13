@@ -177,6 +177,13 @@ export const PAGE_SEO = {
     path: '/rto-agent-crm-software',
     keywords: 'RTO agent CRM software, RTO agent CRM, CRM for RTO agents, RTO CRM software, RTO CRM, best CRM for RTO agents, RTO agent client management software, RTO agent customer management software, RTO consultant CRM, RTO agent WhatsApp CRM, CRM with WhatsApp reminders for RTO agents, vehicle owner CRM, RTO agent follow-up software, RTO agent client follow-up, RTO agent CRM India, RTO Sarthi CRM',
   },
+  '/rto-agent-lead-management-software': {
+    title: `RTO Agent Lead Management Software - Follow-ups & Conversions | RTO Sarthi`,
+    description:
+      'RTO agent lead management software: track permit, tax, fitness, PUC & insurance enquiries, follow-up reminders, one-tap call & WhatsApp, and leads from RC search. Free trial.',
+    path: '/rto-agent-lead-management-software',
+    keywords: 'RTO agent lead management software, RTO lead management software, lead management software for RTO agents, RTO agent lead tracking, RTO agent enquiry management, RTO agent follow-up software, RTO lead follow-up, insurance lead management for RTO agents, permit renewal leads, RTO agent sales pipeline, RTO consultant lead management, RTO Sarthi leads',
+  },
   '/driving-school-software': {
     title: `Driving School Software - Admissions, Fees, Licence & RTO Work | RTO Sarthi`,
     description:

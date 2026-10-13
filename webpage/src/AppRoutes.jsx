@@ -23,6 +23,7 @@ import DrivingSchoolManagementSystem from './pages/DrivingSchoolManagementSystem
 import BestDrivingSchoolSoftwareIndia from './pages/BestDrivingSchoolSoftwareIndia'
 import DrivingSchoolCrm from './pages/DrivingSchoolCrm'
 import RtoAgentCrmSoftware from './pages/RtoAgentCrmSoftware'
+import RtoAgentLeadManagementSoftware from './pages/RtoAgentLeadManagementSoftware'
 import Blog from './pages/Blog'
 import BlogPost from './pages/BlogPost'
 
@@ -53,6 +54,7 @@ export default function AppRoutes() {
         <Route path="best-driving-school-software-india" element={<BestDrivingSchoolSoftwareIndia />} />
         <Route path="driving-school-crm" element={<DrivingSchoolCrm />} />
         <Route path="rto-agent-crm-software" element={<RtoAgentCrmSoftware />} />
+        <Route path="rto-agent-lead-management-software" element={<RtoAgentLeadManagementSoftware />} />
         <Route path="sitemap" element={<Sitemap />} />
         <Route path="blog" element={<Blog />} />
         <Route path="blog/:slug" element={<BlogPost />} />

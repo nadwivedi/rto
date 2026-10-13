@@ -15,6 +15,7 @@ import { drivingSchoolSystemFaqs, DRIVING_SCHOOL_SYSTEM_PATH } from '../data/dri
 import { bestDrivingSchoolFaqs, BEST_DRIVING_SCHOOL_PATH } from '../data/bestDrivingSchool'
 import { drivingSchoolCrmFaqs, DRIVING_SCHOOL_CRM_PATH } from '../data/drivingSchoolCrm'
 import { rtoAgentCrmFaqs, RTO_AGENT_CRM_PATH } from '../data/rtoAgentCrm'
+import { rtoAgentLeadFaqs, RTO_AGENT_LEAD_PATH } from '../data/rtoAgentLeadManagement'
 import {
   SITE_URL,
   SITE_NAME,
@@ -131,6 +132,21 @@ const PRODUCT_PAGES = {
       'Bulk Excel import for PUC and insurance records',
       'Dashboard analytics',
       'Multi-agent access for RTO agents, insurance agents and PUC centers',
+    ],
+  },
+  [RTO_AGENT_LEAD_PATH]: {
+    name: 'RTO Agent Lead Management Software',
+    faqs: rtoAgentLeadFaqs,
+    alternateName: ['RTO Lead Management Software', 'Lead Management for RTO Agents'],
+    features: [
+      'Leads for permit, tax, fitness, PUC and insurance work with vehicle number and expiry date',
+      'Follow-up Today, Overdue, New and Upcoming lists with date and time',
+      'One-tap call and WhatsApp with follow-up notes and history',
+      'Move vehicles from RC search history into leads with document expiry dates',
+      'Status pipeline from New to Converted or Lost with lost reasons',
+      'Hot, warm and cold priority with expected amount',
+      'Lead source tracking',
+      'Staff access control for the leads section',
     ],
   },
 }
