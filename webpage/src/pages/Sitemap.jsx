@@ -34,7 +34,7 @@ export default function Sitemap() {
       <section className={pageHero}>
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>Sitemap</span>
-          <h1 className={cn(h1Page, 'mb-4')}>Site map</h1>
+          <h1 className={cn(h1Page, 'mb-3')}>Site map</h1>
           <p className="mx-auto max-w-lg text-sm text-white/85 sm:text-base lg:text-base">
             RTO Sarthi — {TAGLINE}. All pages on this website.
           </p>

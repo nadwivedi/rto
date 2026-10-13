@@ -204,9 +204,9 @@ export default function ProductLanding({
         <div className={heroGlow} aria-hidden />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>{hero.label}</span>
-          <h1 className={cn(h1Page, 'mb-4')}>{hero.title}</h1>
-          <p className="mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8">{hero.intro}</p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <h1 className={cn(h1Page, 'mb-3')}>{hero.title}</h1>
+          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">{hero.intro}</p>
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             <Button href="/contact" variant="primary" size="lg">
               Start Free Trial
             </Button>
@@ -215,7 +215,7 @@ export default function ProductLanding({
             </Button>
           </div>
           {hero.tags && (
-            <div className="mt-7 flex flex-wrap justify-center gap-3">
+            <div className="mt-5 flex flex-wrap justify-center gap-2.5">
               {hero.tags.map((tag) => (
                 <span
                   key={tag}

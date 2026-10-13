@@ -132,15 +132,15 @@ export default function RcDownloadSoftware() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>RTO Sarthi — RC Download Software</span>
-          <h1 className={cn(h1Page, 'mb-4')}>
+          <h1 className={cn(h1Page, 'mb-3')}>
             RC Download Software for RTO Agents — Download RC of Any Vehicle at Just {LOOKUP_PRICE}
           </h1>
-          <p className="mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8">
+          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">
             Enter a vehicle number and download its RC as a PDF in seconds. Smart card style RC,
             Vehicle Particulars PDF and complete vehicle details, all from one search at{' '}
             {LOOKUP_PRICE} per vehicle.
           </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             <Button href="/contact" variant="primary" size="lg">
               Start Free Trial
             </Button>
@@ -148,7 +148,7 @@ export default function RcDownloadSoftware() {
               Book Demo
             </Button>
           </div>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             {[`${LOOKUP_PRICE} per RC`, 'All States', 'Smart Card Style PDF', 'Particular PDF', 'Free Re-download'].map((tag) => (
               <span
                 key={tag}

@@ -84,7 +84,7 @@ export default function Contact() {
       <section className={pageHero}>
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>Contact</span>
-          <h1 className={cn(h1Page, 'mb-4')}>Connect with us</h1>
+          <h1 className={cn(h1Page, 'mb-3')}>Connect with us</h1>
           <p className="mx-auto max-w-lg text-sm text-white/85 sm:text-base lg:text-base">
             Simplify your RTO workflow — request a free trial, book a demo, or reach out anytime.
           </p>

@@ -117,16 +117,16 @@ export default function RtoManagementSoftware() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>RTO Sarthi — RTO Management Software</span>
-          <h1 className={cn(h1Page, 'mb-4')}>
+          <h1 className={cn(h1Page, 'mb-3')}>
             RTO Management Software in India — Manage Vehicles, Renewals &amp; Clients in One Place
           </h1>
-          <p className="mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8">
+          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">
             RTO Sarthi is RTO management software built for Indian RTO agents, dealers and PUC
             centers. Manage vehicle, driving licence and vehicle transfer records, track tax,
             fitness, permit, PUC and insurance expiry, send WhatsApp alerts and control client
             balances from one dashboard.
           </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             <Button href="/contact" variant="primary" size="lg">
               Start Free Trial
             </Button>
@@ -134,7 +134,7 @@ export default function RtoManagementSoftware() {
               Book Demo
             </Button>
           </div>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             {['Expiry Tracking', 'Driving Licence Records', 'Vehicle Transfer Records', 'WhatsApp Alerts', 'AI Document Entry', 'Client Balance'].map((tag) => (
               <span
                 key={tag}

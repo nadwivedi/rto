@@ -9,7 +9,7 @@ export const glassCard =
   'rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow duration-200 hover:border-brand-200 hover:shadow-md'
 
 export const pageHero =
-  'relative overflow-hidden bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 pt-[calc(3.5rem+2.5rem)] pb-12 text-center text-white sm:pt-[calc(3.75rem+3rem)] sm:pb-14 lg:pt-[calc(4rem+3.5rem)] lg:pb-16'
+  'relative overflow-hidden bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 pt-[calc(3.5rem+1.75rem)] pb-8 text-center text-white sm:pt-[calc(3.75rem+2rem)] sm:pb-9 lg:pt-[calc(4rem+2.25rem)] lg:pb-10'
 
 export const heroSection = pageHero
 
@@ -21,10 +21,10 @@ export const label =
   'mb-3 inline-block font-display text-xs font-semibold uppercase tracking-wider text-accent-600 sm:text-sm'
 
 export const labelOnDark =
-  'mb-3 inline-block font-display text-xs font-semibold uppercase tracking-wider text-accent-400 sm:text-sm'
+  'mb-2 inline-block font-display text-xs font-semibold uppercase tracking-wider text-accent-400 sm:text-sm'
 
 export const h1Page =
-  'mx-auto max-w-4xl font-display text-[1.75rem] font-bold leading-tight tracking-tight text-white sm:text-4xl lg:text-[2.75rem] lg:leading-[1.15]'
+  'mx-auto max-w-4xl font-display text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-[2.25rem] lg:leading-[1.2]'
 
 export const h1Hero = h1Page
 
@@ -38,7 +38,7 @@ export const h3Card = 'mb-2 font-display text-lg font-semibold leading-snug text
 
 export const bodyMuted = 'text-[0.9375rem] leading-7 text-slate-600 sm:text-base'
 
-export const heroIntro = 'mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8'
+export const heroIntro = 'mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base'
 
 export const grid3 = 'grid gap-5 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6'
 

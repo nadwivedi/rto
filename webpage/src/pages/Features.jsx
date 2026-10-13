@@ -28,12 +28,12 @@ export default function Features() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>Features</span>
-          <h1 className={cn(h1Page, 'mb-4')}>Powerful tools for modern RTO agents</h1>
+          <h1 className={cn(h1Page, 'mb-3')}>Powerful tools for modern RTO agents</h1>
           <p className="mx-auto max-w-lg text-sm text-white/85 sm:text-base lg:text-base">
             Automate paperwork, alert clients on WhatsApp, bulk-import PUC and insurance data, and
             manage every vehicle from one secure platform.
           </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             {['Document OCR', 'WhatsApp Alerts', 'Excel Bulk Upload', 'Multi-Agent Roles'].map(
               (tag) => (
                 <span

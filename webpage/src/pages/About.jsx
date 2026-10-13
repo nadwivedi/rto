@@ -58,8 +58,8 @@ export default function About() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>About RTO Sarthi</span>
-          <h1 className={cn(h1Page, 'mb-4')}>India&apos;s Best RTO Agent Software</h1>
-          <p className="mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8">
+          <h1 className={cn(h1Page, 'mb-3')}>India&apos;s Best RTO Agent Software</h1>
+          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">
             Digitizing and simplifying the everyday work of RTO agents across India — trusted for
             over 3 years.
           </p>

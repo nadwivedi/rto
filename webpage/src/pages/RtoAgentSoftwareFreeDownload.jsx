@@ -64,15 +64,15 @@ export default function RtoAgentSoftwareFreeDownload() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>RTO Sarthi — Free Trial</span>
-          <h1 className={cn(h1Page, 'mb-4')}>
+          <h1 className={cn(h1Page, 'mb-3')}>
             RTO Agent Software Free Download — Try RTO Sarthi Free of Cost
           </h1>
-          <p className="mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8">
+          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">
             RTO Sarthi provides a free trial with free download. Download and use India&apos;s RTO
             agent software free of cost on your computer or mobile, and see how it simplifies your
             RTO desk before you decide.
           </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             <Button href={whatsappUrl} target="_blank" rel="noopener noreferrer" variant="primary" size="lg">
               Get Free Trial
             </Button>
@@ -80,7 +80,7 @@ export default function RtoAgentSoftwareFreeDownload() {
               Open &amp; Download App
             </Button>
           </div>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             {['Free Trial', 'Free Download', 'PC & Mobile', 'No Installation File', 'Setup Help'].map((tag) => (
               <span
                 key={tag}

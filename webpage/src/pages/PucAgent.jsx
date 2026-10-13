@@ -103,13 +103,13 @@ export default function PucAgent() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>RTO Sarthi — PUC Agent Software</span>
-          <h1 className={cn(h1Page, 'mb-4')}>PUC Agent Software by RTO Sarthi — India&apos;s Best Complete Solution for RTO, PUC &amp; Insurance Agents</h1>
+          <h1 className={cn(h1Page, 'mb-3')}>PUC Agent Software by RTO Sarthi — India&apos;s Best Complete Solution for RTO, PUC &amp; Insurance Agents</h1>
           <p className="mx-auto max-w-lg text-sm text-white/85 sm:text-base lg:text-base">
             RTO Sarthi is the all-in-one software for RTO agents, PUC centers, and insurance partners.
             Bulk upload PUC data via Excel, auto-extract from PDFs, send WhatsApp reminders, and manage
             everything — RTO, PUC &amp; insurance — from one dashboard.
           </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             {['Excel Bulk Upload', 'PDF Auto-Entry', 'WhatsApp Reminders', 'PUC + RTO + Insurance'].map(
               (tag) => (
                 <span

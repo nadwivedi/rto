@@ -139,15 +139,15 @@ export default function VehicleInformationSoftware() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>RTO Sarthi — Vehicle Information Software</span>
-          <h1 className={cn(h1Page, 'mb-4')}>
+          <h1 className={cn(h1Page, 'mb-3')}>
             Vehicle Information Software for RTO Agents — Complete Vehicle Details by Number
           </h1>
-          <p className="mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8">
+          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">
             Search any vehicle number and get RC download, Particular download, road tax, e-challan,
             fitness, PUC and insurance status in one report. RC verification and bulk RC
             verification included. Just {LOOKUP_PRICE} per vehicle search.
           </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             <Button href="/contact" variant="primary" size="lg">
               Start Free Trial
             </Button>
@@ -155,7 +155,7 @@ export default function VehicleInformationSoftware() {
               Book Demo
             </Button>
           </div>
-          <div className="mt-7 flex flex-wrap justify-center gap-3">
+          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
             {['RC Download', 'Particular Download', 'Road Tax', 'E-Challan', 'Fitness', 'PUC', 'Insurance', 'Bulk RC Verification'].map((tag) => (
               <span
                 key={tag}
