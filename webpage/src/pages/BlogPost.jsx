@@ -89,8 +89,8 @@ const BlogPost = () => {
       <div className='mx-auto px-4 w-full max-w-[95%] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl pt-[calc(3.5rem+1.5rem)] pb-16 sm:pt-[calc(3.75rem+2rem)] lg:pt-[calc(4rem+2rem)] text-center'>
         <div className='text-4xl sm:text-5xl md:text-6xl mb-3 sm:mb-4'>🔍</div>
         <h1 className='text-xl sm:text-2xl font-bold text-gray-800 mb-2'>Post Not Found</h1>
-        <p className='text-sm sm:text-base text-gray-500 mb-5 sm:mb-6'>{error}</p>
-        <Link to='/blog' className='inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold transition-colors'>
+        <p className='text-base sm:text-base text-gray-500 mb-5 sm:mb-6'>{error}</p>
+        <Link to='/blog' className='inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-base sm:text-base bg-brand-700 text-white rounded-xl hover:bg-brand-800 font-semibold transition-colors'>
           ← Back to Blog
         </Link>
       </div>
@@ -99,7 +99,7 @@ const BlogPost = () => {
 
   return (
     <div className='mx-auto px-3 sm:px-4 w-full max-w-[95%] sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl pt-[calc(3.5rem+1rem)] pb-8 sm:pb-10 md:pb-12 sm:pt-[calc(3.75rem+1rem)] lg:pt-[calc(4rem+0.75rem)]'>
-      <Link to='/blog' className='lg:hidden inline-flex items-center gap-1.5 text-xs sm:text-sm text-indigo-600 hover:text-indigo-800 font-semibold mb-2 sm:mb-3 md:mb-4 -ml-0 sm:-ml-1 md:-ml-2 transition-colors'>
+      <Link to='/blog' className='lg:hidden inline-flex items-center gap-1.5 text-sm sm:text-base text-brand-700 hover:text-brand-900 font-semibold mb-2 sm:mb-3 md:mb-4 -ml-0 sm:-ml-1 md:-ml-2 transition-colors'>
         <svg className='w-3.5 h-3.5 sm:w-4 sm:h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15 19l-7-7 7-7' />
         </svg>
@@ -115,26 +115,26 @@ const BlogPost = () => {
               </div>
             )}
 
-            <div className='flex items-center gap-2 sm:gap-3 text-[8.5px] sm:text-[10px] text-gray-500 mb-1 sm:mb-2'>
-              <span className='font-medium text-indigo-600'>Written by {blog.author}</span>
+            <div className='flex items-center gap-2 sm:gap-3 text-sm text-gray-500 mb-1 sm:mb-2'>
+              <span className='font-medium text-brand-700'>Written by {blog.author}</span>
               <span>•</span>
               <time>{formatDate(blog.publishedAt)}</time>
               <span>•</span>
               <span>{getReadingTime(blog.content)} min read</span>
             </div>
 
-            <h1 className='text-lg sm:text-lg md:text-xl lg:text-2xl xl:text-3xl font-bold text-gray-900 mb-2 sm:mb-3 leading-tight'>
+            <h1 className='font-display text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-3 sm:mb-4 leading-tight'>
               {blog.title}
             </h1>
 
             {blog.excerpt && (
-              <p className='text-sm sm:text-base text-gray-600 mb-4 sm:mb-5 md:mb-6 leading-relaxed'>{blog.excerpt}</p>
+              <p className='text-base sm:text-base text-gray-600 mb-4 sm:mb-5 md:mb-6 leading-relaxed'>{blog.excerpt}</p>
             )}
 
             {blog.tags && blog.tags.length > 0 && (
               <div className='flex flex-wrap gap-1.5 sm:gap-2 mb-4 sm:mb-5 md:mb-6'>
                 {blog.tags.map((tag) => (
-                  <span key={tag} className='px-2 sm:px-3 py-0.5 sm:py-1 bg-indigo-50 text-indigo-600 text-[10px] sm:text-xs font-semibold rounded-full'>
+                  <span key={tag} className='px-2 sm:px-3 py-0.5 sm:py-1 bg-brand-50 text-brand-700 text-sm font-semibold rounded-full'>
                     {tag}
                   </span>
                 ))}
@@ -142,7 +142,7 @@ const BlogPost = () => {
             )}
 
             <div
-              className='blog-content text-gray-800 leading-relaxed text-sm sm:text-sm md:text-base [&_h2]:text-base sm:[&_h2]:text-lg md:[&_h2]:text-xl lg:[&_h2]:text-2xl [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mt-5 sm:[&_h2]:mt-6 md:[&_h2]:mt-8 [&_h2]:mb-2 sm:[&_h2]:mb-3 [&_h3]:text-sm sm:[&_h3]:text-base md:[&_h3]:text-lg lg:[&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:mt-4 sm:[&_h3]:mt-5 md:[&_h3]:mt-6 [&_h3]:mb-1.5 sm:[&_h3]:mb-2 [&_p]:mb-2 sm:[&_p]:mb-3 [&_p]:leading-relaxed [&_a]:text-indigo-600 [&_a]:font-medium hover:[&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 sm:[&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-4 sm:[&_ol]:pl-6 [&_li]:mb-1 [&_img]:rounded-lg sm:[&_img]:rounded-xl [&_img]:w-full [&_blockquote]:border-l-3 sm:[&_blockquote]:border-l-4 [&_blockquote]:border-indigo-300 [&_blockquote]:pl-3 sm:[&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_blockquote]:text-sm sm:[&_blockquote]:text-sm [&_pre]:bg-gray-900 [&_pre]:text-gray-100 [&_pre]:p-3 sm:[&_pre]:p-4 [&_pre]:rounded-lg sm:[&_pre]:rounded-xl [&_pre]:overflow-x-auto [&_pre]:text-xs sm:[&_pre]:text-xs [&_code]:bg-gray-100 [&_code]:px-1 sm:[&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-xs sm:[&_code]:text-xs [&_pre_code]:bg-transparent [&_pre_code]:p-0'
+              className='blog-content text-gray-700 leading-8 text-base sm:text-[1.0625rem] [&_h2]:font-display [&_h2]:text-xl sm:[&_h2]:text-2xl lg:[&_h2]:text-[1.75rem] [&_h2]:leading-snug [&_h2]:font-bold [&_h2]:text-gray-900 [&_h2]:mt-5 sm:[&_h2]:mt-6 md:[&_h2]:mt-8 [&_h2]:mb-2 sm:[&_h2]:mb-3 [&_h3]:font-display [&_h3]:text-lg sm:[&_h3]:text-xl [&_h3]:font-bold [&_h3]:text-gray-900 [&_h3]:mt-4 sm:[&_h3]:mt-5 md:[&_h3]:mt-6 [&_h3]:mb-1.5 sm:[&_h3]:mb-2 [&_p]:mb-4 [&_p]:leading-8 [&_a]:text-brand-700 [&_a]:font-medium hover:[&_a]:underline [&_ul]:list-disc [&_ul]:pl-4 sm:[&_ul]:pl-6 [&_ol]:list-decimal [&_ol]:pl-4 sm:[&_ol]:pl-6 [&_li]:mb-2 [&_ul]:mb-4 [&_ol]:mb-4 [&_img]:rounded-lg sm:[&_img]:rounded-xl [&_img]:w-full [&_blockquote]:border-l-3 sm:[&_blockquote]:border-l-4 [&_blockquote]:border-brand-200 [&_blockquote]:pl-3 sm:[&_blockquote]:pl-4 [&_blockquote]:italic [&_blockquote]:text-gray-600 [&_blockquote]:text-base sm:[&_blockquote]:text-base [&_pre]:bg-gray-900 [&_pre]:text-gray-100 [&_pre]:p-3 sm:[&_pre]:p-4 [&_pre]:rounded-lg sm:[&_pre]:rounded-xl [&_pre]:overflow-x-auto [&_pre]:text-sm sm:[&_pre]:text-sm [&_code]:bg-gray-100 [&_code]:px-1 sm:[&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded [&_code]:text-sm sm:[&_code]:text-sm [&_pre_code]:bg-transparent [&_pre_code]:p-0'
               dangerouslySetInnerHTML={{ __html: blog.content }}
             />
           </article>
@@ -150,11 +150,11 @@ const BlogPost = () => {
 
         <aside className='hidden lg:block lg:w-[32%] xl:w-[30%] lg:sticky lg:top-[calc(4rem+1.5rem)] lg:self-start'>
           <div className='bg-white rounded-xl border border-gray-200 p-4 xl:p-5'>
-            <h3 className='text-sm xl:text-base font-bold text-gray-900 mb-3 xl:mb-4 pb-2 xl:pb-3 border-b border-gray-200'>
+            <h3 className='text-base xl:text-base font-bold text-gray-900 mb-3 xl:mb-4 pb-2 xl:pb-3 border-b border-gray-200'>
               Latest Blogs
             </h3>
             {sidebarBlogs.length > 0 ? (
-              <ul className='space-y-2.5 xl:space-y-3'>
+              <ul className='space-y-3 xl:space-y-3'>
                 {sidebarBlogs.filter(b => b._id !== blog._id).slice(0, 5).map(b => (
                   <li key={b._id}>
                     <Link to={`/blog/${b.slug}`} className='group block'>
@@ -165,10 +165,10 @@ const BlogPost = () => {
                           </div>
                         )}
                         <div className='flex-1 min-w-0'>
-                          <p className='text-[11px] xl:text-xs font-semibold text-gray-800 group-hover:text-indigo-600 leading-snug transition-colors line-clamp-2'>
+                          <p className='text-sm font-semibold text-gray-800 group-hover:text-brand-700 leading-snug transition-colors line-clamp-2'>
                             {b.title}
                           </p>
-                          <p className='text-[9px] xl:text-[10px] text-gray-500 mt-0.5'>{formatDate(b.publishedAt)}</p>
+                          <p className='text-xs text-gray-500 mt-0.5'>{formatDate(b.publishedAt)}</p>
                         </div>
                       </div>
                     </Link>
@@ -176,10 +176,10 @@ const BlogPost = () => {
                 ))}
               </ul>
             ) : (
-              <p className='text-[11px] xl:text-xs text-gray-400'>No blogs found.</p>
+              <p className='text-sm text-gray-400'>No blogs found.</p>
             )}
             <div className='mt-3 xl:mt-4 pt-2 xl:pt-3 border-t border-gray-100'>
-              <Link to='/blog' className='text-[11px] xl:text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors'>
+              <Link to='/blog' className='text-sm font-semibold text-brand-700 hover:text-brand-900 transition-colors'>
                 View all blogs →
               </Link>
             </div>
@@ -199,8 +199,8 @@ const BlogPost = () => {
                   </div>
                 )}
                 <div className='p-3 sm:p-4'>
-                  <p className='text-xs sm:text-sm font-semibold text-gray-800 group-hover:text-indigo-600 leading-snug transition-colors line-clamp-2'>{b.title}</p>
-                  <p className='text-[10px] sm:text-xs text-gray-500 mt-1'>{formatDate(b.publishedAt)}</p>
+                  <p className='text-sm sm:text-base font-semibold text-gray-800 group-hover:text-brand-700 leading-snug transition-colors line-clamp-2'>{b.title}</p>
+                  <p className='text-sm text-gray-500 mt-1'>{formatDate(b.publishedAt)}</p>
                 </div>
               </Link>
             ))}
@@ -209,7 +209,7 @@ const BlogPost = () => {
       )}
 
       <div className='mt-6 sm:mt-8 pt-4 sm:pt-5 border-t border-gray-200 text-center'>
-        <Link to='/blog' className='inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-sm sm:text-base bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold transition-colors'>
+        <Link to='/blog' className='inline-flex items-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 text-base sm:text-base bg-brand-700 text-white rounded-xl hover:bg-brand-800 font-semibold transition-colors'>
           ← Back to Blog
         </Link>
       </div>

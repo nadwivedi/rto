@@ -1,30 +1,34 @@
-import { cn, label, h2Section, h2OnDark, bodyMuted } from '../lib/styles'
+import * as page from '../lib/styles'
+import * as home from '../lib/homeStyles'
 
+/** `compact` keeps the smaller homepage look; other pages use the readable defaults. */
 export default function SectionHeading({
   label: labelText,
   title,
   description,
   dark = false,
   align = 'center',
+  compact = false,
 }) {
+  const s = compact ? home : page
   return (
     <div
-      className={cn(
-        'mb-6 lg:mb-7',
+      className={s.cn(
+        compact ? 'mb-6 lg:mb-7' : 'mb-8 lg:mb-10',
         align === 'center' ? 'text-center' : 'text-left',
       )}
     >
       {labelText && (
-        <span className={cn(label, dark && 'text-accent-300')}>{labelText}</span>
+        <span className={s.cn(dark ? s.labelOnDark : s.label, dark && compact && 'text-accent-300')}>{labelText}</span>
       )}
-      <h2 className={cn(dark ? h2OnDark : h2Section, 'mb-1.5')}>{title}</h2>
+      <h2 className={s.cn(dark ? s.h2OnDark : s.h2Section, compact ? 'mb-1.5' : 'mb-3')}>{title}</h2>
       {description && (
         <p
-          className={cn(
-            bodyMuted,
-            'max-w-lg',
+          className={s.cn(
+            s.bodyMuted,
+            compact ? 'max-w-lg' : 'max-w-2xl',
             align === 'center' && 'mx-auto',
-            dark && 'text-slate-400',
+            dark && (compact ? 'text-slate-400' : 'text-slate-300'),
           )}
         >
           {description}

@@ -103,18 +103,18 @@ export default function PucAgent() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>RTO Sarthi — PUC Agent Software</span>
-          <h1 className={cn(h1Page, 'mb-2')}>PUC Agent Software by RTO Sarthi — India&apos;s Best Complete Solution for RTO, PUC &amp; Insurance Agents</h1>
-          <p className="mx-auto max-w-lg text-xs text-white/85 sm:text-[0.8125rem] lg:text-sm">
+          <h1 className={cn(h1Page, 'mb-4')}>PUC Agent Software by RTO Sarthi — India&apos;s Best Complete Solution for RTO, PUC &amp; Insurance Agents</h1>
+          <p className="mx-auto max-w-lg text-sm text-white/85 sm:text-base lg:text-base">
             RTO Sarthi is the all-in-one software for RTO agents, PUC centers, and insurance partners.
             Bulk upload PUC data via Excel, auto-extract from PDFs, send WhatsApp reminders, and manage
             everything — RTO, PUC &amp; insurance — from one dashboard.
           </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
             {['Excel Bulk Upload', 'PDF Auto-Entry', 'WhatsApp Reminders', 'PUC + RTO + Insurance'].map(
               (tag) => (
                 <span
                   key={tag}
-                  className="rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[0.625rem] font-medium sm:text-[0.6875rem]"
+                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
                 >
                   {tag}
                 </span>
@@ -131,15 +131,15 @@ export default function PucAgent() {
             title="Why PUC Agents Choose RTO Sarthi"
             description="RTO Sarthi is the complete platform for RTO agents, PUC centers, and insurance partners. Here is what makes it the best choice for your PUC center."
           />
-          <div className="grid gap-3 sm:grid-cols-2 lg:gap-3.5">
+          <div className="grid gap-5 sm:grid-cols-2 lg:gap-6">
             {benefits.map((item) => (
               <div
                 key={item.title}
-                className={`${glassCard} flex gap-3 p-4`}
+                className={`${glassCard} flex gap-4 p-6`}
               >
                 <FeatureIcon icon={item.icon} variant={item.variant} className="mb-0 shrink-0" />
                 <div>
-                  <h3 className="mb-1 text-sm font-semibold text-slate-900">{item.title}</h3>
+                  <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">{item.title}</h3>
                   <p className={bodyMuted}>{item.description}</p>
                 </div>
               </div>
@@ -162,11 +162,11 @@ export default function PucAgent() {
                 className={`${glassCard} text-center`}
               >
                 <div className="flex justify-center">
-                  <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-800">
+                  <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-800">
                     {item.step}
                   </span>
                 </div>
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">{item.title}</h3>
+                <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">{item.title}</h3>
                 <p className={bodyMuted}>{item.description}</p>
               </div>
             ))}
@@ -197,10 +197,10 @@ export default function PucAgent() {
               aria-hidden
             />
             <div className="relative z-10">
-              <h2 className="mb-2 text-lg font-bold text-white sm:text-xl lg:text-[1.35rem]">
+              <h2 className="mb-3 font-display text-2xl font-bold text-white sm:text-3xl">
                 Ready to digitize your business with RTO Sarthi?
               </h2>
-              <p className="mx-auto mb-4 max-w-md text-xs text-white/90 sm:text-sm">
+              <p className="mx-auto mb-6 max-w-xl text-base text-white/90 sm:text-lg">
                 RTO Sarthi is the complete software for RTO agents, PUC centers, and insurance partners.
                 Join agents who save time with bulk uploads, automated WhatsApp reminders, and
                 one dashboard for all their work.

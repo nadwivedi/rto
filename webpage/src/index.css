@@ -3,6 +3,7 @@
 /* Palette from rtosarthi.avif — navy blue + vibrant orange */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Poppins", "Inter", ui-sans-serif, system-ui, sans-serif;
 
   --color-brand-950: #083c92;
   --color-brand-900: #0f4bac;

@@ -58,8 +58,8 @@ export default function About() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>About RTO Sarthi</span>
-          <h1 className={cn(h1Page, 'mb-2')}>India&apos;s Best RTO Agent Software</h1>
-          <p className="mx-auto max-w-xl text-xs text-white/85 sm:text-[0.8125rem] lg:text-sm">
+          <h1 className={cn(h1Page, 'mb-4')}>India&apos;s Best RTO Agent Software</h1>
+          <p className="mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8">
             Digitizing and simplifying the everyday work of RTO agents across India — trusted for
             over 3 years.
           </p>
@@ -98,7 +98,7 @@ export default function About() {
                 className="rounded-xl border border-brand-100 bg-brand-50/90 px-3 py-4 text-center"
               >
                 <strong className="block text-xl font-bold text-brand-800 sm:text-2xl">{s.n}</strong>
-                <span className="mt-1 block text-[0.625rem] font-medium leading-snug text-slate-600 sm:text-xs">
+                <span className="mt-1 block text-xs font-medium leading-snug text-slate-600 sm:text-sm">
                   {s.l}
                 </span>
               </div>
@@ -116,14 +116,14 @@ export default function About() {
           />
           <div className={grid3}>
             {highlights.map((item) => (
-              <article key={item.title} className={`${glassCard} p-4`}>
+              <article key={item.title} className={`${glassCard} p-6`}>
                 <FeatureIcon icon={item.icon} variant={item.variant} />
-                <h3 className="mb-1.5 text-sm font-bold text-brand-950">{item.title}</h3>
+                <h3 className="font-display mb-1.5 text-lg font-bold text-brand-950">{item.title}</h3>
                 <p className={bodyMuted}>{item.description}</p>
               </article>
             ))}
           </div>
-          <p className="mx-auto mt-6 max-w-2xl text-center text-xs leading-relaxed text-slate-500 sm:text-sm">
+          <p className="mx-auto mt-6 max-w-2xl text-center text-sm leading-relaxed text-slate-600 sm:text-base">
             From automated document capture to scheduled WhatsApp reminders for tax, PUC, insurance,
             permit expiry, and pending balances — RTO Sarthi is designed to make complex desk work{' '}
             <strong className="text-slate-700">easy, simple, and fast</strong>.
@@ -163,7 +163,7 @@ export default function About() {
                 'RTOSarthi.com — full RTO Sarthi product suite',
                 'Ongoing updates driven by agent feedback',
               ].map((line) => (
-                <li key={line} className="flex items-center gap-2 text-xs text-slate-600 sm:text-sm">
+                <li key={line} className="flex items-center gap-2 text-sm text-slate-600 sm:text-base">
                   <span className="shrink-0 text-brand-700 [&_svg]:h-4 [&_svg]:w-4">
                     <IconShield />
                   </span>
@@ -177,13 +177,13 @@ export default function About() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-800 to-accent-600 text-xl font-extrabold text-white shadow-lg">
               SB
             </div>
-            <h3 className="mb-1 text-base font-bold text-brand-950">SoftwareBytes</h3>
-            <p className="mb-1 text-sm font-medium text-accent-600">Raipur-based IT company</p>
-            <p className="text-xs text-slate-500 sm:text-[0.8125rem]">
+            <h3 className="font-display mb-2 text-lg font-bold text-brand-950">SoftwareBytes</h3>
+            <p className="mb-1 text-base font-medium text-accent-600">Raipur-based IT company</p>
+            <p className="text-sm text-slate-600 sm:text-base">
               Chhattisgarh, India · Web & business software
             </p>
             <div className="mt-5 rounded-lg border border-brand-100 bg-brand-50/80 px-4 py-3">
-              <p className="text-xs leading-relaxed text-slate-600 sm:text-sm">
+              <p className="text-sm leading-relaxed text-slate-600 sm:text-base">
                 <strong className="text-brand-900">RTO Sarthi</strong> is SoftwareBytes&apos; flagship
                 product for the RTO agent community — built in India, for India.
               </p>
@@ -198,7 +198,7 @@ export default function About() {
             <h2 className="relative z-10 mb-2 text-lg font-bold text-white sm:text-xl">
               Ready to simplify your RTO desk?
             </h2>
-            <p className="relative z-10 mx-auto mb-4 max-w-md text-xs text-white/90 sm:text-sm">
+            <p className="relative z-10 mx-auto mb-4 max-w-md text-sm text-white/90 sm:text-base">
               Join agents across India who trust RTO Sarthi. Start your free trial or talk to our team today.
             </p>
             <div className="relative z-10 flex flex-wrap justify-center gap-2">

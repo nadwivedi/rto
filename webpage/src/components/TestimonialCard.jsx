@@ -1,5 +1,5 @@
 import { IconStar } from './Icons'
-import { glassCard, bodyMuted } from '../lib/styles'
+import { glassCard, bodyMuted } from '../lib/homeStyles'
 
 export default function TestimonialCard({ quote, name, role, location }) {
   return (

@@ -28,12 +28,12 @@ const contactItems = [
     content: (
       <>
         <p>
-          <a href={`tel:+91${PHONE_PRIMARY}`} className="text-xs text-slate-500 hover:text-brand-800 sm:text-[0.8125rem]">
+          <a href={`tel:+91${PHONE_PRIMARY}`} className="text-sm text-slate-600 hover:text-brand-800 sm:text-base">
             {phonePrimaryDisplay}
           </a>
         </p>
         <p>
-          <a href={`tel:+91${PHONE_SECONDARY}`} className="text-xs text-slate-500 hover:text-brand-800 sm:text-[0.8125rem]">
+          <a href={`tel:+91${PHONE_SECONDARY}`} className="text-sm text-slate-600 hover:text-brand-800 sm:text-base">
             {phoneSecondaryDisplay}
           </a>
         </p>
@@ -49,7 +49,7 @@ const contactItems = [
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs font-medium text-[#128C7E] hover:text-[#25D366] sm:text-[0.8125rem]"
+          className="text-sm font-medium text-[#128C7E] hover:text-[#25D366] sm:text-base"
         >
           {phonePrimaryDisplay} — Chat now
         </a>
@@ -61,7 +61,7 @@ const contactItems = [
     title: 'Email',
     content: (
       <p>
-        <a href={`mailto:${EMAIL}`} className="text-xs text-slate-500 hover:text-brand-800 sm:text-[0.8125rem]">
+        <a href={`mailto:${EMAIL}`} className="text-sm text-slate-600 hover:text-brand-800 sm:text-base">
           {EMAIL}
         </a>
       </p>
@@ -71,7 +71,7 @@ const contactItems = [
     icon: <IconMapPin />,
     title: 'Office',
     content: (
-      <p className="text-xs text-slate-500 sm:text-[0.8125rem]">
+      <p className="text-sm text-slate-600 sm:text-base">
         SoftwareBytes, Raipur, Chhattisgarh, India — 492001
       </p>
     ),
@@ -84,8 +84,8 @@ export default function Contact() {
       <section className={pageHero}>
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>Contact</span>
-          <h1 className={cn(h1Page, 'mb-2')}>Connect with us</h1>
-          <p className="mx-auto max-w-lg text-xs text-white/85 sm:text-[0.8125rem] lg:text-sm">
+          <h1 className={cn(h1Page, 'mb-4')}>Connect with us</h1>
+          <p className="mx-auto max-w-lg text-sm text-white/85 sm:text-base lg:text-base">
             Simplify your RTO workflow — request a free trial, book a demo, or reach out anytime.
           </p>
         </div>
@@ -110,24 +110,24 @@ export default function Contact() {
 
           <div className={grid2}>
             {contactItems.map((item) => (
-              <div key={item.title} className={`${glassCard} flex gap-3 p-4`}>
+              <div key={item.title} className={`${glassCard} flex gap-4 p-6`}>
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-800 [&_svg]:h-5 [&_svg]:w-5">
                   {item.icon}
                 </div>
                 <div>
-                  <strong className="mb-1 block text-sm font-semibold text-slate-900">{item.title}</strong>
+                  <strong className="mb-1 block text-base font-semibold text-slate-900">{item.title}</strong>
                   {item.content}
                 </div>
               </div>
             ))}
           </div>
 
-          <div className="mt-6 flex h-40 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-brand-200 bg-gradient-to-br from-slate-50 to-brand-50/50 text-slate-500">
+          <div className="mt-6 flex h-40 flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-brand-200 bg-gradient-to-br from-slate-50 to-brand-50/50 text-slate-600">
             <span className="text-brand-800 [&_svg]:h-7 [&_svg]:w-7">
               <IconMapPin />
             </span>
-            <span className="text-xs font-medium">Raipur, Chhattisgarh, India</span>
-            <span className="text-[0.6875rem]">Interactive map embed coming soon</span>
+            <span className="text-sm font-medium">Raipur, Chhattisgarh, India</span>
+            <span className="text-sm">Interactive map embed coming soon</span>
           </div>
 
           <div className="mt-5 flex justify-center gap-2" aria-label="Social links">

@@ -139,15 +139,15 @@ export default function VehicleInformationSoftware() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>RTO Sarthi — Vehicle Information Software</span>
-          <h1 className={cn(h1Page, 'mb-2')}>
+          <h1 className={cn(h1Page, 'mb-4')}>
             Vehicle Information Software for RTO Agents — Complete Vehicle Details by Number
           </h1>
-          <p className="mx-auto max-w-xl text-xs text-white/85 sm:text-[0.8125rem] lg:text-sm">
+          <p className="mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8">
             Search any vehicle number and get RC download, Particular download, road tax, e-challan,
             fitness, PUC and insurance status in one report. RC verification and bulk RC
             verification included. Just {LOOKUP_PRICE} per vehicle search.
           </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Button href="/contact" variant="primary" size="lg">
               Start Free Trial
             </Button>
@@ -155,11 +155,11 @@ export default function VehicleInformationSoftware() {
               Book Demo
             </Button>
           </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
             {['RC Download', 'Particular Download', 'Road Tax', 'E-Challan', 'Fitness', 'PUC', 'Insurance', 'Bulk RC Verification'].map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[0.625rem] font-medium sm:text-[0.6875rem]"
+                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
               >
                 {tag}
               </span>
@@ -175,7 +175,7 @@ export default function VehicleInformationSoftware() {
             title="Vehicle information software for RTO agents, built into RTO Sarthi"
             description="RTO Sarthi is made specifically for RTO agents. Vehicle information is part of the same software."
           />
-          <div className="mx-auto max-w-3xl space-y-3">
+          <div className="mx-auto max-w-3xl space-y-5">
             <p className={bodyMuted}>
               Every RTO job starts with the same question: what is the current status of this
               vehicle? Who is the owner, is road tax paid, is fitness valid, is there a pending
@@ -206,12 +206,12 @@ export default function VehicleInformationSoftware() {
             title="Features of vehicle information software for RTO agents"
             description="Everything about a vehicle in one search, from RC download to bulk RC verification."
           />
-          <div className="grid gap-3 sm:grid-cols-2 lg:gap-3.5">
+          <div className="grid gap-5 sm:grid-cols-2 lg:gap-6">
             {features.map((item) => (
-              <div key={item.title} className={`${glassCard} flex gap-3 p-4`}>
+              <div key={item.title} className={`${glassCard} flex gap-4 p-6`}>
                 <FeatureIcon icon={item.icon} variant={item.variant} className="mb-0 shrink-0" />
                 <div>
-                  <h3 className="mb-1 text-sm font-semibold text-slate-900">{item.title}</h3>
+                  <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">{item.title}</h3>
                   <p className={bodyMuted}>{item.description}</p>
                 </div>
               </div>
@@ -229,7 +229,7 @@ export default function VehicleInformationSoftware() {
           />
           <div className="mx-auto grid max-w-4xl gap-3 md:grid-cols-[1fr_1.4fr] lg:gap-3.5">
             <div className={cn(glassCard, 'flex flex-col items-center justify-center p-6 text-center')}>
-              <span className="text-[0.6875rem] font-semibold uppercase tracking-widest text-accent-600">
+              <span className="text-sm font-semibold uppercase tracking-widest text-accent-600">
                 Per vehicle lookup
               </span>
               <span className="my-1 text-4xl font-bold tracking-tight text-brand-950 lg:text-5xl">
@@ -243,13 +243,13 @@ export default function VehicleInformationSoftware() {
                 Get Started
               </Button>
             </div>
-            <div className={cn(glassCard, 'p-5')}>
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">
+            <div className={cn(glassCard, 'p-6')}>
+              <h3 className="font-display mb-3 text-lg font-semibold text-slate-900">
                 What you get in every vehicle report
               </h3>
               <ul className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2">
                 {reportFields.map((f) => (
-                  <li key={f} className="flex gap-1.5 text-xs text-slate-700 sm:text-[0.8125rem]">
+                  <li key={f} className="flex gap-1.5 text-sm text-slate-700 sm:text-base">
                     <span className="mt-0.5 shrink-0 text-emerald-600 [&_svg]:h-3.5 [&_svg]:w-3.5">
                       <IconCheck />
                     </span>
@@ -257,7 +257,7 @@ export default function VehicleInformationSoftware() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-[0.6875rem] text-slate-500 sm:text-xs">
+              <p className="mt-3 text-sm text-slate-600 sm:text-sm">
                 RC and Particular PDFs for an already-searched vehicle are generated from your saved
                 search history, so re-downloading does not use another lookup.
               </p>
@@ -291,14 +291,14 @@ export default function VehicleInformationSoftware() {
                 text: 'Every vehicle you search is saved, so you can reopen it and download its RC or Particular again.',
               },
             ].map((item) => (
-              <div key={item.title} className={`${glassCard} p-4`}>
+              <div key={item.title} className={`${glassCard} p-6`}>
                 <FeatureIcon icon={item.icon} variant="brand" />
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">{item.title}</h3>
+                <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">{item.title}</h3>
                 <p className={bodyMuted}>{item.text}</p>
               </div>
             ))}
           </div>
-          <p className="mt-5 text-center text-xs text-slate-500 sm:text-sm">
+          <p className="mt-5 text-center text-sm text-slate-600 sm:text-base">
             Only need the RC? See our{' '}
             <Link to="/rc-download-software" className="font-semibold text-brand-800 hover:underline">
               RC download software
@@ -321,9 +321,9 @@ export default function VehicleInformationSoftware() {
           />
           <div className={grid3}>
             {audiences.map((a) => (
-              <div key={a} className={`${glassCard} flex items-center gap-2.5 p-3.5`}>
+              <div key={a} className={`${glassCard} flex items-center gap-2.5 p-4`}>
                 <FeatureIcon icon={<IconUsers />} variant="brand" size="sm" className="mb-0" />
-                <span className="text-xs font-medium text-slate-700 sm:text-[0.8125rem]">{a}</span>
+                <span className="text-sm font-medium text-slate-700 sm:text-base">{a}</span>
               </div>
             ))}
           </div>
@@ -337,11 +337,11 @@ export default function VehicleInformationSoftware() {
             title="Vehicle information software for RTO agents — FAQ"
             description="Answers about vehicle number search, RC verification and pricing."
           />
-          <div className="mx-auto max-w-3xl space-y-2.5">
+          <div className="mx-auto max-w-3xl space-y-5">
             {vehicleInfoFaqs.map((f) => (
-              <details key={f.q} className={`${glassCard} group p-4`}>
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold text-slate-900">
-                  <h3 className="text-sm font-semibold">{f.q}</h3>
+              <details key={f.q} className={`${glassCard} group p-5`}>
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-base font-semibold text-slate-900">
+                  <h3 className="font-display text-lg font-semibold">{f.q}</h3>
                   <span className="text-brand-700 transition-transform group-open:rotate-45" aria-hidden>
                     +
                   </span>
@@ -364,10 +364,10 @@ export default function VehicleInformationSoftware() {
               <div className="mb-2 flex justify-center text-white/90 [&_svg]:h-6 [&_svg]:w-6">
                 <IconCar />
               </div>
-              <h2 className="mb-2 text-lg font-bold text-white sm:text-xl lg:text-[1.35rem]">
+              <h2 className="mb-3 font-display text-2xl font-bold text-white sm:text-3xl">
                 Get complete vehicle details for {LOOKUP_PRICE} per search
               </h2>
-              <p className="mx-auto mb-4 max-w-md text-xs text-white/90 sm:text-sm">
+              <p className="mx-auto mb-6 max-w-xl text-base text-white/90 sm:text-lg">
                 Start your free trial of RTO Sarthi, the software made for RTO agents, and search
                 your first vehicle today.
               </p>

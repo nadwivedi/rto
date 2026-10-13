@@ -132,15 +132,15 @@ export default function RcDownloadSoftware() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>RTO Sarthi — RC Download Software</span>
-          <h1 className={cn(h1Page, 'mb-2')}>
+          <h1 className={cn(h1Page, 'mb-4')}>
             RC Download Software for RTO Agents — Download RC of Any Vehicle at Just {LOOKUP_PRICE}
           </h1>
-          <p className="mx-auto max-w-xl text-xs text-white/85 sm:text-[0.8125rem] lg:text-sm">
+          <p className="mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8">
             Enter a vehicle number and download its RC as a PDF in seconds. Smart card style RC,
             Vehicle Particulars PDF and complete vehicle details, all from one search at{' '}
             {LOOKUP_PRICE} per vehicle.
           </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Button href="/contact" variant="primary" size="lg">
               Start Free Trial
             </Button>
@@ -148,11 +148,11 @@ export default function RcDownloadSoftware() {
               Book Demo
             </Button>
           </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
             {[`${LOOKUP_PRICE} per RC`, 'All States', 'Smart Card Style PDF', 'Particular PDF', 'Free Re-download'].map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[0.625rem] font-medium sm:text-[0.6875rem]"
+                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
               >
                 {tag}
               </span>
@@ -168,7 +168,7 @@ export default function RcDownloadSoftware() {
             title="RC download software for RTO agents"
             description={`Download RC of any vehicle at just ${LOOKUP_PRICE}, inside the software you already use for RTO work.`}
           />
-          <div className="mx-auto max-w-3xl space-y-3">
+          <div className="mx-auto max-w-3xl space-y-5">
             <p className={bodyMuted}>
               Transfer, HPA / HPT, NOC, duplicate RC, insurance and fitness work all need the RC
               details of the vehicle. When the client has lost the RC or only has a faded photo,
@@ -198,12 +198,12 @@ export default function RcDownloadSoftware() {
             {steps.map((item) => (
               <div key={item.step} className={`${glassCard} text-center`}>
                 <div className="flex justify-center pt-4">
-                  <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-800">
+                  <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-800">
                     {item.step}
                   </span>
                 </div>
                 <div className="px-4 pb-4">
-                  <h3 className="mb-1 text-sm font-semibold text-slate-900">{item.title}</h3>
+                  <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">{item.title}</h3>
                   <p className={bodyMuted}>{item.description}</p>
                 </div>
               </div>
@@ -219,12 +219,12 @@ export default function RcDownloadSoftware() {
             title="Why RTO agents use RTO Sarthi to download RC"
             description="Built for agents who download RC for client files every day."
           />
-          <div className="grid gap-3 sm:grid-cols-2 lg:gap-3.5">
+          <div className="grid gap-5 sm:grid-cols-2 lg:gap-6">
             {features.map((item) => (
-              <div key={item.title} className={`${glassCard} flex gap-3 p-4`}>
+              <div key={item.title} className={`${glassCard} flex gap-4 p-6`}>
                 <FeatureIcon icon={item.icon} variant={item.variant} className="mb-0 shrink-0" />
                 <div>
-                  <h3 className="mb-1 text-sm font-semibold text-slate-900">{item.title}</h3>
+                  <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">{item.title}</h3>
                   <p className={bodyMuted}>{item.description}</p>
                 </div>
               </div>
@@ -242,7 +242,7 @@ export default function RcDownloadSoftware() {
           />
           <div className="mx-auto grid max-w-4xl gap-3 md:grid-cols-[1fr_1.4fr] lg:gap-3.5">
             <div className={cn(glassCard, 'flex flex-col items-center justify-center p-6 text-center')}>
-              <span className="text-[0.6875rem] font-semibold uppercase tracking-widest text-accent-600">
+              <span className="text-sm font-semibold uppercase tracking-widest text-accent-600">
                 Per vehicle search
               </span>
               <span className="my-1 text-4xl font-bold tracking-tight text-brand-950 lg:text-5xl">
@@ -256,11 +256,11 @@ export default function RcDownloadSoftware() {
                 Get Started
               </Button>
             </div>
-            <div className={cn(glassCard, 'p-5')}>
-              <h3 className="mb-3 text-sm font-semibold text-slate-900">What the RC PDF contains</h3>
+            <div className={cn(glassCard, 'p-6')}>
+              <h3 className="font-display mb-3 text-lg font-semibold text-slate-900">What the RC PDF contains</h3>
               <ul className="grid gap-x-4 gap-y-1.5 sm:grid-cols-2">
                 {rcFields.map((f) => (
-                  <li key={f} className="flex gap-1.5 text-xs text-slate-700 sm:text-[0.8125rem]">
+                  <li key={f} className="flex gap-1.5 text-sm text-slate-700 sm:text-base">
                     <span className="mt-0.5 shrink-0 text-emerald-600 [&_svg]:h-3.5 [&_svg]:w-3.5">
                       <IconCheck />
                     </span>
@@ -268,7 +268,7 @@ export default function RcDownloadSoftware() {
                   </li>
                 ))}
               </ul>
-              <p className="mt-3 text-[0.6875rem] text-slate-500 sm:text-xs">
+              <p className="mt-3 text-sm text-slate-600 sm:text-sm">
                 The RC PDF is a computer-generated copy for reference and client records. It does
                 not replace the original RC or the DigiLocker / mParivahan digital RC.
               </p>
@@ -286,26 +286,26 @@ export default function RcDownloadSoftware() {
           />
           <div className={grid3}>
             {audiences.map((a) => (
-              <div key={a} className={`${glassCard} flex items-center gap-2.5 p-3.5`}>
+              <div key={a} className={`${glassCard} flex items-center gap-2.5 p-4`}>
                 <FeatureIcon icon={<IconUsers />} variant="brand" size="sm" className="mb-0" />
-                <span className="text-xs font-medium text-slate-700 sm:text-[0.8125rem]">{a}</span>
+                <span className="text-sm font-medium text-slate-700 sm:text-base">{a}</span>
               </div>
             ))}
           </div>
           <div className="mx-auto mt-6 grid max-w-3xl gap-3 sm:grid-cols-2">
-            <Link to="/vehicle-information-software" className={cn(glassCard, 'flex gap-3 p-4')}>
+            <Link to="/vehicle-information-software" className={cn(glassCard, 'flex gap-4 p-6')}>
               <FeatureIcon icon={<IconChart />} variant="accent" className="mb-0 shrink-0" />
               <div>
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">Vehicle information software</h3>
+                <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">Vehicle information software</h3>
                 <p className={bodyMuted}>
                   Road tax, e-challan, fitness, PUC, insurance status and bulk RC verification.
                 </p>
               </div>
             </Link>
-            <Link to="/rto-management-software" className={cn(glassCard, 'flex gap-3 p-4')}>
+            <Link to="/rto-management-software" className={cn(glassCard, 'flex gap-4 p-6')}>
               <FeatureIcon icon={<IconShield />} variant="brand" className="mb-0 shrink-0" />
               <div>
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">RTO management software</h3>
+                <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">RTO management software</h3>
                 <p className={bodyMuted}>
                   Manage vehicles, renewals, WhatsApp alerts and client balances in one place.
                 </p>
@@ -322,11 +322,11 @@ export default function RcDownloadSoftware() {
             title="RC download software for RTO agents — FAQ"
             description="Answers about downloading RC by vehicle number, pricing and usage."
           />
-          <div className="mx-auto max-w-3xl space-y-2.5">
+          <div className="mx-auto max-w-3xl space-y-5">
             {rcDownloadFaqs.map((f) => (
-              <details key={f.q} className={`${glassCard} group p-4`}>
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold text-slate-900">
-                  <h3 className="text-sm font-semibold">{f.q}</h3>
+              <details key={f.q} className={`${glassCard} group p-5`}>
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-base font-semibold text-slate-900">
+                  <h3 className="font-display text-lg font-semibold">{f.q}</h3>
                   <span className="text-brand-700 transition-transform group-open:rotate-45" aria-hidden>
                     +
                   </span>
@@ -349,10 +349,10 @@ export default function RcDownloadSoftware() {
               <div className="mb-2 flex justify-center text-white/90 [&_svg]:h-6 [&_svg]:w-6">
                 <IconDocument />
               </div>
-              <h2 className="mb-2 text-lg font-bold text-white sm:text-xl lg:text-[1.35rem]">
+              <h2 className="mb-3 font-display text-2xl font-bold text-white sm:text-3xl">
                 Download RC of any vehicle at just {LOOKUP_PRICE}
               </h2>
-              <p className="mx-auto mb-4 max-w-md text-xs text-white/90 sm:text-sm">
+              <p className="mx-auto mb-6 max-w-xl text-base text-white/90 sm:text-lg">
                 Start your free trial of RTO Sarthi, the RC download software for RTO agents, and
                 download your first RC today.
               </p>

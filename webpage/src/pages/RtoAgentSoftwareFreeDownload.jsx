@@ -64,15 +64,15 @@ export default function RtoAgentSoftwareFreeDownload() {
         />
         <div className={cn(container, 'relative z-10')}>
           <span className={labelOnDark}>RTO Sarthi — Free Trial</span>
-          <h1 className={cn(h1Page, 'mb-2')}>
+          <h1 className={cn(h1Page, 'mb-4')}>
             RTO Agent Software Free Download — Try RTO Sarthi Free of Cost
           </h1>
-          <p className="mx-auto max-w-xl text-xs text-white/85 sm:text-[0.8125rem] lg:text-sm">
+          <p className="mx-auto max-w-2xl text-base leading-7 text-white/90 sm:text-lg sm:leading-8">
             RTO Sarthi provides a free trial with free download. Download and use India&apos;s RTO
             agent software free of cost on your computer or mobile, and see how it simplifies your
             RTO desk before you decide.
           </p>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
             <Button href={whatsappUrl} target="_blank" rel="noopener noreferrer" variant="primary" size="lg">
               Get Free Trial
             </Button>
@@ -80,11 +80,11 @@ export default function RtoAgentSoftwareFreeDownload() {
               Open &amp; Download App
             </Button>
           </div>
-          <div className="mt-4 flex flex-wrap justify-center gap-2">
+          <div className="mt-7 flex flex-wrap justify-center gap-3">
             {['Free Trial', 'Free Download', 'PC & Mobile', 'No Installation File', 'Setup Help'].map((tag) => (
               <span
                 key={tag}
-                className="rounded-full border border-white/20 bg-white/10 px-2.5 py-0.5 text-[0.625rem] font-medium sm:text-[0.6875rem]"
+                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
               >
                 {tag}
               </span>
@@ -115,9 +115,9 @@ export default function RtoAgentSoftwareFreeDownload() {
                 straight from the browser on your PC or mobile.
               </p>
             </div>
-            <ul className={cn(glassCard, 'space-y-2 p-5')}>
+            <ul className={cn(glassCard, 'space-y-2 p-6')}>
               {trialPoints.map((p) => (
-                <li key={p} className="flex gap-1.5 text-xs text-slate-700 sm:text-[0.8125rem]">
+                <li key={p} className="flex gap-1.5 text-sm text-slate-700 sm:text-base">
                   <span className="mt-0.5 shrink-0 text-emerald-600 [&_svg]:h-3.5 [&_svg]:w-3.5">
                     <IconCheck />
                   </span>
@@ -138,24 +138,24 @@ export default function RtoAgentSoftwareFreeDownload() {
           />
           <div className={grid3}>
             {steps.map((item) => (
-              <div key={item.step} className={cn(glassCard, 'p-4 text-center')}>
+              <div key={item.step} className={cn(glassCard, 'p-6 text-center')}>
                 <div className="flex justify-center">
-                  <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-800">
+                  <span className="mb-3 inline-flex h-10 w-10 items-center justify-center rounded-full bg-brand-100 text-sm font-bold text-brand-800">
                     {item.step}
                   </span>
                 </div>
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">{item.title}</h3>
+                <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">{item.title}</h3>
                 <p className={bodyMuted}>{item.description}</p>
               </div>
             ))}
           </div>
           <div className="mx-auto mt-4 grid max-w-4xl gap-3 sm:grid-cols-3">
             {devices.map((d) => (
-              <div key={d.title} className={cn(glassCard, 'flex gap-2.5 p-3.5')}>
+              <div key={d.title} className={cn(glassCard, 'flex gap-2.5 p-4')}>
                 <FeatureIcon icon={<IconPhone />} variant="slate" size="sm" className="mb-0" />
                 <div>
-                  <h3 className="text-xs font-semibold text-slate-900 sm:text-[0.8125rem]">{d.title}</h3>
-                  <p className="text-[0.6875rem] leading-relaxed text-slate-500 sm:text-xs">{d.text}</p>
+                  <h3 className="font-display text-sm font-semibold text-slate-900 sm:text-base">{d.title}</h3>
+                  <p className="text-sm leading-relaxed text-slate-600 sm:text-sm">{d.text}</p>
                 </div>
               </div>
             ))}
@@ -172,9 +172,9 @@ export default function RtoAgentSoftwareFreeDownload() {
           />
           <div className={grid3}>
             {coreFeatures.map((f) => (
-              <div key={f.title} className={cn(glassCard, 'p-4')}>
+              <div key={f.title} className={cn(glassCard, 'p-6')}>
                 <FeatureIcon icon={f.icon} variant={f.iconVariant} />
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">{f.title}</h3>
+                <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">{f.title}</h3>
                 <p className={bodyMuted}>{f.description}</p>
               </div>
             ))}
@@ -182,11 +182,11 @@ export default function RtoAgentSoftwareFreeDownload() {
           <div className="mt-6 text-center">
             <Link
               to="/features"
-              className="inline-flex items-center justify-center rounded-lg border-2 border-brand-200 bg-white px-4 py-2 text-sm font-semibold text-brand-900 transition-all hover:border-brand-700 hover:bg-brand-50"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-brand-200 bg-white px-4 py-2 text-base font-semibold text-brand-900 transition-all hover:border-brand-700 hover:bg-brand-50"
             >
               See all RTO Sarthi features →
             </Link>
-            <p className="mt-3 text-xs text-slate-500 sm:text-sm">
+            <p className="mt-3 text-sm text-slate-600 sm:text-base">
               Also see{' '}
               <Link to="/vehicle-information-software" className="font-semibold text-brand-800 hover:underline">
                 vehicle information software
@@ -218,9 +218,9 @@ export default function RtoAgentSoftwareFreeDownload() {
               { icon: <IconUpload />, title: 'Move your data in a day', text: 'Upload your existing Excel records in bulk. Our team helps you import everything.' },
               { icon: <IconShield />, title: 'Safe and always updated', text: 'Data stored securely online, automatic updates, and no installation files to worry about.' },
             ].map((item) => (
-              <div key={item.title} className={cn(glassCard, 'p-4')}>
+              <div key={item.title} className={cn(glassCard, 'p-6')}>
                 <FeatureIcon icon={item.icon} variant="brand" />
-                <h3 className="mb-1 text-sm font-semibold text-slate-900">{item.title}</h3>
+                <h3 className="font-display mb-2 text-lg font-semibold text-slate-900">{item.title}</h3>
                 <p className={bodyMuted}>{item.text}</p>
               </div>
             ))}
@@ -235,11 +235,11 @@ export default function RtoAgentSoftwareFreeDownload() {
             title="RTO agent software free download — FAQ"
             description="Answers about the free trial, downloading and installing RTO Sarthi."
           />
-          <div className="mx-auto max-w-3xl space-y-2.5">
+          <div className="mx-auto max-w-3xl space-y-5">
             {freeDownloadFaqs.map((f) => (
-              <details key={f.q} className={`${glassCard} group p-4`}>
-                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-sm font-semibold text-slate-900">
-                  <h3 className="text-sm font-semibold">{f.q}</h3>
+              <details key={f.q} className={`${glassCard} group p-5`}>
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3 text-base font-semibold text-slate-900">
+                  <h3 className="font-display text-lg font-semibold">{f.q}</h3>
                   <span className="text-brand-700 transition-transform group-open:rotate-45" aria-hidden>
                     +
                   </span>
@@ -259,10 +259,10 @@ export default function RtoAgentSoftwareFreeDownload() {
               aria-hidden
             />
             <div className="relative z-10">
-              <h2 className="mb-2 text-lg font-bold text-white sm:text-xl lg:text-[1.35rem]">
+              <h2 className="mb-3 font-display text-2xl font-bold text-white sm:text-3xl">
                 Download RTO Sarthi free today
               </h2>
-              <p className="mx-auto mb-4 max-w-md text-xs text-white/90 sm:text-sm">
+              <p className="mx-auto mb-6 max-w-xl text-base text-white/90 sm:text-lg">
                 Get your free trial and use RTO agent software free of cost on your computer and
                 mobile.
               </p>

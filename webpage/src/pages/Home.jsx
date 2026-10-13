@@ -27,7 +27,7 @@ import {
   grid2,
   ctaBand,
   cn,
-} from '../lib/styles'
+} from '../lib/homeStyles'
 
 const heroHighlights = [
   { icon: <IconWallet />, label: 'Client pending balance', variant: 'accent' },
@@ -136,13 +136,13 @@ export default function Home() {
 
       <section className={cn(section, 'relative bg-white')} id="demo-video">
         <div className={cn(container, 'relative z-10')}>
-          <SectionHeading
+          <SectionHeading compact
             label="Product demo"
             title="See RTO Sarthi in action"
             description="Watch how agents manage vehicles, send WhatsApp expiry alerts, and track renewals from one dashboard."
           />
           <div className="grid items-start gap-4 lg:grid-cols-[1.35fr_1fr] lg:gap-5">
-            <VideoEmbed />
+            <VideoEmbed compact />
             <ul className={cn(glassCard, 'flex flex-col gap-3 p-4')}>
               {[
                 { text: 'Dashboard & expiry tracking', icon: <IconChart />, variant: 'brand' },
@@ -162,14 +162,14 @@ export default function Home() {
 
       <section className={cn(section, sectionMuted)} id="features-preview">
         <div className={container}>
-          <SectionHeading
+          <SectionHeading compact
             label="Features"
             title="Everything your RTO desk needs"
             description="From document automation to WhatsApp alerts — one platform for agents, insurance partners, and PUC centers."
           />
           <div className={grid3}>
             {coreFeatures.map((f) => (
-              <FeatureCard key={f.title} {...f} />
+              <FeatureCard key={f.title} {...f} compact />
             ))}
           </div>
           <p className="mt-6 text-center">
@@ -182,7 +182,7 @@ export default function Home() {
 
       <section className={section}>
         <div className={container}>
-          <SectionHeading
+          <SectionHeading compact
             label="Dashboard"
             title="See your entire operation at a glance"
             description="Expiry tracking, vehicle registers, and alert history — designed for how Indian RTO agents actually work."
@@ -193,7 +193,7 @@ export default function Home() {
 
       <section className={cn(section, sectionDark)}>
         <div className={container}>
-          <SectionHeading
+          <SectionHeading compact
             label="Why RTO Sarthi"
             title="Why agents choose us"
             description="Premium software shouldn't mean complicated. RTO Sarthi is fast to learn and hard to outgrow."
@@ -218,7 +218,7 @@ export default function Home() {
 
       <section className={cn(section, sectionMuted)}>
         <div className={container}>
-          <SectionHeading
+          <SectionHeading compact
             label="Testimonials"
             title="Loved by agents across the region"
             description="Real feedback from RTO agents, insurance partners, and PUC centers using RTO Sarthi daily."
