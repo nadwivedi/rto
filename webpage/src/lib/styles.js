@@ -9,7 +9,7 @@ export const glassCard =
   'rounded-2xl border border-slate-200 bg-white shadow-sm transition-shadow duration-200 hover:border-brand-200 hover:shadow-md'
 
 export const pageHero =
-  'relative overflow-hidden bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 pt-[calc(3.5rem+1.75rem)] pb-8 text-center text-white sm:pt-[calc(3.75rem+2rem)] sm:pb-9 lg:pt-[calc(4rem+2.25rem)] lg:pb-10'
+  'relative overflow-hidden bg-gradient-to-br from-[#062f75] via-brand-900 to-brand-700 pt-[calc(3.5rem+1.75rem)] pb-8 text-center text-white sm:pt-[calc(3.75rem+2rem)] sm:pb-9 lg:pt-[calc(4rem+2.25rem)] lg:pb-10'
 
 export const heroSection = pageHero
 
