@@ -1,4 +1,5 @@
 import SectionHeading from '../components/SectionHeading'
+import PageHero from '../components/PageHero'
 import Button from '../components/Button'
 import { IconMapPin, IconMail, IconPhone, IconWhatsApp, IconLinkedIn, IconX, IconInstagram, IconFacebook } from '../components/Icons'
 import {
@@ -13,12 +14,9 @@ import {
 import {
   container,
   section,
-  pageHero,
   glassCard,
-  labelOnDark,
-  h1Page,
-  cn,
   grid2,
+  cn,
 } from '../lib/styles'
 
 const contactItems = [
@@ -81,15 +79,7 @@ const contactItems = [
 export default function Contact() {
   return (
     <>
-      <section className={pageHero}>
-        <div className={cn(container, 'relative z-10')}>
-          <span className={labelOnDark}>Contact</span>
-          <h1 className={cn(h1Page, 'mb-3')}>Connect with us</h1>
-          <p className="mx-auto max-w-lg text-sm text-white/85 sm:text-base lg:text-base">
-            Simplify your RTO workflow — request a free trial, book a demo, or reach out anytime.
-          </p>
-        </div>
-      </section>
+      <PageHero title="Connect with us" subtitle="Simplify your RTO workflow — request a free trial, book a demo, or reach out anytime." />
 
       <section className={section}>
         <div className={cn(container, 'mx-auto max-w-2xl')}>

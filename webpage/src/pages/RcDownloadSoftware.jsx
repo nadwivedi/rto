@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import SectionHeading from '../components/SectionHeading'
+import PageHero from '../components/PageHero'
 import FeatureIcon from '../components/FeatureIcon'
 import Button from '../components/Button'
 import {
@@ -18,14 +19,11 @@ import { LOOKUP_PRICE } from '../data/vehicleInfo'
 import {
   container,
   section,
-  pageHero,
+  glassCard,
   sectionMuted,
+  bodyMuted,
   grid3,
   ctaBand,
-  glassCard,
-  labelOnDark,
-  h1Page,
-  bodyMuted,
   cn,
 } from '../lib/styles'
 
@@ -125,41 +123,14 @@ const audiences = [
 export default function RcDownloadSoftware() {
   return (
     <>
-      <section className={pageHero}>
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(250,86,8,0.15),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(17,76,171,0.2),transparent_45%)]"
-          aria-hidden
-        />
-        <div className={cn(container, 'relative z-10')}>
-          <span className={labelOnDark}>RTO Sarthi — RC Download Software</span>
-          <h1 className={cn(h1Page, 'mb-3')}>
-            RC Download Software for RTO Agents — Download RC of Any Vehicle at Just {LOOKUP_PRICE}
-          </h1>
-          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">
-            Enter a vehicle number and download its RC as a PDF in seconds. Smart card style RC,
-            Vehicle Particulars PDF and complete vehicle details, all from one search at{' '}
-            {LOOKUP_PRICE} per vehicle.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            <Button href="/contact" variant="primary" size="lg">
-              Start Free Trial
-            </Button>
-            <Button href="/contact" variant="ghost" size="lg">
-              Book Demo
-            </Button>
-          </div>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            {[`${LOOKUP_PRICE} per RC`, 'All States', 'Smart Card Style PDF', 'Particular PDF', 'Free Re-download'].map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PageHero title={`RC Download Software for RTO Agents — Download RC of Any Vehicle at Just ${LOOKUP_PRICE}`}>
+        <Button href="/contact" variant="primary" size="lg">
+          Start Free Trial
+        </Button>
+        <Button href="/contact" variant="ghost" size="lg">
+          Book Demo
+        </Button>
+      </PageHero>
 
       <section className={cn(section, 'bg-white')} id="what-is-rc-download-software">
         <div className={container}>
@@ -169,6 +140,9 @@ export default function RcDownloadSoftware() {
             description={`Download RC of any vehicle at just ${LOOKUP_PRICE}, inside the software you already use for RTO work.`}
           />
           <div className="mx-auto max-w-3xl space-y-5">
+            <p className={cn(bodyMuted, 'font-medium text-slate-700')}>
+              Enter a vehicle number and download its RC as a PDF in seconds. Smart card style RC, Vehicle Particulars PDF and complete vehicle details, all from one search at{' '} {LOOKUP_PRICE} per vehicle.
+            </p>
             <p className={bodyMuted}>
               Transfer, HPA / HPT, NOC, duplicate RC, insurance and fitness work all need the RC
               details of the vehicle. When the client has lost the RC or only has a faded photo,

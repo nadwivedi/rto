@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import SectionHeading from '../components/SectionHeading'
+import PageHero from '../components/PageHero'
 import FeatureIcon from '../components/FeatureIcon'
 import Button from '../components/Button'
 import { IconCheck, IconPhone, IconUpload, IconShield, IconUsers } from '../components/Icons'
@@ -9,14 +10,11 @@ import { whatsappUrl } from '../data/contact'
 import {
   container,
   section,
-  pageHero,
+  glassCard,
   sectionMuted,
+  bodyMuted,
   grid3,
   ctaBand,
-  glassCard,
-  labelOnDark,
-  h1Page,
-  bodyMuted,
   cn,
 } from '../lib/styles'
 
@@ -57,41 +55,14 @@ const trialPoints = [
 export default function RtoAgentSoftwareFreeDownload() {
   return (
     <>
-      <section className={pageHero}>
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(250,86,8,0.15),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(17,76,171,0.2),transparent_45%)]"
-          aria-hidden
-        />
-        <div className={cn(container, 'relative z-10')}>
-          <span className={labelOnDark}>RTO Sarthi — Free Trial</span>
-          <h1 className={cn(h1Page, 'mb-3')}>
-            RTO Agent Software Free Download — Try RTO Sarthi Free of Cost
-          </h1>
-          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">
-            RTO Sarthi provides a free trial with free download. Download and use India&apos;s RTO
-            agent software free of cost on your computer or mobile, and see how it simplifies your
-            RTO desk before you decide.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            <Button href={whatsappUrl} target="_blank" rel="noopener noreferrer" variant="primary" size="lg">
-              Get Free Trial
-            </Button>
-            <Button href={APP_URL} target="_blank" rel="noopener noreferrer" variant="ghost" size="lg">
-              Open &amp; Download App
-            </Button>
-          </div>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            {['Free Trial', 'Free Download', 'PC & Mobile', 'No Installation File', 'Setup Help'].map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PageHero title="RTO Agent Software Free Download — Try RTO Sarthi Free of Cost">
+        <Button href={whatsappUrl} target="_blank" rel="noopener noreferrer" variant="primary" size="lg">
+          Get Free Trial
+        </Button>
+        <Button href={APP_URL} target="_blank" rel="noopener noreferrer" variant="ghost" size="lg">
+          Open &amp; Download App
+        </Button>
+      </PageHero>
 
       <section className={cn(section, 'bg-white')} id="free-trial">
         <div className={container}>
@@ -102,6 +73,9 @@ export default function RtoAgentSoftwareFreeDownload() {
           />
           <div className="mx-auto grid max-w-4xl gap-4 md:grid-cols-[1.4fr_1fr]">
             <div className="space-y-3">
+              <p className={cn(bodyMuted, 'font-medium text-slate-700')}>
+                RTO Sarthi provides a free trial with free download. Download and use India&apos;s RTO agent software free of cost on your computer or mobile, and see how it simplifies your RTO desk before you decide.
+              </p>
               <p className={bodyMuted}>
                 Many RTO agents search for <strong className="text-slate-700">RTO agent software free
                 download</strong> because they want to try software before paying for it. RTO Sarthi

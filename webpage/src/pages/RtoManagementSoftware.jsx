@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import SectionHeading from '../components/SectionHeading'
+import PageHero from '../components/PageHero'
 import FeatureIcon from '../components/FeatureIcon'
 import Button from '../components/Button'
 import VideoEmbed from '../components/VideoEmbed'
@@ -19,14 +20,11 @@ import { rtoManagementFaqs } from '../data/rtoManagement'
 import {
   container,
   section,
-  pageHero,
+  glassCard,
   sectionMuted,
+  bodyMuted,
   grid3,
   ctaBand,
-  glassCard,
-  labelOnDark,
-  h1Page,
-  bodyMuted,
   cn,
 } from '../lib/styles'
 
@@ -110,42 +108,14 @@ const problems = [
 export default function RtoManagementSoftware() {
   return (
     <>
-      <section className={pageHero}>
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(250,86,8,0.15),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(17,76,171,0.2),transparent_45%)]"
-          aria-hidden
-        />
-        <div className={cn(container, 'relative z-10')}>
-          <span className={labelOnDark}>RTO Sarthi — RTO Management Software</span>
-          <h1 className={cn(h1Page, 'mb-3')}>
-            RTO Management Software in India — Manage Vehicles, Renewals &amp; Clients in One Place
-          </h1>
-          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">
-            RTO Sarthi is RTO management software built for Indian RTO agents, dealers and PUC
-            centers. Manage vehicle, driving licence and vehicle transfer records, track tax,
-            fitness, permit, PUC and insurance expiry, send WhatsApp alerts and control client
-            balances from one dashboard.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            <Button href="/contact" variant="primary" size="lg">
-              Start Free Trial
-            </Button>
-            <Button href="/contact" variant="ghost" size="lg">
-              Book Demo
-            </Button>
-          </div>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            {['Expiry Tracking', 'Driving Licence Records', 'Vehicle Transfer Records', 'WhatsApp Alerts', 'AI Document Entry', 'Client Balance'].map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PageHero title="RTO Management Software in India — Manage Vehicles, Renewals & Clients in One Place">
+        <Button href="/contact" variant="primary" size="lg">
+          Start Free Trial
+        </Button>
+        <Button href="/contact" variant="ghost" size="lg">
+          Book Demo
+        </Button>
+      </PageHero>
 
       <section className={cn(section, 'bg-white')} id="what-is-rto-management-software">
         <div className={container}>
@@ -155,6 +125,9 @@ export default function RtoManagementSoftware() {
             description="RTO management software is a digital system for handling vehicle registration, transfer, tax, fitness, permit, PUC and insurance work."
           />
           <div className="mx-auto max-w-3xl space-y-5">
+            <p className={cn(bodyMuted, 'font-medium text-slate-700')}>
+              RTO Sarthi is RTO management software built for Indian RTO agents, dealers and PUC centers. Manage vehicle, driving licence and vehicle transfer records, track tax, fitness, permit, PUC and insurance expiry, send WhatsApp alerts and control client balances from one dashboard.
+            </p>
             <p className={bodyMuted}>
               An RTO agent handles hundreds of vehicles, and every vehicle has several dates that
               matter: road tax, fitness, permit, PUC and insurance. Keeping these in paper registers

@@ -1,6 +1,12 @@
 import { Link } from 'react-router-dom'
 import SectionHeading from '../components/SectionHeading'
-import { container, section, pageHero, glassCard, labelOnDark, h1Page, cn } from '../lib/styles'
+import PageHero from '../components/PageHero'
+import {
+  container,
+  section,
+  glassCard,
+  cn,
+} from '../lib/styles'
 import { TAGLINE } from '../config/seo'
 
 const pages = [
@@ -31,15 +37,7 @@ const pages = [
 export default function Sitemap() {
   return (
     <>
-      <section className={pageHero}>
-        <div className={cn(container, 'relative z-10')}>
-          <span className={labelOnDark}>Sitemap</span>
-          <h1 className={cn(h1Page, 'mb-3')}>Site map</h1>
-          <p className="mx-auto max-w-lg text-sm text-white/85 sm:text-base lg:text-base">
-            RTO Sarthi — {TAGLINE}. All pages on this website.
-          </p>
-        </div>
-      </section>
+      <PageHero title="Site map" subtitle={<>RTO Sarthi — {TAGLINE}. All pages on this website.</>} />
 
       <section className={section}>
         <div className={cn(container, 'mx-auto max-w-xl')}>

@@ -1,19 +1,17 @@
 import SectionHeading from '../components/SectionHeading'
+import PageHero from '../components/PageHero'
 import FeatureIcon from '../components/FeatureIcon'
 import Button from '../components/Button'
 import { IconWhatsApp, IconDocument, IconChart, IconShield } from '../components/Icons'
 import {
   container,
   section,
-  pageHero,
-  sectionMuted,
   glassCard,
-  labelOnDark,
-  h1Page,
+  sectionMuted,
   h2Section,
   bodyMuted,
-  ctaBand,
   grid3,
+  ctaBand,
   cn,
 } from '../lib/styles'
 
@@ -51,20 +49,7 @@ const stats = [
 export default function About() {
   return (
     <>
-      <section className={pageHero}>
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(250,86,8,0.15),transparent_50%)]"
-          aria-hidden
-        />
-        <div className={cn(container, 'relative z-10')}>
-          <span className={labelOnDark}>About RTO Sarthi</span>
-          <h1 className={cn(h1Page, 'mb-3')}>India&apos;s Best RTO Agent Software</h1>
-          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">
-            Digitizing and simplifying the everyday work of RTO agents across India — trusted for
-            over 3 years.
-          </p>
-        </div>
-      </section>
+      <PageHero title="India's Best RTO Agent Software" subtitle="Digitizing and simplifying the everyday work of RTO agents across India — trusted for over 3 years." />
 
       <section className={section}>
         <div className={container}>

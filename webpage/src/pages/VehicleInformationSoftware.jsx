@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import SectionHeading from '../components/SectionHeading'
+import PageHero from '../components/PageHero'
 import FeatureIcon from '../components/FeatureIcon'
 import Button from '../components/Button'
 import {
@@ -19,14 +20,11 @@ import { vehicleInfoFaqs, LOOKUP_PRICE } from '../data/vehicleInfo'
 import {
   container,
   section,
-  pageHero,
+  glassCard,
   sectionMuted,
+  bodyMuted,
   grid3,
   ctaBand,
-  glassCard,
-  labelOnDark,
-  h1Page,
-  bodyMuted,
   cn,
 } from '../lib/styles'
 
@@ -132,41 +130,14 @@ const audiences = [
 export default function VehicleInformationSoftware() {
   return (
     <>
-      <section className={pageHero}>
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(250,86,8,0.15),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(17,76,171,0.2),transparent_45%)]"
-          aria-hidden
-        />
-        <div className={cn(container, 'relative z-10')}>
-          <span className={labelOnDark}>RTO Sarthi — Vehicle Information Software</span>
-          <h1 className={cn(h1Page, 'mb-3')}>
-            Vehicle Information Software for RTO Agents — Complete Vehicle Details by Number
-          </h1>
-          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">
-            Search any vehicle number and get RC download, Particular download, road tax, e-challan,
-            fitness, PUC and insurance status in one report. RC verification and bulk RC
-            verification included. Just {LOOKUP_PRICE} per vehicle search.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            <Button href="/contact" variant="primary" size="lg">
-              Start Free Trial
-            </Button>
-            <Button href="/contact" variant="ghost" size="lg">
-              Book Demo
-            </Button>
-          </div>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            {['RC Download', 'Particular Download', 'Road Tax', 'E-Challan', 'Fitness', 'PUC', 'Insurance', 'Bulk RC Verification'].map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
-      </section>
+      <PageHero title="Vehicle Information Software for RTO Agents — Complete Vehicle Details by Number">
+        <Button href="/contact" variant="primary" size="lg">
+          Start Free Trial
+        </Button>
+        <Button href="/contact" variant="ghost" size="lg">
+          Book Demo
+        </Button>
+      </PageHero>
 
       <section className={cn(section, 'bg-white')} id="what-is-vehicle-information-software">
         <div className={container}>
@@ -176,6 +147,9 @@ export default function VehicleInformationSoftware() {
             description="RTO Sarthi is made specifically for RTO agents. Vehicle information is part of the same software."
           />
           <div className="mx-auto max-w-3xl space-y-5">
+            <p className={cn(bodyMuted, 'font-medium text-slate-700')}>
+              Search any vehicle number and get RC download, Particular download, road tax, e-challan, fitness, PUC and insurance status in one report. RC verification and bulk RC verification included. Just {LOOKUP_PRICE} per vehicle search.
+            </p>
             <p className={bodyMuted}>
               Every RTO job starts with the same question: what is the current status of this
               vehicle? Who is the owner, is road tax paid, is fitness valid, is there a pending

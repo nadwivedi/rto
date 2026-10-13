@@ -1,4 +1,5 @@
 import SectionHeading from '../components/SectionHeading'
+import PageHero from '../components/PageHero'
 import FeatureCard from '../components/FeatureCard'
 import Button from '../components/Button'
 import { coreFeatures, detailedFeatures } from '../data/features'
@@ -7,46 +8,18 @@ import FeatureIcon from '../components/FeatureIcon'
 import {
   container,
   section,
-  pageHero,
+  glassCard,
   sectionMuted,
+  bodyMuted,
   grid3,
   ctaBand,
-  glassCard,
-  labelOnDark,
-  h1Page,
-  bodyMuted,
   cn,
 } from '../lib/styles'
 
 export default function Features() {
   return (
     <>
-      <section className={pageHero}>
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(250,86,8,0.15),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(17,76,171,0.2),transparent_45%)]"
-          aria-hidden
-        />
-        <div className={cn(container, 'relative z-10')}>
-          <span className={labelOnDark}>Features</span>
-          <h1 className={cn(h1Page, 'mb-3')}>Powerful tools for modern RTO agents</h1>
-          <p className="mx-auto max-w-lg text-sm text-white/85 sm:text-base lg:text-base">
-            Automate paperwork, alert clients on WhatsApp, bulk-import PUC and insurance data, and
-            manage every vehicle from one secure platform.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            {['Document OCR', 'WhatsApp Alerts', 'Excel Bulk Upload', 'Multi-Agent Roles'].map(
-              (tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
-                >
-                  {tag}
-                </span>
-              ),
-            )}
-          </div>
-        </div>
-      </section>
+      <PageHero title="Powerful tools for modern RTO agents" subtitle="Automate paperwork, alert clients on WhatsApp, bulk-import PUC and insurance data, and manage every vehicle from one secure platform." />
 
       <section className={section}>
         <div className={container}>

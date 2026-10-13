@@ -2,23 +2,19 @@ import { Link } from 'react-router-dom'
 import SectionHeading from './SectionHeading'
 import FeatureIcon from './FeatureIcon'
 import Button from './Button'
+import PageHero from './PageHero'
 import { IconCheck, IconUsers } from './Icons'
 import {
   container,
   section,
-  pageHero,
+  glassCard,
   sectionMuted,
+  bodyMuted,
   grid3,
   ctaBand,
-  glassCard,
-  labelOnDark,
-  h1Page,
-  bodyMuted,
   cn,
 } from '../lib/styles'
 
-const heroGlow =
-  'pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(250,86,8,0.15),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(17,76,171,0.2),transparent_45%)]'
 const ctaGlow =
   'pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.12),transparent_50%),radial-gradient(circle_at_80%_80%,rgba(250,86,8,0.2),transparent_45%)]'
 const linkClass = 'font-semibold text-brand-800 hover:underline'
@@ -56,6 +52,7 @@ export default function ProductLanding({
       <div key="overview" id="overview">
         <SectionHeading label={overview.label || 'Overview'} title={overview.title} description={overview.description} />
         <div className="mx-auto max-w-3xl space-y-5">
+          {hero.intro && <p className={cn(bodyMuted, 'font-medium text-slate-700')}>{hero.intro}</p>}
           {overview.paragraphs.map((p, i) => (
             <p key={i} className={bodyMuted}>
               {p}
@@ -200,34 +197,14 @@ export default function ProductLanding({
 
   return (
     <>
-      <section className={pageHero}>
-        <div className={heroGlow} aria-hidden />
-        <div className={cn(container, 'relative z-10')}>
-          <span className={labelOnDark}>{hero.label}</span>
-          <h1 className={cn(h1Page, 'mb-3')}>{hero.title}</h1>
-          <p className="mx-auto max-w-2xl text-[0.9375rem] leading-7 text-white/90 sm:text-base">{hero.intro}</p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            <Button href="/contact" variant="primary" size="lg">
-              Start Free Trial
-            </Button>
-            <Button href="/contact" variant="ghost" size="lg">
-              Book Demo
-            </Button>
-          </div>
-          {hero.tags && (
-            <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-              {hero.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
-                >
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
-      </section>
+      <PageHero title={hero.title}>
+        <Button href="/contact" variant="primary" size="lg">
+          Start Free Trial
+        </Button>
+        <Button href="/contact" variant="ghost" size="lg">
+          Book Demo
+        </Button>
+      </PageHero>
 
       {blocks.map((block, i) => (
         <section key={block.key} className={cn(section, i % 2 === 0 ? 'bg-white' : sectionMuted)}>

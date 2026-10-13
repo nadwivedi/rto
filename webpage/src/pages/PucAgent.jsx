@@ -1,4 +1,5 @@
 import SectionHeading from '../components/SectionHeading'
+import PageHero from '../components/PageHero'
 import FeatureIcon from '../components/FeatureIcon'
 import Button from '../components/Button'
 import TestimonialCard from '../components/TestimonialCard'
@@ -6,14 +7,11 @@ import { IconExcel, IconWhatsApp, IconUpload, IconChart, IconCar } from '../comp
 import {
   container,
   section,
-  pageHero,
+  glassCard,
   sectionMuted,
+  bodyMuted,
   grid3,
   ctaBand,
-  glassCard,
-  labelOnDark,
-  h1Page,
-  bodyMuted,
   cn,
 } from '../lib/styles'
 
@@ -96,40 +94,14 @@ const testimonials = [
 export default function PucAgent() {
   return (
     <>
-      <section className={pageHero}>
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(250,86,8,0.15),transparent_50%),radial-gradient(circle_at_80%_20%,rgba(17,76,171,0.2),transparent_45%)]"
-          aria-hidden
-        />
-        <div className={cn(container, 'relative z-10')}>
-          <span className={labelOnDark}>RTO Sarthi — PUC Agent Software</span>
-          <h1 className={cn(h1Page, 'mb-3')}>PUC Agent Software by RTO Sarthi — India&apos;s Best Complete Solution for RTO, PUC &amp; Insurance Agents</h1>
-          <p className="mx-auto max-w-lg text-sm text-white/85 sm:text-base lg:text-base">
-            RTO Sarthi is the all-in-one software for RTO agents, PUC centers, and insurance partners.
-            Bulk upload PUC data via Excel, auto-extract from PDFs, send WhatsApp reminders, and manage
-            everything — RTO, PUC &amp; insurance — from one dashboard.
-          </p>
-          <div className="mt-5 flex flex-wrap justify-center gap-2.5">
-            {['Excel Bulk Upload', 'PDF Auto-Entry', 'WhatsApp Reminders', 'PUC + RTO + Insurance'].map(
-              (tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium sm:text-sm"
-                >
-                  {tag}
-                </span>
-              ),
-            )}
-          </div>
-        </div>
-      </section>
+      <PageHero title="PUC Agent Software by RTO Sarthi — India's Best Complete Solution for RTO, PUC & Insurance Agents" />
 
       <section className={section}>
         <div className={container}>
           <SectionHeading
             label="Why PUC agents love RTO Sarthi"
             title="Why PUC Agents Choose RTO Sarthi"
-            description="RTO Sarthi is the complete platform for RTO agents, PUC centers, and insurance partners. Here is what makes it the best choice for your PUC center."
+            description={<>RTO Sarthi is the all-in-one software for RTO agents, PUC centers, and insurance partners. Bulk upload PUC data via Excel, auto-extract from PDFs, send WhatsApp reminders, and manage everything — RTO, PUC &amp; insurance — from one dashboard.</>}
           />
           <div className="grid gap-5 sm:grid-cols-2 lg:gap-6">
             {benefits.map((item) => (
