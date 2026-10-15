@@ -669,39 +669,45 @@ const ApiCredits = () => {
               </div>
 
               {/* User-wise */}
-              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
-                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Usage by user</h3>
+              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col'>
+                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>
+                  Usage by user
+                  {usage?.users?.length > 0 && <span className='font-normal text-gray-400'> ({usage.users.length})</span>}
+                </h3>
                 {usage?.users?.length ? (
-                  <div className='overflow-x-auto'>
-                    <table className='w-full'>
-                      <thead>
-                        <tr className='border-b border-gray-100 bg-gray-50/60'>
-                          <th className={`${th} text-left`}>User</th>
-                          <th className={`${th} text-right`}>Today</th>
-                          <th className={`${th} text-right`}>Last 7 Days</th>
-                          <th className={`${th} text-right`}>Last 28 Days</th>
-                          <th className={`${th} text-right`}>Left</th>
-                        </tr>
-                      </thead>
-                      <tbody className='divide-y divide-gray-100'>
-                        {usage.users.map((u) => (
-                          <tr key={u.userId} className='hover:bg-gray-50/80 transition-colors'>
-                            <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'>
-                              <div className='font-semibold text-gray-900'>{u.name || 'Deleted user'}</div>
-                              <div className='text-gray-400'>{u.mobile1 || ''}</div>
-                            </td>
-                            <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.today ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
-                              {formatNumber(u.today)}
-                            </td>
-                            <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last7)}</td>
-                            <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last28)}</td>
-                            <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.rcSearchRemaining <= 0 ? 'font-bold text-rose-600' : 'text-gray-700'}`}>
-                              {formatNumber(u.rcSearchRemaining)}
-                            </td>
+                  // Side by side (xl) the list takes the height of the day-wise card and scrolls; stacked it is capped to about the same height
+                  <div className='relative max-h-[340px] overflow-auto xl:max-h-none xl:flex-1 xl:min-h-0'>
+                    <div className='xl:absolute xl:inset-0 xl:overflow-auto'>
+                      <table className='w-full'>
+                        <thead className='sticky top-0 z-10 bg-gray-50'>
+                          <tr className='border-b border-gray-100'>
+                            <th className={`${th} text-left`}>User</th>
+                            <th className={`${th} text-right`}>Today</th>
+                            <th className={`${th} text-right`}>Last 7 Days</th>
+                            <th className={`${th} text-right`}>Last 28 Days</th>
+                            <th className={`${th} text-right`}>Left</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className='divide-y divide-gray-100'>
+                          {usage.users.map((u) => (
+                            <tr key={u.userId} className='hover:bg-gray-50/80 transition-colors'>
+                              <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'>
+                                <div className='font-semibold text-gray-900'>{u.name || 'Deleted user'}</div>
+                                <div className='text-gray-400'>{u.mobile1 || ''}</div>
+                              </td>
+                              <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.today ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
+                                {formatNumber(u.today)}
+                              </td>
+                              <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last7)}</td>
+                              <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last28)}</td>
+                              <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.rcSearchRemaining <= 0 ? 'font-bold text-rose-600' : 'text-gray-700'}`}>
+                                {formatNumber(u.rcSearchRemaining)}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 ) : (
                   <p className='p-6 text-center text-sm text-gray-500'>No user has searched in the last 28 days.</p>
