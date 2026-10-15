@@ -380,7 +380,12 @@ exports.getUsage = async (req, res) => {
 // Totals, month-wise cashflow and per-user sales
 exports.getSummary = async (req, res) => {
   try {
-    const [byType, byMonth, byUser, lastPurchase, lastSale, keySales, keySalesByMonth] = await Promise.all([
+    // Sales dated today (India), from users and from API keys
+    const today = RcSearchUsage.todayIST()
+    const todayMatch = { $expr: { $eq: [{ $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: IST } }, today] } }
+    const todayTotal = { $group: { _id: null, quantity: { $sum: '$quantity' }, amount: { $sum: '$amount' }, entries: { $sum: 1 } } }
+
+    const [byType, byMonth, byUser, lastPurchase, lastSale, keySales, keySalesByMonth, userSalesToday, keySalesToday] = await Promise.all([
       ApiCreditTransaction.aggregate([
         {
           $group: {
@@ -445,7 +450,9 @@ exports.getSummary = async (req, res) => {
             amount: { $sum: '$amount' }
           }
         }
-      ])
+      ]),
+      ApiCreditTransaction.aggregate([{ $match: { type: 'sale', ...todayMatch } }, todayTotal]),
+      ApiKeySale.aggregate([{ $match: todayMatch }, todayTotal])
     ])
 
     const pick = (type) => byType.find((t) => t._id === type) || { quantity: 0, amount: 0, entries: 0 }
@@ -496,6 +503,13 @@ exports.getSummary = async (req, res) => {
           profitOnSold: avgBuyRate === null ? null : roundMoney(sale.amount - sale.quantity * avgBuyRate),
           // Bought from the provider but not yet sold to any user
           unsoldQty: purchase.quantity - sale.quantity
+        },
+        today: {
+          date: today,
+          quantity: (userSalesToday[0]?.quantity || 0) + (keySalesToday[0]?.quantity || 0),
+          amount: roundMoney((userSalesToday[0]?.amount || 0) + (keySalesToday[0]?.amount || 0)),
+          entries: (userSalesToday[0]?.entries || 0) + (keySalesToday[0]?.entries || 0),
+          keyAmount: roundMoney(keySalesToday[0]?.amount || 0)
         },
         lastRates: {
           purchase: lastPurchase?.rate ?? null,

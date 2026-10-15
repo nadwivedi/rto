@@ -368,8 +368,8 @@ const ApiCredits = () => {
 
       {loading ? (
         <div className='space-y-4'>
-          <div className='grid grid-cols-2 lg:grid-cols-5 gap-3'>
-            {[0, 1, 2, 3, 4].map((i) => (
+          <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3'>
+            {[0, 1, 2, 3, 4, 5].map((i) => (
               <div key={i} className='h-24 bg-white rounded-xl border border-gray-100 animate-pulse' />
             ))}
           </div>
@@ -378,7 +378,19 @@ const ApiCredits = () => {
       ) : (
         <>
           {/* Totals */}
-          <div className='grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-3 sm:mb-5'>
+          <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3 mb-3 sm:mb-5'>
+            <Tile
+              label="Today's Sales"
+              value={formatRupees(summary?.today?.amount)}
+              accent='text-emerald-700'
+              sub={
+                summary?.today?.entries
+                  ? `${formatNumber(summary.today.quantity)} API calls in ${summary.today.entries} sale(s)${
+                      summary.today.keyAmount ? ` · ${formatRupees(summary.today.keyAmount)} via API keys` : ''
+                    }`
+                  : 'No sale recorded today'
+              }
+            />
             <Tile
               label='You Bought'
               value={formatRupees(totals?.boughtAmount)}
@@ -418,7 +430,6 @@ const ApiCredits = () => {
             />
             <Tile
               label='Net Cashflow'
-              className='col-span-2 lg:col-span-1'
               value={formatRupees(totals?.netCashflow)}
               accent={totals?.netCashflow < 0 ? 'text-red-600' : 'text-emerald-700'}
               sub={`Received minus paid · ${formatNumber(totals?.unsoldQty)} bought calls not yet sold`}
