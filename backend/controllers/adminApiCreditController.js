@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const ApiCreditTransaction = require('../models/ApiCreditTransaction')
 const User = require('../models/User')
 const RcSearchUsage = require('../models/RcSearchUsage')
+const ApiKeySale = require('../models/ApiKeySale')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity } = require('../utils/activityLog')
 
@@ -379,7 +380,7 @@ exports.getUsage = async (req, res) => {
 // Totals, month-wise cashflow and per-user sales
 exports.getSummary = async (req, res) => {
   try {
-    const [byType, byMonth, byUser, lastPurchase, lastSale] = await Promise.all([
+    const [byType, byMonth, byUser, lastPurchase, lastSale, keySales, keySalesByMonth] = await Promise.all([
       ApiCreditTransaction.aggregate([
         {
           $group: {
@@ -433,30 +434,43 @@ exports.getSummary = async (req, res) => {
         }
       ]),
       ApiCreditTransaction.findOne({ type: 'purchase' }).sort({ date: -1, createdAt: -1 }).select('rate').lean(),
-      ApiCreditTransaction.findOne({ type: 'sale' }).sort({ date: -1, createdAt: -1 }).select('rate').lean()
+      ApiCreditTransaction.findOne({ type: 'sale' }).sort({ date: -1, createdAt: -1 }).select('rate').lean(),
+      // Calls sold on API keys are sales of the same provider calls
+      ApiKeySale.aggregate([{ $group: { _id: null, quantity: { $sum: '$quantity' }, amount: { $sum: '$amount' } } }]),
+      ApiKeySale.aggregate([
+        {
+          $group: {
+            _id: { month: { $dateToString: { format: '%Y-%m', date: '$date', timezone: IST } }, type: 'sale' },
+            quantity: { $sum: '$quantity' },
+            amount: { $sum: '$amount' }
+          }
+        }
+      ])
     ])
 
     const pick = (type) => byType.find((t) => t._id === type) || { quantity: 0, amount: 0, entries: 0 }
     const purchase = pick('purchase')
-    const sale = pick('sale')
+    const userSale = pick('sale')
+    const keySale = keySales[0] || { quantity: 0, amount: 0 }
+    const sale = { quantity: userSale.quantity + keySale.quantity, amount: userSale.amount + keySale.amount }
 
     const avgBuyRate = purchase.quantity ? purchase.amount / purchase.quantity : null
     const avgSellRate = sale.quantity ? sale.amount / sale.quantity : null
 
     // Pivot month/type rows into one row per month
     const monthMap = new Map()
-    for (const row of byMonth) {
+    for (const row of [...byMonth, ...keySalesByMonth]) {
       const key = row._id.month
       if (!monthMap.has(key)) {
         monthMap.set(key, { month: key, boughtQty: 0, boughtAmount: 0, soldQty: 0, soldAmount: 0 })
       }
       const m = monthMap.get(key)
       if (row._id.type === 'purchase') {
-        m.boughtQty = row.quantity
-        m.boughtAmount = roundMoney(row.amount)
+        m.boughtQty += row.quantity
+        m.boughtAmount = roundMoney(m.boughtAmount + row.amount)
       } else {
-        m.soldQty = row.quantity
-        m.soldAmount = roundMoney(row.amount)
+        m.soldQty += row.quantity
+        m.soldAmount = roundMoney(m.soldAmount + row.amount)
       }
     }
     const months = Array.from(monthMap.values())
@@ -471,6 +485,9 @@ exports.getSummary = async (req, res) => {
           boughtAmount: roundMoney(purchase.amount),
           soldQty: sale.quantity,
           soldAmount: roundMoney(sale.amount),
+          // Part of the sold figures that came from API keys
+          keySoldQty: keySale.quantity,
+          keySoldAmount: roundMoney(keySale.amount),
           avgBuyRate: avgBuyRate === null ? null : roundMoney(avgBuyRate),
           avgSellRate: avgSellRate === null ? null : roundMoney(avgSellRate),
           // Money in from users minus money out to the provider

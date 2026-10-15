@@ -393,7 +393,7 @@ const ApiCredits = () => {
               value={formatRupees(totals?.soldAmount)}
               sub={
                 totals?.soldQty
-                  ? `Received from users · avg ${formatRupees(totals.avgSellRate)} per search`
+                  ? `Received from users${totals.keySoldAmount ? ` · ${formatRupees(totals.keySoldAmount)} via API keys` : ''} · avg ${formatRupees(totals.avgSellRate)} per search`
                   : 'No sale recorded yet'
               }
             />

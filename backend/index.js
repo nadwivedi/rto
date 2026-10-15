@@ -33,7 +33,7 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization']
+  allowedHeaders: ['Origin', 'X-Requested-With', 'Content-Type', 'Accept', 'Authorization', 'X-API-Key']
 }))
 
 // Middleware (12MB limit for image uploads)
@@ -97,6 +97,8 @@ const adminAuthRoutes = require('./routes/adminAuth')
 const adminUsersRoutes = require('./routes/adminUsers')
 const adminVehicleRegistrationsRoutes = require('./routes/adminVehicleRegistrations')
 const adminApiCreditsRoutes = require('./routes/adminApiCredits')
+const adminApiKeysRoutes = require('./routes/adminApiKeys')
+const publicVehicleApiRoutes = require('./routes/publicVehicleApi')
 const adminAuditRoutes = require('./routes/adminAudit')
 const exportRoutes = require('./routes/export')
 const drivingLicenseRoutes = require('./routes/drivingLicense')
@@ -148,6 +150,7 @@ app.use('/api/admin/auth', adminAuthRoutes)
 app.use('/api/admin/users', adminUsersRoutes)
 app.use('/api/admin/vehicle-registrations', adminVehicleRegistrationsRoutes)
 app.use('/api/admin/api-credits', adminApiCreditsRoutes)
+app.use('/api/admin/api-keys', adminApiKeysRoutes)
 app.use('/api/admin/audit', adminAuditRoutes)
 app.use('/api/admin/export', exportRoutes)
 app.use('/api/admin/blogs', blogRoutes)
@@ -198,6 +201,8 @@ app.use('/api/sarthi-dashboard', userAuth, sarthiDashboardRoutes)
 
 // Public routes (no auth)
 app.use('/api/blogs', publicBlogRoutes)
+// Vehicle info API for customers with an API key
+app.use('/api/v1', publicVehicleApiRoutes)
 
 // Root route
 app.get('/', (req, res) => {

@@ -4,6 +4,8 @@ import Sidebar from './components/Sidebar';
 import Users from './pages/Users';
 import Dashboard from './pages/Dashboard';
 import ApiCredits from './pages/ApiCredits';
+import ApiKeys from './pages/ApiKeys';
+import ApiKeyDetail from './pages/ApiKeyDetail';
 import Blogs from './pages/Blogs';
 import VehicleRegistrations from './pages/VehicleRegistrations';
 import Export from './pages/Export';
@@ -88,6 +90,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ApiCredits />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/api-keys"
+                element={
+                  <ProtectedRoute>
+                    <ApiKeys />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/api-keys/:id"
+                element={
+                  <ProtectedRoute>
+                    <ApiKeyDetail />
                   </ProtectedRoute>
                 }
               />

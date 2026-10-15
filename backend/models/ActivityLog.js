@@ -10,7 +10,7 @@ const activityLogSchema = new mongoose.Schema({
   // What kind of record was touched
   entity: {
     type: String,
-    enum: ['user', 'api_credit', 'blog', 'vehicle_registration', 'admin'],
+    enum: ['user', 'api_credit', 'api_key', 'blog', 'vehicle_registration', 'admin'],
     required: true
   },
   entityId: { type: String },

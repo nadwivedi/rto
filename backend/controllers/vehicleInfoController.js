@@ -1,13 +1,10 @@
-const axios = require('axios')
 const mongoose = require('mongoose')
 const VehicleSearchHistory = require('../models/VehicleSearchHistory')
 const User = require('../models/User')
-const ApiUsage = require('../models/ApiUsage')
 const RcSearchUsage = require('../models/RcSearchUsage')
 const Lead = require('../models/Lead')
+const { fetchVehicleInfo } = require('../utils/vehicleInfoProvider')
 const { VEHICLE_DOC_TYPES, getVehicleDocuments, matchExpiry, leadPriorityFor } = require('../utils/vehicleExpiry')
-
-const VEHICLE_INFO_PROVIDER = 'vehicleInfo'
 
 const EXPIRY_FILTERS = ['expired', '30', '60', '90', '180', '365']
 const LEAD_FILTERS = ['in', 'notIn']
@@ -17,43 +14,6 @@ const HISTORY_SCAN_LIMIT = 5000
 const MOVE_TO_LEADS_LIMIT = 1000
 // Everything the history table and the lead builder need, without the heavy rawResponse
 const HISTORY_LIST_FIELDS = 'vehicleNumber ownerName mobileNo makerModel status registeredAt insuranceUpto fitnessUpto taxUpto pucUpto searchCount lastSearchedAt createdAt updatedAt rawResponse.MOBILE_NO rawResponse.PUCC_UPTO rawResponse.PUC_UPTO'
-
-/**
- * The provider reports its own account quota on every response as
- * `_usage: { total_limit, used, remaining }`. Keep the latest snapshot so the
- * admin panel can show how many searches are left. Never throws - a failure
- * here must not break the vehicle lookup.
- */
-const recordProviderUsage = async (usage, { vehicleNumber, userId } = {}) => {
-  if (!usage || typeof usage !== 'object') return
-
-  const toNumber = (value) => {
-    const n = Number(value)
-    return value !== null && value !== '' && Number.isFinite(n) ? n : undefined
-  }
-  const totalLimit = toNumber(usage.total_limit)
-  const used = toNumber(usage.used)
-  const remaining = toNumber(usage.remaining)
-  if (totalLimit === undefined && used === undefined && remaining === undefined) return
-
-  // Only write the fields the provider actually sent, so a partial reply can't blank the rest
-  const snapshot = { checkedAt: new Date() }
-  if (totalLimit !== undefined) snapshot.totalLimit = totalLimit
-  if (used !== undefined) snapshot.used = used
-  if (remaining !== undefined) snapshot.remaining = remaining
-  if (vehicleNumber) snapshot.lastVehicleNumber = vehicleNumber
-  if (userId) snapshot.lastUserId = userId
-
-  try {
-    await ApiUsage.findOneAndUpdate(
-      { provider: VEHICLE_INFO_PROVIDER },
-      { $set: snapshot },
-      { upsert: true, setDefaultsOnInsert: true }
-    )
-  } catch (err) {
-    console.error('Failed to record vehicle API usage:', err.message)
-  }
-}
 
 /**
  * Controller to fetch vehicle details from external RTO Information API
@@ -113,43 +73,11 @@ const lookupVehicle = async (req, res) => {
       })
     }
 
-    const apiUrl = process.env.VEHICLE_INFO_API_URL || 'https://informationapi.shop/rtosathi767/api.php'
-    const apiKey = process.env.VEHICLE_INFO_API_KEY || 'xxnxxxxx8000'
-
-    const targetUrl = `${apiUrl}?key=${apiKey}&vno=${encodeURIComponent(cleanVno)}`
-
-    const response = await axios.get(targetUrl, {
-      timeout: 20000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-        Accept: 'application/json, text/plain, */*'
-      }
-    })
-
-    const data = response.data
-
-    // If API returned string that needs parsing
-    let parsedData = data
-    if (typeof data === 'string') {
-      try {
-        parsedData = JSON.parse(data)
-      } catch (err) {
-        return res.status(404).json({
-          success: false,
-          message: data || 'No vehicle information found for this registration number.'
-        })
-      }
+    const result = await fetchVehicleInfo(cleanVno, { userId: targetUserId })
+    if (!result.found) {
+      return res.status(404).json({ success: false, message: result.message })
     }
-
-    // Recorded before the error check so a "not found" reply still updates the quota
-    await recordProviderUsage(parsedData?._usage, { vehicleNumber: cleanVno, userId: targetUserId })
-
-    if (!parsedData || parsedData.error || parsedData.status === 'error' || parsedData.status === false) {
-      return res.status(404).json({
-        success: false,
-        message: parsedData?.message || parsedData?.error || 'Vehicle details not found. Please check registration number.'
-      })
-    }
+    const parsedData = result.data
 
     let savedRecord = null
     // Save or update in search history for authenticated user
