@@ -6,6 +6,9 @@ import TestimonialCard from '../components/TestimonialCard'
 import DashboardPreview from '../components/DashboardPreview'
 import VideoEmbed from '../components/VideoEmbed'
 import { coreFeatures } from '../data/features'
+import { SOLUTION_GROUPS } from '../data/solutions'
+import { homeFaqs } from '../data/home'
+import { LOOKUP_PRICE } from '../data/vehicleInfo'
 import HeroHighlight from '../components/HeroHighlight'
 import FeatureIcon from '../components/FeatureIcon'
 import {
@@ -100,12 +103,12 @@ export default function Home() {
         />
         <div className={cn(container, 'relative z-10 grid items-center gap-8 lg:grid-cols-2 lg:gap-10')}>
           <div className="animate-in text-center lg:text-left">
-            <h1 className="mb-2 text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-[1.75rem]">
+            <h1 className="mb-4 text-2xl font-bold leading-tight tracking-tight text-white sm:text-3xl lg:text-[1.75rem]">
               RTO Sarthi
+              <span className="mt-2 block text-sm font-semibold leading-snug tracking-normal text-accent-300 sm:text-base lg:text-lg">
+                India&apos;s Best RTO Agent Software
+              </span>
             </h1>
-            <p className="mb-4 text-sm font-semibold leading-snug text-accent-300 sm:text-base lg:text-lg">
-              India&apos;s Best RTO Agent Software
-            </p>
             <p className="mx-auto mb-5 max-w-sm text-xs leading-relaxed text-white/75 sm:max-w-md sm:text-sm lg:mx-0">
               One dashboard for documents, renewals, client balances, and WhatsApp alerts — built for
               Indian RTO agents. Explore our{' '}
@@ -180,6 +183,37 @@ export default function Home() {
         </div>
       </section>
 
+      <section className={section} id="solutions">
+        <div className={container}>
+          <SectionHeading compact
+            label="Solutions"
+            title="Software for every RTO and vehicle business"
+            description="RTO agents, PUC centres, driving schools and businesses that need vehicle data all run on RTO Sarthi."
+          />
+          <div className={grid3}>
+            {SOLUTION_GROUPS.map((g) => (
+              <div key={g.key} className={cn(glassCard, 'p-4')}>
+                <h3 className="text-sm font-semibold text-brand-950 sm:text-base">
+                  <Link to={g.items[0].to} className="hover:text-brand-700">
+                    {g.title}
+                  </Link>
+                </h3>
+                <p className="mt-0.5 mb-2.5 text-xs leading-relaxed text-slate-500 sm:text-[0.8125rem]">{g.description}</p>
+                <ul className="space-y-1.5">
+                  {g.items.map((item) => (
+                    <li key={item.to}>
+                      <Link to={item.to} className="text-xs font-medium text-brand-800 hover:text-accent-600 hover:underline sm:text-[0.8125rem]">
+                        {item.label} →
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className={section}>
         <div className={container}>
           <SectionHeading compact
@@ -216,6 +250,61 @@ export default function Home() {
         </div>
       </section>
 
+      <section className={cn(section, 'bg-white')} id="what-is-rto-agent-software">
+        <div className={cn(container, 'max-w-3xl')}>
+          <SectionHeading compact
+            label="About RTO Sarthi"
+            title="What is RTO agent software?"
+            description="Why RTO agents across India are moving from registers to software."
+          />
+          <div className="space-y-3 text-xs leading-relaxed text-slate-600 sm:text-sm">
+            <p>
+              An RTO agent handles hundreds of vehicles, and every vehicle has dates that matter: road tax,
+              fitness, permit, PUC and insurance. In a paper register or Excel sheet these dates are easy to
+              miss, and a missed renewal means a penalty for the vehicle owner and lost work for the agent.{' '}
+              <strong className="text-slate-800">RTO agent software</strong> keeps every vehicle, client and
+              document in one place and tells you what is expiring before it expires.
+            </p>
+            <p>
+              <strong className="text-slate-800">RTO Sarthi</strong> is complete{' '}
+              <Link to="/rto-management-software" className="font-semibold text-brand-800 hover:underline">RTO management software</Link>{' '}
+              made for Indian RTO desks. It sends{' '}
+              <Link to="/vehicle-document-expiry-reminder-software" className="font-semibold text-brand-800 hover:underline">automatic WhatsApp expiry reminders</Link>{' '}
+              for tax, fitness, permit, PUC and insurance, tracks each client&apos;s pending balance, and keeps
+              your customers in a simple{' '}
+              <Link to="/rto-agent-crm-software" className="font-semibold text-brand-800 hover:underline">RTO agent CRM</Link>{' '}
+              with{' '}
+              <Link to="/rto-agent-lead-management-software" className="font-semibold text-brand-800 hover:underline">lead follow-ups</Link>{' '}
+              for new work.
+            </p>
+            <p>
+              Need vehicle details? The built-in{' '}
+              <Link to="/vehicle-information-software" className="font-semibold text-brand-800 hover:underline">vehicle information software</Link>{' '}
+              lets you{' '}
+              <Link to="/rc-download-software" className="font-semibold text-brand-800 hover:underline">download RC</Link>{' '}
+              and{' '}
+              <Link to="/rc-verification-software" className="font-semibold text-brand-800 hover:underline">verify RC</Link>{' '}
+              of any vehicle at just {LOOKUP_PRICE} per search, and businesses can get the same data in their own
+              software through our{' '}
+              <Link to="/vehicle-information-api" className="font-semibold text-brand-800 hover:underline">vehicle information API</Link>.
+            </p>
+            <p>
+              RTO Sarthi is also used by{' '}
+              <Link to="/puc-agent-software" className="font-semibold text-brand-800 hover:underline">PUC centres</Link>{' '}
+              for bulk PUC uploads and reminders, and by driving schools as{' '}
+              <Link to="/driving-school-software" className="font-semibold text-brand-800 hover:underline">driving school software</Link>{' '}
+              for admissions, fees and{' '}
+              <Link to="/driving-licence-software" className="font-semibold text-brand-800 hover:underline">driving licence</Link>{' '}
+              work, from{' '}
+              <Link to="/learning-licence-software" className="font-semibold text-brand-800 hover:underline">learning licence</Link>{' '}
+              to permanent DL. You can{' '}
+              <Link to="/rto-agent-software-free-download" className="font-semibold text-brand-800 hover:underline">try RTO Sarthi free</Link>{' '}
+              on PC and mobile.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <section className={cn(section, sectionMuted)}>
         <div className={container}>
           <SectionHeading compact
@@ -226,6 +315,29 @@ export default function Home() {
           <div className={grid3}>
             {testimonials.map((t) => (
               <TestimonialCard key={t.name} {...t} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className={cn(section, 'bg-white')} id="faq">
+        <div className={cn(container, 'max-w-3xl')}>
+          <SectionHeading compact
+            label="FAQ"
+            title="RTO agent software: frequently asked questions"
+            description="Quick answers about RTO Sarthi."
+          />
+          <div className="space-y-2.5">
+            {homeFaqs.map((f) => (
+              <details key={f.q} className={cn(glassCard, 'group p-4')}>
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3">
+                  <h3 className="text-sm font-semibold text-brand-950 sm:text-base">{f.q}</h3>
+                  <span className="text-brand-700 transition-transform group-open:rotate-45" aria-hidden>
+                    +
+                  </span>
+                </summary>
+                <p className="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">{f.a}</p>
+              </details>
             ))}
           </div>
         </div>

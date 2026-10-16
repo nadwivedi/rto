@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { SOLUTION_GROUPS } from '../data/solutions'
 import { useParams, Link } from 'react-router-dom'
 import { SITE_NAME } from '../config/seo'
 import { API_URL, blogImageUrl, formatDate, getBlogPostHead } from '../config/blog'
@@ -185,6 +186,24 @@ const BlogPost = () => {
             </div>
           </div>
         </aside>
+      </div>
+
+      <div className='mt-8 sm:mt-10 md:mt-12 pt-5 sm:pt-6 md:pt-8 border-t border-gray-200'>
+        <h2 className='text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-5'>RTO Sarthi Software</h2>
+        <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5'>
+          {SOLUTION_GROUPS.map(g => (
+            <div key={g.key} className='bg-white rounded-xl border border-gray-100 p-4'>
+              <Link to={g.items[0].to} className='text-base font-semibold text-gray-900 hover:text-brand-700'>{g.title}</Link>
+              <ul className='mt-2 space-y-1'>
+                {g.items.map(item => (
+                  <li key={item.to}>
+                    <Link to={item.to} className='text-sm text-brand-700 hover:text-brand-900 hover:underline'>{item.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       </div>
 
       {sidebarBlogs.filter(b => b._id !== blog._id).length > 0 && (

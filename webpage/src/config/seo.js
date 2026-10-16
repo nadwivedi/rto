@@ -5,7 +5,7 @@ export const TAGLINE = "India's Best RTO Agent Software"
 export const DEFAULT_TITLE = `RTO Sarthi - ${TAGLINE}`
 
 export const DEFAULT_DESCRIPTION =
-  'RTO Sarthi is India\'s best RTO agent software. Digitize your RTO desk with AI document entry, WhatsApp expiry alerts, bulk Excel uploads, client pending balance tracking, and dashboard analytics. Built by SoftwareBytes, Raipur.'
+  'RTO Sarthi is India\'s best RTO agent software: WhatsApp expiry alerts for tax, fitness, permit, PUC & insurance, RC search at ₹1.5 and client balances. Free trial.'
 
 export const DEFAULT_KEYWORDS = [
   'RTO Sarthi',

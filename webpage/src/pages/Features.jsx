@@ -1,4 +1,5 @@
 import SectionHeading from '../components/SectionHeading'
+import RelatedSolutions from '../components/RelatedSolutions'
 import PageHero from '../components/PageHero'
 import FeatureCard from '../components/FeatureCard'
 import Button from '../components/Button'
@@ -75,6 +76,8 @@ export default function Features() {
           ))}
         </div>
       </section>
+
+      <RelatedSolutions className="bg-white" />
 
       <section className={section}>
         <div className={container}>

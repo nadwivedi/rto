@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import RelatedSolutions from '../components/RelatedSolutions'
 import SectionHeading from '../components/SectionHeading'
 import PageHero from '../components/PageHero'
 import FeatureIcon from '../components/FeatureIcon'
@@ -224,6 +225,8 @@ export default function RtoAgentSoftwareFreeDownload() {
           </div>
         </div>
       </section>
+
+      <RelatedSolutions className={sectionMuted} />
 
       <section className={section}>
         <div className={container}>

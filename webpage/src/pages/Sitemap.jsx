@@ -8,33 +8,17 @@ import {
   cn,
 } from '../lib/styles'
 import { TAGLINE } from '../config/seo'
+import { SOLUTION_GROUPS } from '../data/solutions'
 
-const pages = [
-  { to: '/', label: 'Home', desc: 'RTO Sarthi overview, demo video, features & testimonials' },
+const mainPages = [
+  { to: '/', label: 'Home', desc: 'RTO Sarthi: RTO agent software overview, solutions, demo video & FAQ' },
   { to: '/features', label: 'Features', desc: 'AI, WhatsApp alerts, bulk upload, dashboard & more' },
-  { to: '/rto-management-software', label: 'RTO Management Software', desc: 'Expiry tracking, WhatsApp alerts, client balances & demo video for RTO agents' },
-  { to: '/vehicle-information-software', label: 'Vehicle Information Software', desc: 'Vehicle number search: RC & Particular download, tax, e-challan, fitness, PUC, insurance status & bulk RC verification' },
-  { to: '/vehicle-information-api', label: 'Vehicle Information API', desc: 'RC details by vehicle number for your software as JSON, from ₹1.5 per successful search' },
-  { to: '/rc-download-software', label: 'RC Download Software', desc: 'Download RC of any vehicle at just ₹1.5 — smart card style RC PDF for RTO agents' },
-  { to: '/rto-agent-software-free-download', label: 'RTO Agent Software Free Download', desc: 'Free trial — download and use RTO Sarthi free of cost on PC and mobile' },
-  { to: '/vehicle-document-expiry-reminder-software', label: 'Vehicle Document Expiry Reminder Software', desc: 'Automatic WhatsApp reminders for tax, fitness, permit, PUC, insurance and GPS expiry' },
-  { to: '/rc-verification-software', label: 'RC Verification Software', desc: 'Verify RC of any vehicle at ₹1.5 — owner, chassis, engine, HP & blacklist, plus bulk verification' },
-  { to: '/national-permit-renewal-reminder-software', label: 'National Permit Renewal Reminder Software', desc: 'Track national permit Part A & Part B validity with WhatsApp renewal reminders' },
-  { to: '/driving-licence-software', label: 'Driving Licence Software', desc: 'Manage learner licence and DL applications, documents, fees and LL to DL alerts' },
-  { to: '/learning-licence-software', label: 'Learning Licence Software', desc: 'Automatic WhatsApp 30 days after LL for DL eligibility, LL expiry dashboard and pending balance' },
-  { to: '/driving-licence-management-system', label: 'Driving Licence Management System', desc: 'One system for LL, DL and renewals with WhatsApp follow-ups, LL expiry dashboard and multi-agent access' },
-  { to: '/driving-school-software', label: 'Driving School Software', desc: 'Manage driving school admissions, fees, documents, LL / DL and RTO work' },
-  { to: '/driving-school-management-software', label: 'Driving School Management Software', desc: 'Admissions register, fee dues, student documents, auto WhatsApp for DL eligibility and LL expiry dashboard' },
-  { to: '/driving-school-management-system', label: 'Driving School Management System', desc: 'Connected system from admission to DL with fee instalments, automatic WhatsApp follow-ups and LL expiry dashboard' },
-  { to: '/best-driving-school-software-india', label: 'Best Driving School Software India', desc: 'Buyer guide: what the best driving school software in India needs, and how RTO Sarthi covers it' },
-  { to: '/driving-school-crm', label: 'Driving School CRM', desc: 'Student records, automatic WhatsApp follow-ups, referral sources, fee dues and repeat RTO work' },
-  { to: '/rto-agent-crm-software', label: 'RTO Agent CRM Software', desc: 'Client & vehicle CRM for RTO agents with WhatsApp expiry reminders, pending balance and LL / DL clients' },
-  { to: '/rto-agent-lead-management-software', label: 'RTO Agent Lead Management Software', desc: 'Track permit, tax, fitness, PUC & insurance enquiries with follow-up lists, one-tap call & WhatsApp and leads from RC search' },
-  { to: '/document-expiry-reminder-software', label: 'Document Expiry Reminder Software', desc: 'Automatic WhatsApp reminders for every type of document with an expiry date' },
-  { to: '/puc-agent-software', label: 'PUC Agent Software', desc: 'Bulk Excel upload, PDF auto-entry, WhatsApp PUC reminders & complete RTO/insurance management' },
+  { to: '/blog', label: 'Blog', desc: 'Guides for RTO agents, driving schools and vehicle owners' },
   { to: '/about', label: 'About', desc: 'About RTO Sarthi and SoftwareBytes, Raipur' },
   { to: '/contact', label: 'Contact', desc: 'Phone, WhatsApp, email and office details' },
 ]
+
+const sections = [{ key: 'main', title: 'RTO Sarthi', items: mainPages }, ...SOLUTION_GROUPS]
 
 export default function Sitemap() {
   return (
@@ -48,20 +32,25 @@ export default function Sitemap() {
             title="Browse all pages"
             description="For search engines: XML sitemap is available at /sitemap.xml"
           />
-          <ul className="space-y-3">
-            {pages.map((p) => (
-              <li key={p.to}>
-                <Link
-                  to={p.to}
-                  className={`${glassCard} block p-6 transition-colors hover:border-brand-300`}
-                >
-                  <span className="text-base font-bold text-brand-900">{p.label}</span>
-                  <span className="mt-1 block text-sm text-slate-600">{p.desc}</span>
-                  <span className="mt-1 block text-sm text-brand-700">rtosarthi.com{p.to === '/' ? '' : p.to}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+          {sections.map((group) => (
+            <div key={group.key} className="mb-8">
+              <h2 className="font-display mb-3 text-lg font-bold text-slate-900">{group.title}</h2>
+              <ul className="space-y-3">
+                {group.items.map((p) => (
+                  <li key={p.to}>
+                    <Link
+                      to={p.to}
+                      className={`${glassCard} block p-6 transition-colors hover:border-brand-300`}
+                    >
+                      <span className="text-base font-bold text-brand-900">{p.label}</span>
+                      <span className="mt-1 block text-sm text-slate-600">{p.desc}</span>
+                      <span className="mt-1 block text-sm text-brand-700">rtosarthi.com{p.to === '/' ? '' : p.to}</span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
           <p className="mt-6 text-center text-sm text-slate-600">
             <a href="/sitemap.xml" className="font-medium text-brand-800 hover:underline">
               View XML sitemap for search engines

@@ -1,4 +1,5 @@
 import SectionHeading from '../components/SectionHeading'
+import RelatedSolutions from '../components/RelatedSolutions'
 import PageHero from '../components/PageHero'
 import FeatureIcon from '../components/FeatureIcon'
 import Button from '../components/Button'
@@ -160,6 +161,8 @@ export default function PucAgent() {
           </div>
         </div>
       </section>
+
+      <RelatedSolutions className={sectionMuted} />
 
       <section className={section}>
         <div className={container}>

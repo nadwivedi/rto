@@ -4,6 +4,7 @@ import FeatureIcon from './FeatureIcon'
 import Button from './Button'
 import PageHero from './PageHero'
 import VideoEmbed from './VideoEmbed'
+import RelatedSolutions from './RelatedSolutions'
 import { IconCheck, IconUsers } from './Icons'
 import {
   container,
@@ -248,6 +249,8 @@ export default function ProductLanding({
           <div className={container}>{block}</div>
         </section>
       ))}
+
+      <RelatedSolutions className={blocks.length % 2 === 0 ? 'bg-white' : sectionMuted} />
 
       <section className={section}>
         <div className={container}>

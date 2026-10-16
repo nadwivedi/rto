@@ -1,6 +1,7 @@
 import { rtoManagementFaqs, RTO_MANAGEMENT_PATH, VIDEO_ID } from '../data/rtoManagement'
 import { vehicleInfoFaqs, VEHICLE_INFO_PATH } from '../data/vehicleInfo'
 import { vehicleInfoApiFaqs, VEHICLE_INFO_API_PATH } from '../data/vehicleInfoApi'
+import { homeFaqs } from '../data/home'
 import { rcDownloadFaqs, RC_DOWNLOAD_PATH } from '../data/rcDownload'
 import { freeDownloadFaqs, FREE_DOWNLOAD_PATH } from '../data/freeDownload'
 import { drivingSchoolFaqs, DRIVING_SCHOOL_PATH } from '../data/drivingSchool'
@@ -271,6 +272,9 @@ export function getPageHead(pathname) {
   if (product?.faqs) {
     jsonLd.push({ id: 'faq', data: getFaqJsonLd(product.faqs) })
     jsonLd.push({ id: 'breadcrumb', data: getBreadcrumbJsonLd(product.name, url) })
+  }
+  if (pathname === '/') {
+    jsonLd.push({ id: 'faq', data: getFaqJsonLd(homeFaqs) })
   }
   if (product?.video) {
     jsonLd.push({ id: 'video', data: getVideoJsonLd(url) })
