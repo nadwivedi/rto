@@ -1,6 +1,7 @@
 import ProductLanding from '../components/ProductLanding'
 import { IconUsers, IconWhatsApp, IconWallet, IconUpload, IconClock, IconCar, IconChart, IconBell } from '../components/Icons'
 import { drivingSchoolCrmFaqs } from '../data/drivingSchoolCrm'
+import { drivingSchoolVideo } from '../data/drivingSchool'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
 
@@ -36,6 +37,7 @@ export default function DrivingSchoolCrm() {
           </>,
         ],
       }}
+      video={drivingSchoolVideo}
       steps={{
         title: 'The student relationship in RTO Sarthi',
         description: 'From first admission to repeat customer.',

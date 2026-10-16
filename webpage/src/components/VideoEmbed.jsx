@@ -2,17 +2,20 @@ import { glassCard } from '../lib/styles'
 import { glassCard as homeCard } from '../lib/homeStyles'
 
 const YOUTUBE_VIDEO_ID = '4Ri70YEgQuU'
-const YOUTUBE_WATCH_URL = 'https://youtu.be/4Ri70YEgQuU?si=ZH1f5uP5ZXMO6qfY'
 
 export default function VideoEmbed({
   videoId = YOUTUBE_VIDEO_ID,
   title = 'RTO Sarthi — product overview',
   compact = false,
+  vertical = false,
 }) {
+  const watchUrl = vertical
+    ? `https://www.youtube.com/shorts/${videoId}`
+    : `https://www.youtube.com/watch?v=${videoId}`
   return (
-    <div className="w-full">
+    <div className={vertical ? 'mx-auto w-full max-w-xs text-center' : 'w-full'}>
       <div className={`${compact ? homeCard : glassCard} overflow-hidden p-0`}>
-        <div className="relative aspect-video w-full">
+        <div className={`relative w-full ${vertical ? 'aspect-[9/16]' : 'aspect-video'}`}>
           <iframe
             className="absolute inset-0 h-full w-full border-0"
             src={`https://www.youtube.com/embed/${videoId}?rel=0`}
@@ -25,7 +28,7 @@ export default function VideoEmbed({
       </div>
       <a
         className={`mt-2 inline-block ${compact ? 'text-xs' : 'text-sm'} font-semibold text-brand-800 hover:text-accent-600 hover:underline`}
-        href={YOUTUBE_WATCH_URL}
+        href={watchUrl}
         target="_blank"
         rel="noopener noreferrer"
       >

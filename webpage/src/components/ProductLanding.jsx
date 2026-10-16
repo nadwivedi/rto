@@ -3,6 +3,7 @@ import SectionHeading from './SectionHeading'
 import FeatureIcon from './FeatureIcon'
 import Button from './Button'
 import PageHero from './PageHero'
+import VideoEmbed from './VideoEmbed'
 import { IconCheck, IconUsers } from './Icons'
 import {
   container,
@@ -37,6 +38,7 @@ function CheckItem({ children }) {
 export default function ProductLanding({
   hero,
   overview,
+  video,
   steps,
   features,
   checklist,
@@ -59,6 +61,15 @@ export default function ProductLanding({
             </p>
           ))}
         </div>
+      </div>,
+    )
+  }
+
+  if (video) {
+    blocks.push(
+      <div key="video" id="demo-video">
+        <SectionHeading label={video.label || 'Watch'} title={video.title} description={video.description} />
+        <VideoEmbed videoId={video.id} title={video.title} vertical={video.vertical} />
       </div>,
     )
   }

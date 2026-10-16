@@ -1,5 +1,13 @@
 export const DRIVING_SCHOOL_PATH = '/driving-school-software'
 
+/** YouTube Short shown on every driving school page */
+export const drivingSchoolVideo = {
+  id: 'a0fscVq1c-o',
+  vertical: true,
+  title: 'See RTO Sarthi driving school software in action',
+  description: 'A quick look at how driving schools manage admissions, fees and licence work in RTO Sarthi.',
+}
+
 export const drivingSchoolFaqs = [
   {
     q: 'What is RTO Sarthi driving school software?',

@@ -1,6 +1,6 @@
 import ProductLanding from '../components/ProductLanding'
 import { IconUsers, IconWallet, IconUpload, IconWhatsApp, IconClock, IconCar, IconShield, IconChart } from '../components/Icons'
-import { drivingSchoolFaqs } from '../data/drivingSchool'
+import { drivingSchoolFaqs, drivingSchoolVideo } from '../data/drivingSchool'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
 
@@ -32,6 +32,7 @@ export default function DrivingSchoolSoftware() {
           </>,
         ],
       }}
+      video={drivingSchoolVideo}
       steps={{
         title: 'How a driving school uses RTO Sarthi',
         description: 'From admission to driving licence.',

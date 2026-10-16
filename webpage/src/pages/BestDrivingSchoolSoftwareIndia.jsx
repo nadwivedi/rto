@@ -1,6 +1,7 @@
 import ProductLanding from '../components/ProductLanding'
 import { IconUsers, IconWhatsApp, IconWallet, IconUpload, IconClock, IconCar, IconRenewal, IconChart } from '../components/Icons'
 import { bestDrivingSchoolFaqs } from '../data/bestDrivingSchool'
+import { drivingSchoolVideo } from '../data/drivingSchool'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
 
@@ -37,6 +38,7 @@ export default function BestDrivingSchoolSoftwareIndia() {
           </>,
         ],
       }}
+      video={drivingSchoolVideo}
       steps={{
         label: 'How to choose',
         title: 'How to choose the best driving school software',
