@@ -14,6 +14,7 @@ const pages = [
   { to: '/features', label: 'Features', desc: 'AI, WhatsApp alerts, bulk upload, dashboard & more' },
   { to: '/rto-management-software', label: 'RTO Management Software', desc: 'Expiry tracking, WhatsApp alerts, client balances & demo video for RTO agents' },
   { to: '/vehicle-information-software', label: 'Vehicle Information Software', desc: 'Vehicle number search: RC & Particular download, tax, e-challan, fitness, PUC, insurance status & bulk RC verification' },
+  { to: '/vehicle-information-api', label: 'Vehicle Information API', desc: 'RC details by vehicle number for your software as JSON, from ₹1.5 per successful search' },
   { to: '/rc-download-software', label: 'RC Download Software', desc: 'Download RC of any vehicle at just ₹1.5 — smart card style RC PDF for RTO agents' },
   { to: '/rto-agent-software-free-download', label: 'RTO Agent Software Free Download', desc: 'Free trial — download and use RTO Sarthi free of cost on PC and mobile' },
   { to: '/vehicle-document-expiry-reminder-software', label: 'Vehicle Document Expiry Reminder Software', desc: 'Automatic WhatsApp reminders for tax, fitness, permit, PUC, insurance and GPS expiry' },

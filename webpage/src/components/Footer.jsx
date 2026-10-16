@@ -49,6 +49,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/vehicle-information-api" className="hover:text-brand-800">
+                  Vehicle Information API
+                </Link>
+              </li>
+              <li>
                 <Link to="/rc-download-software" className="hover:text-brand-800">
                   RC Download Software
                 </Link>

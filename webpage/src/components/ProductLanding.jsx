@@ -31,15 +31,23 @@ function CheckItem({ children }) {
   )
 }
 
+const DEFAULT_BUTTONS = [
+  { label: 'Start Free Trial', href: '/contact' },
+  { label: 'Book Demo', href: '/contact' },
+]
+
 /**
  * Shared layout for SEO product landing pages. Sections render in order and
  * are skipped when their prop is not given; alternating backgrounds are automatic.
+ * `buttons` replaces the two hero / CTA buttons (first is the main one).
  */
 export default function ProductLanding({
   hero,
+  buttons = DEFAULT_BUTTONS,
   overview,
   video,
   steps,
+  code,
   features,
   checklist,
   audiences,
@@ -90,6 +98,25 @@ export default function ProductLanding({
               <p className={bodyMuted}>{item.description}</p>
             </div>
           ))}
+        </div>
+      </div>,
+    )
+  }
+
+  if (code) {
+    blocks.push(
+      <div key="code" id={code.id || 'api'}>
+        <SectionHeading label={code.label || 'API'} title={code.title} description={code.description} />
+        <div className="mx-auto grid max-w-4xl gap-4">
+          {code.blocks.map((b) => (
+            <div key={b.label} className="min-w-0 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-sm">
+              <p className="border-b border-slate-800 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-slate-400">{b.label}</p>
+              <pre className="overflow-x-auto px-4 py-3 font-mono text-[13px] leading-relaxed text-slate-100">
+                <code>{b.code}</code>
+              </pre>
+            </div>
+          ))}
+          {code.note && <p className="text-sm text-slate-600">{code.note}</p>}
         </div>
       </div>,
     )
@@ -209,12 +236,11 @@ export default function ProductLanding({
   return (
     <>
       <PageHero title={hero.title}>
-        <Button href="/contact" variant="primary" size="lg">
-          Start Free Trial
-        </Button>
-        <Button href="/contact" variant="ghost" size="lg">
-          Book Demo
-        </Button>
+        {buttons.map((b, i) => (
+          <Button key={b.label} href={b.href} variant={i === 0 ? 'primary' : 'ghost'} size="lg">
+            {b.label}
+          </Button>
+        ))}
       </PageHero>
 
       {blocks.map((block, i) => (
@@ -231,12 +257,11 @@ export default function ProductLanding({
               <h2 className="mb-3 font-display text-2xl font-bold text-white sm:text-3xl">{cta.title}</h2>
               <p className="mx-auto mb-6 max-w-xl text-base text-white/90 sm:text-lg">{cta.text}</p>
               <div className="flex flex-wrap justify-center gap-2">
-                <Button href="/contact" variant="secondary" size="lg">
-                  Start Free Trial
-                </Button>
-                <Button href="/contact" variant="ghost" size="lg">
-                  Book Demo
-                </Button>
+                {buttons.map((b, i) => (
+                  <Button key={b.label} href={b.href} variant={i === 0 ? 'secondary' : 'ghost'} size="lg">
+                    {b.label}
+                  </Button>
+                ))}
               </div>
             </div>
           </div>

@@ -86,6 +86,13 @@ export const PAGE_SEO = {
     path: '/vehicle-information-software',
     keywords: 'vehicle information software for RTO agents, vehicle information software for RTO agent, vehicle details software for RTO agents, vehicle number search software for RTO agents, RC download software for RTO agents, RC verification software for RTO agents, bulk RC verification software for RTO agents, vehicle particular download software for RTO agents, e-challan check software for RTO agents, vehicle information software for insurance agents, vehicle information software for vehicle dealers, best vehicle information software for RTO agents, vehicle information software India, vehicle information software, vehicle details by number, vehicle number search software, RC download, RC verification, bulk RC verification, vehicle particulars download, road tax status check, e-challan status check, fitness status check, PUC status check, insurance status by vehicle number, vehicle owner details software, RTO agent vehicle search, RTO Sarthi vehicle information',
   },
+  '/vehicle-information-api': {
+    title: `Vehicle Information API India - RC Details from ₹1.5 per Search | RTO Sarthi`,
+    description:
+      'Vehicle information API provider for India: get RC details by vehicle number as JSON - owner, model, chassis, engine, insurance, tax, fitness & PUC. From ₹1.5 per search.',
+    path: '/vehicle-information-api',
+    keywords: 'vehicle information API, vehicle information API India, vehicle details API, vehicle number API, RC details API, RC API, RC verification API, vehicle RC API, vehicle registration API India, vehicle owner details API, vehicle API provider, vehicle information API provider, cheapest vehicle information API, vehicle information API price, vehicle number search API, chassis number API, insurance validity API, vehicle data API, RTO API, RTO vehicle API, RTO Sarthi vehicle information API',
+  },
   '/rc-download-software': {
     title: `RC Download Software for RTO Agents - Download RC at ₹1.5 | RTO Sarthi`,
     description:

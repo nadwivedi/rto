@@ -77,6 +77,7 @@ export default function RcVerificationSoftware() {
       related={[
         { to: '/rc-download-software', label: 'RC download software' },
         { to: '/vehicle-information-software', label: 'Vehicle information software' },
+        { to: '/vehicle-information-api', label: 'Vehicle information API' },
       ]}
       faq={{
         title: 'RC verification software — FAQ',

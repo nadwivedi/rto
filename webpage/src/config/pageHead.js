@@ -1,5 +1,6 @@
 import { rtoManagementFaqs, RTO_MANAGEMENT_PATH, VIDEO_ID } from '../data/rtoManagement'
 import { vehicleInfoFaqs, VEHICLE_INFO_PATH } from '../data/vehicleInfo'
+import { vehicleInfoApiFaqs, VEHICLE_INFO_API_PATH } from '../data/vehicleInfoApi'
 import { rcDownloadFaqs, RC_DOWNLOAD_PATH } from '../data/rcDownload'
 import { freeDownloadFaqs, FREE_DOWNLOAD_PATH } from '../data/freeDownload'
 import { drivingSchoolFaqs, DRIVING_SCHOOL_PATH } from '../data/drivingSchool'
@@ -29,6 +30,21 @@ const PRODUCT_PAGES = {
   '/puc-agent-software': { name: 'PUC Agent Software' },
   [RTO_MANAGEMENT_PATH]: { name: 'RTO Management Software', faqs: rtoManagementFaqs, video: true },
   [VEHICLE_INFO_PATH]: { name: 'Vehicle Information Software', faqs: vehicleInfoFaqs },
+  [VEHICLE_INFO_API_PATH]: {
+    name: 'Vehicle Information API',
+    faqs: vehicleInfoApiFaqs,
+    alternateName: ['Vehicle Details API', 'RC Details API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'RC details by vehicle number as JSON',
+      'Owner, maker and model, chassis and engine number',
+      'Registration, insurance, tax, fitness and PUC validity',
+      'Pay only for successful searches',
+      'Usage and remaining searches in every response',
+      'Vehicles from all states of India',
+    ],
+  },
   [RC_DOWNLOAD_PATH]: { name: 'RC Download Software', faqs: rcDownloadFaqs },
   [FREE_DOWNLOAD_PATH]: { name: 'RTO Agent Software Free Download', faqs: freeDownloadFaqs },
   [DRIVING_SCHOOL_PATH]: { name: 'Driving School Software', faqs: drivingSchoolFaqs },
@@ -151,22 +167,22 @@ const PRODUCT_PAGES = {
   },
 }
 
-function getSoftwareJsonLd(name, description, url, { alternateName, features } = {}) {
+function getSoftwareJsonLd(name, description, url, { alternateName, features, category, offer } = {}) {
   return {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
     name,
     ...(alternateName && { alternateName }),
     ...(features && { featureList: features }),
-    applicationCategory: 'BusinessApplication',
+    applicationCategory: category || 'BusinessApplication',
     operatingSystem: 'Web',
     description,
     url,
     offers: {
       '@type': 'Offer',
-      price: '0',
+      price: offer?.price || '0',
       priceCurrency: 'INR',
-      description: 'Free trial available',
+      description: offer?.description || 'Free trial available',
     },
     provider: {
       '@type': 'Organization',
