@@ -9,6 +9,7 @@ import ApiKeyDetail from './pages/ApiKeyDetail';
 import Blogs from './pages/Blogs';
 import VehicleRegistrations from './pages/VehicleRegistrations';
 import Export from './pages/Export';
+import Deploy from './pages/Deploy';
 import CreateVehicleFromJson from './pages/CreateVehicleFromJson';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -138,6 +139,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Export />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/deploy"
+                element={
+                  <ProtectedRoute>
+                    <Deploy />
                   </ProtectedRoute>
                 }
               />

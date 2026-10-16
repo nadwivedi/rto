@@ -4,13 +4,13 @@ const mongoose = require('mongoose')
 const activityLogSchema = new mongoose.Schema({
   action: {
     type: String,
-    enum: ['create', 'update', 'delete', 'activate', 'deactivate', 'access', 'login'],
+    enum: ['create', 'update', 'delete', 'activate', 'deactivate', 'access', 'login', 'deploy'],
     required: true
   },
   // What kind of record was touched
   entity: {
     type: String,
-    enum: ['user', 'api_credit', 'api_key', 'blog', 'vehicle_registration', 'admin'],
+    enum: ['user', 'api_credit', 'api_key', 'blog', 'vehicle_registration', 'admin', 'server'],
     required: true
   },
   entityId: { type: String },

@@ -71,7 +71,8 @@ const ENTITIES = {
   api_key: 'API Keys',
   blog: 'Blogs',
   vehicle_registration: 'Vehicles',
-  admin: 'Admin Logins'
+  admin: 'Admin Logins',
+  server: 'Deploys'
 }
 
 const ENTITY_SINGULAR = {
@@ -80,7 +81,8 @@ const ENTITY_SINGULAR = {
   api_key: 'API Key',
   blog: 'Blog',
   vehicle_registration: 'Vehicle',
-  admin: 'Admin'
+  admin: 'Admin',
+  server: 'Server'
 }
 
 const ICON_PATHS = {
@@ -91,7 +93,8 @@ const ICON_PATHS = {
   ban: 'M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636',
   eye: 'M15 12a3 3 0 11-6 0 3 3 0 016 0zm-3-9C7 3 3.6 6.1 2.5 12c1.1 5.9 4.5 9 9.5 9s8.4-3.1 9.5-9C20.4 6.1 17 3 12 3z',
   login: 'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1',
-  activity: 'M3 12h4l3-8 4 16 3-8h4'
+  activity: 'M3 12h4l3-8 4 16 3-8h4',
+  upload: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12'
 }
 
 // How each kind of action is shown in the list
@@ -102,7 +105,8 @@ const ACTIONS = {
   activate: { label: 'Activated', icon: 'check', tile: 'bg-teal-50 text-teal-700 ring-teal-100' },
   deactivate: { label: 'Deactivated', icon: 'ban', tile: 'bg-amber-50 text-amber-700 ring-amber-100' },
   access: { label: 'Opened as user', icon: 'eye', tile: 'bg-violet-50 text-violet-700 ring-violet-100' },
-  login: { label: 'Login', icon: 'login', tile: 'bg-gray-100 text-gray-600 ring-gray-200' }
+  login: { label: 'Login', icon: 'login', tile: 'bg-gray-100 text-gray-600 ring-gray-200' },
+  deploy: { label: 'Deploy', icon: 'upload', tile: 'bg-indigo-50 text-indigo-700 ring-indigo-100' }
 }
 
 const Icon = ({ name, className = 'w-4 h-4' }) => (

@@ -80,3 +80,6 @@ party_report*.md
 # Public uploads/temporary PDFs
 public/insurance/
 frontend/public/insurance/
+
+# Deploy state and logs written on the server by deploy/deploy.sh
+.deploy/
