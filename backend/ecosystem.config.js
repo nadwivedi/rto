@@ -2,7 +2,7 @@
 module.exports = {
   apps: [
     {
-      name: 'rto-backend',
+      name: 'rto',
       script: 'index.js',
       cwd: __dirname,
       // Never watch in production: Chrome writes files inside the backend folder and every

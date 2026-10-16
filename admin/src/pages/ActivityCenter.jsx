@@ -178,7 +178,7 @@ const ActivityCenter = () => {
         if (res.status === 404) {
           // An older backend (still running the password version, or not restarted) answers 404 here
           throw new Error(
-            'The server is running an older backend. Restart it with the latest code (git pull, then pm2 restart rto-backend) and reload this page.'
+            'The server is running an older backend. Restart it with the latest code (git pull, then pm2 restart rto) and reload this page.'
           )
         }
         const json = await res.json()

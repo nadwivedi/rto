@@ -14,7 +14,7 @@ set -uo pipefail
 TARGET="${1:-all}"
 INSTALL="${2:-0}"
 REPO_DIR="${DEPLOY_REPO_DIR:-$(cd "$(dirname "$0")/.." && pwd)}"
-PM2_NAME="${DEPLOY_PM2_NAME:-rto-backend}"
+PM2_NAME="${DEPLOY_PM2_NAME:-rto}"
 BRANCH="${DEPLOY_BRANCH:-main}"
 STATE_DIR="$REPO_DIR/.deploy"
 STATE_FILE="$STATE_DIR/state.json"

@@ -4,9 +4,9 @@ const { spawn, execFile } = require('child_process')
 const { recordActivity } = require('../utils/activityLog')
 const { logError } = require('../utils/errorLogger')
 
-// The repo on the server, the pm2 name of this backend and the branch to pull
+// The repo on the server (/var/www/rto), the pm2 name of this backend and the branch to pull
 const REPO_DIR = process.env.DEPLOY_REPO_DIR || path.resolve(__dirname, '..', '..')
-const PM2_NAME = process.env.DEPLOY_PM2_NAME || 'rto-backend'
+const PM2_NAME = process.env.DEPLOY_PM2_NAME || 'rto'
 const BRANCH = process.env.DEPLOY_BRANCH || 'main'
 const SCRIPT = path.join(REPO_DIR, 'deploy', 'deploy.sh')
 const STATE_DIR = path.join(REPO_DIR, '.deploy')
