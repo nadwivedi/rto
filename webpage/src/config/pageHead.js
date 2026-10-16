@@ -1,6 +1,7 @@
 import { rtoManagementFaqs, RTO_MANAGEMENT_PATH, VIDEO_ID } from '../data/rtoManagement'
 import { vehicleInfoFaqs, VEHICLE_INFO_PATH } from '../data/vehicleInfo'
 import { vehicleInfoApiFaqs, VEHICLE_INFO_API_PATH } from '../data/vehicleInfoApi'
+import { vahanApiFaqs, VAHAN_API_PATH } from '../data/vahanApi'
 import { homeFaqs } from '../data/home'
 import { rcDownloadFaqs, RC_DOWNLOAD_PATH } from '../data/rcDownload'
 import { freeDownloadFaqs, FREE_DOWNLOAD_PATH } from '../data/freeDownload'
@@ -43,6 +44,23 @@ const PRODUCT_PAGES = {
       'Registration, insurance, tax, fitness and PUC validity',
       'Pay only for successful searches',
       'Usage and remaining searches in every response',
+      'Vehicles from all states of India',
+    ],
+  },
+  [VAHAN_API_PATH]: {
+    name: 'Vahan API for Vehicle Details',
+    faqs: vahanApiFaqs,
+    alternateName: ['RTO Sarthi Vahan API', 'Vehicle Details API', 'Vahan RC API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Vehicle details by vehicle number as JSON',
+      'Owner name, father\'s name and address',
+      'Maker, model, vehicle class, body type, fuel and emission norms',
+      'Chassis and engine number, cubic capacity and seating',
+      'Financer, insurance, PUC, fitness and road tax details',
+      'Blacklist and NOC status',
+      'Pay only for successful searches',
       'Vehicles from all states of India',
     ],
   },

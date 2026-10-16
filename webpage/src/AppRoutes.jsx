@@ -9,6 +9,7 @@ import PucAgent from './pages/PucAgent'
 import RtoManagementSoftware from './pages/RtoManagementSoftware'
 import VehicleInformationSoftware from './pages/VehicleInformationSoftware'
 import VehicleInformationApi from './pages/VehicleInformationApi'
+import VahanApi from './pages/VahanApi'
 import RcDownloadSoftware from './pages/RcDownloadSoftware'
 import RtoAgentSoftwareFreeDownload from './pages/RtoAgentSoftwareFreeDownload'
 import DrivingSchoolSoftware from './pages/DrivingSchoolSoftware'
@@ -41,6 +42,7 @@ export default function AppRoutes() {
         <Route path="rto-management-software" element={<RtoManagementSoftware />} />
         <Route path="vehicle-information-software" element={<VehicleInformationSoftware />} />
         <Route path="vehicle-information-api" element={<VehicleInformationApi />} />
+        <Route path="vahan-api" element={<VahanApi />} />
         <Route path="rc-download-software" element={<RcDownloadSoftware />} />
         <Route path="rto-agent-software-free-download" element={<RtoAgentSoftwareFreeDownload />} />
         <Route path="driving-school-software" element={<DrivingSchoolSoftware />} />

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import ProductLanding from '../components/ProductLanding'
 import { IconWallet, IconCheck, IconShield, IconChart, IconCar, IconClock, IconDocument, IconMapPin } from '../components/Icons'
 import { vehicleInfoApiFaqs } from '../data/vehicleInfoApi'
@@ -54,7 +55,8 @@ export default function VehicleInformationApi() {
             With the {s('RTO Sarthi Vehicle Information API')} your system sends a vehicle number
             and gets the RC details back in seconds as clean JSON. Pricing starts at{' '}
             {s(`${LOOKUP_PRICE} per search`)}, you pay only for successful searches, and every
-            response tells you how many searches you have left.
+            response tells you how many searches you have left. See every field the API returns on
+            our <Link to="/vahan-api" className="font-semibold text-brand-800 hover:underline">Vahan API for vehicle details</Link> page.
           </>,
         ],
       }}
@@ -118,6 +120,7 @@ export default function VehicleInformationApi() {
         { to: '/vehicle-information-software', label: 'Vehicle information software' },
         { to: '/rc-verification-software', label: 'RC verification software' },
         { to: '/rc-download-software', label: 'RC download software' },
+        { to: '/vahan-api', label: 'Vahan API for vehicle details' },
       ]}
       faq={{
         title: 'Vehicle information API — FAQ',

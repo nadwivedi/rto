@@ -54,6 +54,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/vahan-api" className="hover:text-brand-800">
+                  Vahan API
+                </Link>
+              </li>
+              <li>
                 <Link to="/rc-download-software" className="hover:text-brand-800">
                   RC Download Software
                 </Link>

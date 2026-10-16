@@ -287,7 +287,9 @@ export default function Home() {
               <Link to="/rc-verification-software" className="font-semibold text-brand-800 hover:underline">verify RC</Link>{' '}
               of any vehicle at just {LOOKUP_PRICE} per search, and businesses can get the same data in their own
               software through our{' '}
-              <Link to="/vehicle-information-api" className="font-semibold text-brand-800 hover:underline">vehicle information API</Link>.
+              <Link to="/vehicle-information-api" className="font-semibold text-brand-800 hover:underline">vehicle information API</Link>{' '}
+              (a{' '}
+              <Link to="/vahan-api" className="font-semibold text-brand-800 hover:underline">Vahan API for vehicle details</Link>).
             </p>
             <p>
               RTO Sarthi is also used by{' '}
