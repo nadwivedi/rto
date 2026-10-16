@@ -2,12 +2,10 @@ import { LOOKUP_PRICE } from './vehicleInfo'
 
 export const VEHICLE_INFO_API_PATH = '/vehicle-information-api'
 
-export const API_ENDPOINT = 'https://api.rtosarthi.com/api/v1/vehicle-info'
-
 export const vehicleInfoApiFaqs = [
   {
     q: 'What is the RTO Sarthi Vehicle Information API?',
-    a: `It is a REST API that returns vehicle (RC) details for any Indian vehicle number: owner, maker and model, chassis and engine number, registration, insurance, tax, fitness and PUC validity and more. You call it from your own software with an API key, starting at ${LOOKUP_PRICE} per search.`,
+    a: `It is a REST API that returns vehicle (RC) details for any Indian vehicle number: owner name and address, maker and model, chassis and engine number, registration, insurance, PUC, fitness and tax details and more. You call it from your own software with an API key, starting at ${LOOKUP_PRICE} per search.`,
   },
   {
     q: 'How much does the vehicle information API cost?',
@@ -19,11 +17,7 @@ export const vehicleInfoApiFaqs = [
   },
   {
     q: 'What details does the API return?',
-    a: 'Owner name, maker and model, vehicle class, fuel, colour, chassis and engine number, registration date and validity, insurance company, policy and validity, road tax, fitness and PUC validity, financer (hypothecation), permit and blacklist details, wherever they are available on the vehicle record.',
-  },
-  {
-    q: 'How do I call the API?',
-    a: `Send a GET request to ${API_ENDPOINT}?vno=VEHICLE_NUMBER with your key in the x-api-key header. The response is JSON with the vehicle details and how many searches you have left.`,
+    a: 'Owner name and address, maker and model, vehicle class, fuel, colour, chassis and engine number, registration date and validity, insurance company, policy number and validity, PUC number and validity, fitness and road tax validity, financer (hypothecation), permit and blacklist details, wherever they are available on the vehicle record.',
   },
   {
     q: 'Does the API work for vehicles from every state?',
@@ -43,6 +37,6 @@ export const vehicleInfoApiFaqs = [
   },
   {
     q: 'Is my API key safe?',
-    a: 'Keep your API key secret and call the API from your server, not from browser or app code that users can see. If a key leaks, we can switch it off and issue a new one.',
+    a: 'Yes. Every customer gets a private API key. If a key leaks, we switch it off and issue a new one.',
   },
 ]

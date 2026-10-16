@@ -1,34 +1,34 @@
 import ProductLanding from '../components/ProductLanding'
 import { IconWallet, IconCheck, IconShield, IconChart, IconCar, IconClock, IconDocument, IconMapPin } from '../components/Icons'
-import { vehicleInfoApiFaqs, API_ENDPOINT } from '../data/vehicleInfoApi'
+import { vehicleInfoApiFaqs } from '../data/vehicleInfoApi'
 import { LOOKUP_PRICE } from '../data/vehicleInfo'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
-
-const curlExample = `curl -H "x-api-key: YOUR_API_KEY" \\
-  "${API_ENDPOINT}?vno=CG12BU5574"`
 
 const responseExample = `{
   "success": true,
   "vehicleNumber": "CG12BU5574",
   "data": {
     "OWNER_NAME": "RAM KUMAR",
+    "PRESENT_ADDRESS": "WARD NO 12, TELIBANDHA, RAIPUR, CHHATTISGARH 492001",
+    "MAKER_DESC": "TATA MOTORS LTD",
     "MAKER_MODEL": "ACE GOLD",
     "FUEL_DESC": "DIESEL",
+    "COLOR": "WHITE",
+    "CHASI_NO": "MAT445123K1A12345",
+    "ENG_NO": "275IDI12ABC345",
     "REGN_DT": "15-Jun-2019",
+    "REGN_UPTO": "14-Jun-2034",
+    "INSURANCE_COMP": "TATA AIG GENERAL INSURANCE CO. LTD.",
+    "INS_POLICY_NO": "0164123456",
     "INSURANCE_UPTO": "12-Mar-2027",
-    ...
+    "PUCC_NO": "CG01200030012345",
+    "PUCC_UPTO": "20-Dec-2026",
+    "FIT_UPTO": "14-Jun-2027",
+    "TAX_UPTO": "31-Mar-2027"
   },
   "usage": { "limit": 1000, "used": 101, "remaining": 899 }
 }`
-
-const nodeExample = `const res = await fetch('${API_ENDPOINT}?vno=CG12BU5574', {
-  headers: { 'x-api-key': process.env.RTO_SARTHI_API_KEY }
-})
-const body = await res.json()
-
-if (body.success) console.log(body.data, body.usage.remaining)
-else console.log(body.message)`
 
 export default function VehicleInformationApi() {
   return (
@@ -63,19 +63,16 @@ export default function VehicleInformationApi() {
         description: 'Three steps from API key to your first search.',
         items: [
           { title: 'Get your API key', description: 'Contact us and choose your search limit. We create your API key and share the integration guide.' },
-          { title: 'Call the API', description: 'Send a GET request with the vehicle number and your key in the x-api-key header.' },
+          { title: 'Connect your software', description: 'Our team helps you connect the API to your software, website or app.' },
           { title: 'Use the details', description: 'Read the JSON response in your software and recharge when your remaining searches run low.' },
         ],
       }}
       code={{
-        title: 'Simple REST API, one request',
-        description: 'Send the vehicle number, get JSON back.',
-        blocks: [
-          { label: 'Request (curl)', code: curlExample },
-          { label: 'Response', code: responseExample },
-          { label: 'Node.js', code: nodeExample },
-        ],
-        note: 'Errors return success: false with a message: 400 invalid number, 401 wrong key, 403 limit used up, 404 vehicle not found, 502 try again.',
+        label: 'Sample response',
+        title: 'Complete vehicle details in one JSON response',
+        description: 'Owner and address, chassis and engine number, insurance, PUC, fitness and tax.',
+        blocks: [{ label: 'JSON response', code: responseExample }],
+        note: 'Sample data. Details are returned wherever they are available on the vehicle record.',
       }}
       features={{
         title: 'Why choose RTO Sarthi as your vehicle information API provider',
@@ -83,12 +80,12 @@ export default function VehicleInformationApi() {
         items: [
           { icon: <IconWallet />, variant: 'success', title: `From ${LOOKUP_PRICE} per search`, description: 'Prepaid searches with no monthly fee. Recharge whenever you need more.' },
           { icon: <IconCheck />, variant: 'brand', title: 'Pay only for successful searches', description: 'If the vehicle is not found or the service is busy, the search goes back to your limit.' },
-          { icon: <IconCar />, variant: 'accent', title: 'Complete RC details', description: 'Owner, maker and model, chassis and engine number, registration, insurance, tax, fitness and PUC in one response.' },
+          { icon: <IconCar />, variant: 'accent', title: 'Complete RC details', description: 'Owner and address, maker and model, chassis and engine number, insurance, PUC, fitness and tax in one response.' },
           { icon: <IconMapPin />, variant: 'brand', title: 'All states of India', description: 'Search vehicles registered in any state or union territory.' },
           { icon: <IconChart />, variant: 'success', title: 'Usage in every response', description: 'Limit, used and remaining searches come back with each call, so you always know your balance.' },
-          { icon: <IconClock />, variant: 'accent', title: 'Fast JSON response', description: 'One GET request returns the details in seconds, ready to show or save in your system.' },
-          { icon: <IconShield />, variant: 'brand', title: 'Secure API key', description: 'Your key is sent in a header. A leaked key can be switched off and replaced at once.' },
-          { icon: <IconDocument />, variant: 'success', title: 'Clear guide & support', description: 'Short integration guide with curl and code examples, and direct support from our Raipur team.' },
+          { icon: <IconClock />, variant: 'accent', title: 'Fast JSON response', description: 'Vehicle details come back in seconds, ready to show or save in your system.' },
+          { icon: <IconShield />, variant: 'brand', title: 'Secure API key', description: 'Every customer gets a private API key. A leaked key can be switched off and replaced at once.' },
+          { icon: <IconDocument />, variant: 'success', title: 'Integration help & support', description: 'We share the integration guide with your API key, and our Raipur team helps you connect it.' },
         ],
       }}
       checklist={{
@@ -103,9 +100,9 @@ export default function VehicleInformationApi() {
         },
         listTitle: 'Details returned by the API',
         items: [
-          'Owner name', 'Maker & model', 'Vehicle class & fuel', 'Chassis & engine number',
+          'Owner name & address', 'Maker & model', 'Vehicle class & fuel', 'Chassis & engine number',
           'Registration date & validity', 'Insurance company & validity', 'Road tax validity', 'Fitness validity',
-          'PUC validity', 'Financer (HP) details', 'Permit details', 'Blacklist status',
+          'PUC validity', 'Financer (HP) details', 'PUC number', 'Insurance policy number',
         ],
         note: 'Details are returned wherever they are available on the vehicle record.',
       }}
@@ -124,7 +121,7 @@ export default function VehicleInformationApi() {
       ]}
       faq={{
         title: 'Vehicle information API — FAQ',
-        description: 'Pricing, data and integration.',
+        description: 'Pricing, data and API keys.',
         items: vehicleInfoApiFaqs,
       }}
       cta={{
