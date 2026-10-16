@@ -9,15 +9,15 @@ import ApiKeyDetail from './pages/ApiKeyDetail';
 import Blogs from './pages/Blogs';
 import VehicleRegistrations from './pages/VehicleRegistrations';
 import Export from './pages/Export';
-import Deploy from './pages/Deploy';
 import CreateVehicleFromJson from './pages/CreateVehicleFromJson';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import ActivityShortcut from './components/ActivityShortcut';
 import { useAuth } from './context/AuthContext';
-import { useAudit, ACTIVITY_PATH } from './context/AuditContext';
+import { useAudit, ACTIVITY_PATH, DEPLOY_PATH } from './context/AuditContext';
 
 const ActivityCenter = lazy(() => import('./pages/ActivityCenter'));
+const Deploy = lazy(() => import('./pages/Deploy'));
 
 function App() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -143,10 +143,16 @@ function App() {
                 }
               />
               <Route
-                path="/deploy"
+                path={DEPLOY_PATH}
                 element={
                   <ProtectedRoute>
-                    <Deploy />
+                    {unlocked ? (
+                      <Suspense fallback={null}>
+                        <Deploy />
+                      </Suspense>
+                    ) : (
+                      <Navigate to="/" replace />
+                    )}
                   </ProtectedRoute>
                 }
               />

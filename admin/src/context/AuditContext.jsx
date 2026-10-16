@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useCallback } from 'react'
 
 export const ACTIVITY_PATH = '/activity-center'
+export const DEPLOY_PATH = '/deploy'
 
 const AuditContext = createContext(null)
 

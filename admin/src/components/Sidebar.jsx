@@ -175,21 +175,6 @@ const Sidebar = ({ isOpen, onClose }) => {
             </svg>
             <span className="truncate">Export Data</span>
           </Link>
-
-          <Link
-            to="/deploy"
-            onClick={handleLinkClick}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-              location.pathname === '/deploy'
-                ? 'bg-white text-indigo-800 font-bold'
-                : 'text-indigo-200 hover:bg-indigo-800'
-            }`}
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
-            </svg>
-            <span className="truncate">Deploy</span>
-          </Link>
         </nav>
       </div>
     </>

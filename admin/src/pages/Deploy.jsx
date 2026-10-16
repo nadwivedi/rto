@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import axios from 'axios'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useAudit, ACTIVITY_PATH } from '../context/AuditContext'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const ENDPOINT = `${BACKEND_URL}/api/admin/deploy`
@@ -80,6 +82,8 @@ const StatusBadge = ({ status }) => {
  */
 const Deploy = () => {
   const { logout } = useAuth()
+  const { lock } = useAudit()
+  const navigate = useNavigate()
   // logout changes every render; a ref keeps load() stable so it isn't refetched in a loop
   const logoutRef = useRef(logout)
   logoutRef.current = logout
@@ -187,10 +191,22 @@ const Deploy = () => {
           <h1 className='text-xl md:text-2xl font-bold text-gray-900'>Deploy</h1>
           <p className='mt-0.5 text-sm text-gray-500'>Pull the latest code from GitHub and update the live server</p>
         </div>
-        <button type='button' onClick={load} className='flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100'>
-          <Icon name='refresh' />
-          Refresh
-        </button>
+        <div className='flex flex-wrap items-center gap-2'>
+          <Link to={ACTIVITY_PATH} className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100'>
+            ← Activity Center
+          </Link>
+          <button type='button' onClick={load} className='flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100'>
+            <Icon name='refresh' />
+            Refresh
+          </button>
+          <button
+            type='button'
+            onClick={() => { lock(); navigate('/', { replace: true }) }}
+            className='rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100'
+          >
+            Lock
+          </button>
+        </div>
       </div>
 
       {notice && (
