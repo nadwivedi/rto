@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import SectionHeading from '../components/SectionHeading'
 import RelatedSolutions from '../components/RelatedSolutions'
 import PageHero from '../components/PageHero'
@@ -20,14 +21,14 @@ import {
 export default function Features() {
   return (
     <>
-      <PageHero title="Powerful tools for modern RTO agents" subtitle="Automate paperwork, alert clients on WhatsApp, bulk-import PUC and insurance data, and manage every vehicle from one secure platform." />
+      <PageHero title="RTO Sarthi Features — Powerful tools for modern RTO agents" subtitle="Automate paperwork, alert clients on WhatsApp, bulk-import PUC and insurance data, and manage every vehicle from one secure platform." />
 
       <section className={section}>
         <div className={container}>
           <SectionHeading
             label="Overview"
             title="Core capabilities"
-            description="Six pillars that make RTO Sarthi the complete operating system for your desk."
+            description="Every tool an RTO agent, PUC centre, insurance agent or driving school needs, in one software."
           />
           <div className={grid3}>
             {coreFeatures.map((f) => (
@@ -65,6 +66,11 @@ export default function Features() {
                     </li>
                   ))}
                 </ul>
+                {feature.link && (
+                  <Link to={feature.link.to} className="mt-3 inline-block text-sm font-semibold text-brand-800 hover:text-accent-600 hover:underline sm:text-base">
+                    {feature.link.label} →
+                  </Link>
+                )}
               </div>
               <div className={cn(`${glassCard} flex min-h-[180px] flex-col items-center justify-center gap-4 p-6 lg:min-h-[200px]`, feature.reverse && 'lg:order-1')}>
                 <FeatureIcon icon={feature.icon} variant={feature.iconVariant} className="mb-0 h-14 w-14 [&_svg]:h-6 [&_svg]:w-6" />

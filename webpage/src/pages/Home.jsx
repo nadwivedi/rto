@@ -167,8 +167,8 @@ export default function Home() {
         <div className={container}>
           <SectionHeading compact
             label="Features"
-            title="Everything your RTO desk needs"
-            description="From document automation to WhatsApp alerts — one platform for agents, insurance partners, and PUC centers."
+            title="RTO Sarthi features: everything your RTO desk needs"
+            description="WhatsApp expiry alerts, vehicle search, lead management, client balances and more. One platform for RTO agents, PUC centres, insurance agents and driving schools."
           />
           <div className={grid3}>
             {coreFeatures.map((f) => (
@@ -177,7 +177,7 @@ export default function Home() {
           </div>
           <p className="mt-6 text-center">
             <Button href="/features" variant="outline-dark">
-              View all features
+              See all RTO Sarthi features in detail
             </Button>
           </p>
         </div>
@@ -259,11 +259,12 @@ export default function Home() {
           />
           <div className="space-y-3 text-xs leading-relaxed text-slate-600 sm:text-sm">
             <p>
-              An RTO agent handles hundreds of vehicles, and every vehicle has dates that matter: road tax,
-              fitness, permit, PUC and insurance. In a paper register or Excel sheet these dates are easy to
-              miss, and a missed renewal means a penalty for the vehicle owner and lost work for the agent.{' '}
-              <strong className="text-slate-800">RTO agent software</strong> keeps every vehicle, client and
-              document in one place and tells you what is expiring before it expires.
+              <strong className="text-slate-800">RTO agent software</strong> is software that keeps every
+              vehicle, client and document of an RTO desk in one place and tells the agent what is expiring
+              before it expires. An RTO agent handles hundreds of vehicles, and every vehicle has dates that
+              matter: road tax, fitness, permit, PUC and insurance. In a paper register or Excel sheet these
+              dates are easy to miss, and a missed renewal means a penalty for the vehicle owner and lost work
+              for the agent.
             </p>
             <p>
               <strong className="text-slate-800">RTO Sarthi</strong> is complete{' '}

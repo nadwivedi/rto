@@ -27,49 +27,116 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@500;600;700&display=swap" rel="stylesheet" />
 
   <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@type": "Organization",
-            "@id": "https://rtosarthi.com/#organization",
-            "name": "SoftwareBytes",
-            "url": "https://softwarebytes.in",
-            "address": {
-              "@type": "PostalAddress",
-              "addressLocality": "Raipur",
-              "addressRegion": "Chhattisgarh",
-              "addressCountry": "IN"
-            }
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://rtosarthi.com/#organization",
+          "name": "RTO Sarthi",
+          "alternateName": "RTOSarthi",
+          "url": "https://rtosarthi.com/",
+          "logo": {
+            "@type": "ImageObject",
+            "url": "https://rtosarthi.com/favicon.avif",
+            "width": 165,
+            "height": 171
           },
-          {
-            "@type": "WebSite",
-            "@id": "https://rtosarthi.com/#website",
-            "url": "https://rtosarthi.com/",
-            "name": "RTO Sarthi",
-            "description": "India's Best RTO Agent Software",
-            "publisher": { "@id": "https://rtosarthi.com/#organization" },
-            "inLanguage": "en-IN"
+          "description": "RTO Sarthi is RTO agent software for India with WhatsApp expiry alerts, vehicle search, RC download and a vehicle information API.",
+          "email": "rtosarthi@gmail.com",
+          "telephone": "+91-6264682508",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "Raipur",
+            "addressRegion": "Chhattisgarh",
+            "postalCode": "492001",
+            "addressCountry": "IN"
           },
-          {
-            "@type": "SoftwareApplication",
-            "name": "RTO Sarthi",
-            "applicationCategory": "BusinessApplication",
-            "operatingSystem": "Web",
-            "description": "RTO agent software for India — digitize vehicle registration workflows, WhatsApp expiry alerts, AI document entry, and client management.",
-            "url": "https://rtosarthi.com/",
-            "offers": {
-              "@type": "Offer",
-              "price": "0",
-              "priceCurrency": "INR",
-              "description": "Free trial available"
+          "contactPoint": [
+            {
+              "@type": "ContactPoint",
+              "contactType": "customer service",
+              "telephone": "+91-6264682508",
+              "email": "rtosarthi@gmail.com",
+              "areaServed": "IN",
+              "availableLanguage": [
+                "en",
+                "hi"
+              ]
             },
-            "provider": { "@id": "https://rtosarthi.com/#organization" },
-            "areaServed": { "@type": "Country", "name": "India" }
+            {
+              "@type": "ContactPoint",
+              "contactType": "customer service",
+              "telephone": "+91-9202469725",
+              "areaServed": "IN",
+              "availableLanguage": [
+                "en",
+                "hi"
+              ]
+            }
+          ],
+          "sameAs": [
+            "https://www.linkedin.com/company/rto-sarthi/",
+            "https://x.com/rtosarthi",
+            "https://www.instagram.com/rtosarthi/",
+            "https://www.facebook.com/rtosarthi"
+          ],
+          "parentOrganization": {
+            "@type": "Organization",
+            "name": "SoftwareBytes",
+            "url": "https://softwarebytes.in"
           }
-        ]
-      }
-    </script>
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://rtosarthi.com/#website",
+          "url": "https://rtosarthi.com/",
+          "name": "RTO Sarthi",
+          "alternateName": "RTOSarthi",
+          "description": "India's Best RTO Agent Software",
+          "publisher": {
+            "@id": "https://rtosarthi.com/#organization"
+          },
+          "inLanguage": "en-IN"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "@id": "https://rtosarthi.com/#software",
+          "name": "RTO Sarthi",
+          "applicationCategory": "BusinessApplication",
+          "operatingSystem": "Web",
+          "description": "RTO agent software for India: WhatsApp expiry alerts, vehicle search and RC download, lead management, client pending balance, permits, tax, fitness, PUC, insurance and driving licence work.",
+          "url": "https://rtosarthi.com/",
+          "image": "https://rtosarthi.com/rtosarthi.avif",
+          "featureList": [
+            "WhatsApp expiry alerts for tax, fitness, permit, PUC, insurance and GPS",
+            "Vehicle search and RC download by vehicle number",
+            "Vehicle information API",
+            "Lead management with follow-ups",
+            "Client CRM and pending balance reminders",
+            "AI document entry and bulk Excel upload",
+            "Permit, tax, fitness, transfer, NOC and HPA records",
+            "Driving licence and driving school management",
+            "Dealer bills, cashflow and insurance reports",
+            "Multi-agent and staff access"
+          ],
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "INR",
+            "description": "Free trial available"
+          },
+          "provider": {
+            "@id": "https://rtosarthi.com/#organization"
+          },
+          "areaServed": {
+            "@type": "Country",
+            "name": "India"
+          }
+        }
+      ]
+    }
+  </script>
 
 
   <!-- Google tag (gtag.js) -->
