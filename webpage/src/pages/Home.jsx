@@ -298,9 +298,9 @@ export default function Home() {
               <Link to="/driving-licence-software" className="font-semibold text-brand-800 hover:underline">driving licence</Link>{' '}
               work, from{' '}
               <Link to="/learning-licence-software" className="font-semibold text-brand-800 hover:underline">learning licence</Link>{' '}
-              to permanent DL. You can{' '}
+              to permanent DL. RTO Sarthi works on Android, iPhone, Windows and any web browser, and you can{' '}
               <Link to="/rto-agent-software-free-download" className="font-semibold text-brand-800 hover:underline">try RTO Sarthi free</Link>{' '}
-              on PC and mobile.
+              today.
             </p>
           </div>
         </div>

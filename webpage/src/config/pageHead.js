@@ -176,7 +176,7 @@ function getSoftwareJsonLd(name, description, url, { alternateName, features, ca
     ...(alternateName && { alternateName }),
     ...(features && { featureList: features }),
     applicationCategory: category || 'BusinessApplication',
-    operatingSystem: 'Web',
+    operatingSystem: 'Android, iOS, Windows, macOS, Web',
     description,
     url,
     offers: {

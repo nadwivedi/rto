@@ -22,8 +22,8 @@ export const homeFaqs = [
     a: 'Yes. Upload PUC and insurance records in bulk with an Excel file, or let AI document entry read the details from a PDF or photo, instead of typing every vehicle by hand.',
   },
   {
-    q: 'Does RTO Sarthi work on mobile?',
-    a: 'Yes. RTO Sarthi runs in the browser on PC, laptop and mobile, so you and your staff can use it at the desk or outside the RTO office.',
+    q: 'Does RTO Sarthi work on Android, iPhone and Windows?',
+    a: 'Yes. RTO Sarthi works on Android, iPhone (iOS), Windows and Mac computers and in any web browser. Install it as an app from the browser or simply log in, and you and your staff can use it at the desk or outside the RTO office.',
   },
   {
     q: 'Is there a free trial?',
