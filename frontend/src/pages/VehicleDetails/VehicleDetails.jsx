@@ -42,6 +42,7 @@ import {
 
 import { useAuth } from '../../context/AuthContext'
 import Form23Modal from '../forms/components/Form23Modal'
+import Form23Menu from './Form23Menu'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -1474,6 +1475,7 @@ const VehicleDetails = () => {
                               )}
                               Particular
                             </button>
+                            {canForm23 && <Form23Menu historyId={item._id} />}
                             <button
                               onClick={() => handleDeleteHistoryItem(item._id, item.vehicleNumber)}
                               disabled={deletingId === item._id}

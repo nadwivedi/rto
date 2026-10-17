@@ -31,6 +31,7 @@ import {
   Users
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
+import Form23Menu from './Form23Menu'
 import { toInputDate } from '../../utils/dateHelpers'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
@@ -88,6 +89,7 @@ const VehicleSearchHistory = () => {
   const isStaff = user?.type === 'staff'
   const canOpenLeads = !isStaff || user?.sections?.leads !== false
   const canMoveToLeads = !isStaff || (Boolean(user?.permissions?.add) && canOpenLeads)
+  const canForm23 = user?.features?.form23 === true
 
   const [historyList, setHistoryList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -835,6 +837,7 @@ const VehicleSearchHistory = () => {
                                   <FileText className="w-3.5 h-3.5" />
                                 )}
                               </button>
+                              {canForm23 && <Form23Menu historyId={item._id} />}
                               <button
                                 onClick={() => handleDeleteItem(item._id, item.vehicleNumber)}
                                 disabled={deletingId === item._id}
