@@ -7,11 +7,14 @@ import RcFormModal from '../forms/components/RcFormModal'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
+// Each form filled, then the same form blank
 const ITEMS = [
-  { type: 'form23', filled: true, label: 'Form 23', hint: 'Certificate of Registration, auto-filled' },
-  { type: 'tempRc', filled: true, label: 'Temporary RC', hint: 'Temporary authorization, auto-filled' },
-  { type: 'form23', filled: false, label: 'Blank Form 23', hint: 'Empty form to fill manually' },
-  { type: 'tempRc', filled: false, label: 'Blank Temporary RC', hint: 'Empty form to fill manually' }
+  { type: 'form23', filled: true, label: 'Form 23 (Filled)', hint: 'Certificate of Registration from saved RC' },
+  { type: 'form23', filled: false, label: 'Form 23 (Empty)', hint: 'Blank form to fill manually' },
+  { type: 'tempRc', filled: true, label: 'Temporary RC (Filled)', hint: 'Temporary authorization from saved RC' },
+  { type: 'tempRc', filled: false, label: 'Temporary RC (Empty)', hint: 'Blank form to fill manually' },
+  { type: 'nlParticular', filled: true, label: 'NL Particulars (Filled)', hint: 'Vehicle particulars from saved RC' },
+  { type: 'nlParticular', filled: false, label: 'NL Particulars (Empty)', hint: 'Blank form to fill manually' }
 ]
 
 /**
@@ -19,7 +22,7 @@ const ITEMS = [
  * saved RC data (no API credit) or blank. The menu and the form are portalled to <body> so the
  * table's scroll container does not clip them.
  */
-const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc'] }) => {
+const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc', 'nlParticular'] }) => {
   const items = ITEMS.filter((it) => types.includes(it.type))
   const btnRef = useRef(null)
   const menuRef = useRef(null)
@@ -47,7 +50,7 @@ const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc'] }) => {
   const toggleMenu = () => {
     if (menuPos) return setMenuPos(null)
     const r = btnRef.current.getBoundingClientRect()
-    const width = 210
+    const width = 220
     const height = items.length * 50 + 10
     // Open upwards when there is no room below (last rows of the table)
     const top = r.bottom + 4 + height > window.innerHeight ? Math.max(8, r.top - height - 4) : r.bottom + 4
@@ -80,7 +83,7 @@ const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc'] }) => {
         onClick={toggleMenu}
         disabled={loading}
         className='inline-flex items-center gap-1 px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-bold rounded-lg text-xs transition cursor-pointer disabled:opacity-50 whitespace-nowrap'
-        title={items.filter((it) => it.filled).map((it) => it.label).join(' and ')}
+        title='Form 23, Temporary RC and NL Particulars'
         aria-haspopup='menu'
         aria-expanded={Boolean(menuPos)}
       >
@@ -101,7 +104,7 @@ const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc'] }) => {
               key={it.label}
               role='menuitem'
               onClick={() => choose(it)}
-              className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-800 transition cursor-pointer ${i > 0 && !it.filled && items[i - 1].filled ? 'border-t border-slate-100' : ''}`}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-800 transition cursor-pointer ${i > 0 && it.type !== items[i - 1].type ? 'border-t border-slate-100' : ''}`}
             >
               {it.label}
               <span className='block text-[10px] font-normal text-slate-500'>{it.hint}</span>

@@ -90,15 +90,15 @@ const kit = (fields, { v, edit, onChange }, { boldLabels = true, colon = true, c
   })
   const field = (k) => {
     if (!edit) return <span>{v[k]}</span>
-    if (!fields[k].wide) {
-      return <input className='rcf-in' name={k} value={v[k]} onChange={onChange} style={{ ...inputStyle(k), width: '100%' }} />
-    }
-    // Grows with the text (about 90 characters per line), no resize handle
-    const rows = Math.max(1, Math.ceil(v[k].length / 90))
+    // Every field is a textarea so long values wrap like the printed form instead of being cut off.
+    // Height follows the text (fieldSizing in Chrome/Edge, row estimate elsewhere); Enter adds a
+    // new line only in the wide (address / paragraph) fields.
+    const rows = Math.max(1, Math.ceil(v[k].length / (fields[k].wide ? 90 : 18)))
     return (
       <textarea
         className='rcf-in' name={k} value={v[k]} onChange={onChange} rows={rows}
-        style={{ ...inputStyle(k), width: '100%', resize: 'none', overflow: 'hidden', display: 'block', lineHeight: 'inherit' }}
+        onKeyDown={fields[k].wide ? undefined : (e) => e.key === 'Enter' && e.preventDefault()}
+        style={{ ...inputStyle(k), width: '100%', resize: 'none', overflow: 'hidden', display: 'block', lineHeight: 'inherit', fieldSizing: 'content' }}
       />
     )
   }
@@ -114,6 +114,7 @@ const kit = (fields, { v, edit, onChange }, { boldLabels = true, colon = true, c
     labelCell,
     field,
     row: (a, b) => <tr key={a}>{pair(a)}{b ? pair(b) : <><td /><td /></>}</tr>,
+    row3: (a, b, c) => <tr key={a}>{pair(a)}{pair(b)}{pair(c)}</tr>,
     wideRow: (k) => <tr key={k}><td style={labelCell}>{fields[k].label}</td>{valueCell(k, 3)}</tr>,
     table: (rows) => (
       <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
@@ -434,6 +435,21 @@ const tempRcSheet = (props) => {
   )
 }
 
+// "THIRD PARTY Insurance From <company> vide policy certificate/covernote no <no> is valid from <from> to <upto>."
+const insuranceText = (d) => {
+  const company = val(d.INSURANCE_COMP)
+  if (!company) return ''
+  const type = val(d.INSURANCE_TYPE)
+  const policy = val(d.INS_POLICY_NO) || val(d.POLICY_NO)
+  const from = fmtDate(d.INSURANCE_FROM)
+  const upto = fmtDate(d.INSURANCE_UPTO)
+  return [
+    `${type ? `${type} ` : ''}Insurance From ${company}`,
+    policy && `vide policy certificate/covernote no ${policy}`,
+    from && upto ? `is valid from ${from} to ${upto}` : upto && `is valid upto ${upto}`
+  ].filter(Boolean).join(' ') + '.'
+}
+
 const tempRcFromRc = (d) => {
   const form = fillFromRc(TEMP_RC_FIELDS, d)
   form.printedDate = nowStamp()
@@ -441,19 +457,205 @@ const tempRcFromRc = (d) => {
   if (form.hypothecation && !/^\(hypothecation\)/i.test(form.hypothecation)) {
     form.hypothecation = `(Hypothecation) ${form.hypothecation}`
   }
-  // "THIRD PARTY Insurance From <company> vide policy certificate/covernote no <no> is valid from <from> to <upto>."
-  const company = val(d.INSURANCE_COMP)
-  if (company) {
-    const type = val(d.INSURANCE_TYPE)
-    const policy = val(d.INS_POLICY_NO) || val(d.POLICY_NO)
-    const from = fmtDate(d.INSURANCE_FROM)
-    const upto = fmtDate(d.INSURANCE_UPTO)
-    form.insurance = [
-      `${type ? `${type} ` : ''}Insurance From ${company}`,
-      policy && `vide policy certificate/covernote no ${policy}`,
-      from && upto ? `is valid from ${from} to ${upto}` : upto && `is valid upto ${upto}`
-    ].filter(Boolean).join(' ') + '.'
-  }
+  form.insurance = insuranceText(d)
+  return form
+}
+
+/* -------------------- NL VEHICLE PARTICULARS (FOR INTERNAL USE) -------------------- */
+
+const NL_FIELDS = {
+  stateName: {},
+  office: {},
+  applNo: { label: 'Application No:', from: ['APPL_NO'] },
+  regnNo: { label: 'Registration No:', from: ['REGN_NO'] },
+  ownerName: { label: 'Owner Name:', from: ['OWNER_NAME'] },
+  relation: { label: 'Son/Wife/Daughter of:', from: ['F_NAME'] },
+  vehicleClass: { label: 'Vehicle Class:', from: ['VEHICLE_CLASS', 'VH_CLASS_DESC'] },
+  maker: { label: 'Vehicle Maker:', from: ['MAKER_DESC'] },
+  manuMonthYr: { label: 'Month/Year of Manuf.:', from: ['MANU_MONTH_YR'] },
+  ownershipType: { label: 'Ownership Type:', from: ['OWNERSHIP_TYPE', 'OWNER_CD_DESC'] },
+  presentAddress: { label: 'Present Address:', from: ['PRESENT_ADDRESS', 'PERMANENT_ADDRESS'], wide: true },
+  chassis: { label: 'Chassis No:', from: ['CHASI_NO'] },
+  engine: { label: 'Engine No:', from: ['ENG_NO'] },
+  colour: { label: 'Color:', from: ['COLOR'] },
+  status: { label: 'Vehicle Status', from: ['STATUS'] },
+  ownerSerial: { label: 'Owner Serial No:', from: ['OWNER_SERIAL_NO'] },
+  bodyType: { label: 'Body Type:', from: ['BODY_TYPE_DESC'] },
+  cylinders: { label: 'No of Cylinders:', from: ['NO_OF_CYLINDERS', 'NO_CYL', 'NO_CYLINDERS', 'NO_OF_CYL'] },
+  hp: { label: 'Horse Power(BHP):', from: ['HORSE_POWER', 'HP'] },
+  seating: { label: 'Seat(inc. driver):', from: ['SEATING_CAPACITY'] },
+  unladen: { label: 'Unladen Wt(kg):', from: ['UNLADEN_WEIGHT'] },
+  laden: { label: 'Laden Wt(kg):', from: ['LADEN_WEIGHT'] },
+  taxAmount: { label: 'Tax Amount:', from: ['TAX_AMOUNT'] },
+  cc: { label: 'Cubic Capacity:', from: ['CUBIC_CAPACITY'] },
+  model: { label: 'Vehicle Model', from: ['MAKER_MODEL'] },
+  wheelBase: { label: 'Wheel Base', from: ['WHEELBASE', 'WHEEL_BASE'] },
+  floorArea: { label: 'Floor Area', from: ['FLOOR_AREA'] },
+  regnDate: { label: 'Registration Date:', from: ['REGN_DT'], date: true },
+  regnUpto: { label: 'Regn Valid upto:', from: ['REGN_UPTO'], date: true },
+  taxUpto: { label: 'Tax Paid upto:', from: ['TAX_UPTO'], date: true },
+  fuel: { label: 'Fuel:', from: ['FUEL_DESC'] },
+  fitUpto: { label: 'Fitness upto:', from: ['FIT_UPTO'], date: true },
+  norms: { label: 'Vehicle Norms', from: ['FUEL_NORMS', 'NORMS_DESC'] },
+  addressChange: { label: 'Last Change of Address on:' },
+  alteration: { label: 'Last Alteration of Vehicle on' },
+  insurance: { wide: true },
+  hpDetails: { wide: true },
+  permitNo: { label: 'Permit Number :', from: ['PERMIT_NO'] },
+  permitType: { label: 'Permit Type :', from: ['PERMIT_TYPE'] },
+  permitCategory: { label: 'Permit Category :', from: ['PERMIT_CATEGORY'] },
+  permitOffice: { label: 'RTO Office Name :' },
+  serviceType: { label: 'Service Type :' },
+  standing: { label: 'Stand Capacity:', from: ['STANDING_CAPACITY'] },
+  sleeper: { label: 'Sleep Capacity:', from: ['SLEEPER_CAPACITY'] },
+  permitFrom: { label: 'Permit Valid From :', from: ['PERMIT_VALID_FROM', 'PERMIT_ISSUE_DATE'], date: true },
+  permitUpto: { label: 'Permit Valid Upto :', from: ['PERMIT_VALID_UPTO', 'PERMIT_UPTO'], date: true },
+  authNo: { label: 'Authorization Number:', from: ['RC_NP_NO', 'NP_NO'] },
+  authFrom: { label: 'Authorization From:', from: ['NP_ISSUED_FROM', 'NP_FROM'], date: true },
+  authUpto: { label: 'Authorization Upto:', from: ['NP_UPTO'], date: true },
+  pucFrom: { label: 'PUCC From:', from: ['PUCC_FROM', 'PUC_FROM'], date: true },
+  pucUpto: { label: 'PUCC Upto:', from: ['PUCC_UPTO', 'PUC_UPTO'], date: true },
+  regionCode: {},
+  region: {},
+  adminRemark: { label: 'Admin Remark:' },
+  mobile: { label: 'Mobile No:', from: ['MOBILE_NO'] },
+  email: { label: 'Email Id:', from: ['EMAIL_ID'] },
+  previousOwner: { label: 'Previous Owner' },
+  previousRegn: { label: 'Previous RegNo', from: ['PREV_REGN_NO'] },
+  oldState: { label: 'Old State' },
+  entryDate: { label: 'Entry Date' },
+  transferDate: { label: 'Transfer Date' },
+  conversionDate: { label: 'Conversion Date' },
+  frontDesc: {}, frontWt: {}, rearDesc: {}, rearWt: {}, otherDesc: {}, otherWt: {}, tandemDesc: {}, tandemWt: {},
+  printedOn: {}
+}
+
+const nlParticularSheet = (props) => {
+  const { v, edit } = props
+  const k4 = kit(NL_FIELDS, props, { boldLabels: false, colon: false, cols: [21, 29, 21, 29] })
+  const k6 = kit(NL_FIELDS, props, { boldLabels: false, colon: false, cols: [16, 15, 15, 17, 18, 19] })
+  const kColon = kit(NL_FIELDS, props, { boldLabels: false, colon: true, cols: [21, 29, 21, 29] })
+  const { field, inline, cell } = k4
+  const title = { fontWeight: 'bold', fontSize: '13px' }
+  const gap = { height: '8px' }
+  const para = (k) => (edit ? field(k) : <div style={{ lineHeight: 1.45 }}>{v[k]}</div>)
+  const th = { border: '1px solid #1e3a5f', padding: '3px 8px', fontWeight: 'bold', fontSize: '11.5px' }
+
+  return (
+    <div style={{ fontFamily: FONT, color: '#000', fontSize: '11.5px' }}>
+      <div style={{ textAlign: 'center', marginBottom: '10px' }}>
+        <div style={{ fontSize: '16px', fontWeight: 'bold' }}>{underlined(<>GOVERNMENT OF {inline('stateName', '180px')}</>)}</div>
+        <div style={{ ...title, marginTop: '5px' }}>Motor Vehicles Department</div>
+        <div style={title}>[ {inline('office', '140px')} ]</div>
+        <div style={{ ...title, fontSize: '15px', marginTop: '8px' }}>{underlined('VEHICLE PARTICULARS (FOR INTERNAL USE)')}</div>
+      </div>
+
+      {k4.table([
+        k4.row('applNo', 'regnNo'),
+        k4.row('ownerName', 'relation'),
+        k4.row('vehicleClass', 'maker'),
+        k4.row('manuMonthYr', 'ownershipType'),
+        k4.wideRow('presentAddress'),
+        k4.row('chassis', 'engine'),
+        k4.row('colour', 'status')
+      ])}
+      {k6.table([
+        k6.row3('ownerSerial', 'bodyType', 'cylinders'),
+        k6.row3('hp', 'seating', 'unladen'),
+        k6.row3('laden', 'taxAmount', 'cc'),
+        k6.row3('model', 'wheelBase', 'floorArea'),
+        k6.row3('regnDate', 'regnUpto', 'taxUpto'),
+        k6.row3('fuel', 'fitUpto', 'norms')
+      ])}
+      {k4.table([k4.row('addressChange', 'alteration')])}
+      <div style={{ padding: '0 3px' }}>{para('insurance')}</div>
+      <div style={gap} />
+      <div style={{ padding: '0 3px' }}>
+        <div>HP Dtls:</div>
+        {para('hpDetails')}
+      </div>
+      <div style={gap} />
+
+      {k4.table([
+        k4.row('permitNo', 'permitType'),
+        k4.row('permitCategory', 'permitOffice'),
+        k4.row('serviceType'),
+        k4.row('standing', 'sleeper'),
+        k4.row('permitFrom', 'permitUpto'),
+        k4.row('authNo', 'authFrom'),
+        k4.row('authUpto'),
+        k4.row('pucFrom', 'pucUpto')
+      ])}
+
+      <div style={{ ...title, textAlign: 'center', margin: '4px 0' }}>PERMIT AREA DETAIL</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', border: '1px solid #1e3a5f' }}>
+        <colgroup><col style={{ width: '18%' }} /><col style={{ width: '82%' }} /></colgroup>
+        <tbody>
+          <tr>
+            <td style={{ ...th, textAlign: 'center' }}>Region Code</td>
+            <td style={{ ...th, textAlign: 'center' }}>Region</td>
+          </tr>
+          <tr>
+            {edit || v.regionCode || v.region ? (
+              <>
+                <td style={{ ...cell, padding: '6px 8px' }}>{field('regionCode')}</td>
+                <td style={{ ...cell, padding: '6px 8px' }}>{field('region')}</td>
+              </>
+            ) : (
+              <td colSpan={2} style={{ ...cell, padding: '10px 8px', fontWeight: 'bold' }}>No records found.</td>
+            )}
+          </tr>
+        </tbody>
+      </table>
+      <div style={gap} />
+
+      {k4.table([k4.row('adminRemark'), k4.row('mobile', 'email')])}
+      <div style={{ padding: '0 3px' }}>Other State/Transfer/Conversion Details</div>
+      {kColon.table([
+        kColon.row('previousOwner', 'previousRegn'),
+        kColon.row('oldState', 'entryDate'),
+        kColon.row('transferDate', 'conversionDate')
+      ])}
+
+      <div style={{ margin: '4px 0 0 12px' }}>{underlined('Additional Particulars')}</div>
+      <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', marginTop: '6px' }}>
+        <colgroup><col style={{ width: '28%' }} /><col style={{ width: '36%' }} /><col style={{ width: '36%' }} /></colgroup>
+        <tbody>
+          <tr>
+            <td style={cell} />
+            <td style={cell}>Number,Desc &amp; size of</td>
+            <td style={cell}>Regd. Axle Weight(in kgs)</td>
+          </tr>
+          {[['a) Front:', 'front'], ['b) Rear:', 'rear'], ['c) Other:', 'other'], ['d) Tandem:', 'tandem']].map(([label, k]) => (
+            <tr key={k}>
+              <td style={{ ...cell, paddingLeft: '12px' }}>{label}</td>
+              <td style={cell}>{field(`${k}Desc`)}</td>
+              <td style={cell}>{field(`${k}Wt`)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div style={{ textAlign: 'right', marginTop: '36px', lineHeight: 1.5 }}>
+        <div>Signature of Registering Authority</div>
+        <div>{v.office} [ {v.stateName} ]</div>
+      </div>
+      <div style={{ textAlign: 'center', marginTop: '28px' }}>Printed On: {inline('printedOn', '150px')}</div>
+    </div>
+  )
+}
+
+// "27-Aug-2026 21:34:48", as printed on the NL particulars
+const nowStampMon = () => {
+  const d = new Date()
+  return `${today()} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`
+}
+
+const nlParticularFromRc = (d) => {
+  const form = fillFromRc(NL_FIELDS, d)
+  form.insurance = insuranceText(d)
+  if (val(d.FINANCER_DETAILS)) form.hpDetails = `1. Hypothecation-${val(d.FINANCER_DETAILS)}`
+  form.printedOn = nowStampMon()
   return form
 }
 
@@ -475,6 +677,15 @@ export const RC_FORMS = {
     sheet: tempRcSheet,
     fromRc: tempRcFromRc,
     blank: () => ({ ...emptyOf(TEMP_RC_FIELDS), printedDate: nowStamp() })
+  },
+  nlParticular: {
+    title: 'NL Particulars',
+    subtitle: 'Vehicle Particulars (For Internal Use)',
+    printTitle: 'Vehicle Particulars (For Internal Use)',
+    fields: NL_FIELDS,
+    sheet: nlParticularSheet,
+    fromRc: nlParticularFromRc,
+    blank: () => ({ ...emptyOf(NL_FIELDS), printedOn: nowStampMon() })
   }
 }
 

@@ -90,7 +90,7 @@ const VehicleSearchHistory = () => {
   const canOpenLeads = !isStaff || user?.sections?.leads !== false
   const canMoveToLeads = !isStaff || (Boolean(user?.permissions?.add) && canOpenLeads)
   // RC forms the admin switched on for this user
-  const rcFormTypes = [user?.features?.form23 === true && 'form23', user?.features?.tempRc === true && 'tempRc'].filter(Boolean)
+  const rcFormTypes = ['form23', 'tempRc', 'nlParticular'].filter((t) => user?.features?.[t] === true)
 
   const [historyList, setHistoryList] = useState([])
   const [loading, setLoading] = useState(true)

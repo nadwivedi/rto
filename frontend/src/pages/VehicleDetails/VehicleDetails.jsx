@@ -51,11 +51,13 @@ const VehicleDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const historyIdParam = searchParams.get('historyId')
   const { user } = useAuth()
-  // Form 23 and Temporary RC are switched on per user from the admin panel (features.form23 / tempRc).
-  // rcForm: { type: 'form23' | 'tempRc', blank } - blank opens an empty form
+  // RC forms are switched on per user from the admin panel (features.form23 / tempRc / nlParticular).
+  // rcForm: { type: 'form23' | 'tempRc' | 'nlParticular', blank } - blank opens an empty form
   const canForm23 = user?.features?.form23 === true
   const canTempRc = user?.features?.tempRc === true
-  const rcFormTypes = [canForm23 && 'form23', canTempRc && 'tempRc'].filter(Boolean)
+  const canNlParticular = user?.features?.nlParticular === true
+  const rcFormTypes = [canForm23 && 'form23', canTempRc && 'tempRc', canNlParticular && 'nlParticular'].filter(Boolean)
+  const BLANK_LABELS = { form23: 'Blank Form 23', tempRc: 'Blank Temp RC', nlParticular: 'Blank NL Particulars' }
   const [rcForm, setRcForm] = useState(null)
 
   const [vehicleNo, setVehicleNo] = useState('')
@@ -583,6 +585,15 @@ const VehicleDetails = () => {
                     Temp RC
                   </button>
                 )}
+                {canNlParticular && (
+                  <button
+                    onClick={() => setRcForm({ type: 'nlParticular' })}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+                  >
+                    <FileCheck className="w-4 h-4" />
+                    NL Particulars
+                  </button>
+                )}
                 <button
                   onClick={handlePrint}
                   className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm text-xs font-semibold transition cursor-pointer"
@@ -598,7 +609,7 @@ const VehicleDetails = () => {
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
               >
                 <FileCheck className="w-4 h-4" />
-                {rcFormTypes.length > 1 ? 'Blank RC Forms' : canForm23 ? 'Blank Form 23' : 'Blank Temp RC'}
+                {rcFormTypes.length > 1 ? 'Blank RC Forms' : BLANK_LABELS[rcFormTypes[0]]}
               </button>
             )}
           </div>
@@ -820,6 +831,15 @@ const VehicleDetails = () => {
                     >
                       <FileCheck className="w-4 h-4 text-sky-600" />
                       Temporary RC
+                    </button>
+                  )}
+                  {canNlParticular && (
+                    <button
+                      onClick={() => setRcForm({ type: 'nlParticular' })}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
+                    >
+                      <FileCheck className="w-4 h-4 text-sky-600" />
+                      NL Particulars
                     </button>
                   )}
                   <div className="flex items-center gap-2">

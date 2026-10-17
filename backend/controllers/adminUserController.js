@@ -30,7 +30,8 @@ const USER_FIELDS = [
   { key: 'features.rcDetails', label: 'Feature: RC Details' },
   { key: 'features.forms', label: 'Feature: Forms' },
   { key: 'features.form23', label: 'Feature: Form 23 in RC Details' },
-  { key: 'features.tempRc', label: 'Feature: Temporary RC in RC Details' }
+  { key: 'features.tempRc', label: 'Feature: Temporary RC in RC Details' },
+  { key: 'features.nlParticular', label: 'Feature: NL Particulars in RC Details' }
 ]
 
 // Get all users
@@ -276,8 +277,9 @@ exports.createUser = async (req, res) => {
         rcDetails: features.rcDetails === true,
         forms: features.forms === true,
         form23: features.form23 === true,
-        tempRc: features.tempRc === true
-      } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false, form23: false, tempRc: false },
+        tempRc: features.tempRc === true,
+        nlParticular: features.nlParticular === true
+      } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false, form23: false, tempRc: false, nlParticular: false },
       // Starts at 0; the limit only grows when a sale is recorded in Vehicle API Sales
       rcSearchLimit: 0,
       rcSearchCount: 0
@@ -429,7 +431,8 @@ exports.updateUser = async (req, res) => {
         rcDetails: features.rcDetails === true,
         forms: features.forms === true,
         form23: features.form23 === true,
-        tempRc: features.tempRc === true
+        tempRc: features.tempRc === true,
+        nlParticular: features.nlParticular === true
       }
     }
     if (planType !== undefined) {

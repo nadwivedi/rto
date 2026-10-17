@@ -92,7 +92,7 @@ const RcFormModal = ({ vehicleData, type: initialType = 'form23', types = Object
           </div>
 
           {types.length > 1 && (
-          <div className='grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl' role='tablist'>
+          <div className='grid gap-1 p-1 bg-slate-100 rounded-xl' style={{ gridTemplateColumns: `repeat(${types.length}, 1fr)` }} role='tablist'>
             {types.map((key) => [key, RC_FORMS[key]]).map(([key, f]) => (
               <button
                 key={key}
