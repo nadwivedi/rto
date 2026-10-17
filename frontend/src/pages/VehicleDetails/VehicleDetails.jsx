@@ -41,8 +41,8 @@ import {
 } from 'lucide-react'
 
 import { useAuth } from '../../context/AuthContext'
-import Form23Modal from '../forms/components/Form23Modal'
-import Form23Menu from './Form23Menu'
+import RcFormModal from '../forms/components/RcFormModal'
+import RcFormsMenu from './RcFormsMenu'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -51,9 +51,10 @@ const VehicleDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const historyIdParam = searchParams.get('historyId')
   const { user } = useAuth()
-  // Form 23 is switched on per user from the admin panel. 'rc' = filled from the result, 'blank' = empty form
+  // Form 23 and Temporary RC are switched on per user from the admin panel (features.form23).
+  // rcForm: { type: 'form23' | 'tempRc', blank } - blank opens an empty form
   const canForm23 = user?.features?.form23 === true
-  const [form23Mode, setForm23Mode] = useState(null)
+  const [rcForm, setRcForm] = useState(null)
 
   const [vehicleNo, setVehicleNo] = useState('')
   const [loading, setLoading] = useState(false)
@@ -563,13 +564,22 @@ const VehicleDetails = () => {
                   {particularLoading ? 'Generating...' : 'Download Particular'}
                 </button>
                 {canForm23 && (
-                  <button
-                    onClick={() => setForm23Mode('rc')}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-                  >
-                    <FileCheck className="w-4 h-4" />
-                    Form 23
-                  </button>
+                  <>
+                    <button
+                      onClick={() => setRcForm({ type: 'form23' })}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+                    >
+                      <FileCheck className="w-4 h-4" />
+                      Form 23
+                    </button>
+                    <button
+                      onClick={() => setRcForm({ type: 'tempRc' })}
+                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+                    >
+                      <FileCheck className="w-4 h-4" />
+                      Temp RC
+                    </button>
+                  </>
                 )}
                 <button
                   onClick={handlePrint}
@@ -582,11 +592,12 @@ const VehicleDetails = () => {
             )}
             {!vehicleData && canForm23 && (
               <button
-                onClick={() => setForm23Mode('blank')}
+                onClick={() => setRcForm({ type: 'form23', blank: true })}
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+                title="Blank Form 23 or Temporary RC"
               >
                 <FileCheck className="w-4 h-4" />
-                Blank Form 23
+                Blank RC Forms
               </button>
             )}
           </div>
@@ -793,13 +804,22 @@ const VehicleDetails = () => {
                     {particularLoading ? 'Generating...' : 'Export Particular'}
                   </button>
                   {canForm23 && (
-                    <button
-                      onClick={() => setForm23Mode('rc')}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
-                    >
-                      <FileCheck className="w-4 h-4 text-sky-600" />
-                      Form 23
-                    </button>
+                    <>
+                      <button
+                        onClick={() => setRcForm({ type: 'form23' })}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
+                      >
+                        <FileCheck className="w-4 h-4 text-sky-600" />
+                        Form 23
+                      </button>
+                      <button
+                        onClick={() => setRcForm({ type: 'tempRc' })}
+                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
+                      >
+                        <FileCheck className="w-4 h-4 text-sky-600" />
+                        Temporary RC
+                      </button>
+                    </>
                   )}
                   <div className="flex items-center gap-2">
                     <span
@@ -1475,7 +1495,7 @@ const VehicleDetails = () => {
                               )}
                               Particular
                             </button>
-                            {canForm23 && <Form23Menu historyId={item._id} />}
+                            {canForm23 && <RcFormsMenu historyId={item._id} />}
                             <button
                               onClick={() => handleDeleteHistoryItem(item._id, item.vehicleNumber)}
                               disabled={deletingId === item._id}
@@ -1511,11 +1531,12 @@ const VehicleDetails = () => {
 
       </div>
 
-      {canForm23 && form23Mode && (
-        <Form23Modal
-          key={form23Mode === 'rc' ? vehicleData?.REGN_NO : 'blank'}
-          vehicleData={form23Mode === 'rc' ? vehicleData : null}
-          onClose={() => setForm23Mode(null)}
+      {canForm23 && rcForm && (
+        <RcFormModal
+          key={`${rcForm.type}-${rcForm.blank ? 'blank' : vehicleData?.REGN_NO}`}
+          type={rcForm.type}
+          vehicleData={rcForm.blank ? null : vehicleData}
+          onClose={() => setRcForm(null)}
         />
       )}
     </div>

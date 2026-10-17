@@ -31,7 +31,7 @@ import {
   Users
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import Form23Menu from './Form23Menu'
+import RcFormsMenu from './RcFormsMenu'
 import { toInputDate } from '../../utils/dateHelpers'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
@@ -837,7 +837,7 @@ const VehicleSearchHistory = () => {
                                   <FileText className="w-3.5 h-3.5" />
                                 )}
                               </button>
-                              {canForm23 && <Form23Menu historyId={item._id} />}
+                              {canForm23 && <RcFormsMenu historyId={item._id} />}
                               <button
                                 onClick={() => handleDeleteItem(item._id, item.vehicleNumber)}
                                 disabled={deletingId === item._id}

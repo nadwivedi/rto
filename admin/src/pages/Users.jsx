@@ -1366,7 +1366,7 @@ const Users = () => {
                     />
                     Forms
                   </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer' title='Show Form 23 (Certificate of Registration) in RC Details'>
+                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer' title='Show Form 23 and Temporary RC in RC Details'>
                     <input
                       type='checkbox'
                       name='features_form23'
@@ -1374,7 +1374,7 @@ const Users = () => {
                       onChange={handleChange}
                       className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
                     />
-                    Form 23 (RC)
+                    Form 23 & Temp RC
                   </label>
                 </div>
 

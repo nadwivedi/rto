@@ -29,7 +29,7 @@ const USER_FIELDS = [
   { key: 'features.moneyReceived', label: 'Feature: Money Received' },
   { key: 'features.rcDetails', label: 'Feature: RC Details' },
   { key: 'features.forms', label: 'Feature: Forms' },
-  { key: 'features.form23', label: 'Feature: Form 23 in RC Details' }
+  { key: 'features.form23', label: 'Feature: Form 23 & Temp RC in RC Details' }
 ]
 
 // Get all users
