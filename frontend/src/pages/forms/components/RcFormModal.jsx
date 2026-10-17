@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { toast } from 'react-toastify'
-import { RC_FORMS, rcFieldCount, emptyRcForm } from './rcForms'
+import { RC_FORMS, RC_FORM_CSS, rcFieldCount, emptyRcForm } from './rcForms'
 
 /**
  * Editable RC form (Form 23 or Temporary RC) filled from a vehicle RC search. `vehicleData` null
@@ -72,6 +72,7 @@ const RcFormModal = ({ vehicleData, type: initialType = 'form23', onClose }) => 
       <div className='w-full max-w-[1280px] flex flex-col lg:flex-row gap-4'>
         <div className='flex-1 bg-gray-200/80 rounded-2xl p-3 shadow-inner overflow-x-auto'>
           <div className='bg-white shadow-2xl mx-auto rounded-sm' style={{ width: '210mm', minHeight: '297mm', padding: '12mm 14mm' }}>
+            <style>{RC_FORM_CSS}</style>
             {def.sheet({ v: form, edit: true, onChange: handleChange })}
           </div>
         </div>

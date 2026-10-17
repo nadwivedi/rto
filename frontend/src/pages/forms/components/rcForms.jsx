@@ -63,6 +63,17 @@ const fillFromRc = (fields, d) => {
 
 const FONT = 'Arial, Helvetica, sans-serif'
 
+// Screen-only styles for the editable sheet (inline styles cannot do :hover / :focus)
+export const RC_FORM_CSS = `
+  .rcf-in:hover { background: #f1f5f9 !important; }
+  .rcf-in:focus { background: #eef2ff !important; border-bottom: 1px solid #6366f1 !important; }
+`
+
+// Underline that covers the whole heading, including the editable value inside it
+const underlined = (children) => (
+  <span style={{ borderBottom: '1.5px solid #000', paddingBottom: '1px' }}>{children}</span>
+)
+
 /**
  * Layout helpers shared by the sheets. `edit` renders inputs (screen, empty ones highlighted);
  * without it the values are plain text (print).
@@ -71,16 +82,24 @@ const kit = (fields, { v, edit, onChange }, { boldLabels = true, colon = true, c
   const cell = { padding: '1px 3px', verticalAlign: 'top', fontSize: '11.5px', lineHeight: 1.35 }
   const labelCell = { ...cell, fontWeight: boldLabels ? 'bold' : 'normal', whiteSpace: 'nowrap' }
 
+  // Filled values look like printed text; empty ones are yellow. Hover/focus styles: RC_FORM_CSS
+  const inputStyle = (k) => ({
+    border: 'none', outline: 'none', font: 'inherit', color: 'inherit', padding: '0 2px', borderRadius: '2px',
+    borderBottom: v[k] ? '1px solid transparent' : '1px dashed #eab308',
+    background: v[k] ? 'transparent' : '#fef9c3'
+  })
   const field = (k) => {
     if (!edit) return <span>{v[k]}</span>
-    const style = {
-      width: '100%', border: 'none', borderBottom: '1px dashed #cbd5e1', outline: 'none', font: 'inherit',
-      padding: '0 2px', background: v[k] ? 'transparent' : '#fef9c3', resize: 'vertical'
+    if (!fields[k].wide) {
+      return <input className='rcf-in' name={k} value={v[k]} onChange={onChange} style={{ ...inputStyle(k), width: '100%' }} />
     }
-    return fields[k].wide ? (
-      <textarea name={k} value={v[k]} onChange={onChange} rows={2} style={style} />
-    ) : (
-      <input name={k} value={v[k]} onChange={onChange} style={style} />
+    // Grows with the text (about 90 characters per line), no resize handle
+    const rows = Math.max(1, Math.ceil(v[k].length / 90))
+    return (
+      <textarea
+        className='rcf-in' name={k} value={v[k]} onChange={onChange} rows={rows}
+        style={{ ...inputStyle(k), width: '100%', resize: 'none', overflow: 'hidden', display: 'block', lineHeight: 'inherit' }}
+      />
     )
   }
   const valueCell = (k, span) => (
@@ -102,11 +121,16 @@ const kit = (fields, { v, edit, onChange }, { boldLabels = true, colon = true, c
         <tbody>{rows}</tbody>
       </table>
     ),
-    // Inline value inside a sentence; keeps a blank gap only when there is nothing to print
-    inline: (k, width) => (
-      <span style={{ display: 'inline-block', minWidth: edit || !v[k] ? width : 0, textAlign: 'left', verticalAlign: 'bottom' }}>
-        {field(k)}
-      </span>
+    // Inline value inside a sentence or heading. On screen the input is as wide as its text;
+    // in print an empty value keeps a blank gap to write in
+    inline: (k, width) => edit ? (
+      <input
+        className='rcf-in' name={k} value={v[k]} onChange={onChange}
+        size={v[k] ? v[k].length + 1 : Math.round(parseInt(width, 10) / 8)}
+        style={{ ...inputStyle(k), width: 'auto', fieldSizing: 'content', minWidth: v[k] ? '2ch' : width, fontWeight: 'inherit' }}
+      />
+    ) : (
+      <span style={{ display: 'inline-block', minWidth: v[k] ? 0 : width, textAlign: 'left', verticalAlign: 'bottom' }}>{v[k]}</span>
     )
   }
 }
@@ -187,8 +211,8 @@ const form23Sheet = (props) => {
   return (
     <div style={{ fontFamily: FONT, color: '#000', fontSize: '11.5px' }}>
       <div style={{ textAlign: 'center', marginBottom: '8px' }}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', textDecoration: 'underline' }}>
-          GOVERNMENT OF {inline('stateName', '180px')}
+        <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+          {underlined(<>GOVERNMENT OF {inline('stateName', '180px')}</>)}
         </div>
         <div style={{ fontSize: '13px', fontWeight: 'bold', marginTop: '3px' }}>
           Motor Vehicles Department {inline('office', '160px')}
@@ -354,11 +378,11 @@ const tempRcSheet = (props) => {
   return (
     <div style={{ fontFamily: FONT, color: '#000', fontSize: '11.5px' }}>
       <div style={{ textAlign: 'center', marginBottom: '4px' }}>
-        <div style={{ fontSize: '16px', fontWeight: 'bold', textDecoration: 'underline' }}>
-          GOVERNMENT OF {inline('stateName', '180px')}
+        <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+          {underlined(<>GOVERNMENT OF {inline('stateName', '180px')}</>)}
         </div>
         <div style={{ ...title, marginTop: '3px' }}>[ {inline('office', '140px')} ]</div>
-        <div style={{ ...title, textDecoration: 'underline', marginTop: '3px' }}>TEMPORARY AUTHORIZATION OF REGISTRATION CERTIFICATE</div>
+        <div style={{ ...title, marginTop: '5px' }}>{underlined('TEMPORARY AUTHORIZATION OF REGISTRATION CERTIFICATE')}</div>
         <div style={{ ...title, marginTop: '3px' }}>REGISTRATION NO : {inline('regnNo', '160px')}</div>
       </div>
       <div style={{ textAlign: 'right', fontWeight: 'bold', marginBottom: '8px' }}>
