@@ -1,4 +1,5 @@
 import React from 'react'
+import QRCode from 'qrcode'
 
 // Printable RC forms filled from a vehicle RC search (raw Vahan fields). Each form has its
 // fields (key -> label and the raw RC fields to try), a fromRc() mapper and a Sheet layout.
@@ -73,6 +74,39 @@ export const RC_FORM_CSS = `
 const underlined = (children) => (
   <span style={{ borderBottom: '1.5px solid #000', paddingBottom: '1px' }}>{children}</span>
 )
+
+/**
+ * QR code in the top-right corner with the registration, chassis and engine numbers as plain text,
+ * built from the current form values (so manual corrections are included). Drawn as SVG so it
+ * shows the same on screen, in print and in the saved PDF. Nothing is drawn on an empty form.
+ */
+const qrCorner = (v) => {
+  const text = [
+    v.regnNo && `Registration No: ${v.regnNo}`,
+    v.chassis && `Chassis No: ${v.chassis}`,
+    v.engine && `Engine No: ${v.engine}`
+  ].filter(Boolean).join('\n')
+  if (!text) return null
+
+  const { modules } = QRCode.create(text, { errorCorrectionLevel: 'M' })
+  const size = modules.size
+  const quiet = 2
+  let d = ''
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      if (modules.data[y * size + x]) d += `M${x + quiet} ${y + quiet}h1v1h-1z`
+    }
+  }
+  const box = size + quiet * 2
+  return (
+    <div style={{ position: 'absolute', top: 0, right: 0, width: '22mm', height: '22mm' }}>
+      <svg viewBox={`0 0 ${box} ${box}`} width='100%' height='100%' shapeRendering='crispEdges' role='img' aria-label='QR code'>
+        <rect width={box} height={box} fill='#fff' />
+        <path d={d} fill='#000' />
+      </svg>
+    </div>
+  )
+}
 
 /**
  * Layout helpers shared by the sheets. `edit` renders inputs (screen, empty ones highlighted);
@@ -210,7 +244,8 @@ const form23Sheet = (props) => {
   const heading = { fontWeight: 'bold', fontSize: '12.5px', margin: '6px 0 2px' }
 
   return (
-    <div style={{ fontFamily: FONT, color: '#000', fontSize: '11.5px' }}>
+    <div style={{ fontFamily: FONT, color: '#000', fontSize: '11.5px', position: 'relative' }}>
+      {qrCorner(v)}
       <div style={{ textAlign: 'center', marginBottom: '8px' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
           {underlined(<>GOVERNMENT OF {inline('stateName', '180px')}</>)}
@@ -377,8 +412,9 @@ const tempRcSheet = (props) => {
   )
 
   return (
-    <div style={{ fontFamily: FONT, color: '#000', fontSize: '11.5px' }}>
-      <div style={{ textAlign: 'center', marginBottom: '4px' }}>
+    <div style={{ fontFamily: FONT, color: '#000', fontSize: '11.5px', position: 'relative' }}>
+      {qrCorner(v)}
+      <div style={{ textAlign: 'center', marginBottom: '4px', minHeight: '23mm' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
           {underlined(<>GOVERNMENT OF {inline('stateName', '180px')}</>)}
         </div>
@@ -542,7 +578,8 @@ const nlParticularSheet = (props) => {
   const th = { border: '1px solid #1e3a5f', padding: '3px 8px', fontWeight: 'bold', fontSize: '11.5px' }
 
   return (
-    <div style={{ fontFamily: FONT, color: '#000', fontSize: '11.5px' }}>
+    <div style={{ fontFamily: FONT, color: '#000', fontSize: '11.5px', position: 'relative' }}>
+      {qrCorner(v)}
       <div style={{ textAlign: 'center', marginBottom: '10px' }}>
         <div style={{ fontSize: '16px', fontWeight: 'bold' }}>{underlined(<>GOVERNMENT OF {inline('stateName', '180px')}</>)}</div>
         <div style={{ ...title, marginTop: '5px' }}>Motor Vehicles Department</div>
