@@ -156,6 +156,7 @@ const Users = () => {
     features_rcDetails: false,
     features_forms: false,
     features_form23: false,
+    features_tempRc: false,
     rcSearchLimit: 0,
     rcSearchCount: 0
   })
@@ -313,7 +314,8 @@ const Users = () => {
           moneyReceived: formData.features_moneyReceived,
           rcDetails: formData.features_rcDetails,
           forms: formData.features_forms,
-          form23: formData.features_form23
+          form23: formData.features_form23,
+          tempRc: formData.features_tempRc
         }
       }
       delete bodyData.features_greenTax
@@ -324,6 +326,7 @@ const Users = () => {
       delete bodyData.features_rcDetails
       delete bodyData.features_forms
       delete bodyData.features_form23
+      delete bodyData.features_tempRc
       // Shown in the form for reference only; the limit changes through Vehicle API Sales
       delete bodyData.rcSearchLimit
       delete bodyData.rcSearchCount
@@ -353,7 +356,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, rcSearchLimit: 0, rcSearchCount: 0 })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, rcSearchLimit: 0, rcSearchCount: 0 })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -391,6 +394,7 @@ const Users = () => {
       features_rcDetails: user.features?.rcDetails ?? false,
       features_forms: user.features?.forms ?? false,
       features_form23: user.features?.form23 ?? false,
+      features_tempRc: user.features?.tempRc ?? false,
       rcSearchLimit: user.rcSearchLimit ?? 0,
       rcSearchCount: user.rcSearchCount ?? 0
     })
@@ -403,7 +407,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, rcSearchLimit: 0, rcSearchCount: 0 })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, rcSearchLimit: 0, rcSearchCount: 0 })
   }
 
   const openDeleteModal = (user) => {
@@ -1366,7 +1370,7 @@ const Users = () => {
                     />
                     Forms
                   </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer' title='Show Form 23 and Temporary RC in RC Details'>
+                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer' title='Show Form 23 (Certificate of Registration) in RC Details'>
                     <input
                       type='checkbox'
                       name='features_form23'
@@ -1374,7 +1378,17 @@ const Users = () => {
                       onChange={handleChange}
                       className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
                     />
-                    Form 23 & Temp RC
+                    Form 23 (RC)
+                  </label>
+                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer' title='Show Temporary Authorization of Registration Certificate in RC Details'>
+                    <input
+                      type='checkbox'
+                      name='features_tempRc'
+                      checked={formData.features_tempRc}
+                      onChange={handleChange}
+                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                    />
+                    Temporary RC
                   </label>
                 </div>
 

@@ -115,7 +115,8 @@ const userSchema = new mongoose.Schema({
     moneyReceived: { type: Boolean, default: false },
     rcDetails: { type: Boolean, default: false },
     forms: { type: Boolean, default: false },
-    form23: { type: Boolean, default: false }
+    form23: { type: Boolean, default: false },
+    tempRc: { type: Boolean, default: false }
   },
   rcSearchLimit: {
     type: Number,

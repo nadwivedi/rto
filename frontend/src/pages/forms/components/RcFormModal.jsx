@@ -4,9 +4,10 @@ import { RC_FORMS, RC_FORM_CSS, rcFieldCount, emptyRcForm } from './rcForms'
 
 /**
  * Editable RC form (Form 23 or Temporary RC) filled from a vehicle RC search. `vehicleData` null
- * opens a blank form. Both forms are kept, so switching tabs does not lose typed changes.
+ * opens a blank form. `types` = forms this user may open (tabs). Each form keeps its own values,
+ * so switching tabs does not lose typed changes.
  */
-const RcFormModal = ({ vehicleData, type: initialType = 'form23', onClose }) => {
+const RcFormModal = ({ vehicleData, type: initialType = 'form23', types = Object.keys(RC_FORMS), onClose }) => {
   const [type, setType] = useState(initialType)
   const [forms, setForms] = useState(() => ({
     [initialType]: vehicleData ? RC_FORMS[initialType].fromRc(vehicleData) : RC_FORMS[initialType].blank()
@@ -90,8 +91,9 @@ const RcFormModal = ({ vehicleData, type: initialType = 'form23', onClose }) => 
             </button>
           </div>
 
+          {types.length > 1 && (
           <div className='grid grid-cols-2 gap-1 p-1 bg-slate-100 rounded-xl' role='tablist'>
-            {Object.entries(RC_FORMS).map(([key, f]) => (
+            {types.map((key) => [key, RC_FORMS[key]]).map(([key, f]) => (
               <button
                 key={key}
                 role='tab'
@@ -103,6 +105,7 @@ const RcFormModal = ({ vehicleData, type: initialType = 'form23', onClose }) => 
               </button>
             ))}
           </div>
+          )}
 
           <div className='bg-sky-50/70 p-3.5 rounded-xl border border-sky-100 text-xs text-sky-900 space-y-1'>
             {vehicleData ? (

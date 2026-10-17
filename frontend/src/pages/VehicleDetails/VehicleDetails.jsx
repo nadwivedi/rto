@@ -51,9 +51,11 @@ const VehicleDetails = () => {
   const [searchParams, setSearchParams] = useSearchParams()
   const historyIdParam = searchParams.get('historyId')
   const { user } = useAuth()
-  // Form 23 and Temporary RC are switched on per user from the admin panel (features.form23).
+  // Form 23 and Temporary RC are switched on per user from the admin panel (features.form23 / tempRc).
   // rcForm: { type: 'form23' | 'tempRc', blank } - blank opens an empty form
   const canForm23 = user?.features?.form23 === true
+  const canTempRc = user?.features?.tempRc === true
+  const rcFormTypes = [canForm23 && 'form23', canTempRc && 'tempRc'].filter(Boolean)
   const [rcForm, setRcForm] = useState(null)
 
   const [vehicleNo, setVehicleNo] = useState('')
@@ -564,22 +566,22 @@ const VehicleDetails = () => {
                   {particularLoading ? 'Generating...' : 'Download Particular'}
                 </button>
                 {canForm23 && (
-                  <>
-                    <button
-                      onClick={() => setRcForm({ type: 'form23' })}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-                    >
-                      <FileCheck className="w-4 h-4" />
-                      Form 23
-                    </button>
-                    <button
-                      onClick={() => setRcForm({ type: 'tempRc' })}
-                      className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-                    >
-                      <FileCheck className="w-4 h-4" />
-                      Temp RC
-                    </button>
-                  </>
+                  <button
+                    onClick={() => setRcForm({ type: 'form23' })}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+                  >
+                    <FileCheck className="w-4 h-4" />
+                    Form 23
+                  </button>
+                )}
+                {canTempRc && (
+                  <button
+                    onClick={() => setRcForm({ type: 'tempRc' })}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+                  >
+                    <FileCheck className="w-4 h-4" />
+                    Temp RC
+                  </button>
                 )}
                 <button
                   onClick={handlePrint}
@@ -590,14 +592,13 @@ const VehicleDetails = () => {
                 </button>
               </>
             )}
-            {!vehicleData && canForm23 && (
+            {!vehicleData && rcFormTypes.length > 0 && (
               <button
-                onClick={() => setRcForm({ type: 'form23', blank: true })}
+                onClick={() => setRcForm({ type: rcFormTypes[0], blank: true })}
                 className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-                title="Blank Form 23 or Temporary RC"
               >
                 <FileCheck className="w-4 h-4" />
-                Blank RC Forms
+                {rcFormTypes.length > 1 ? 'Blank RC Forms' : canForm23 ? 'Blank Form 23' : 'Blank Temp RC'}
               </button>
             )}
           </div>
@@ -804,22 +805,22 @@ const VehicleDetails = () => {
                     {particularLoading ? 'Generating...' : 'Export Particular'}
                   </button>
                   {canForm23 && (
-                    <>
-                      <button
-                        onClick={() => setRcForm({ type: 'form23' })}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
-                      >
-                        <FileCheck className="w-4 h-4 text-sky-600" />
-                        Form 23
-                      </button>
-                      <button
-                        onClick={() => setRcForm({ type: 'tempRc' })}
-                        className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
-                      >
-                        <FileCheck className="w-4 h-4 text-sky-600" />
-                        Temporary RC
-                      </button>
-                    </>
+                    <button
+                      onClick={() => setRcForm({ type: 'form23' })}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
+                    >
+                      <FileCheck className="w-4 h-4 text-sky-600" />
+                      Form 23
+                    </button>
+                  )}
+                  {canTempRc && (
+                    <button
+                      onClick={() => setRcForm({ type: 'tempRc' })}
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
+                    >
+                      <FileCheck className="w-4 h-4 text-sky-600" />
+                      Temporary RC
+                    </button>
                   )}
                   <div className="flex items-center gap-2">
                     <span
@@ -1495,7 +1496,7 @@ const VehicleDetails = () => {
                               )}
                               Particular
                             </button>
-                            {canForm23 && <RcFormsMenu historyId={item._id} />}
+                            {rcFormTypes.length > 0 && <RcFormsMenu historyId={item._id} types={rcFormTypes} />}
                             <button
                               onClick={() => handleDeleteHistoryItem(item._id, item.vehicleNumber)}
                               disabled={deletingId === item._id}
@@ -1531,10 +1532,11 @@ const VehicleDetails = () => {
 
       </div>
 
-      {canForm23 && rcForm && (
+      {rcForm && rcFormTypes.includes(rcForm.type) && (
         <RcFormModal
           key={`${rcForm.type}-${rcForm.blank ? 'blank' : vehicleData?.REGN_NO}`}
           type={rcForm.type}
+          types={rcFormTypes}
           vehicleData={rcForm.blank ? null : vehicleData}
           onClose={() => setRcForm(null)}
         />

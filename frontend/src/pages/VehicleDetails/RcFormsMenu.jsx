@@ -19,7 +19,8 @@ const ITEMS = [
  * saved RC data (no API credit) or blank. The menu and the form are portalled to <body> so the
  * table's scroll container does not clip them.
  */
-const RcFormsMenu = ({ historyId }) => {
+const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc'] }) => {
+  const items = ITEMS.filter((it) => types.includes(it.type))
   const btnRef = useRef(null)
   const menuRef = useRef(null)
   const [menuPos, setMenuPos] = useState(null)
@@ -47,7 +48,7 @@ const RcFormsMenu = ({ historyId }) => {
     if (menuPos) return setMenuPos(null)
     const r = btnRef.current.getBoundingClientRect()
     const width = 210
-    const height = 230
+    const height = items.length * 50 + 10
     // Open upwards when there is no room below (last rows of the table)
     const top = r.bottom + 4 + height > window.innerHeight ? Math.max(8, r.top - height - 4) : r.bottom + 4
     setMenuPos({ top, left: Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8)), width })
@@ -79,7 +80,7 @@ const RcFormsMenu = ({ historyId }) => {
         onClick={toggleMenu}
         disabled={loading}
         className='inline-flex items-center gap-1 px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-bold rounded-lg text-xs transition cursor-pointer disabled:opacity-50 whitespace-nowrap'
-        title='Form 23 and Temporary RC'
+        title={items.filter((it) => it.filled).map((it) => it.label).join(' and ')}
         aria-haspopup='menu'
         aria-expanded={Boolean(menuPos)}
       >
@@ -95,12 +96,12 @@ const RcFormsMenu = ({ historyId }) => {
           className='fixed z-[65] bg-white rounded-xl border border-slate-200 shadow-xl py-1 overflow-hidden'
           style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width }}
         >
-          {ITEMS.map((it, i) => (
+          {items.map((it, i) => (
             <button
               key={it.label}
               role='menuitem'
               onClick={() => choose(it)}
-              className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-800 transition cursor-pointer ${i === 2 ? 'border-t border-slate-100' : ''}`}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-800 transition cursor-pointer ${i > 0 && !it.filled && items[i - 1].filled ? 'border-t border-slate-100' : ''}`}
             >
               {it.label}
               <span className='block text-[10px] font-normal text-slate-500'>{it.hint}</span>
@@ -112,7 +113,7 @@ const RcFormsMenu = ({ historyId }) => {
 
       {open && createPortal(
         <div className='text-left'>
-          <RcFormModal type={open.type} vehicleData={open.data} onClose={() => setOpen(null)} />
+          <RcFormModal type={open.type} types={types} vehicleData={open.data} onClose={() => setOpen(null)} />
         </div>,
         document.body
       )}

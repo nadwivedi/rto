@@ -89,7 +89,8 @@ const VehicleSearchHistory = () => {
   const isStaff = user?.type === 'staff'
   const canOpenLeads = !isStaff || user?.sections?.leads !== false
   const canMoveToLeads = !isStaff || (Boolean(user?.permissions?.add) && canOpenLeads)
-  const canForm23 = user?.features?.form23 === true
+  // RC forms the admin switched on for this user
+  const rcFormTypes = [user?.features?.form23 === true && 'form23', user?.features?.tempRc === true && 'tempRc'].filter(Boolean)
 
   const [historyList, setHistoryList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -837,7 +838,7 @@ const VehicleSearchHistory = () => {
                                   <FileText className="w-3.5 h-3.5" />
                                 )}
                               </button>
-                              {canForm23 && <RcFormsMenu historyId={item._id} />}
+                              {rcFormTypes.length > 0 && <RcFormsMenu historyId={item._id} types={rcFormTypes} />}
                               <button
                                 onClick={() => handleDeleteItem(item._id, item.vehicleNumber)}
                                 disabled={deletingId === item._id}
