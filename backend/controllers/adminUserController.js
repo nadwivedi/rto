@@ -28,7 +28,8 @@ const USER_FIELDS = [
   { key: 'features.expandAdditionalDetails', label: 'Feature: Expand Additional Details' },
   { key: 'features.moneyReceived', label: 'Feature: Money Received' },
   { key: 'features.rcDetails', label: 'Feature: RC Details' },
-  { key: 'features.forms', label: 'Feature: Forms' }
+  { key: 'features.forms', label: 'Feature: Forms' },
+  { key: 'features.form23', label: 'Feature: Form 23 in RC Details' }
 ]
 
 // Get all users
@@ -272,8 +273,9 @@ exports.createUser = async (req, res) => {
         expandAdditionalDetails: features.expandAdditionalDetails === true,
         moneyReceived: features.moneyReceived === true,
         rcDetails: features.rcDetails === true,
-        forms: features.forms === true
-      } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false },
+        forms: features.forms === true,
+        form23: features.form23 === true
+      } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false, form23: false },
       // Starts at 0; the limit only grows when a sale is recorded in Vehicle API Sales
       rcSearchLimit: 0,
       rcSearchCount: 0
@@ -423,7 +425,8 @@ exports.updateUser = async (req, res) => {
         expandAdditionalDetails: features.expandAdditionalDetails === true,
         moneyReceived: features.moneyReceived === true,
         rcDetails: features.rcDetails === true,
-        forms: features.forms === true
+        forms: features.forms === true,
+        form23: features.form23 === true
       }
     }
     if (planType !== undefined) {
