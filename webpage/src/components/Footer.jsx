@@ -64,6 +64,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/rto-agent-app" className="hover:text-brand-800">
+                  RTO Agent App
+                </Link>
+              </li>
+              <li>
                 <Link to="/rto-agent-software-free-download" className="hover:text-brand-800">
                   Free Download
                 </Link>

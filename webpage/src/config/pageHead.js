@@ -19,6 +19,7 @@ import { bestDrivingSchoolFaqs, BEST_DRIVING_SCHOOL_PATH } from '../data/bestDri
 import { drivingSchoolCrmFaqs, DRIVING_SCHOOL_CRM_PATH } from '../data/drivingSchoolCrm'
 import { rtoAgentCrmFaqs, RTO_AGENT_CRM_PATH } from '../data/rtoAgentCrm'
 import { rtoAgentLeadFaqs, RTO_AGENT_LEAD_PATH } from '../data/rtoAgentLeadManagement'
+import { rtoAgentAppFaqs, RTO_AGENT_APP_PATH } from '../data/rtoAgentApp'
 import {
   SITE_URL,
   SITE_NAME,
@@ -66,6 +67,22 @@ const PRODUCT_PAGES = {
   },
   [RC_DOWNLOAD_PATH]: { name: 'RC Download Software', faqs: rcDownloadFaqs },
   [FREE_DOWNLOAD_PATH]: { name: 'RTO Agent Software Free Download', faqs: freeDownloadFaqs },
+  [RTO_AGENT_APP_PATH]: {
+    name: 'RTO Agent App',
+    faqs: rtoAgentAppFaqs,
+    alternateName: ['RTO Sarthi App', 'RTO Agent Mobile App', 'App for RTO Agents'],
+    features: [
+      'Works on Android, iPhone, Windows, Mac and web with one account',
+      'Automatic WhatsApp reminders for tax, fitness, permit, PUC, insurance and GPS expiry',
+      'RC details by vehicle number at ₹1.5 per search',
+      'Client and vehicle records with search by vehicle number, owner or mobile',
+      'Payments and pending balance',
+      'Learner licence and driving licence work with 30-day DL eligibility WhatsApp',
+      'Automatic document entry from RC, insurance and permit copies',
+      'Lead follow-ups with one-tap call and WhatsApp',
+      'Staff and sub-agent logins',
+    ],
+  },
   [DRIVING_SCHOOL_PATH]: { name: 'Driving School Software', faqs: drivingSchoolFaqs },
   [DOCUMENT_EXPIRY_PATH]: { name: 'Document Expiry Reminder Software', faqs: documentExpiryFaqs },
   [EXPIRY_REMINDER_PATH]: { name: 'Vehicle Document Expiry Reminder Software', faqs: expiryReminderFaqs },

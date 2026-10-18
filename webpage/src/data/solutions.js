@@ -13,6 +13,7 @@ export const SOLUTION_GROUPS = [
       { to: '/rto-agent-crm-software', label: 'RTO Agent CRM Software', desc: 'Client & vehicle CRM for RTO agents with WhatsApp expiry reminders, pending balance and LL / DL clients' },
       { to: '/rto-agent-lead-management-software', label: 'RTO Agent Lead Management Software', desc: 'Track permit, tax, fitness, PUC & insurance enquiries with follow-up lists, one-tap call & WhatsApp' },
       { to: '/puc-agent-software', label: 'PUC Agent Software', desc: 'Bulk Excel upload, PDF auto-entry, WhatsApp PUC reminders & complete RTO/insurance management' },
+      { to: '/rto-agent-app', label: 'RTO Agent App', desc: 'RTO Sarthi app for Android, iPhone & PC: clients, WhatsApp reminders, RC search & balances on your phone' },
       { to: '/rto-agent-software-free-download', label: 'RTO Agent Software Free Download', desc: 'Free trial: use RTO Sarthi free on Android, iPhone, Windows and web' },
     ],
   },

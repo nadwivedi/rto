@@ -114,6 +114,13 @@ export const PAGE_SEO = {
     path: '/rto-agent-software-free-download',
     keywords: 'RTO agent software free download, RTO software free download, RTO agent software free, RTO agent software free trial, free RTO agent software, RTO Sarthi free download, RTO Sarthi free trial, RTO agent app free download, RTO agent software download for PC, RTO agent software for Windows, RTO agent software for Android, RTO software download, RTO management software free download, RTO consultant software free download, free RTO software India, best free RTO agent software',
   },
+  '/rto-agent-app': {
+    title: `RTO Agent App for Android, iPhone & PC - WhatsApp Reminders | RTO Sarthi`,
+    description:
+      'RTO agent app for India: clients & vehicles on your phone, WhatsApp reminders for tax, fitness, permit, PUC & insurance, RC search at ₹1.5, balances & LL/DL. Free trial.',
+    path: '/rto-agent-app',
+    keywords: 'RTO agent app, RTO agent app India, best RTO agent app, RTO agent mobile app, RTO agent app for Android, RTO agent app for iPhone, RTO agent app download, RTO agent app free, RTO agent app free download, RTO app for agents, RTO consultant app, RTO work app, app for RTO agents, RTO agent application, RTO agent app with WhatsApp reminder, vehicle expiry reminder app, RTO Sarthi app, RTOSarthi app',
+  },
   '/vehicle-document-expiry-reminder-software': {
     title: `Vehicle Document Expiry Reminder Software - Tax, Fitness, Permit, PUC | RTO Sarthi`,
     description:
