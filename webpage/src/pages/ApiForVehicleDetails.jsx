@@ -134,6 +134,7 @@ export default function ApiForVehicleDetails() {
       related={[
         { to: '/vehicle-information-api', label: 'Vehicle information API' },
         { to: '/vahan-api', label: 'Vahan API' },
+        { to: '/vehicle-make-and-model-api', label: 'Vehicle make and model API' },
         { to: '/rc-verification-software', label: 'RC verification software' },
       ]}
       faq={{

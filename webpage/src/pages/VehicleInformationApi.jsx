@@ -122,6 +122,7 @@ export default function VehicleInformationApi() {
         { to: '/rc-download-software', label: 'RC download software' },
         { to: '/vahan-api', label: 'Vahan API for vehicle details' },
         { to: '/api-for-vehicle-details', label: 'API for getting vehicle details' },
+        { to: '/vehicle-make-and-model-api', label: 'Vehicle make and model API' },
       ]}
       faq={{
         title: 'Vehicle information API — FAQ',

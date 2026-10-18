@@ -107,6 +107,13 @@ export const PAGE_SEO = {
     path: '/api-for-vehicle-details',
     keywords: 'API for getting vehicle details, API for vehicle details, API to get vehicle details, vehicle details API, get vehicle details by vehicle number API, vehicle number to details API, vehicle details API India, vehicle owner details API, vehicle registration details API, API for RC details, API to get RC details, vehicle details API price, vehicle details API for insurance, vehicle details API for used cars, vehicle details API for loan verification, fleet vehicle details API, cheapest vehicle details API, best vehicle details API India, RTO Sarthi vehicle details API',
   },
+  '/vehicle-make-and-model-api': {
+    title: `Vehicle Make and Model API - by Vehicle Number from ₹1.5 | RTO Sarthi`,
+    description:
+      'Vehicle make and model API for India: get maker, model, class, body type, fuel, BS norms, CC, seating, colour & manufacturing year from a vehicle number. From ₹1.5 per search.',
+    path: '/vehicle-make-and-model-api',
+    keywords: 'vehicle make and model API, vehicle make model API, car make and model API, car make and model API India, vehicle make and model by registration number, make and model lookup API, vehicle model API, vehicle manufacturer API, vehicle number to make and model, find car model by number plate API, bike make and model API, vehicle specification API, vehicle fuel type API, vehicle CC API, vehicle manufacturing year API, vehicle make model API for insurance, vehicle make model API for spare parts, RTO Sarthi make and model API',
+  },
   '/rc-download-software': {
     title: `RC Download Software for RTO Agents - Download RC at ₹1.5 | RTO Sarthi`,
     description:
