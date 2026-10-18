@@ -21,6 +21,7 @@ import { rtoAgentCrmFaqs, RTO_AGENT_CRM_PATH } from '../data/rtoAgentCrm'
 import { rtoAgentLeadFaqs, RTO_AGENT_LEAD_PATH } from '../data/rtoAgentLeadManagement'
 import { rtoAgentAppFaqs, RTO_AGENT_APP_PATH } from '../data/rtoAgentApp'
 import { rtoOfflineFaqs, RTO_OFFLINE_PATH } from '../data/rtoOfflineSoftware'
+import { bestRtoOfficeFaqs, BEST_RTO_OFFICE_PATH } from '../data/bestRtoOffice'
 import {
   SITE_URL,
   SITE_NAME,
@@ -82,6 +83,22 @@ const PRODUCT_PAGES = {
       'Automatic document entry from RC, insurance and permit copies',
       'Lead follow-ups with one-tap call and WhatsApp',
       'Staff and sub-agent logins',
+    ],
+  },
+  [BEST_RTO_OFFICE_PATH]: {
+    name: 'Best RTO Office Software',
+    faqs: bestRtoOfficeFaqs,
+    alternateName: ['RTO Office Software', 'RTO Office Management Software'],
+    features: [
+      'Staff and sub-agent logins on the same records',
+      'Automatic WhatsApp reminders for tax, fitness, permit, PUC, insurance and GPS expiry',
+      'Client payments and pending balance',
+      'RC details by vehicle number at ₹1.5 per search',
+      'Learner licence and driving licence work with 30-day DL eligibility WhatsApp',
+      'Automatic document entry and bulk Excel import',
+      'Lead and enquiry follow-ups',
+      'Owner dashboard',
+      'Works on Windows, Mac, Android and iPhone with online backup',
     ],
   },
   [RTO_OFFLINE_PATH]: {

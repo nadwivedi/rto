@@ -10,6 +10,7 @@ export const SOLUTION_GROUPS = [
     description: 'Run the whole RTO desk: vehicles, clients, renewals, balances and leads.',
     items: [
       { to: '/rto-management-software', label: 'RTO Management Software', desc: 'Expiry tracking, WhatsApp alerts, client balances & demo video for RTO agents' },
+      { to: '/best-rto-office-software', label: 'Best RTO Office Software', desc: 'Run the whole RTO office: staff logins, WhatsApp reminders, client balances, LL / DL and RC search' },
       { to: '/rto-agent-crm-software', label: 'RTO Agent CRM Software', desc: 'Client & vehicle CRM for RTO agents with WhatsApp expiry reminders, pending balance and LL / DL clients' },
       { to: '/rto-agent-lead-management-software', label: 'RTO Agent Lead Management Software', desc: 'Track permit, tax, fitness, PUC & insurance enquiries with follow-up lists, one-tap call & WhatsApp' },
       { to: '/puc-agent-software', label: 'PUC Agent Software', desc: 'Bulk Excel upload, PDF auto-entry, WhatsApp PUC reminders & complete RTO/insurance management' },

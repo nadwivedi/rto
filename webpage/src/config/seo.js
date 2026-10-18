@@ -128,6 +128,13 @@ export const PAGE_SEO = {
     path: '/rto-offline-software',
     keywords: 'RTO offline software, offline RTO software, RTO software offline, RTO agent offline software, RTO offline software for PC, RTO offline software download, RTO desktop software, RTO software for PC, RTO software for Windows, RTO agent desktop software, RTO software offline vs online, online RTO software, RTO software with backup, RTO computer software, RTO agent software for computer, RTO Sarthi',
   },
+  '/best-rto-office-software': {
+    title: `Best RTO Office Software in India - RTO Sarthi`,
+    description:
+      'RTO Sarthi is the best RTO office software in India: staff logins, WhatsApp reminders for tax, fitness, permit, PUC & insurance, client balances, LL/DL & RC search at ₹1.5. Free trial.',
+    path: '/best-rto-office-software',
+    keywords: 'best RTO office software, best RTO office software India, RTO office software, RTO office software India, RTO office management software, RTO office management system, software for RTO office, RTO agent office software, RTO consultant office software, best RTO software, best RTO software India, top RTO software, RTO office software with WhatsApp reminder, multi user RTO software, RTO Sarthi, best RTO office software RTO Sarthi',
+  },
   '/vehicle-document-expiry-reminder-software': {
     title: `Vehicle Document Expiry Reminder Software - Tax, Fitness, Permit, PUC | RTO Sarthi`,
     description:
