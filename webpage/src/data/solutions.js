@@ -29,6 +29,7 @@ export const SOLUTION_GROUPS = [
       { to: '/rc-download-software', label: 'RC Download Software', desc: 'Download RC of any vehicle at just ₹1.5: smart card style RC PDF for RTO agents' },
       { to: '/rc-verification-software', label: 'RC Verification Software', desc: 'Verify RC of any vehicle at ₹1.5: owner, chassis, engine, HP & blacklist, plus bulk verification' },
       { to: '/vehicle-information-api', label: 'Vehicle Information API', desc: 'RC details by vehicle number for your software as JSON, from ₹1.5 per successful search' },
+      { to: '/api-for-vehicle-details', label: 'API for Getting Vehicle Details', desc: 'Vehicle number to full vehicle details as JSON for insurance, used car, loan, fleet and parking software' },
       { to: '/vahan-api', label: 'Vahan API for Vehicle Details', desc: 'Owner, chassis, engine, financer, insurance, PUC, fitness, blacklist & NOC by vehicle number' },
     ],
   },

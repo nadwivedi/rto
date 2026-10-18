@@ -54,6 +54,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/api-for-vehicle-details" className="hover:text-brand-800">
+                  API for Vehicle Details
+                </Link>
+              </li>
+              <li>
                 <Link to="/vahan-api" className="hover:text-brand-800">
                   Vahan API
                 </Link>

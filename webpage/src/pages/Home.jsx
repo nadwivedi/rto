@@ -291,7 +291,9 @@ export default function Home() {
               software through our{' '}
               <Link to="/vehicle-information-api" className="font-semibold text-brand-800 hover:underline">vehicle information API</Link>{' '}
               (a{' '}
-              <Link to="/vahan-api" className="font-semibold text-brand-800 hover:underline">Vahan API for vehicle details</Link>).
+              <Link to="/vahan-api" className="font-semibold text-brand-800 hover:underline">Vahan API for vehicle details</Link>), the{' '}
+              <Link to="/api-for-vehicle-details" className="font-semibold text-brand-800 hover:underline">API for getting vehicle details</Link>{' '}
+              by vehicle number.
             </p>
             <p>
               RTO Sarthi is also used by{' '}

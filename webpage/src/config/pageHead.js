@@ -2,6 +2,7 @@ import { rtoManagementFaqs, RTO_MANAGEMENT_PATH, VIDEO_ID } from '../data/rtoMan
 import { vehicleInfoFaqs, VEHICLE_INFO_PATH } from '../data/vehicleInfo'
 import { vehicleInfoApiFaqs, VEHICLE_INFO_API_PATH } from '../data/vehicleInfoApi'
 import { vahanApiFaqs, VAHAN_API_PATH } from '../data/vahanApi'
+import { vehicleDetailsApiFaqs, VEHICLE_DETAILS_API_PATH } from '../data/vehicleDetailsApi'
 import { homeFaqs } from '../data/home'
 import { rcDownloadFaqs, RC_DOWNLOAD_PATH } from '../data/rcDownload'
 import { freeDownloadFaqs, FREE_DOWNLOAD_PATH } from '../data/freeDownload'
@@ -65,6 +66,23 @@ const PRODUCT_PAGES = {
       'Financer, insurance, PUC, fitness and road tax details',
       'Blacklist and NOC status',
       'Pay only for successful searches',
+      'Vehicles from all states of India',
+    ],
+  },
+  [VEHICLE_DETAILS_API_PATH]: {
+    name: 'API for Getting Vehicle Details',
+    faqs: vehicleDetailsApiFaqs,
+    alternateName: ['Vehicle Details API', 'Vehicle Number to Details API', 'RTO Sarthi Vehicle Details API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Vehicle details by vehicle number as JSON',
+      'Owner name and address',
+      'Maker, model, vehicle class, fuel, chassis and engine number',
+      'Insurance, PUC, fitness and road tax validity',
+      'Financer, blacklist and NOC status',
+      'Pay only for successful searches',
+      'Usage and remaining searches in every response',
       'Vehicles from all states of India',
     ],
   },

@@ -149,6 +149,7 @@ export default function VahanApi() {
       }}
       related={[
         { to: '/vehicle-information-api', label: 'Vehicle information API' },
+        { to: '/api-for-vehicle-details', label: 'API for getting vehicle details' },
         { to: '/rc-verification-software', label: 'RC verification software' },
         { to: '/vehicle-information-software', label: 'Vehicle information software' },
       ]}

@@ -100,6 +100,13 @@ export const PAGE_SEO = {
     path: '/vahan-api',
     keywords: 'vahan API, vahan API for vehicle details, vahan vehicle details API, vahan API India, vahan RC API, vahan API price, vahan API provider, vahan database API, vahan vehicle API, vahan API for vehicle owner details, vahan API for chassis number, vahan API for insurance details, vehicle details API by vehicle number, RC details API India, vehicle registration details API, parivahan vehicle details API, cheapest vahan API, RTO Sarthi vahan API',
   },
+  '/api-for-vehicle-details': {
+    title: `API for Getting Vehicle Details by Vehicle Number - from ₹1.5 | RTO Sarthi`,
+    description:
+      'API for getting vehicle details by vehicle number: owner, address, model, chassis, engine, insurance, PUC, fitness, tax & financer as JSON. All states. From ₹1.5 per search.',
+    path: '/api-for-vehicle-details',
+    keywords: 'API for getting vehicle details, API for vehicle details, API to get vehicle details, vehicle details API, get vehicle details by vehicle number API, vehicle number to details API, vehicle details API India, vehicle owner details API, vehicle registration details API, API for RC details, API to get RC details, vehicle details API price, vehicle details API for insurance, vehicle details API for used cars, vehicle details API for loan verification, fleet vehicle details API, cheapest vehicle details API, best vehicle details API India, RTO Sarthi vehicle details API',
+  },
   '/rc-download-software': {
     title: `RC Download Software for RTO Agents - Download RC at ₹1.5 | RTO Sarthi`,
     description:
