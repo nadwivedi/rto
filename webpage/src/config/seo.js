@@ -114,6 +114,20 @@ export const PAGE_SEO = {
     path: '/vehicle-make-and-model-api',
     keywords: 'vehicle make and model API, vehicle make model API, car make and model API, car make and model API India, vehicle make and model by registration number, make and model lookup API, vehicle model API, vehicle manufacturer API, vehicle number to make and model, find car model by number plate API, bike make and model API, vehicle specification API, vehicle fuel type API, vehicle CC API, vehicle manufacturing year API, vehicle make model API for insurance, vehicle make model API for spare parts, RTO Sarthi make and model API',
   },
+  '/vehicle-insurance-api': {
+    title: `Vehicle Insurance API - Check Insurance Status by Vehicle Number | RTO Sarthi`,
+    description:
+      'Vehicle insurance API: check insurance company, policy number & expiry date of any Indian vehicle number as JSON, plus model, PUC, fitness & tax. From ₹1.5 per search.',
+    path: '/vehicle-insurance-api',
+    keywords: 'vehicle insurance API, vehicle insurance details API, vehicle insurance status API, check vehicle insurance by vehicle number API, vehicle insurance expiry API, insurance validity API, car insurance API India, bike insurance details API, motor insurance API, vehicle insurance check API, vehicle insurance policy number API, insurance expiry date by vehicle number, previous insurer API, vehicle insurance API for agents, fleet insurance check API, vehicle insurance API price, RTO Sarthi insurance API',
+  },
+  '/vehicle-lookup-api': {
+    title: `Vehicle Lookup API - Registration Number Lookup India from ₹1.5 | RTO Sarthi`,
+    description:
+      'Vehicle lookup API for India: look up any registration number for status, RTO, owner, model, chassis, engine, insurance, PUC, fitness, financer, blacklist & NOC. From ₹1.5.',
+    path: '/vehicle-lookup-api',
+    keywords: 'vehicle lookup API, vehicle lookup API India, vehicle registration lookup API, registration number lookup API, vehicle number lookup API, number plate lookup API, licence plate lookup API India, car lookup API, bike lookup API, vehicle verification API, vehicle check API, chassis number verification API, vehicle blacklist check API, vehicle hypothecation check API, bulk vehicle lookup API, RC lookup API, vehicle lookup API price, RTO Sarthi vehicle lookup API',
+  },
   '/rc-download-software': {
     title: `RC Download Software for RTO Agents - Download RC at ₹1.5 | RTO Sarthi`,
     description:

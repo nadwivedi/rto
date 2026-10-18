@@ -2,6 +2,8 @@ import { rtoManagementFaqs, RTO_MANAGEMENT_PATH, VIDEO_ID } from '../data/rtoMan
 import { vehicleInfoFaqs, VEHICLE_INFO_PATH } from '../data/vehicleInfo'
 import { vehicleInfoApiFaqs, VEHICLE_INFO_API_PATH } from '../data/vehicleInfoApi'
 import { vahanApiFaqs, VAHAN_API_PATH } from '../data/vahanApi'
+import { lookupApiFaqs, LOOKUP_API_PATH } from '../data/lookupApi'
+import { insuranceApiFaqs, INSURANCE_API_PATH } from '../data/insuranceApi'
 import { vehicleDetailsApiFaqs, VEHICLE_DETAILS_API_PATH } from '../data/vehicleDetailsApi'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
 import { homeFaqs } from '../data/home'
@@ -101,6 +103,38 @@ const PRODUCT_PAGES = {
       'Colour and manufacturing month and year',
       'Two-wheelers, cars and commercial vehicles from all states of India',
       'Pay only for successful searches',
+    ],
+  },
+  [INSURANCE_API_PATH]: {
+    name: 'Vehicle Insurance API',
+    faqs: insuranceApiFaqs,
+    alternateName: ['Vehicle Insurance Details API', 'Vehicle Insurance Status API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Insurance company, policy number and valid-up-to date by vehicle number',
+      'Maker, model, vehicle class, fuel and registration date',
+      'PUC, fitness and road tax validity',
+      'Vehicles from all states of India',
+      'Pay only for successful searches',
+      'Usage and remaining searches in every response',
+    ],
+  },
+  [LOOKUP_API_PATH]: {
+    name: 'Vehicle Lookup API',
+    faqs: lookupApiFaqs,
+    alternateName: ['Vehicle Registration Lookup API', 'Vehicle Verification API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Vehicle record by registration number as JSON',
+      'Registration status, registering RTO, owner and owner serial number',
+      'Maker, model, chassis and engine number for verification',
+      'Insurance, PUC, fitness and road tax validity',
+      'Financer, blacklist and NOC status',
+      'Bulk lookups with remaining searches in every response',
+      'Vehicles from all states of India',
+      'Pay only for successful lookups',
     ],
   },
   [RC_DOWNLOAD_PATH]: { name: 'RC Download Software', faqs: rcDownloadFaqs },

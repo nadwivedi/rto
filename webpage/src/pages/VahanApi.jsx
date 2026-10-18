@@ -81,7 +81,11 @@ export default function VahanApi() {
             download the RC with{' '}
             <Link to="/rc-download-software" className={linkClass}>RC download software</Link>. For a
             shorter overview of the API, see the{' '}
-            <Link to="/vehicle-information-api" className={linkClass}>vehicle information API</Link> page.
+            <Link to="/vehicle-information-api" className={linkClass}>vehicle information API</Link> page. The same
+            Vahan API powers our{' '}
+            <Link to="/vehicle-lookup-api" className={linkClass}>vehicle lookup API</Link>,{' '}
+            <Link to="/vehicle-insurance-api" className={linkClass}>vehicle insurance API</Link> and{' '}
+            <Link to="/vehicle-make-and-model-api" className={linkClass}>vehicle make and model API</Link>.
           </>,
           <span className="text-sm">
             RTO Sarthi is an independent private software company. It is not the Vahan or Parivahan
@@ -151,6 +155,8 @@ export default function VahanApi() {
         { to: '/vehicle-information-api', label: 'Vehicle information API' },
         { to: '/api-for-vehicle-details', label: 'API for getting vehicle details' },
         { to: '/vehicle-make-and-model-api', label: 'Vehicle make and model API' },
+        { to: '/vehicle-lookup-api', label: 'Vehicle lookup API' },
+        { to: '/vehicle-insurance-api', label: 'Vehicle insurance API' },
         { to: '/rc-verification-software', label: 'RC verification software' },
         { to: '/vehicle-information-software', label: 'Vehicle information software' },
       ]}

@@ -133,6 +133,7 @@ export default function VehicleMakeModelApi() {
         { to: '/api-for-vehicle-details', label: 'API for getting vehicle details' },
         { to: '/vehicle-information-api', label: 'Vehicle information API' },
         { to: '/vahan-api', label: 'Vahan API' },
+        { to: '/vehicle-lookup-api', label: 'Vehicle lookup API' },
       ]}
       faq={{
         title: 'Vehicle make and model API — FAQ',

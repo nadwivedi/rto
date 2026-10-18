@@ -135,6 +135,7 @@ export default function ApiForVehicleDetails() {
         { to: '/vehicle-information-api', label: 'Vehicle information API' },
         { to: '/vahan-api', label: 'Vahan API' },
         { to: '/vehicle-make-and-model-api', label: 'Vehicle make and model API' },
+        { to: '/vehicle-insurance-api', label: 'Vehicle insurance API' },
         { to: '/rc-verification-software', label: 'RC verification software' },
       ]}
       faq={{
