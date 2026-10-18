@@ -20,6 +20,7 @@ import { drivingSchoolCrmFaqs, DRIVING_SCHOOL_CRM_PATH } from '../data/drivingSc
 import { rtoAgentCrmFaqs, RTO_AGENT_CRM_PATH } from '../data/rtoAgentCrm'
 import { rtoAgentLeadFaqs, RTO_AGENT_LEAD_PATH } from '../data/rtoAgentLeadManagement'
 import { rtoAgentAppFaqs, RTO_AGENT_APP_PATH } from '../data/rtoAgentApp'
+import { rtoOfflineFaqs, RTO_OFFLINE_PATH } from '../data/rtoOfflineSoftware'
 import {
   SITE_URL,
   SITE_NAME,
@@ -81,6 +82,21 @@ const PRODUCT_PAGES = {
       'Automatic document entry from RC, insurance and permit copies',
       'Lead follow-ups with one-tap call and WhatsApp',
       'Staff and sub-agent logins',
+    ],
+  },
+  [RTO_OFFLINE_PATH]: {
+    name: 'RTO Offline Software Alternative',
+    faqs: rtoOfflineFaqs,
+    alternateName: ['RTO Desktop Software', 'RTO Software for PC'],
+    features: [
+      'Installs on Windows and Mac with a desktop and taskbar icon',
+      'Data stored online with automatic backup',
+      'Same data on Android and iPhone',
+      'Automatic WhatsApp reminders for tax, fitness, permit, PUC and insurance expiry',
+      'Multiple staff logins on the same records',
+      'RC details by vehicle number at ₹1.5 per search',
+      'Automatic updates',
+      'Excel import from existing records',
     ],
   },
   [DRIVING_SCHOOL_PATH]: { name: 'Driving School Software', faqs: drivingSchoolFaqs },

@@ -13,6 +13,7 @@ import VahanApi from './pages/VahanApi'
 import RcDownloadSoftware from './pages/RcDownloadSoftware'
 import RtoAgentSoftwareFreeDownload from './pages/RtoAgentSoftwareFreeDownload'
 import RtoAgentApp from './pages/RtoAgentApp'
+import RtoOfflineSoftware from './pages/RtoOfflineSoftware'
 import DrivingSchoolSoftware from './pages/DrivingSchoolSoftware'
 import DocumentExpiryReminderSoftware from './pages/DocumentExpiryReminderSoftware'
 import ExpiryReminderSoftware from './pages/ExpiryReminderSoftware'
@@ -47,6 +48,7 @@ export default function AppRoutes() {
         <Route path="rc-download-software" element={<RcDownloadSoftware />} />
         <Route path="rto-agent-software-free-download" element={<RtoAgentSoftwareFreeDownload />} />
         <Route path="rto-agent-app" element={<RtoAgentApp />} />
+        <Route path="rto-offline-software" element={<RtoOfflineSoftware />} />
         <Route path="driving-school-software" element={<DrivingSchoolSoftware />} />
         <Route path="document-expiry-reminder-software" element={<DocumentExpiryReminderSoftware />} />
         <Route path="vehicle-document-expiry-reminder-software" element={<ExpiryReminderSoftware />} />

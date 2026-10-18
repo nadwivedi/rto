@@ -121,6 +121,13 @@ export const PAGE_SEO = {
     path: '/rto-agent-app',
     keywords: 'RTO agent app, RTO agent app India, best RTO agent app, RTO agent mobile app, RTO agent app for Android, RTO agent app for iPhone, RTO agent app download, RTO agent app free, RTO agent app free download, RTO app for agents, RTO consultant app, RTO work app, app for RTO agents, RTO agent application, RTO agent app with WhatsApp reminder, vehicle expiry reminder app, RTO Sarthi app, RTOSarthi app',
   },
+  '/rto-offline-software': {
+    title: `RTO Offline Software vs Online - Install on PC, No Data Loss | RTO Sarthi`,
+    description:
+      'Looking for RTO offline software? RTO Sarthi installs on your PC like desktop software, keeps data backed up online, works on mobile too & sends WhatsApp reminders. Free trial.',
+    path: '/rto-offline-software',
+    keywords: 'RTO offline software, offline RTO software, RTO software offline, RTO agent offline software, RTO offline software for PC, RTO offline software download, RTO desktop software, RTO software for PC, RTO software for Windows, RTO agent desktop software, RTO software offline vs online, online RTO software, RTO software with backup, RTO computer software, RTO agent software for computer, RTO Sarthi',
+  },
   '/vehicle-document-expiry-reminder-software': {
     title: `Vehicle Document Expiry Reminder Software - Tax, Fitness, Permit, PUC | RTO Sarthi`,
     description:
