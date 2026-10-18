@@ -135,6 +135,13 @@ export const PAGE_SEO = {
     path: '/best-rto-office-software',
     keywords: 'best RTO office software, best RTO office software India, RTO office software, RTO office software India, RTO office management software, RTO office management system, software for RTO office, RTO agent office software, RTO consultant office software, best RTO software, best RTO software India, top RTO software, RTO office software with WhatsApp reminder, multi user RTO software, RTO Sarthi, best RTO office software RTO Sarthi',
   },
+  '/cloud-rto-software': {
+    title: `Cloud RTO Software for RTO Agents - RTO Sarthi`,
+    description:
+      'RTO Sarthi is cloud RTO software: data backed up online, works on PC & mobile, staff logins, WhatsApp reminders for tax, fitness, permit, PUC & insurance, RC search at ₹1.5. Free trial.',
+    path: '/cloud-rto-software',
+    keywords: 'cloud RTO software, cloud based RTO software, RTO cloud software, cloud RTO software India, online RTO software, RTO software online, web based RTO software, cloud RTO management software, cloud software for RTO agents, RTO agent cloud software, SaaS RTO software, RTO software with cloud backup, cloud RTO office software, best cloud RTO software, RTO Sarthi, RTOSarthi cloud',
+  },
   '/vehicle-document-expiry-reminder-software': {
     title: `Vehicle Document Expiry Reminder Software - Tax, Fitness, Permit, PUC | RTO Sarthi`,
     description:

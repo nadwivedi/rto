@@ -74,6 +74,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/cloud-rto-software" className="hover:text-brand-800">
+                  Cloud RTO Software
+                </Link>
+              </li>
+              <li>
                 <Link to="/rto-offline-software" className="hover:text-brand-800">
                   RTO Offline Software
                 </Link>

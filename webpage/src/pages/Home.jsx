@@ -302,7 +302,9 @@ export default function Home() {
               <Link to="/driving-licence-software" className="font-semibold text-brand-800 hover:underline">driving licence</Link>{' '}
               work, from{' '}
               <Link to="/learning-licence-software" className="font-semibold text-brand-800 hover:underline">learning licence</Link>{' '}
-              to permanent DL. RTO Sarthi works on Android, iPhone, Windows and any web browser as an{' '}
+              to permanent DL. As{' '}
+              <Link to="/cloud-rto-software" className="font-semibold text-brand-800 hover:underline">cloud RTO software</Link>,
+              RTO Sarthi works on Android, iPhone, Windows and any web browser as an{' '}
               <Link to="/rto-agent-app" className="font-semibold text-brand-800 hover:underline">RTO agent app</Link>, and you can{' '}
               <Link to="/rto-agent-software-free-download" className="font-semibold text-brand-800 hover:underline">try RTO Sarthi free</Link>{' '}
               today.

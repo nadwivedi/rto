@@ -22,6 +22,7 @@ import { rtoAgentLeadFaqs, RTO_AGENT_LEAD_PATH } from '../data/rtoAgentLeadManag
 import { rtoAgentAppFaqs, RTO_AGENT_APP_PATH } from '../data/rtoAgentApp'
 import { rtoOfflineFaqs, RTO_OFFLINE_PATH } from '../data/rtoOfflineSoftware'
 import { bestRtoOfficeFaqs, BEST_RTO_OFFICE_PATH } from '../data/bestRtoOffice'
+import { cloudRtoFaqs, CLOUD_RTO_PATH } from '../data/cloudRto'
 import {
   SITE_URL,
   SITE_NAME,
@@ -83,6 +84,21 @@ const PRODUCT_PAGES = {
       'Automatic document entry from RC, insurance and permit copies',
       'Lead follow-ups with one-tap call and WhatsApp',
       'Staff and sub-agent logins',
+    ],
+  },
+  [CLOUD_RTO_PATH]: {
+    name: 'Cloud RTO Software',
+    faqs: cloudRtoFaqs,
+    alternateName: ['Cloud Based RTO Software', 'Online RTO Software', 'RTO Sarthi Cloud'],
+    features: [
+      'Data stored securely online with automatic backup',
+      'Same account on Windows, Mac, Android, iPhone and web',
+      'Automatic WhatsApp reminders for tax, fitness, permit, PUC, insurance and GPS expiry, sent from the cloud',
+      'Staff, sub-agent, insurance agent and PUC center logins on the same records',
+      'Automatic updates with no installation file',
+      'RC details by vehicle number at ₹1.5 per search',
+      'Client payments and pending balance in real time',
+      'Excel import from existing records',
     ],
   },
   [BEST_RTO_OFFICE_PATH]: {

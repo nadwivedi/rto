@@ -47,7 +47,8 @@ export default function RtoOfflineSoftware() {
             records, reminders only go out if someone opens the software, and every update means a new setup file.
           </>,
           <>
-            {s('RTO Sarthi gives you the desktop feel without that risk')}. Install it on your PC from the
+            {s('RTO Sarthi gives you the desktop feel without that risk')}. It is{' '}
+            <Link to="/cloud-rto-software" className={linkClass}>cloud RTO software</Link>: install it on your PC from the
             browser and it opens in its own window from the taskbar. Your data is stored online and backed up, the
             same account opens on your{' '}
             <Link to="/rto-agent-app" className={linkClass}>RTO agent app</Link> on mobile, and{' '}
@@ -101,6 +102,7 @@ export default function RtoOfflineSoftware() {
       related={[
         { to: '/rto-agent-software-free-download', label: 'RTO agent software free download' },
         { to: '/rto-agent-app', label: 'RTO agent app' },
+        { to: '/cloud-rto-software', label: 'Cloud RTO software' },
         { to: '/rto-management-software', label: 'RTO management software' },
       ]}
       faq={{
