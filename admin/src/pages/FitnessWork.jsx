@@ -90,9 +90,10 @@ const CARD = 'overflow-hidden rounded-2xl border border-stone-200 bg-[#fbfaf7] s
 const FILTER_DATE =
   'h-[38px] rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 outline-none transition focus:border-stone-500 focus:ring-4 focus:ring-stone-200'
 
-const FieldLabel = ({ children, optional }) => (
+const FieldLabel = ({ children, optional, required }) => (
   <span className='text-sm font-medium text-stone-700'>
     {children}
+    {required && <span className='ml-0.5 text-rose-600'>*</span>}
     {optional && <span className='ml-1 font-normal text-stone-400'>(optional)</span>}
   </span>
 )
@@ -279,7 +280,12 @@ const FitnessWork = () => {
   const handleSubmit = async (e) => {
     e.preventDefault()
 
-    if (!formData.userId) return setFormError('Please select the party who gave the work')
+    if (!formData.userId) {
+      setFormError('Please select the party who gave the work')
+      // Open the party search so it can be picked right away
+      partyRef.current?.click()
+      return
+    }
     if (!formData.date) return setFormError('Please choose a date')
     if (formData.amount === '' || Number.isNaN(formAmount) || formAmount < 0) {
       return setFormError('Please enter the work amount')
@@ -716,7 +722,7 @@ const FitnessWork = () => {
 
             <form className='grid gap-4 p-5' onSubmit={handleSubmit}>
               <div className='grid gap-1.5'>
-                <FieldLabel>Date</FieldLabel>
+                <FieldLabel required>Date</FieldLabel>
                 <div className='relative'>
                   <CalendarDays className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400' />
                   <input
@@ -751,7 +757,7 @@ const FitnessWork = () => {
               </div>
 
               <div className='grid gap-1.5'>
-                <FieldLabel>Work By Party</FieldLabel>
+                <FieldLabel required>Work By Party</FieldLabel>
                 <SearchSelect
                   value={formData.userId}
                   onChange={(userId) => {
@@ -771,7 +777,7 @@ const FitnessWork = () => {
 
               <div className='grid grid-cols-2 gap-4'>
                 <label className='grid gap-1.5'>
-                  <FieldLabel>Work Amount</FieldLabel>
+                  <FieldLabel required>Work Amount</FieldLabel>
                   <div className='relative'>
                     <IndianRupee className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400' />
                     <input
@@ -790,7 +796,7 @@ const FitnessWork = () => {
                   </div>
                 </label>
                 <label className='grid gap-1.5'>
-                  <FieldLabel>Our Profit</FieldLabel>
+                  <FieldLabel required>Our Profit</FieldLabel>
                   <div className='relative'>
                     <TrendingUp className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500' />
                     <input
