@@ -13,6 +13,7 @@ import VahanApi from './pages/VahanApi'
 import VehicleLookupApi from './pages/VehicleLookupApi'
 import VehicleInsuranceApi from './pages/VehicleInsuranceApi'
 import ApiForVehicleDetails from './pages/ApiForVehicleDetails'
+import VehicleDetailsApiIndia from './pages/VehicleDetailsApiIndia'
 import VehicleMakeModelApi from './pages/VehicleMakeModelApi'
 import RcDownloadSoftware from './pages/RcDownloadSoftware'
 import RtoAgentSoftwareFreeDownload from './pages/RtoAgentSoftwareFreeDownload'
@@ -54,6 +55,7 @@ export default function AppRoutes() {
         <Route path="vehicle-lookup-api" element={<VehicleLookupApi />} />
         <Route path="vehicle-insurance-api" element={<VehicleInsuranceApi />} />
         <Route path="api-for-vehicle-details" element={<ApiForVehicleDetails />} />
+        <Route path="vehicle-details-api" element={<VehicleDetailsApiIndia />} />
         <Route path="vehicle-make-and-model-api" element={<VehicleMakeModelApi />} />
         <Route path="rc-download-software" element={<RcDownloadSoftware />} />
         <Route path="rto-agent-software-free-download" element={<RtoAgentSoftwareFreeDownload />} />

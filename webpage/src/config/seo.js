@@ -105,7 +105,14 @@ export const PAGE_SEO = {
     description:
       'API for getting vehicle details by vehicle number: owner, address, model, chassis, engine, insurance, PUC, fitness, tax & financer as JSON. All states. From ₹1.5 per search.',
     path: '/api-for-vehicle-details',
-    keywords: 'API for getting vehicle details, API for vehicle details, API to get vehicle details, vehicle details API, get vehicle details by vehicle number API, vehicle number to details API, vehicle details API India, vehicle owner details API, vehicle registration details API, API for RC details, API to get RC details, vehicle details API price, vehicle details API for insurance, vehicle details API for used cars, vehicle details API for loan verification, fleet vehicle details API, cheapest vehicle details API, best vehicle details API India, RTO Sarthi vehicle details API',
+    keywords: 'API for getting vehicle details, API for vehicle details, API to get vehicle details, vehicle details API, get vehicle details by vehicle number API, vehicle number to details API, vehicle owner details API, vehicle registration details API, API for RC details, API to get RC details, vehicle details API price, vehicle details API for insurance, vehicle details API for used cars, vehicle details API for loan verification, fleet vehicle details API, cheapest vehicle details API, best vehicle details API India, RTO Sarthi vehicle details API',
+  },
+  '/vehicle-details-api': {
+    title: `Vehicle Details API India - All States & BH Series from ₹1.5 | RTO Sarthi`,
+    description:
+      'Vehicle details API India: get owner, model, chassis, engine, insurance, PUC, fitness & tax of any Indian vehicle number, incl. BH series, as JSON. From ₹1.5 + GST invoice.',
+    path: '/vehicle-details-api',
+    keywords: 'vehicle details API India, vehicle details API, vehicle detail API, vehicle details API provider in India, vehicle details API price in India, vehicle details by number API, vehicle number details API, vehicle registration details API India, RC details API India, car details API India, bike details API India, truck details API, BH series vehicle details API, vehicle owner details API India, vehicle details JSON API, vehicle details API for developers, all India vehicle details API, cheapest vehicle details API India, best vehicle details API India, gaadi number se details API, RTO Sarthi vehicle details API',
   },
   '/vehicle-make-and-model-api': {
     title: `Vehicle Make and Model API - by Vehicle Number from ₹1.5 | RTO Sarthi`,

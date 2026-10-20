@@ -30,6 +30,7 @@ export const SOLUTION_GROUPS = [
       { to: '/rc-verification-software', label: 'RC Verification Software', desc: 'Verify RC of any vehicle at ₹1.5: owner, chassis, engine, HP & blacklist, plus bulk verification' },
       { to: '/vehicle-information-api', label: 'Vehicle Information API', desc: 'RC details by vehicle number for your software as JSON, from ₹1.5 per successful search' },
       { to: '/api-for-vehicle-details', label: 'API for Getting Vehicle Details', desc: 'Vehicle number to full vehicle details as JSON for insurance, used car, loan, fleet and parking software' },
+      { to: '/vehicle-details-api', label: 'Vehicle Details API India', desc: 'Any Indian vehicle number incl. BH series, all 36 states & UTs, as JSON with GST invoice' },
       { to: '/vehicle-make-and-model-api', label: 'Vehicle Make and Model API', desc: 'Maker, model, class, fuel, BS norms, CC, seating and year from any vehicle number' },
       { to: '/vehicle-insurance-api', label: 'Vehicle Insurance API', desc: 'Insurer, policy number and insurance expiry of any vehicle number for agents, fleets and insurtech' },
       { to: '/vehicle-lookup-api', label: 'Vehicle Lookup API', desc: 'Look up any registration number: status, owner, chassis & engine, validity, financer, blacklist & NOC' },

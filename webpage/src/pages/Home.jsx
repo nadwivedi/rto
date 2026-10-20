@@ -293,7 +293,8 @@ export default function Home() {
               (a{' '}
               <Link to="/vahan-api" className="font-semibold text-brand-800 hover:underline">Vahan API for vehicle details</Link>), the{' '}
               <Link to="/api-for-vehicle-details" className="font-semibold text-brand-800 hover:underline">API for getting vehicle details</Link>{' '}
-              by vehicle number, including a{' '}
+              by vehicle number (a{' '}
+              <Link to="/vehicle-details-api" className="font-semibold text-brand-800 hover:underline">vehicle details API for all of India</Link>), including a{' '}
               <Link to="/vehicle-make-and-model-api" className="font-semibold text-brand-800 hover:underline">vehicle make and model API</Link>,{' '}
               <Link to="/vehicle-insurance-api" className="font-semibold text-brand-800 hover:underline">vehicle insurance API</Link>{' '}
               and{' '}

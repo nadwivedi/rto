@@ -5,6 +5,7 @@ import { vahanApiFaqs, VAHAN_API_PATH } from '../data/vahanApi'
 import { lookupApiFaqs, LOOKUP_API_PATH } from '../data/lookupApi'
 import { insuranceApiFaqs, INSURANCE_API_PATH } from '../data/insuranceApi'
 import { vehicleDetailsApiFaqs, VEHICLE_DETAILS_API_PATH } from '../data/vehicleDetailsApi'
+import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
 import { homeFaqs } from '../data/home'
 import { rcDownloadFaqs, RC_DOWNLOAD_PATH } from '../data/rcDownload'
@@ -87,6 +88,23 @@ const PRODUCT_PAGES = {
       'Pay only for successful searches',
       'Usage and remaining searches in every response',
       'Vehicles from all states of India',
+    ],
+  },
+  [VEHICLE_DETAILS_API_INDIA_PATH]: {
+    name: 'Vehicle Details API India',
+    faqs: vehicleDetailsApiIndiaFaqs,
+    alternateName: ['Vehicle Details API', 'Vehicle Detail API', 'All India Vehicle Details API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Vehicle details for any Indian vehicle number as JSON',
+      'All 36 states and union territories, including BH series',
+      'Owner, RTO, maker and model, chassis and engine number',
+      'Insurance, PUC, fitness and road tax validity',
+      'Financer, blacklist and NOC status',
+      'Cars, bikes, trucks, buses and tractors',
+      'Prepaid in rupees with GST invoice',
+      'Pay only for successful searches',
     ],
   },
   [MAKE_MODEL_API_PATH]: {

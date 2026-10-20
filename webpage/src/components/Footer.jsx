@@ -59,6 +59,11 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
+                <Link to="/vehicle-details-api" className="hover:text-brand-800">
+                  Vehicle Details API India
+                </Link>
+              </li>
+              <li>
                 <Link to="/vehicle-make-and-model-api" className="hover:text-brand-800">
                   Make and Model API
                 </Link>
