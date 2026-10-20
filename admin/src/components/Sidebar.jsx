@@ -58,7 +58,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         to={item.to}
         onClick={handleLinkClick}
         aria-current={active ? 'page' : undefined}
-        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${
+        className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
           active ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
         }`}
       >
@@ -110,7 +110,7 @@ const Sidebar = ({ isOpen, onClose }) => {
         </div>
 
         {/* Menu */}
-        <nav className="flex flex-col gap-1 overflow-y-auto" aria-label="Admin navigation">
+        <nav className="flex flex-col gap-2 overflow-y-auto" aria-label="Admin navigation">
           {NAV_ITEMS.map(renderLink)}
 
           <button
@@ -125,7 +125,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           </button>
 
           {moreOpen && (
-            <div className="ml-3 flex flex-col gap-1 border-l border-stone-200 pl-2">
+            <div className="ml-3 flex flex-col gap-2 border-l border-stone-200 pl-2">
               {MORE_ITEMS.map(renderLink)}
             </div>
           )}
