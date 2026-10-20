@@ -17,6 +17,9 @@ router.get('/:id', adminApiKeyController.getApiKey)
 // Change name / user / note / on-off
 router.patch('/:id', adminApiKeyController.updateApiKey)
 
+// Delete a key for good (body: { confirm: 'delete' })
+router.delete('/:id', adminApiKeyController.deleteApiKey)
+
 // Replace the secret (the old one stops working)
 router.post('/:id/regenerate', adminApiKeyController.regenerateApiKey)
 

@@ -211,6 +211,37 @@ exports.regenerateApiKey = async (req, res) => {
   }
 }
 
+// Delete a key for good: it stops working at once and its call log goes with it.
+// Its sales stay on the books so money totals in Vehicle API Sales do not change.
+exports.deleteApiKey = async (req, res) => {
+  try {
+    if (!mongoose.isValidObjectId(req.params.id)) return badRequest(res, 'Invalid API key')
+    if (req.body?.confirm !== 'delete') return badRequest(res, 'Type delete to confirm')
+
+    const apiKey = await ApiKey.findByIdAndDelete(req.params.id)
+    if (!apiKey) return notFound(res)
+
+    const { deletedCount: callsDeleted } = await ApiKeyCall.deleteMany({ apiKeyId: apiKey._id })
+
+    recordActivity(req, {
+      action: 'delete',
+      entity: 'api_key',
+      entityId: apiKey._id,
+      entityName: apiKey.name,
+      summary: `Deleted vehicle API key "${apiKey.name}" (${callsDeleted} call logs removed)`,
+      changes: [
+        { field: 'Name', from: apiKey.name, to: null },
+        { field: 'Limit', from: apiKey.callLimit || 0, to: null },
+        { field: 'Used', from: apiKey.callCount || 0, to: null }
+      ]
+    })
+
+    res.json({ success: true, message: `API key "${apiKey.name}" deleted`, data: { callsDeleted } })
+  } catch (error) {
+    sendError(res, req, error)
+  }
+}
+
 /**
  * One key with its sales and day-wise call counts.
  * Query: from / to ('YYYY-MM-DD', India dates) for the day-wise table, default the last 30 days.
