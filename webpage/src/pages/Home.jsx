@@ -291,10 +291,10 @@ export default function Home() {
               software through our{' '}
               <Link to="/vehicle-information-api" className="font-semibold text-brand-800 hover:underline">vehicle information API</Link>{' '}
               (a{' '}
-              <Link to="/vahan-api" className="font-semibold text-brand-800 hover:underline">Vahan API for vehicle details</Link>), the{' '}
-              <Link to="/api-for-vehicle-details" className="font-semibold text-brand-800 hover:underline">API for getting vehicle details</Link>{' '}
-              by vehicle number (a{' '}
-              <Link to="/vehicle-details-api" className="font-semibold text-brand-800 hover:underline">vehicle details API for all of India</Link>), including a{' '}
+              <Link to="/vahan-api" className="font-semibold text-brand-800 hover:underline">Vahan API for vehicle details</Link>, also called a{' '}
+              <Link to="/parivahan-api" className="font-semibold text-brand-800 hover:underline">Parivahan API</Link>), the{' '}
+              <Link to="/vehicle-details-api" className="font-semibold text-brand-800 hover:underline">vehicle details API for India</Link>{' '}
+              for getting vehicle details by vehicle number, including a{' '}
               <Link to="/vehicle-make-and-model-api" className="font-semibold text-brand-800 hover:underline">vehicle make and model API</Link>,{' '}
               <Link to="/vehicle-insurance-api" className="font-semibold text-brand-800 hover:underline">vehicle insurance API</Link>{' '}
               and{' '}

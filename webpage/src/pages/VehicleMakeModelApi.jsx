@@ -62,7 +62,7 @@ export default function VehicleMakeModelApi() {
             The same search also returns chassis and engine number, owner and insurance, PUC, fitness and tax
             validity. See every field on the{' '}
             <Link to="/vahan-api" className={linkClass}>Vahan API</Link> page, use cases on the{' '}
-            <Link to="/api-for-vehicle-details" className={linkClass}>API for getting vehicle details</Link> page, or
+            <Link to="/vehicle-details-api" className={linkClass}>vehicle details API</Link> page, or
             look up vehicles without code in{' '}
             <Link to="/vehicle-information-software" className={linkClass}>vehicle information software</Link>.
           </>,
@@ -130,7 +130,7 @@ export default function VehicleMakeModelApi() {
         ],
       }}
       related={[
-        { to: '/api-for-vehicle-details', label: 'API for getting vehicle details' },
+        { to: '/vehicle-details-api', label: 'Vehicle details API India' },
         { to: '/vehicle-information-api', label: 'Vehicle information API' },
         { to: '/vahan-api', label: 'Vahan API' },
         { to: '/vehicle-lookup-api', label: 'Vehicle lookup API' },

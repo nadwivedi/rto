@@ -2,9 +2,9 @@ import { rtoManagementFaqs, RTO_MANAGEMENT_PATH, VIDEO_ID } from '../data/rtoMan
 import { vehicleInfoFaqs, VEHICLE_INFO_PATH } from '../data/vehicleInfo'
 import { vehicleInfoApiFaqs, VEHICLE_INFO_API_PATH } from '../data/vehicleInfoApi'
 import { vahanApiFaqs, VAHAN_API_PATH } from '../data/vahanApi'
+import { parivahanApiFaqs, PARIVAHAN_API_PATH } from '../data/parivahanApi'
 import { lookupApiFaqs, LOOKUP_API_PATH } from '../data/lookupApi'
 import { insuranceApiFaqs, INSURANCE_API_PATH } from '../data/insuranceApi'
-import { vehicleDetailsApiFaqs, VEHICLE_DETAILS_API_PATH } from '../data/vehicleDetailsApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
 import { homeFaqs } from '../data/home'
@@ -73,27 +73,10 @@ const PRODUCT_PAGES = {
       'Vehicles from all states of India',
     ],
   },
-  [VEHICLE_DETAILS_API_PATH]: {
-    name: 'API for Getting Vehicle Details',
-    faqs: vehicleDetailsApiFaqs,
-    alternateName: ['Vehicle Details API', 'Vehicle Number to Details API', 'RTO Sarthi Vehicle Details API'],
-    category: 'DeveloperApplication',
-    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
-    features: [
-      'Vehicle details by vehicle number as JSON',
-      'Owner name and address',
-      'Maker, model, vehicle class, fuel, chassis and engine number',
-      'Insurance, PUC, fitness and road tax validity',
-      'Financer, blacklist and NOC status',
-      'Pay only for successful searches',
-      'Usage and remaining searches in every response',
-      'Vehicles from all states of India',
-    ],
-  },
   [VEHICLE_DETAILS_API_INDIA_PATH]: {
     name: 'Vehicle Details API India',
     faqs: vehicleDetailsApiIndiaFaqs,
-    alternateName: ['Vehicle Details API', 'Vehicle Detail API', 'All India Vehicle Details API'],
+    alternateName: ['Vehicle Details API', 'API for Getting Vehicle Details', 'Vehicle Detail API', 'All India Vehicle Details API'],
     category: 'DeveloperApplication',
     offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
     features: [
@@ -120,6 +103,22 @@ const PRODUCT_PAGES = {
       'Cubic capacity and seating capacity',
       'Colour and manufacturing month and year',
       'Two-wheelers, cars and commercial vehicles from all states of India',
+      'Pay only for successful searches',
+    ],
+  },
+  [PARIVAHAN_API_PATH]: {
+    name: 'Parivahan API for Vehicle Details',
+    faqs: parivahanApiFaqs,
+    alternateName: ['RTO Sarthi Parivahan API', 'Parivahan Vehicle Details API', 'Parivahan RC API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Vehicle details by vehicle number as JSON',
+      'Owner, RTO, maker and model, chassis and engine number',
+      'Insurance, PUC, fitness and road tax validity',
+      'Financer, blacklist and NOC status',
+      'All states of India, including BH series',
+      'No monthly or setup fee, GST invoice',
       'Pay only for successful searches',
     ],
   },

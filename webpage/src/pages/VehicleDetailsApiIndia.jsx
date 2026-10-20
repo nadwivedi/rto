@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom'
 import ProductLanding from '../components/ProductLanding'
-import { IconMapPin, IconCar, IconSearch, IconWallet, IconDocument, IconCode, IconClock, IconShield } from '../components/Icons'
+import { IconMapPin, IconCar, IconSearch, IconWallet, IconDocument, IconCode, IconClock, IconShield, IconChart, IconUsers, IconCheck } from '../components/Icons'
 import { vehicleDetailsApiIndiaFaqs } from '../data/vehicleDetailsApiIndia'
 import { LOOKUP_PRICE } from '../data/vehicleInfo'
 
@@ -39,8 +39,8 @@ export default function VehicleDetailsApiIndia() {
   return (
     <ProductLanding
       hero={{
-        title: `Vehicle Details API India — Any State, Any Vehicle Number, from ${LOOKUP_PRICE}`,
-        intro: `RTO Sarthi is a vehicle details API provider in India. Send any Indian vehicle number, including BH series, and get the owner, model, chassis and engine number, insurance, PUC, fitness, tax, financer and blacklist status back as JSON in seconds, from ${LOOKUP_PRICE} per successful search with a GST invoice.`,
+        title: `Vehicle Details API India — API for Getting Vehicle Details by Vehicle Number from ${LOOKUP_PRICE}`,
+        intro: `Looking for an API for getting vehicle details? RTO Sarthi is a vehicle details API provider in India. Send any Indian vehicle number, including BH series, and get the owner, model, chassis and engine number, insurance, PUC, fitness, tax, financer and blacklist status back as JSON in seconds, from ${LOOKUP_PRICE} per successful search with a GST invoice.`,
       }}
       buttons={[
         { label: 'Get API Key', href: '/contact' },
@@ -65,11 +65,17 @@ export default function VehicleDetailsApiIndia() {
             rupees with no monthly fee.
           </>,
           <>
-            For use cases like insurance quotes and loan checks, see the{' '}
-            <Link to="/api-for-vehicle-details" className={linkClass}>API for getting vehicle details</Link>. For every
-            field, see the <Link to="/vahan-api" className={linkClass}>Vahan API</Link> page. To verify a vehicle, use
+            Most businesses start with only a vehicle number: an insurance quote, a used car listing, a loan
+            application or a fleet check. Instead of someone searching the number and typing the details by hand,
+            an {s('API for getting vehicle details')} fills your form, verifies the customer or saves to your
+            database automatically, with no typing mistakes.
+          </>,
+          <>
+            For every field, see the <Link to="/vahan-api" className={linkClass}>Vahan API</Link> page. To verify a vehicle, use
             the <Link to="/vehicle-lookup-api" className={linkClass}>vehicle lookup API</Link>, and for model data only,
-            the <Link to="/vehicle-make-and-model-api" className={linkClass}>vehicle make and model API</Link>.
+            the <Link to="/vehicle-make-and-model-api" className={linkClass}>vehicle make and model API</Link>. Without
+            software of your own, get the same details in the app with{' '}
+            <Link to="/vehicle-information-software" className={linkClass}>vehicle information software</Link>.
           </>,
           <span className="text-sm">
             RTO Sarthi is an independent private software company. It is not the Vahan or Parivahan portal and is
@@ -93,7 +99,19 @@ export default function VehicleDetailsApiIndia() {
         blocks: [{ label: 'JSON response', code: responseExample }],
         note: 'Sample data. Details are returned wherever they are available on the vehicle record.',
       }}
-      features={{
+      features={[{
+        label: 'Use cases',
+        title: 'What you can build with an API for getting vehicle details',
+        description: 'Ways Indian businesses use vehicle details from a vehicle number.',
+        items: [
+          { icon: <IconShield />, variant: 'brand', title: 'Instant motor insurance quotes', description: 'Customer types the vehicle number, and maker, model, fuel, registration date and current insurer fill automatically.' },
+          { icon: <IconCar />, variant: 'accent', title: 'Used car listings & inspections', description: 'Auto-fill listings and check owner serial number, financer, blacklist and NOC before you buy or sell.' },
+          { icon: <IconWallet />, variant: 'success', title: 'Vehicle loan verification', description: 'Match chassis, engine and owner with the application and see existing hypothecation before approving a loan.' },
+          { icon: <IconChart />, variant: 'brand', title: 'Fleet document compliance', description: 'Check insurance, PUC, fitness and tax validity of every truck or cab in your fleet on a schedule.' },
+          { icon: <IconUsers />, variant: 'accent', title: 'Parking, society & toll systems', description: 'Show vehicle model and status at the gate from the number plate, for visitor and resident vehicles.' },
+          { icon: <IconCheck />, variant: 'success', title: 'RTO, dealer & garage software', description: 'Add vehicle number search to your own product so your users never type vehicle details again.' },
+        ],
+      }, {
         title: 'Why Indian businesses choose this vehicle details API',
         description: 'What to look for in a vehicle details API provider in India.',
         items: [
@@ -106,7 +124,7 @@ export default function VehicleDetailsApiIndia() {
           { icon: <IconClock />, variant: 'brand', title: 'Results in seconds', description: 'Fast enough to fill a form while your customer waits on screen.' },
           { icon: <IconShield />, variant: 'accent', title: 'Indian support team', description: 'Talk to us on call or WhatsApp in Hindi or English, and get help testing with real vehicle numbers.' },
         ],
-      }}
+      }]}
       checklist={{
         id: 'pricing',
         label: 'Pricing',
@@ -134,15 +152,16 @@ export default function VehicleDetailsApiIndia() {
         ],
       }}
       related={[
-        { to: '/api-for-vehicle-details', label: 'API for getting vehicle details' },
         { to: '/vahan-api', label: 'Vahan API' },
+        { to: '/parivahan-api', label: 'Parivahan API' },
         { to: '/vehicle-information-api', label: 'Vehicle information API' },
         { to: '/vehicle-lookup-api', label: 'Vehicle lookup API' },
         { to: '/vehicle-make-and-model-api', label: 'Vehicle make and model API' },
+        { to: '/rc-verification-software', label: 'RC verification software' },
       ]}
       faq={{
         title: 'Vehicle details API India — FAQ',
-        description: 'States, number formats, price and getting started.',
+        description: 'How it works, what you get, states, number formats and price.',
         items: vehicleDetailsApiIndiaFaqs,
       }}
       cta={{

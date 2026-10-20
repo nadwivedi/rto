@@ -54,11 +54,6 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/api-for-vehicle-details" className="hover:text-brand-800">
-                  API for Vehicle Details
-                </Link>
-              </li>
-              <li>
                 <Link to="/vehicle-details-api" className="hover:text-brand-800">
                   Vehicle Details API India
                 </Link>
@@ -76,6 +71,11 @@ export default function Footer() {
               <li>
                 <Link to="/vehicle-lookup-api" className="hover:text-brand-800">
                   Vehicle Lookup API
+                </Link>
+              </li>
+              <li>
+                <Link to="/parivahan-api" className="hover:text-brand-800">
+                  Parivahan API
                 </Link>
               </li>
               <li>

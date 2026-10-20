@@ -123,12 +123,13 @@ export default function ProductLanding({
     )
   }
 
-  if (features) {
+  // One features section, or several when given an array (first keeps id="features")
+  for (const [n, set] of [].concat(features || []).entries()) {
     blocks.push(
-      <div key="features" id="features">
-        <SectionHeading label={features.label || 'Features'} title={features.title} description={features.description} />
+      <div key={`features-${n}`} id={set.id || (n === 0 ? 'features' : `features-${n + 1}`)}>
+        <SectionHeading label={set.label || 'Features'} title={set.title} description={set.description} />
         <div className="grid gap-5 sm:grid-cols-2 lg:gap-6">
-          {features.items.map((item) => (
+          {set.items.map((item) => (
             <div key={item.title} className={cn(glassCard, 'flex gap-4 p-6')}>
               <FeatureIcon icon={item.icon} variant={item.variant} className="mb-0 shrink-0" />
               <div>

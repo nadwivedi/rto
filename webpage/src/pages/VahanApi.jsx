@@ -153,9 +153,9 @@ export default function VahanApi() {
       }}
       related={[
         { to: '/vehicle-information-api', label: 'Vehicle information API' },
-        { to: '/api-for-vehicle-details', label: 'API for getting vehicle details' },
         { to: '/vehicle-details-api', label: 'Vehicle details API India' },
         { to: '/vehicle-make-and-model-api', label: 'Vehicle make and model API' },
+        { to: '/parivahan-api', label: 'Parivahan API' },
         { to: '/vehicle-lookup-api', label: 'Vehicle lookup API' },
         { to: '/vehicle-insurance-api', label: 'Vehicle insurance API' },
         { to: '/rc-verification-software', label: 'RC verification software' },

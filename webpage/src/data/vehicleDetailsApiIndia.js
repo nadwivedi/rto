@@ -12,6 +12,18 @@ export const vehicleDetailsApiIndiaFaqs = [
     a: 'A vehicle detail API is a service your website, app or CRM calls with an Indian vehicle number. It returns the vehicle’s registration details, such as owner, maker and model, chassis and engine number, insurance, PUC, fitness and tax validity, as JSON your software can use straight away.',
   },
   {
+    q: 'Which API can I use for getting vehicle details?',
+    a: `You can use the RTO Sarthi vehicle details API. Your software sends an Indian vehicle number and gets the vehicle’s registration details back as JSON: owner, address, maker and model, chassis and engine number, registration, insurance, PUC, fitness, tax, financer, blacklist and NOC, from ${LOOKUP_PRICE} per successful search.`,
+  },
+  {
+    q: 'How do I get vehicle details by vehicle number through an API?',
+    a: 'Contact RTO Sarthi for a private API key and choose a search limit. We share the integration guide, your developer connects it to your website, app or CRM, and from then on every vehicle number your software sends returns the vehicle details in seconds.',
+  },
+  {
+    q: 'What vehicle details can I get from the API?',
+    a: 'Owner name, father’s name and address, registering RTO and status, vehicle class and body type, maker and model, fuel and emission norms, colour, chassis and engine number, cubic capacity and seating, manufacturing date, registration date and validity, financer (hypothecation), insurance company, policy number and validity, PUC number and validity, fitness and road tax validity, blacklist status and NOC details, wherever they are available on the vehicle record.',
+  },
+  {
     q: 'Does the API work for vehicles from every state of India?',
     a: 'Yes. It works for vehicle numbers registered in every state and union territory, from Delhi, Maharashtra, Uttar Pradesh and Karnataka to the North East, J&K and Andaman, with the same integration.',
   },
@@ -30,6 +42,14 @@ export const vehicleDetailsApiIndiaFaqs = [
   {
     q: 'Can I get vehicle owner details by vehicle number through the API?',
     a: 'Yes. The owner name, father’s name, owner serial number and address are returned wherever they are on the vehicle record. Use them only for genuine business work such as insurance, finance or vehicle verification, as required by Indian data protection law.',
+  },
+  {
+    q: 'Can I check a large number of vehicles?',
+    a: 'Yes. Your software can send vehicle numbers one after another, for example to check a whole fleet. Each successful search is counted from your limit and every response shows the remaining searches.',
+  },
+  {
+    q: 'I do not have software. Can I still get vehicle details?',
+    a: `Yes. Use the vehicle number search inside the RTO Sarthi app: enter a vehicle number to see the details and download the RC and Vehicle Particulars PDF at ${LOOKUP_PRICE} per search, with no coding.`,
   },
   {
     q: 'Gaadi number se vehicle details nikalne ka API kaise milega?',

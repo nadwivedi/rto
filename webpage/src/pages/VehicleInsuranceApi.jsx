@@ -129,7 +129,7 @@ export default function VehicleInsuranceApi() {
       related={[
         { to: '/vahan-api', label: 'Vahan API' },
         { to: '/vehicle-lookup-api', label: 'Vehicle lookup API' },
-        { to: '/api-for-vehicle-details', label: 'API for getting vehicle details' },
+        { to: '/vehicle-details-api', label: 'Vehicle details API India' },
       ]}
       faq={{
         title: 'Vehicle insurance API — FAQ',
