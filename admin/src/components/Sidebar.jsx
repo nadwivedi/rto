@@ -162,21 +162,6 @@ const Sidebar = ({ isOpen, onClose }) => {
           </Link>
 
           <Link
-            to="/create-vehicle-json"
-            onClick={handleLinkClick}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-              location.pathname === '/create-vehicle-json'
-                ? 'bg-white text-indigo-800 font-bold'
-                : 'text-indigo-200 hover:bg-indigo-800'
-            }`}
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span className="truncate">Create Vehicle (JSON)</span>
-          </Link>
-
-          <Link
             to="/export"
             onClick={handleLinkClick}
             className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
