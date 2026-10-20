@@ -18,6 +18,7 @@ function SearchSelect({
   emptyText = 'Nothing found',
   className = '',
   ariaLabel,
+  triggerRef,
 }) {
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
@@ -84,6 +85,7 @@ function SearchSelect({
   return (
     <div ref={rootRef} className={`relative ${className}`}>
       <button
+        ref={triggerRef}
         type="button"
         onClick={() => (open ? close() : openList())}
         aria-haspopup="listbox"

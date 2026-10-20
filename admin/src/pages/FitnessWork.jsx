@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import {
   AlertTriangle,
   CalendarDays,
@@ -241,6 +241,17 @@ const FitnessWork = () => {
   }
 
   const handleChange = (e) => setField(e.target.name, e.target.value)
+
+  // Keyboard flow in the popup: Date -> Party -> Work Amount -> Profit, and Enter on Profit saves
+  const partyRef = useRef(null)
+  const amountRef = useRef(null)
+  const profitRef = useRef(null)
+  const noteRef = useRef(null)
+  const enterTo = (next) => (e) => {
+    if (e.key !== 'Enter') return
+    e.preventDefault()
+    next()
+  }
 
   const changeFilter = (setter) => (value) => {
     setter(value)
@@ -698,24 +709,19 @@ const FitnessWork = () => {
 
             <form className='grid gap-4 p-5' onSubmit={handleSubmit}>
               <div className='grid gap-1.5'>
-                <FieldLabel>Work By Party</FieldLabel>
-                <SearchSelect
-                  value={formData.userId}
-                  onChange={(userId) => setField('userId', userId)}
-                  options={partyOptions}
-                  placeholder='Select party'
-                  searchPlaceholder='Search name or mobile…'
-                  emptyText='No party found'
-                  icon={User}
-                  ariaLabel='Work by party'
-                />
-              </div>
-
-              <div className='grid gap-1.5'>
                 <FieldLabel>Date</FieldLabel>
                 <div className='relative'>
                   <CalendarDays className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400' />
-                  <input type='date' name='date' value={formData.date} onChange={handleChange} className={INPUT_CLASS} aria-label='Date' />
+                  <input
+                    type='date'
+                    name='date'
+                    value={formData.date}
+                    onChange={handleChange}
+                    onKeyDown={enterTo(() => partyRef.current?.click())}
+                    className={INPUT_CLASS}
+                    aria-label='Date'
+                    autoFocus
+                  />
                 </div>
                 <div className='flex gap-1.5'>
                   {[
@@ -738,6 +744,25 @@ const FitnessWork = () => {
                 </div>
               </div>
 
+              <div className='grid gap-1.5'>
+                <FieldLabel>Work By Party</FieldLabel>
+                <SearchSelect
+                  value={formData.userId}
+                  onChange={(userId) => {
+                    setField('userId', userId)
+                    // Party chosen: carry on typing in Work Amount
+                    requestAnimationFrame(() => amountRef.current?.focus())
+                  }}
+                  options={partyOptions}
+                  placeholder='Select party'
+                  searchPlaceholder='Search name or mobile…'
+                  emptyText='No party found'
+                  icon={User}
+                  ariaLabel='Work by party'
+                  triggerRef={partyRef}
+                />
+              </div>
+
               <div className='grid grid-cols-2 gap-4'>
                 <label className='grid gap-1.5'>
                   <FieldLabel>Work Amount</FieldLabel>
@@ -745,9 +770,11 @@ const FitnessWork = () => {
                     <IndianRupee className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400' />
                     <input
                       type='number'
+                      ref={amountRef}
                       name='amount'
                       value={formData.amount}
                       onChange={handleChange}
+                      onKeyDown={enterTo(() => profitRef.current?.focus())}
                       placeholder='e.g. 5000'
                       min='0'
                       step='0.01'
@@ -762,6 +789,7 @@ const FitnessWork = () => {
                     <TrendingUp className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500' />
                     <input
                       type='number'
+                      ref={profitRef}
                       name='profit'
                       value={formData.profit}
                       onChange={handleChange}
@@ -802,6 +830,7 @@ const FitnessWork = () => {
                       name='vehicleNumber'
                       value={formData.vehicleNumber}
                       onChange={(e) => setField('vehicleNumber', e.target.value.toUpperCase())}
+                      onKeyDown={enterTo(() => noteRef.current?.focus())}
                       placeholder='CG04AB1234'
                       className={INPUT_CLASS}
                     />
@@ -811,7 +840,7 @@ const FitnessWork = () => {
                   <FieldLabel optional>Note</FieldLabel>
                   <div className='relative'>
                     <StickyNote className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400' />
-                    <input type='text' name='note' value={formData.note} onChange={handleChange} placeholder='Any detail' className={INPUT_CLASS} />
+                    <input ref={noteRef} type='text' name='note' value={formData.note} onChange={handleChange} placeholder='Any detail' className={INPUT_CLASS} />
                   </div>
                 </label>
               </div>
