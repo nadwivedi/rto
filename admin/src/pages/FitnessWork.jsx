@@ -242,11 +242,18 @@ const FitnessWork = () => {
 
   const handleChange = (e) => setField(e.target.name, e.target.value)
 
-  // Keyboard flow in the popup: Date -> Party -> Work Amount -> Profit, and Enter on Profit saves
+  // Keyboard flow in the popup: Party -> Work Amount -> Profit, and Enter on Profit saves (Enter on Date opens Party)
   const partyRef = useRef(null)
   const amountRef = useRef(null)
   const profitRef = useRef(null)
   const noteRef = useRef(null)
+  // Popup opens with the party search ready to type in (date is already today)
+  useEffect(() => {
+    if (!showModal) return undefined
+    const frame = requestAnimationFrame(() => partyRef.current?.click())
+    return () => cancelAnimationFrame(frame)
+  }, [showModal])
+
   const enterTo = (next) => (e) => {
     if (e.key !== 'Enter') return
     e.preventDefault()
@@ -720,7 +727,6 @@ const FitnessWork = () => {
                     onKeyDown={enterTo(() => partyRef.current?.click())}
                     className={INPUT_CLASS}
                     aria-label='Date'
-                    autoFocus
                   />
                 </div>
                 <div className='flex gap-1.5'>
