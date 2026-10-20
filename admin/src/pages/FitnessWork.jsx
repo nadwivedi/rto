@@ -54,6 +54,93 @@ const TrashIcon = () => (
   </svg>
 )
 
+// Party picker you can type into: filters users by name or mobile number
+const PartySearchSelect = ({ users, value, onChange, className }) => {
+  const selected = users.find((u) => u._id === value)
+  const [query, setQuery] = useState('')
+  const [open, setOpen] = useState(false)
+  const [highlight, setHighlight] = useState(0)
+
+  const matches = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    if (!q) return users
+    return users.filter((u) => u.name?.toLowerCase().includes(q) || String(u.mobile1 || '').includes(q))
+  }, [users, query])
+
+  const pick = (user) => {
+    onChange(user._id)
+    setQuery('')
+    setOpen(false)
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      setOpen(true)
+      setHighlight((h) => Math.min(h + 1, matches.length - 1))
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      setHighlight((h) => Math.max(h - 1, 0))
+    } else if (e.key === 'Enter' && open) {
+      // Pick the highlighted party instead of submitting the form
+      e.preventDefault()
+      if (matches[highlight]) pick(matches[highlight])
+    } else if (e.key === 'Escape' && open) {
+      e.stopPropagation()
+      setOpen(false)
+    }
+  }
+
+  return (
+    <div className='relative'>
+      <input
+        type='text'
+        value={open ? query : selected ? `${selected.name} · ${selected.mobile1}` : ''}
+        onChange={(e) => {
+          setQuery(e.target.value)
+          setHighlight(0)
+          setOpen(true)
+        }}
+        onFocus={() => {
+          setQuery('')
+          setHighlight(0)
+          setOpen(true)
+        }}
+        onBlur={() => setOpen(false)}
+        onKeyDown={handleKeyDown}
+        placeholder={selected ? `${selected.name} · ${selected.mobile1}` : 'Search party by name or mobile'}
+        autoComplete='off'
+        className={className}
+      />
+      {open && (
+        <ul className='absolute z-10 mt-1 w-full max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg'>
+          {matches.length === 0 ? (
+            <li className='px-3 py-2 text-sm text-gray-500'>No party found</li>
+          ) : (
+            matches.map((u, i) => (
+              <li
+                key={u._id}
+                // mousedown fires before the input's blur, so the click still lands
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  pick(u)
+                }}
+                onMouseEnter={() => setHighlight(i)}
+                className={`px-3 py-2 text-sm cursor-pointer flex justify-between gap-2 ${
+                  i === highlight ? 'bg-indigo-50' : ''
+                } ${u._id === value ? 'font-semibold text-indigo-700' : 'text-gray-800'}`}
+              >
+                <span className='truncate'>{u.name}</span>
+                <span className='text-xs text-gray-400 shrink-0'>{u.mobile1}</span>
+              </li>
+            ))
+          )}
+        </ul>
+      )}
+    </div>
+  )
+}
+
 const FitnessWork = () => {
   const [summary, setSummary] = useState(null)
   const [works, setWorks] = useState([])
@@ -549,14 +636,15 @@ const FitnessWork = () => {
               <form onSubmit={handleSubmit} className='space-y-3'>
                 <div>
                   <label className={labelClass}>Work By Party</label>
-                  <select name='userId' value={formData.userId} onChange={handleChange} className={`${inputClass} cursor-pointer`}>
-                    <option value=''>Select party</option>
-                    {users.map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.name} · {u.mobile1}
-                      </option>
-                    ))}
-                  </select>
+                  <PartySearchSelect
+                    users={users}
+                    value={formData.userId}
+                    onChange={(userId) => {
+                      setFormData((prev) => ({ ...prev, userId }))
+                      setFormError('')
+                    }}
+                    className={inputClass}
+                  />
                 </div>
 
                 <div>
