@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { SlidersHorizontal, X } from 'lucide-react'
 import RcApiUsageCard from '../components/RcApiUsageCard'
+import SearchSelect from '../components/SearchSelect'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://app.rtosarthi.com'
@@ -8,6 +10,21 @@ const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://app.rtosarthi
 // Confirmation code for deleting a user. This is a typo guard, not a security
 // control - the DELETE endpoint is already behind admin auth.
 const DELETE_PASSWORD = '123456'
+
+const SORT_LABELS = {
+  default: 'Default order',
+  newest: 'Joined: Newest first',
+  oldest: 'Joined: Oldest first'
+}
+
+const FilterChip = ({ label, onRemove }) => (
+  <span className='inline-flex items-center gap-1 rounded-full bg-indigo-50 py-0.5 pl-2.5 pr-1 text-xs font-semibold text-indigo-700'>
+    {label}
+    <button type='button' onClick={onRemove} className='rounded-full p-0.5 hover:bg-indigo-100 cursor-pointer' aria-label={`Remove ${label}`}>
+      <X className='w-3 h-3' />
+    </button>
+  </span>
+)
 
 // All dates are shown in India time regardless of the admin's device timezone.
 // Without this the browser's own timezone is used (UTC on a server/VM), which
@@ -127,6 +144,9 @@ const Users = () => {
   const [statusFilter, setStatusFilter] = useState('all')
   const [stateFilter, setStateFilter] = useState('all')
   const [sortBy, setSortBy] = useState('default')
+  // Phone filter popup works on a draft; Apply copies it to the real filters
+  const [showFilters, setShowFilters] = useState(false)
+  const [draftFilters, setDraftFilters] = useState({ status: 'all', state: 'all', sort: 'default' })
   const [stats, setStats] = useState({ total: 0, active: 0, inactive: 0 })
   const [stateCounts, setStateCounts] = useState([])
   const [showModal, setShowModal] = useState(false)
@@ -238,6 +258,20 @@ const Users = () => {
     const time = (u) => new Date(u.createdAt).getTime() || 0
     return [...users].sort((a, b) => sortBy === 'newest' ? time(b) - time(a) : time(a) - time(b))
   }, [users, sortBy])
+
+  const activeFilterCount = [statusFilter !== 'all', stateFilter !== 'all', sortBy !== 'default'].filter(Boolean).length
+
+  const openFilters = () => {
+    setDraftFilters({ status: statusFilter, state: stateFilter, sort: sortBy })
+    setShowFilters(true)
+  }
+
+  const applyFilters = () => {
+    setStatusFilter(draftFilters.status)
+    setStateFilter(draftFilters.state)
+    setSortBy(draftFilters.sort)
+    setShowFilters(false)
+  }
 
   const copyToClipboard = (userId) => {
     navigator.clipboard.writeText(userId)
@@ -669,7 +703,7 @@ const Users = () => {
       {/* Search & Filter Bar */}
       <div className='bg-white rounded-xl shadow-sm border border-gray-100 p-2 sm:p-3 mb-3 sm:mb-5'>
         <div className='flex flex-wrap sm:flex-nowrap gap-2 sm:gap-3'>
-          <div className='relative w-full sm:w-auto sm:flex-1'>
+          <div className='relative min-w-0 flex-1'>
             <svg className='absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z' />
             </svg>
@@ -681,7 +715,23 @@ const Users = () => {
               className='w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent bg-gray-50'
             />
           </div>
-          <div className='flex gap-1 sm:gap-2'>
+          {/* Phones: all filters live in a popup behind this button */}
+          <button
+            type='button'
+            onClick={openFilters}
+            className={`sm:hidden relative flex shrink-0 items-center justify-center w-10 rounded-lg border transition-colors cursor-pointer ${
+              activeFilterCount ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-200 bg-gray-50 text-gray-600'
+            }`}
+            aria-label='Filters'
+          >
+            <SlidersHorizontal className='w-4 h-4' />
+            {activeFilterCount > 0 && (
+              <span className='absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white'>
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
+          <div className='hidden sm:flex gap-1 sm:gap-2'>
             {['all', 'true', 'false'].map((val) => (
               <button
                 key={val}
@@ -701,7 +751,7 @@ const Users = () => {
           <select
             value={stateFilter}
             onChange={(e) => setStateFilter(e.target.value)}
-            className='min-w-0 flex-1 sm:flex-none px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border border-gray-200 bg-gray-50 text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+            className='hidden sm:block min-w-0 flex-1 sm:flex-none px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border border-gray-200 bg-gray-50 text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
           >
             <option value='all'>All States</option>
             {stateCounts.map(({ state, count }) => (
@@ -711,14 +761,131 @@ const Users = () => {
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className='w-full sm:w-auto px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border border-gray-200 bg-gray-50 text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+            className='hidden sm:block w-full sm:w-auto px-2 py-1.5 sm:px-3 sm:py-2 text-xs sm:text-sm font-semibold rounded-lg border border-gray-200 bg-gray-50 text-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
           >
             <option value='default'>Sort: Default</option>
             <option value='newest'>Joined: Newest first</option>
             <option value='oldest'>Joined: Oldest first</option>
           </select>
         </div>
+
+        {/* Phones: the filters in use, each with its own x */}
+        {activeFilterCount > 0 && (
+          <div className='sm:hidden flex flex-wrap gap-1.5 mt-2'>
+            {statusFilter !== 'all' && (
+              <FilterChip label={statusFilter === 'true' ? 'Active' : 'Inactive'} onRemove={() => setStatusFilter('all')} />
+            )}
+            {stateFilter !== 'all' && <FilterChip label={stateFilter} onRemove={() => setStateFilter('all')} />}
+            {sortBy !== 'default' && <FilterChip label={SORT_LABELS[sortBy]} onRemove={() => setSortBy('default')} />}
+          </div>
+        )}
       </div>
+
+      {/* Phone filter popup */}
+      {showFilters && (
+        <div className='sm:hidden fixed inset-0 z-50 flex items-end bg-black/40' onClick={() => setShowFilters(false)}>
+          <div
+            className='w-full max-h-[85vh] overflow-y-auto rounded-t-2xl bg-white shadow-2xl'
+            onClick={(e) => e.stopPropagation()}
+            role='dialog'
+            aria-modal='true'
+            aria-label='Filters'
+          >
+            <div className='flex items-center justify-between border-b border-gray-100 px-4 py-3'>
+              <h2 className='text-base font-bold text-gray-800'>Filters</h2>
+              <button
+                type='button'
+                onClick={() => setShowFilters(false)}
+                className='flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 hover:bg-gray-100 cursor-pointer'
+                aria-label='Close'
+              >
+                <X className='w-4 h-4' />
+              </button>
+            </div>
+
+            <div className='space-y-5 p-4'>
+              <div>
+                <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500'>Status</p>
+                <div className='grid grid-cols-3 gap-2'>
+                  {[
+                    ['all', 'All', stats.total, 'bg-gray-800'],
+                    ['true', 'Active', stats.active, 'bg-green-600'],
+                    ['false', 'Inactive', stats.inactive, 'bg-red-500']
+                  ].map(([val, label, count, activeBg]) => {
+                    const on = draftFilters.status === val
+                    return (
+                      <button
+                        key={val}
+                        type='button'
+                        onClick={() => setDraftFilters((f) => ({ ...f, status: val }))}
+                        className={`rounded-lg border px-2 py-2 text-sm font-semibold transition cursor-pointer ${
+                          on ? `${activeBg} border-transparent text-white` : 'border-gray-200 bg-gray-50 text-gray-600'
+                        }`}
+                      >
+                        {label}
+                        <span className={`block text-[11px] font-normal ${on ? 'text-white/80' : 'text-gray-400'}`}>{count}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500'>State</p>
+                <SearchSelect
+                  value={draftFilters.state === 'all' ? '' : draftFilters.state}
+                  onChange={(state) => setDraftFilters((f) => ({ ...f, state: state || 'all' }))}
+                  options={stateCounts.map(({ state, count }) => ({ value: state, label: state, count }))}
+                  placeholder='All states'
+                  searchPlaceholder='Search state…'
+                  emptyText='No state found'
+                  clearable
+                  ariaLabel='State'
+                />
+              </div>
+
+              <div>
+                <p className='mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500'>Sort</p>
+                <div className='grid gap-2'>
+                  {Object.entries(SORT_LABELS).map(([val, label]) => {
+                    const on = draftFilters.sort === val
+                    return (
+                      <button
+                        key={val}
+                        type='button'
+                        onClick={() => setDraftFilters((f) => ({ ...f, sort: val }))}
+                        className={`flex items-center justify-between rounded-lg border px-3 py-2 text-sm font-semibold transition cursor-pointer ${
+                          on ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-200 bg-gray-50 text-gray-600'
+                        }`}
+                      >
+                        {label}
+                        <span className={`h-4 w-4 rounded-full border-2 ${on ? 'border-indigo-600 bg-indigo-600 ring-2 ring-inset ring-white' : 'border-gray-300'}`} />
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            </div>
+
+            <div className='sticky bottom-0 flex gap-2 border-t border-gray-100 bg-white p-4'>
+              <button
+                type='button'
+                onClick={() => setDraftFilters({ status: 'all', state: 'all', sort: 'default' })}
+                className='flex-1 rounded-lg border border-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer'
+              >
+                Reset
+              </button>
+              <button
+                type='button'
+                onClick={applyFilters}
+                className='flex-1 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 cursor-pointer'
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Success/Error Messages */}
       {success && (
