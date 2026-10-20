@@ -6,6 +6,7 @@ import Dashboard from './pages/Dashboard';
 import ApiCredits from './pages/ApiCredits';
 import ApiKeys from './pages/ApiKeys';
 import ApiKeyDetail from './pages/ApiKeyDetail';
+import FitnessWork from './pages/FitnessWork';
 import Blogs from './pages/Blogs';
 import VehicleRegistrations from './pages/VehicleRegistrations';
 import Export from './pages/Export';
@@ -107,6 +108,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ApiKeyDetail />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/fitness-work"
+                element={
+                  <ProtectedRoute>
+                    <FitnessWork />
                   </ProtectedRoute>
                 }
               />
