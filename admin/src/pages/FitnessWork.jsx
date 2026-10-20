@@ -1,4 +1,25 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import {
+  AlertTriangle,
+  CalendarDays,
+  Car,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  IndianRupee,
+  Loader2,
+  Pencil,
+  Plus,
+  StickyNote,
+  Trash2,
+  TrendingUp,
+  User,
+  Wallet,
+  X
+} from 'lucide-react'
+import StatCard from '../components/StatCard'
+import SearchSelect from '../components/SearchSelect'
+import RowMenu from '../components/RowMenu'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -30,116 +51,57 @@ const formatMonth = (key) => {
 const formatRupees = (n) =>
   `${Number(n) < 0 ? '-' : ''}₹${Math.abs(Number(n) || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
 
+// Profit as a share of the work amount: 800 of 5000 -> "16%"
+const marginOf = (profit, amount) => (Number(amount) > 0 ? `${Math.round((Number(profit) / Number(amount)) * 1000) / 10}%` : null)
+
+const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`
+
+const getInitials = (name) => {
+  if (!name) return '?'
+  const parts = name.trim().split(/\s+/)
+  return parts.slice(0, 2).map((part) => part[0]?.toUpperCase() || '').join('') || '?'
+}
+
+const AVATAR_PALETTE = [
+  'bg-sky-100 text-sky-700',
+  'bg-emerald-100 text-emerald-700',
+  'bg-violet-100 text-violet-700',
+  'bg-amber-100 text-amber-700',
+  'bg-rose-100 text-rose-700',
+  'bg-teal-100 text-teal-700'
+]
+
+const getAvatarClass = (seed) => {
+  const code = String(seed || '').split('').reduce((total, char) => total + char.charCodeAt(0), 0)
+  return AVATAR_PALETTE[code % AVATAR_PALETTE.length]
+}
+
 const EMPTY_FORM = { userId: '', date: '', amount: '', profit: '', vehicleNumber: '', note: '' }
 
-const Tile = ({ label, value, sub, accent = 'text-gray-900' }) => (
-  <div className='bg-white rounded-xl border border-gray-100 p-2.5 sm:p-4 shadow-sm'>
-    <p className='text-[10px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wide'>{label}</p>
-    <p className={`text-lg sm:text-2xl font-bold mt-0.5 sm:mt-1 tabular-nums ${accent}`}>{value}</p>
-    {sub && <p className='text-[11px] text-gray-400 mt-0.5'>{sub}</p>}
-  </div>
+const INPUT_CLASS =
+  'w-full rounded-lg border border-stone-300 bg-white py-2 pl-9 pr-3 text-sm text-stone-900 placeholder:text-stone-400 outline-none transition focus:border-stone-500 focus:ring-4 focus:ring-stone-200'
+const PRIMARY_BUTTON =
+  'flex items-center justify-center gap-1.5 rounded-lg bg-stone-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-stone-800 disabled:opacity-60 cursor-pointer'
+const SECONDARY_BUTTON =
+  'flex items-center justify-center gap-1.5 rounded-lg border border-stone-300 bg-white px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-100 disabled:opacity-60 cursor-pointer'
+const ICON_BUTTON =
+  'flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 transition hover:bg-stone-100 hover:text-stone-800 cursor-pointer'
+const CARD = 'overflow-hidden rounded-2xl border border-stone-200 bg-[#fbfaf7] shadow-xs'
+const FILTER_DATE =
+  'h-[38px] rounded-lg border border-stone-300 bg-white px-3 text-sm text-stone-800 outline-none transition focus:border-stone-500 focus:ring-4 focus:ring-stone-200'
+
+const FieldLabel = ({ children, optional }) => (
+  <span className='text-sm font-medium text-stone-700'>
+    {children}
+    {optional && <span className='ml-1 font-normal text-stone-400'>(optional)</span>}
+  </span>
 )
 
-const th = 'px-2.5 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wider'
-const td = 'px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'
-
-const PencilIcon = () => (
-  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M15.232 5.232l3.536 3.536M9 13l6.232-6.232a2.5 2.5 0 113.536 3.536L12.536 16.536 8 17l.464-4.536z' />
-  </svg>
+const Avatar = ({ name, seed, size = 'h-9 w-9' }) => (
+  <span className={`flex ${size} shrink-0 items-center justify-center rounded-full text-xs font-bold ${getAvatarClass(seed || name)}`}>
+    {getInitials(name)}
+  </span>
 )
-const TrashIcon = () => (
-  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
-  </svg>
-)
-
-// Party picker you can type into: filters users by name or mobile number
-const PartySearchSelect = ({ users, value, onChange, className }) => {
-  const selected = users.find((u) => u._id === value)
-  const [query, setQuery] = useState('')
-  const [open, setOpen] = useState(false)
-  const [highlight, setHighlight] = useState(0)
-
-  const matches = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return users
-    return users.filter((u) => u.name?.toLowerCase().includes(q) || String(u.mobile1 || '').includes(q))
-  }, [users, query])
-
-  const pick = (user) => {
-    onChange(user._id)
-    setQuery('')
-    setOpen(false)
-  }
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'ArrowDown') {
-      e.preventDefault()
-      setOpen(true)
-      setHighlight((h) => Math.min(h + 1, matches.length - 1))
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault()
-      setHighlight((h) => Math.max(h - 1, 0))
-    } else if (e.key === 'Enter' && open) {
-      // Pick the highlighted party instead of submitting the form
-      e.preventDefault()
-      if (matches[highlight]) pick(matches[highlight])
-    } else if (e.key === 'Escape' && open) {
-      e.stopPropagation()
-      setOpen(false)
-    }
-  }
-
-  return (
-    <div className='relative'>
-      <input
-        type='text'
-        value={open ? query : selected ? `${selected.name} · ${selected.mobile1}` : ''}
-        onChange={(e) => {
-          setQuery(e.target.value)
-          setHighlight(0)
-          setOpen(true)
-        }}
-        onFocus={() => {
-          setQuery('')
-          setHighlight(0)
-          setOpen(true)
-        }}
-        onBlur={() => setOpen(false)}
-        onKeyDown={handleKeyDown}
-        placeholder={selected ? `${selected.name} · ${selected.mobile1}` : 'Search party by name or mobile'}
-        autoComplete='off'
-        className={className}
-      />
-      {open && (
-        <ul className='absolute z-10 mt-1 w-full max-h-60 overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg'>
-          {matches.length === 0 ? (
-            <li className='px-3 py-2 text-sm text-gray-500'>No party found</li>
-          ) : (
-            matches.map((u, i) => (
-              <li
-                key={u._id}
-                // mousedown fires before the input's blur, so the click still lands
-                onMouseDown={(e) => {
-                  e.preventDefault()
-                  pick(u)
-                }}
-                onMouseEnter={() => setHighlight(i)}
-                className={`px-3 py-2 text-sm cursor-pointer flex justify-between gap-2 ${
-                  i === highlight ? 'bg-indigo-50' : ''
-                } ${u._id === value ? 'font-semibold text-indigo-700' : 'text-gray-800'}`}
-              >
-                <span className='truncate'>{u.name}</span>
-                <span className='text-xs text-gray-400 shrink-0'>{u.mobile1}</span>
-              </li>
-            ))
-          )}
-        </ul>
-      )}
-    </div>
-  )
-}
 
 const FitnessWork = () => {
   const [summary, setSummary] = useState(null)
@@ -162,7 +124,8 @@ const FitnessWork = () => {
   const [formData, setFormData] = useState(EMPTY_FORM)
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
-  const [deletingId, setDeletingId] = useState(null)
+  const [workToDelete, setWorkToDelete] = useState(null)
+  const [deleting, setDeleting] = useState(false)
 
   const fetchSummary = useCallback(async () => {
     const res = await fetch(`${BACKEND_URL}/api/admin/fitness-work/summary`, { credentials: 'include' })
@@ -206,9 +169,32 @@ const FitnessWork = () => {
     loadAll()
   }, [loadAll])
 
+  // Success notes fade on their own
+  useEffect(() => {
+    if (!success) return undefined
+    const timer = setTimeout(() => setSuccess(''), 3500)
+    return () => clearTimeout(timer)
+  }, [success])
+
   const usersById = useMemo(() => new Map(users.map((u) => [u._id, u])), [users])
   const filteredParty = usersById.get(partyFilter)
   const hasFilter = Boolean(partyFilter || fromDate || toDate)
+
+  // Work done per party, to show next to each name in the picker
+  const entriesByParty = useMemo(
+    () => new Map((summary?.parties || []).map((p) => [String(p.userId), p.entries])),
+    [summary]
+  )
+  const partyOptions = useMemo(
+    () =>
+      users.map((u) => ({
+        value: u._id,
+        label: u.mobile1 ? `${u.name} · ${u.mobile1}` : u.name,
+        count: entriesByParty.get(u._id)
+      })),
+    [users, entriesByParty]
+  )
+  const filterOptions = useMemo(() => partyOptions.map(({ value, label }) => ({ value, label })), [partyOptions])
 
   const openAdd = () => {
     setEditingId(null)
@@ -232,18 +218,32 @@ const FitnessWork = () => {
   }
 
   const closeModal = () => {
+    if (saving) return
     setShowModal(false)
     setFormError('')
   }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target
+  // Esc closes whichever popup is open
+  useEffect(() => {
+    if (!showModal && !workToDelete) return undefined
+    const onKeyDown = (e) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return
+      if (workToDelete && !deleting) setWorkToDelete(null)
+      else if (showModal && !saving) setShowModal(false)
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [showModal, workToDelete, saving, deleting])
+
+  const setField = (name, value) => {
     setFormData((prev) => ({ ...prev, [name]: value }))
     setFormError('')
   }
 
-  const changeFilter = (setter) => (e) => {
-    setter(e.target.value)
+  const handleChange = (e) => setField(e.target.name, e.target.value)
+
+  const changeFilter = (setter) => (value) => {
+    setter(value)
     setPage(1)
   }
 
@@ -254,17 +254,20 @@ const FitnessWork = () => {
     setPage(1)
   }
 
+  const formAmount = Number(formData.amount)
+  const formProfit = Number(formData.profit)
+  const formReady = formData.amount !== '' && formData.profit !== '' && !Number.isNaN(formAmount) && !Number.isNaN(formProfit)
+
   const handleSubmit = async (e) => {
     e.preventDefault()
-    const amount = Number(formData.amount)
-    const profit = Number(formData.profit)
 
     if (!formData.userId) return setFormError('Please select the party who gave the work')
     if (!formData.date) return setFormError('Please choose a date')
-    if (formData.amount === '' || Number.isNaN(amount) || amount < 0) {
+    if (formData.amount === '' || Number.isNaN(formAmount) || formAmount < 0) {
       return setFormError('Please enter the work amount')
     }
-    if (formData.profit === '' || Number.isNaN(profit)) return setFormError('Please enter the profit amount')
+    if (formData.profit === '' || Number.isNaN(formProfit)) return setFormError('Please enter the profit amount')
+    if (formProfit > formAmount) return setFormError('Profit cannot be more than the work amount')
 
     try {
       setSaving(true)
@@ -273,7 +276,7 @@ const FitnessWork = () => {
         method: editingId ? 'PUT' : 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, amount, profit })
+        body: JSON.stringify({ ...formData, amount: formAmount, profit: formProfit })
       })
       const json = await res.json()
       if (json.success) {
@@ -291,438 +294,579 @@ const FitnessWork = () => {
     }
   }
 
-  const handleDelete = async (work) => {
-    const who = work.userId?.name ? ` from ${work.userId.name}` : ''
-    if (!window.confirm(`Delete fitness work${who} of ${formatRupees(work.amount)} on ${formatDate(work.date)}?`)) return
-
+  const handleDeleteConfirm = async () => {
     try {
-      setDeletingId(work._id)
-      const res = await fetch(`${BACKEND_URL}/api/admin/fitness-work/${work._id}`, {
+      setDeleting(true)
+      const res = await fetch(`${BACKEND_URL}/api/admin/fitness-work/${workToDelete._id}`, {
         method: 'DELETE',
         credentials: 'include'
       })
       const json = await res.json()
       if (json.success) {
         setSuccess(json.message)
+        setWorkToDelete(null)
         await loadAll()
       } else {
         setError(json.message || 'Failed to delete')
+        setWorkToDelete(null)
       }
     } catch {
       setError('Failed to delete')
+      setWorkToDelete(null)
     } finally {
-      setDeletingId(null)
+      setDeleting(false)
     }
   }
 
-  const inputClass =
-    'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-  const labelClass = 'block text-xs sm:text-sm font-semibold text-gray-700 mb-1'
-  const filterClass =
-    'px-2.5 py-1.5 text-xs sm:text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+  const rowActions = (work) => [
+    { label: 'Edit', icon: Pencil, onClick: () => openEdit(work) },
+    { label: 'Delete', icon: Trash2, tone: 'danger', onClick: () => setWorkToDelete(work) }
+  ]
 
-  const formAmount = Number(formData.amount)
-  const formProfit = Number(formData.profit)
-  const profitPercent =
-    formData.amount !== '' && formData.profit !== '' && formAmount > 0 && !Number.isNaN(formProfit)
-      ? Math.round((formProfit / formAmount) * 1000) / 10
-      : null
+  const renderParty = (work, withMobile = true) =>
+    work.userId ? (
+      <div className='flex min-w-0 items-center gap-3'>
+        <Avatar name={work.userId.name} seed={work.userId._id} />
+        <div className='min-w-0'>
+          <p className='truncate font-semibold text-stone-900'>{work.userId.name}</p>
+          {withMobile && <p className='truncate text-xs text-stone-500'>{work.userId.mobile1}</p>}
+        </div>
+      </div>
+    ) : (
+      <div className='flex items-center gap-3'>
+        <Avatar name='?' />
+        <span className='text-stone-400'>Deleted user</span>
+      </div>
+    )
 
-  const iconButton = 'p-1.5 text-gray-400 rounded-md transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer'
+  const renderProfit = (work) => (
+    <div className='text-right'>
+      <p className='font-bold tabular-nums text-emerald-700'>{formatRupees(work.profit)}</p>
+      {marginOf(work.profit, work.amount) && (
+        <p className='text-[11px] tabular-nums text-stone-400'>{marginOf(work.profit, work.amount)} margin</p>
+      )}
+    </div>
+  )
+
+  const maxPartyProfit = Math.max(1, ...(summary?.parties || []).map((p) => p.profit))
+  const months = summary?.months || []
+  const maxMonthProfit = Math.max(1, ...months.map((m) => m.profit))
 
   return (
-    <div className='max-w-[1500px] mx-auto'>
+    <div className='mx-auto max-w-[1500px] space-y-4 text-stone-900'>
       {/* Header */}
-      <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5 sm:gap-4 mb-3 sm:mb-6'>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
         <div>
-          <h1 className='text-xl sm:text-3xl font-bold text-gray-800'>Fitness Work</h1>
-          <p className='text-xs sm:text-base text-gray-600 mt-0.5 sm:mt-1'>
-            Fitness work each party gives us and the profit we make on it. Only visible to admin.
-          </p>
+          <h1 className='text-xl font-bold text-stone-900'>Fitness Work</h1>
+          <p className='mt-0.5 text-sm text-stone-500'>Fitness work each party gives us and the profit we make on it. Only for admin.</p>
         </div>
-        <button
-          onClick={openAdd}
-          className='px-3 py-2 sm:px-5 sm:py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all cursor-pointer'
-        >
-          + New Work
+        <button type='button' onClick={openAdd} className={PRIMARY_BUTTON}>
+          <Plus className='h-4 w-4' strokeWidth={2.5} />
+          New Work
         </button>
       </div>
 
       {success && (
-        <div className='mb-5 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium'>
-          {success}
-        </div>
+        <div className='rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-800'>{success}</div>
       )}
       {error && (
-        <div className='mb-5 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium'>
+        <div className='flex items-start justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700'>
           {error}
+          <button type='button' onClick={() => setError('')} className='text-rose-400 hover:text-rose-700 cursor-pointer' aria-label='Dismiss'>
+            <X className='h-4 w-4' />
+          </button>
         </div>
       )}
 
-      {loading ? (
-        <div className='space-y-4'>
-          <div className='grid grid-cols-2 lg:grid-cols-4 gap-3'>
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className='h-24 bg-white rounded-xl border border-gray-100 animate-pulse' />
-            ))}
-          </div>
-          <div className='h-64 bg-white rounded-xl border border-gray-100 animate-pulse' />
-        </div>
-      ) : (
-        <>
-          {/* Totals */}
-          <div className='grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-5'>
-            <Tile
-              label="Today's Profit"
-              value={formatRupees(summary?.today?.profit)}
-              accent='text-emerald-700'
-              sub={summary?.today?.entries ? `${summary.today.entries} work(s) · ${formatRupees(summary.today.amount)}` : 'No work recorded today'}
-            />
-            <Tile
-              label='This Month Profit'
-              value={formatRupees(summary?.thisMonth?.profit)}
-              accent='text-emerald-700'
-              sub={
-                summary?.thisMonth?.entries
-                  ? `${summary.thisMonth.entries} work(s) · ${formatRupees(summary.thisMonth.amount)}`
-                  : 'No work this month'
-              }
-            />
-            <Tile
-              label='Total Profit'
-              value={formatRupees(summary?.overall?.profit)}
-              accent='text-emerald-700'
-              sub={`${summary?.overall?.entries || 0} work(s) in all`}
-            />
-            <Tile
-              label='Total Work Amount'
-              value={formatRupees(summary?.overall?.amount)}
-              sub={`From ${summary?.parties?.length || 0} part${summary?.parties?.length === 1 ? 'y' : 'ies'}`}
-            />
-          </div>
+      {/* Totals */}
+      <section className='grid grid-cols-2 gap-2 md:gap-3 xl:grid-cols-4'>
+        <StatCard
+          compact
+          icon={TrendingUp}
+          tone='emerald'
+          label="Today's Profit"
+          value={formatRupees(summary?.today?.profit)}
+          hint={summary?.today?.entries ? `${plural(summary.today.entries, 'work', 'works')} · ${formatRupees(summary.today.amount)}` : 'No work recorded today'}
+        />
+        <StatCard
+          compact
+          icon={CalendarDays}
+          tone='teal'
+          label='This Month Profit'
+          value={formatRupees(summary?.thisMonth?.profit)}
+          hint={summary?.thisMonth?.entries ? `${plural(summary.thisMonth.entries, 'work', 'works')} · ${formatRupees(summary.thisMonth.amount)}` : 'No work this month'}
+        />
+        <StatCard
+          compact
+          icon={Wallet}
+          tone='indigo'
+          label='Total Profit'
+          value={formatRupees(summary?.overall?.profit)}
+          hint={
+            summary?.overall?.amount
+              ? `${marginOf(summary.overall.profit, summary.overall.amount)} of all work`
+              : 'Nothing recorded yet'
+          }
+        />
+        <StatCard
+          compact
+          icon={ClipboardCheck}
+          tone='amber'
+          label='Total Work Amount'
+          value={formatRupees(summary?.overall?.amount)}
+          hint={`${plural(summary?.overall?.entries || 0, 'work', 'works')} from ${plural(summary?.parties?.length || 0, 'party', 'parties')}`}
+        />
+      </section>
 
-          <div className='grid grid-cols-1 xl:grid-cols-3 gap-3 sm:gap-5'>
-            {/* Entries */}
-            <div className='xl:col-span-2 bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden'>
-              <div className='p-3 sm:p-4 border-b border-gray-100 space-y-2'>
-                <div className='flex items-center justify-between gap-2'>
-                  <h2 className='text-sm sm:text-base font-bold text-gray-800'>
-                    {filteredParty ? `Work from ${filteredParty.name}` : 'All Fitness Work'}
-                  </h2>
-                  {hasFilter && (
-                    <button onClick={clearFilters} className='text-xs text-indigo-600 hover:underline cursor-pointer'>
-                      Clear filters
-                    </button>
-                  )}
-                </div>
-                <div className='flex flex-wrap gap-2'>
-                  <select value={partyFilter} onChange={changeFilter(setPartyFilter)} className={`${filterClass} cursor-pointer min-w-0 flex-1 sm:flex-none`}>
-                    <option value=''>All parties</option>
-                    {users.map((u) => (
-                      <option key={u._id} value={u._id}>
-                        {u.name}
-                      </option>
-                    ))}
-                  </select>
-                  <input type='date' value={fromDate} onChange={changeFilter(setFromDate)} className={filterClass} title='From date' />
-                  <input type='date' value={toDate} onChange={changeFilter(setToDate)} className={filterClass} title='To date' />
-                </div>
-                {hasFilter && listTotals && (
-                  <p className='text-xs text-gray-600'>
-                    {listTotals.entries} work(s) · Amount <b>{formatRupees(listTotals.amount)}</b> · Profit{' '}
-                    <b className='text-emerald-700'>{formatRupees(listTotals.profit)}</b>
-                  </p>
-                )}
-              </div>
-
-              {works.length === 0 ? (
-                <div className='p-8 text-center text-sm text-gray-500'>
-                  {hasFilter ? 'No fitness work matches these filters.' : 'No fitness work recorded yet. Click “+ New Work” to add one.'}
-                </div>
-              ) : (
-                <>
-                  {/* Mobile list */}
-                  <ul className='md:hidden divide-y divide-gray-100'>
-                    {works.map((work) => (
-                      <li key={work._id} className='p-3 flex items-start gap-2'>
-                        <div className='flex-1 min-w-0'>
-                          <div className='flex justify-between gap-2'>
-                            <span className='font-semibold text-sm text-gray-900 truncate'>{work.userId?.name || 'Deleted user'}</span>
-                            <span className='text-sm font-bold text-emerald-700 tabular-nums'>{formatRupees(work.profit)}</span>
-                          </div>
-                          <div className='flex justify-between gap-2 text-xs text-gray-500 mt-0.5'>
-                            <span>
-                              {formatDate(work.date)}
-                              {work.vehicleNumber && ` · ${work.vehicleNumber}`}
-                            </span>
-                            <span className='tabular-nums'>of {formatRupees(work.amount)}</span>
-                          </div>
-                          {work.note && <p className='text-xs text-gray-400 mt-0.5 truncate'>{work.note}</p>}
-                        </div>
-                        <button onClick={() => openEdit(work)} className={`${iconButton} hover:text-indigo-600 hover:bg-indigo-50`} title='Edit'>
-                          <PencilIcon />
-                        </button>
-                        <button
-                          onClick={() => handleDelete(work)}
-                          disabled={deletingId === work._id}
-                          className={`${iconButton} -mr-1 hover:text-red-600 hover:bg-red-50`}
-                          title='Delete'
-                        >
-                          <TrashIcon />
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-
-                  {/* Desktop table */}
-                  <div className='hidden md:block overflow-x-auto'>
-                    <table className='w-full'>
-                      <thead>
-                        <tr className='border-b border-gray-100 bg-gray-50/60'>
-                          <th className={`${th} text-left`}>Date</th>
-                          <th className={`${th} text-left`}>Party</th>
-                          <th className={`${th} text-left`}>Vehicle</th>
-                          <th className={`${th} text-right`}>Amount</th>
-                          <th className={`${th} text-right`}>Profit</th>
-                          <th className={`${th} text-left`}>Note</th>
-                          <th className={`${th} text-right`}></th>
-                        </tr>
-                      </thead>
-                      <tbody className='divide-y divide-gray-100'>
-                        {works.map((work) => (
-                          <tr key={work._id} className='hover:bg-gray-50/80 transition-colors'>
-                            <td className={`${td} text-gray-700 whitespace-nowrap`}>{formatDate(work.date)}</td>
-                            <td className={td}>
-                              {work.userId ? (
-                                <>
-                                  <div className='font-semibold text-gray-900'>{work.userId.name}</div>
-                                  <div className='text-gray-400'>{work.userId.mobile1}</div>
-                                </>
-                              ) : (
-                                <span className='text-gray-400'>Deleted user</span>
-                              )}
-                            </td>
-                            <td className={`${td} text-gray-700 whitespace-nowrap`}>{work.vehicleNumber || '-'}</td>
-                            <td className={`${td} text-right tabular-nums text-gray-900`}>{formatRupees(work.amount)}</td>
-                            <td className={`${td} text-right tabular-nums font-bold text-emerald-700`}>{formatRupees(work.profit)}</td>
-                            <td className={`${td} text-gray-500 max-w-[200px] truncate`} title={work.note || ''}>
-                              {work.note || '-'}
-                            </td>
-                            <td className={`${td} text-right whitespace-nowrap`}>
-                              <button onClick={() => openEdit(work)} className={`${iconButton} hover:text-indigo-600 hover:bg-indigo-50`} title='Edit'>
-                                <PencilIcon />
-                              </button>
-                              <button
-                                onClick={() => handleDelete(work)}
-                                disabled={deletingId === work._id}
-                                className={`${iconButton} hover:text-red-600 hover:bg-red-50`}
-                                title='Delete'
-                              >
-                                <TrashIcon />
-                              </button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-
-                  {pagination.totalPages > 1 && (
-                    <div className='flex items-center justify-between p-3 border-t border-gray-100 text-xs text-gray-600'>
-                      <button
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page <= 1}
-                        className='px-3 py-1.5 border border-gray-300 rounded-lg disabled:opacity-40 cursor-pointer disabled:cursor-default'
-                      >
-                        Previous
-                      </button>
-                      <span>
-                        Page {pagination.currentPage} of {pagination.totalPages}
-                      </span>
-                      <button
-                        onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
-                        disabled={page >= pagination.totalPages}
-                        className='px-3 py-1.5 border border-gray-300 rounded-lg disabled:opacity-40 cursor-pointer disabled:cursor-default'
-                      >
-                        Next
-                      </button>
-                    </div>
-                  )}
-                </>
+      <div className='grid grid-cols-1 gap-4 xl:grid-cols-3'>
+        {/* Entries */}
+        <section className={`${CARD} xl:col-span-2`}>
+          <div className='flex flex-col gap-3 border-b border-stone-200 px-4 py-3 md:px-5'>
+            <div className='flex items-center justify-between gap-2'>
+              <h2 className='text-sm font-bold text-stone-800'>
+                {filteredParty ? `Work from ${filteredParty.name}` : 'All Fitness Work'}
+                <span className='ml-2 text-xs font-normal text-stone-500'>{pagination.totalRecords} entries</span>
+              </h2>
+              {hasFilter && (
+                <button type='button' onClick={clearFilters} className='text-xs font-semibold text-stone-500 hover:text-stone-900 cursor-pointer'>
+                  Clear filters
+                </button>
               )}
             </div>
-
-            {/* Side: party-wise and month-wise */}
-            <div className='space-y-3 sm:space-y-5'>
-              <div className='bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden'>
-                <h2 className='p-3 sm:p-4 border-b border-gray-100 text-sm sm:text-base font-bold text-gray-800'>Party-wise Profit</h2>
-                {summary?.parties?.length ? (
-                  <ul className='divide-y divide-gray-100'>
-                    {summary.parties.map((p) => (
-                      <li key={p.userId}>
-                        <button
-                          onClick={() => {
-                            setPartyFilter(String(p.userId))
-                            setPage(1)
-                          }}
-                          className={`w-full text-left px-3 sm:px-4 py-2 flex justify-between gap-2 hover:bg-gray-50 cursor-pointer ${
-                            partyFilter === String(p.userId) ? 'bg-indigo-50' : ''
-                          }`}
-                        >
-                          <div className='min-w-0'>
-                            <div className='text-sm font-semibold text-gray-900 truncate'>{p.name}</div>
-                            <div className='text-[11px] text-gray-400'>
-                              {p.entries} work(s) · {formatRupees(p.amount)} · last {formatDate(p.lastDate)}
-                            </div>
-                          </div>
-                          <div className='text-sm font-bold text-emerald-700 tabular-nums whitespace-nowrap'>{formatRupees(p.profit)}</div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className='p-4 text-xs text-gray-500'>No party has given work yet.</p>
-                )}
-              </div>
-
-              <div className='bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden'>
-                <h2 className='p-3 sm:p-4 border-b border-gray-100 text-sm sm:text-base font-bold text-gray-800'>Month-wise</h2>
-                {summary?.months?.length ? (
-                  <table className='w-full'>
-                    <thead>
-                      <tr className='border-b border-gray-100 bg-gray-50/60'>
-                        <th className={`${th} text-left`}>Month</th>
-                        <th className={`${th} text-right`}>Works</th>
-                        <th className={`${th} text-right`}>Amount</th>
-                        <th className={`${th} text-right`}>Profit</th>
-                      </tr>
-                    </thead>
-                    <tbody className='divide-y divide-gray-100'>
-                      {summary.months.map((m) => (
-                        <tr key={m.month}>
-                          <td className={`${td} text-gray-700 whitespace-nowrap`}>{formatMonth(m.month)}</td>
-                          <td className={`${td} text-right tabular-nums`}>{m.entries}</td>
-                          <td className={`${td} text-right tabular-nums`}>{formatRupees(m.amount)}</td>
-                          <td className={`${td} text-right tabular-nums font-bold text-emerald-700`}>{formatRupees(m.profit)}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : (
-                  <p className='p-4 text-xs text-gray-500'>Nothing recorded yet.</p>
-                )}
+            <div className='flex flex-col gap-2 sm:flex-row sm:items-center'>
+              <SearchSelect
+                value={partyFilter}
+                onChange={changeFilter(setPartyFilter)}
+                options={filterOptions}
+                placeholder='All parties'
+                searchPlaceholder='Search party…'
+                emptyText='No party found'
+                icon={User}
+                clearable
+                ariaLabel='Filter by party'
+                className='sm:w-64'
+              />
+              <div className='flex items-center gap-2'>
+                <input
+                  type='date'
+                  value={fromDate}
+                  max={toDate || undefined}
+                  onChange={(e) => changeFilter(setFromDate)(e.target.value)}
+                  className={`${FILTER_DATE} min-w-0 flex-1`}
+                  aria-label='From date'
+                />
+                <span className='text-xs text-stone-400'>to</span>
+                <input
+                  type='date'
+                  value={toDate}
+                  min={fromDate || undefined}
+                  onChange={(e) => changeFilter(setToDate)(e.target.value)}
+                  className={`${FILTER_DATE} min-w-0 flex-1`}
+                  aria-label='To date'
+                />
               </div>
             </div>
+            {hasFilter && listTotals && (
+              <div className='flex flex-wrap gap-x-5 gap-y-1 rounded-lg bg-white px-3 py-2 text-xs text-stone-600 ring-1 ring-stone-200'>
+                <span>
+                  Works <b className='text-stone-900'>{listTotals.entries}</b>
+                </span>
+                <span>
+                  Amount <b className='text-stone-900'>{formatRupees(listTotals.amount)}</b>
+                </span>
+                <span>
+                  Profit <b className='text-emerald-700'>{formatRupees(listTotals.profit)}</b>
+                </span>
+              </div>
+            )}
           </div>
-        </>
-      )}
 
-      {showModal && (
-        <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto'>
-          <div className='flex items-start justify-center min-h-full px-3 py-8 sm:py-16'>
-            <div className='bg-white rounded-lg shadow-xl max-w-md w-full p-5'>
-              <div className='flex justify-between items-start mb-4'>
-                <div>
-                  <h2 className='text-lg font-bold text-gray-800'>{editingId ? 'Edit Fitness Work' : 'New Fitness Work'}</h2>
-                  <p className='text-xs text-gray-500 mt-0.5'>Which party gave the work, its amount and our profit.</p>
-                </div>
-                <button onClick={closeModal} className='text-gray-500 hover:text-gray-700 p-1 cursor-pointer'>
-                  <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-                  </svg>
+          {loading ? (
+            <div className='flex flex-col items-center justify-center gap-3 py-14 text-stone-500'>
+              <Loader2 className='h-6 w-6 animate-spin text-stone-700' />
+              <p className='text-sm'>Loading fitness work…</p>
+            </div>
+          ) : works.length === 0 ? (
+            <div className='flex flex-col items-center justify-center gap-2 px-6 py-14 text-center'>
+              <span className='flex h-11 w-11 items-center justify-center rounded-full bg-stone-100'>
+                <ClipboardCheck className='h-5 w-5 text-stone-400' />
+              </span>
+              <p className='text-sm font-semibold text-stone-800'>No fitness work found</p>
+              <p className='text-xs text-stone-500'>{hasFilter ? 'Try different filters.' : 'Add the first work to get started.'}</p>
+              {!hasFilter && (
+                <button type='button' onClick={openAdd} className={`${PRIMARY_BUTTON} mt-2`}>
+                  <Plus className='h-4 w-4' strokeWidth={2.5} />
+                  New Work
                 </button>
+              )}
+            </div>
+          ) : (
+            <>
+              {/* Desktop table */}
+              <div className='hidden overflow-x-auto md:block'>
+                <table className='w-full text-left'>
+                  <thead>
+                    <tr className='border-b border-stone-200 text-[11px] font-semibold uppercase tracking-wide text-stone-400'>
+                      <th className='px-5 py-2.5'>Party</th>
+                      <th className='px-3 py-2.5'>Date</th>
+                      <th className='px-3 py-2.5'>Vehicle</th>
+                      <th className='px-3 py-2.5 text-right'>Amount</th>
+                      <th className='px-3 py-2.5 text-right'>Profit</th>
+                      <th className='px-5 py-2.5' />
+                    </tr>
+                  </thead>
+                  <tbody className='divide-y divide-stone-200/70'>
+                    {works.map((work) => (
+                      <tr key={work._id} className='text-sm transition hover:bg-white'>
+                        <td className='px-5 py-3'>
+                          {renderParty(work)}
+                          {work.note && (
+                            <p className='mt-1 max-w-xs truncate pl-12 text-xs text-stone-400' title={work.note}>
+                              {work.note}
+                            </p>
+                          )}
+                        </td>
+                        <td className='whitespace-nowrap px-3 py-3 text-stone-700'>{formatDate(work.date)}</td>
+                        <td className='whitespace-nowrap px-3 py-3'>
+                          {work.vehicleNumber ? (
+                            <span className='rounded-md bg-stone-100 px-2 py-0.5 font-mono text-xs font-semibold text-stone-700'>{work.vehicleNumber}</span>
+                          ) : (
+                            <span className='text-stone-400'>—</span>
+                          )}
+                        </td>
+                        <td className='whitespace-nowrap px-3 py-3 text-right font-medium tabular-nums text-stone-800'>{formatRupees(work.amount)}</td>
+                        <td className='whitespace-nowrap px-3 py-3'>{renderProfit(work)}</td>
+                        <td className='px-5 py-3'>
+                          <div className='flex justify-end'>
+                            <RowMenu items={rowActions(work)} label={`Actions for this work`} />
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
 
-              <form onSubmit={handleSubmit} className='space-y-3'>
-                <div>
-                  <label className={labelClass}>Work By Party</label>
-                  <PartySearchSelect
-                    users={users}
-                    value={formData.userId}
-                    onChange={(userId) => {
-                      setFormData((prev) => ({ ...prev, userId }))
-                      setFormError('')
-                    }}
-                    className={inputClass}
-                  />
-                </div>
+              {/* Phones: one short card per work */}
+              <ul className='divide-y divide-stone-200/70 md:hidden'>
+                {works.map((work) => (
+                  <li key={work._id} className='flex items-start gap-3 px-4 py-3'>
+                    <Avatar name={work.userId?.name || '?'} seed={work.userId?._id} />
+                    <div className='min-w-0 flex-1'>
+                      <div className='flex items-start justify-between gap-2'>
+                        <p className='truncate text-sm font-semibold text-stone-900'>{work.userId?.name || 'Deleted user'}</p>
+                        <p className='shrink-0 text-sm font-bold tabular-nums text-emerald-700'>{formatRupees(work.profit)}</p>
+                      </div>
+                      <div className='flex items-center justify-between gap-2 text-xs text-stone-500'>
+                        <span className='truncate'>
+                          {formatDate(work.date)}
+                          {work.vehicleNumber && ` · ${work.vehicleNumber}`}
+                        </span>
+                        <span className='shrink-0 tabular-nums'>of {formatRupees(work.amount)}</span>
+                      </div>
+                      {work.note && <p className='truncate text-xs text-stone-400'>{work.note}</p>}
+                    </div>
+                    <RowMenu items={rowActions(work)} label='Actions for this work' />
+                  </li>
+                ))}
+              </ul>
 
-                <div>
-                  <label className={labelClass}>Date</label>
-                  <input type='date' name='date' value={formData.date} onChange={handleChange} className={inputClass} />
+              {pagination.totalPages > 1 && (
+                <div className='flex items-center justify-between border-t border-stone-200 px-4 py-2.5 text-xs text-stone-500 md:px-5'>
+                  <span>
+                    Page {pagination.currentPage} of {pagination.totalPages}
+                  </span>
+                  <div className='flex gap-1'>
+                    <button
+                      type='button'
+                      onClick={() => setPage((p) => Math.max(1, p - 1))}
+                      disabled={page <= 1}
+                      className={`${ICON_BUTTON} disabled:opacity-40 disabled:cursor-default`}
+                      aria-label='Previous page'
+                    >
+                      <ChevronLeft className='h-4 w-4' />
+                    </button>
+                    <button
+                      type='button'
+                      onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                      disabled={page >= pagination.totalPages}
+                      className={`${ICON_BUTTON} disabled:opacity-40 disabled:cursor-default`}
+                      aria-label='Next page'
+                    >
+                      <ChevronRight className='h-4 w-4' />
+                    </button>
+                  </div>
                 </div>
+              )}
+            </>
+          )}
+        </section>
 
-                <div className='grid grid-cols-2 gap-3'>
-                  <div>
-                    <label className={labelClass}>Amount (₹)</label>
+        {/* Side: party-wise and month-wise */}
+        <div className='space-y-4'>
+          <section className={CARD}>
+            <div className='border-b border-stone-200 px-4 py-3 md:px-5'>
+              <h2 className='text-sm font-bold text-stone-800'>Party-wise Profit</h2>
+              <p className='text-xs text-stone-500'>Tap a party to see only their work</p>
+            </div>
+            {summary?.parties?.length ? (
+              <ul className='max-h-[420px] divide-y divide-stone-200/70 overflow-y-auto'>
+                {summary.parties.map((p) => {
+                  const active = partyFilter === String(p.userId)
+                  return (
+                    <li key={p.userId}>
+                      <button
+                        type='button'
+                        onClick={() => changeFilter(setPartyFilter)(active ? '' : String(p.userId))}
+                        className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition md:px-5 cursor-pointer ${active ? 'bg-white ring-1 ring-inset ring-stone-300' : 'hover:bg-white'}`}
+                      >
+                        <Avatar name={p.name} seed={p.userId} size='h-8 w-8' />
+                        <div className='min-w-0 flex-1'>
+                          <div className='flex items-center justify-between gap-2'>
+                            <p className='truncate text-sm font-semibold text-stone-900'>{p.name}</p>
+                            <p className='shrink-0 text-sm font-bold tabular-nums text-emerald-700'>{formatRupees(p.profit)}</p>
+                          </div>
+                          <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-stone-200/70'>
+                            <div className='h-full rounded-full bg-emerald-500' style={{ width: `${Math.max(2, (p.profit / maxPartyProfit) * 100)}%` }} />
+                          </div>
+                          <p className='mt-1 text-[11px] text-stone-500'>
+                            {plural(p.entries, 'work', 'works')} · {formatRupees(p.amount)} · last {formatDate(p.lastDate)}
+                          </p>
+                        </div>
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            ) : (
+              <p className='px-5 py-8 text-center text-xs text-stone-500'>{loading ? 'Loading…' : 'No party has given work yet.'}</p>
+            )}
+          </section>
+
+          <section className={CARD}>
+            <div className='border-b border-stone-200 px-4 py-3 md:px-5'>
+              <h2 className='text-sm font-bold text-stone-800'>Month-wise</h2>
+              <p className='text-xs text-stone-500'>Last 12 months</p>
+            </div>
+            {months.length ? (
+              <ul className='divide-y divide-stone-200/70'>
+                {months.map((m) => (
+                  <li key={m.month} className='px-4 py-2.5 md:px-5'>
+                    <div className='flex items-center justify-between gap-2 text-sm'>
+                      <span className='font-semibold text-stone-800'>{formatMonth(m.month)}</span>
+                      <span className='font-bold tabular-nums text-emerald-700'>{formatRupees(m.profit)}</span>
+                    </div>
+                    <div className='mt-1 h-1.5 overflow-hidden rounded-full bg-stone-200/70'>
+                      <div className='h-full rounded-full bg-teal-500' style={{ width: `${Math.max(2, (m.profit / maxMonthProfit) * 100)}%` }} />
+                    </div>
+                    <p className='mt-1 text-[11px] text-stone-500'>
+                      {plural(m.entries, 'work', 'works')} · {formatRupees(m.amount)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className='px-5 py-8 text-center text-xs text-stone-500'>{loading ? 'Loading…' : 'Nothing recorded yet.'}</p>
+            )}
+          </section>
+        </div>
+      </div>
+
+      {/* Add / edit popup */}
+      {showModal && (
+        <div className='fixed inset-0 z-50 grid place-items-center bg-black/40 p-4' onClick={closeModal}>
+          <div
+            className='max-h-[calc(100vh-2rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-stone-200 bg-[#fbfaf7] shadow-2xl'
+            onClick={(e) => e.stopPropagation()}
+            role='dialog'
+            aria-modal='true'
+          >
+            <div className='flex items-start justify-between gap-4 border-b border-stone-200 px-5 py-4'>
+              <div className='flex items-center gap-3'>
+                <span className='flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white'>
+                  <ClipboardCheck className='h-5 w-5' />
+                </span>
+                <div>
+                  <h2 className='text-base font-bold text-stone-900'>{editingId ? 'Edit Fitness Work' : 'New Fitness Work'}</h2>
+                  <p className='mt-0.5 text-sm text-stone-500'>Which party gave the work, its amount and our profit.</p>
+                </div>
+              </div>
+              <button type='button' onClick={closeModal} className={ICON_BUTTON} aria-label='Close'>
+                <X className='h-4 w-4' />
+              </button>
+            </div>
+
+            <form className='grid gap-4 p-5' onSubmit={handleSubmit}>
+              <div className='grid gap-1.5'>
+                <FieldLabel>Work By Party</FieldLabel>
+                <SearchSelect
+                  value={formData.userId}
+                  onChange={(userId) => setField('userId', userId)}
+                  options={partyOptions}
+                  placeholder='Select party'
+                  searchPlaceholder='Search name or mobile…'
+                  emptyText='No party found'
+                  icon={User}
+                  ariaLabel='Work by party'
+                />
+              </div>
+
+              <div className='grid gap-1.5'>
+                <FieldLabel>Date</FieldLabel>
+                <div className='relative'>
+                  <CalendarDays className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400' />
+                  <input type='date' name='date' value={formData.date} onChange={handleChange} className={INPUT_CLASS} aria-label='Date' />
+                </div>
+                <div className='flex gap-1.5'>
+                  {[
+                    ['Today', 0],
+                    ['Yesterday', 1]
+                  ].map(([label, daysAgo]) => {
+                    const key = toDateInput(Date.now() - daysAgo * 24 * 60 * 60 * 1000)
+                    const active = formData.date === key
+                    return (
+                      <button
+                        key={label}
+                        type='button'
+                        onClick={() => setField('date', key)}
+                        className={`rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition cursor-pointer ${active ? 'border-stone-900 bg-stone-900 text-white' : 'border-stone-300 bg-white text-stone-600 hover:bg-stone-100'}`}
+                      >
+                        {label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+
+              <div className='grid grid-cols-2 gap-4'>
+                <label className='grid gap-1.5'>
+                  <FieldLabel>Work Amount</FieldLabel>
+                  <div className='relative'>
+                    <IndianRupee className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400' />
                     <input
                       type='number'
                       name='amount'
                       value={formData.amount}
                       onChange={handleChange}
-                      placeholder='5000'
+                      placeholder='e.g. 5000'
                       min='0'
                       step='0.01'
-                      className={inputClass}
+                      inputMode='decimal'
+                      className={INPUT_CLASS}
                     />
                   </div>
-                  <div>
-                    <label className={labelClass}>Profit (₹)</label>
+                </label>
+                <label className='grid gap-1.5'>
+                  <FieldLabel>Our Profit</FieldLabel>
+                  <div className='relative'>
+                    <TrendingUp className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-emerald-500' />
                     <input
                       type='number'
                       name='profit'
                       value={formData.profit}
                       onChange={handleChange}
-                      placeholder='800'
+                      placeholder='e.g. 800'
                       step='0.01'
-                      className={inputClass}
+                      inputMode='decimal'
+                      className={`${INPUT_CLASS} focus:border-emerald-500 focus:ring-emerald-100`}
                     />
                   </div>
-                </div>
-                {profitPercent !== null && (
-                  <p className='text-[11px] text-gray-500 -mt-1'>Profit is {profitPercent}% of the work amount</p>
-                )}
+                </label>
+              </div>
 
-                <div>
-                  <label className={labelClass}>
-                    Vehicle Number <span className='font-normal text-gray-400'>(optional)</span>
-                  </label>
-                  <input
-                    type='text'
-                    name='vehicleNumber'
-                    value={formData.vehicleNumber}
-                    onChange={handleChange}
-                    placeholder='CG04AB1234'
-                    className={`${inputClass} uppercase`}
-                  />
+              {/* Live breakdown of the numbers typed above */}
+              <div className='grid grid-cols-3 divide-x divide-stone-200 rounded-xl border border-stone-200 bg-white text-center'>
+                <div className='px-2 py-2.5'>
+                  <p className='text-[11px] font-medium uppercase tracking-wide text-stone-400'>Amount</p>
+                  <p className='text-sm font-bold tabular-nums text-stone-800'>{formReady ? formatRupees(formAmount) : '—'}</p>
                 </div>
-
-                <div>
-                  <label className={labelClass}>
-                    Note <span className='font-normal text-gray-400'>(optional)</span>
-                  </label>
-                  <input type='text' name='note' value={formData.note} onChange={handleChange} className={inputClass} />
+                <div className='px-2 py-2.5'>
+                  <p className='text-[11px] font-medium uppercase tracking-wide text-stone-400'>Cost</p>
+                  <p className='text-sm font-bold tabular-nums text-stone-800'>{formReady ? formatRupees(formAmount - formProfit) : '—'}</p>
                 </div>
-
-                {formError && <p className='text-sm text-red-600'>{formError}</p>}
-
-                <div className='flex gap-2 pt-1'>
-                  <button
-                    type='button'
-                    onClick={closeModal}
-                    className='flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm font-semibold cursor-pointer'
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type='submit'
-                    disabled={saving}
-                    className='flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 text-sm font-semibold disabled:opacity-60 cursor-pointer disabled:cursor-wait'
-                  >
-                    {saving ? 'Saving...' : editingId ? 'Save Changes' : 'Save Work'}
-                  </button>
+                <div className='px-2 py-2.5'>
+                  <p className='text-[11px] font-medium uppercase tracking-wide text-stone-400'>Margin</p>
+                  <p className={`text-sm font-bold tabular-nums ${formReady && formProfit < 0 ? 'text-rose-600' : 'text-emerald-700'}`}>
+                    {formReady ? marginOf(formProfit, formAmount) || '—' : '—'}
+                  </p>
                 </div>
-              </form>
+              </div>
+
+              <div className='grid gap-4 sm:grid-cols-2'>
+                <label className='grid gap-1.5'>
+                  <FieldLabel optional>Vehicle Number</FieldLabel>
+                  <div className='relative'>
+                    <Car className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400' />
+                    <input
+                      type='text'
+                      name='vehicleNumber'
+                      value={formData.vehicleNumber}
+                      onChange={(e) => setField('vehicleNumber', e.target.value.toUpperCase())}
+                      placeholder='CG04AB1234'
+                      className={INPUT_CLASS}
+                    />
+                  </div>
+                </label>
+                <label className='grid gap-1.5'>
+                  <FieldLabel optional>Note</FieldLabel>
+                  <div className='relative'>
+                    <StickyNote className='pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400' />
+                    <input type='text' name='note' value={formData.note} onChange={handleChange} placeholder='Any detail' className={INPUT_CLASS} />
+                  </div>
+                </label>
+              </div>
+
+              {formError && (
+                <p className='flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700'>
+                  <AlertTriangle className='h-4 w-4 shrink-0' />
+                  {formError}
+                </p>
+              )}
+
+              <div className='flex justify-end gap-2 border-t border-stone-200 pt-4'>
+                <button type='button' onClick={closeModal} className={SECONDARY_BUTTON}>
+                  Cancel
+                </button>
+                <button type='submit' disabled={saving} className={`${PRIMARY_BUTTON} px-6`}>
+                  {saving && <Loader2 className='h-4 w-4 animate-spin' />}
+                  {saving ? 'Saving…' : editingId ? 'Update Work' : 'Save Work'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation */}
+      {workToDelete && (
+        <div className='fixed inset-0 z-50 grid place-items-center bg-black/40 p-4' onClick={() => !deleting && setWorkToDelete(null)}>
+          <div
+            className='w-full max-w-sm rounded-2xl border border-stone-200 bg-[#fbfaf7] p-6 text-center shadow-2xl'
+            onClick={(e) => e.stopPropagation()}
+            role='alertdialog'
+            aria-modal='true'
+          >
+            <span className='mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-rose-50'>
+              <AlertTriangle className='h-5 w-5 text-rose-600' />
+            </span>
+            <h3 className='mt-3 text-base font-bold text-stone-900'>Delete this work?</h3>
+            <p className='mt-1 text-sm text-stone-500'>
+              Work from <span className='font-semibold text-stone-800'>{workToDelete.userId?.name || 'a deleted user'}</span> of{' '}
+              {formatRupees(workToDelete.amount)} on {formatDate(workToDelete.date)} will be removed. This cannot be undone.
+            </p>
+            <div className='mt-5 flex gap-2'>
+              <button type='button' onClick={() => setWorkToDelete(null)} disabled={deleting} className={`${SECONDARY_BUTTON} flex-1`}>
+                Cancel
+              </button>
+              <button
+                type='button'
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className='flex flex-1 items-center justify-center gap-2 rounded-lg bg-rose-600 py-2 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:opacity-60 cursor-pointer'
+              >
+                {deleting && <Loader2 className='h-4 w-4 animate-spin' />}
+                {deleting ? 'Deleting…' : 'Delete'}
+              </button>
             </div>
           </div>
         </div>

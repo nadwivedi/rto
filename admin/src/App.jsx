@@ -35,20 +35,20 @@ function App() {
   return (
     <Router>
       <ActivityShortcut />
-      <div className="flex min-h-screen bg-gray-50">
+      <div className="flex min-h-screen bg-[#f5f4f0]">
         <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
 
         <div className="flex-1 flex flex-col min-h-screen min-w-0">
           {/* Mobile Header with Hamburger */}
           {!loading && isAuthenticated && (
-            <div className="md:hidden bg-white shadow-sm px-2 py-1.5 flex items-center justify-between sticky top-0 z-30">
+            <div className="md:hidden bg-[#fbfaf7] border-b border-stone-200 px-2 py-1.5 flex items-center justify-between sticky top-0 z-30">
               <button
                 onClick={toggleSidebar}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
+                className="p-2 rounded-lg hover:bg-stone-100 transition-colors"
                 aria-label="Toggle menu"
               >
                 <svg
-                  className="w-6 h-6 text-gray-700"
+                  className="w-6 h-6 text-stone-700"
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -61,7 +61,7 @@ function App() {
                   />
                 </svg>
               </button>
-              <h1 className="text-base font-bold text-gray-800">RTO Sarthi</h1>
+              <h1 className="text-base font-bold text-stone-900">RTO Sarthi</h1>
               <div className="w-10"></div> {/* Spacer for centering */}
             </div>
           )}

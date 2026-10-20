@@ -1,14 +1,39 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import {
+  Car,
+  ChevronRight,
+  ClipboardCheck,
+  Download,
+  KeyRound,
+  LayoutDashboard,
+  Newspaper,
+  ShieldCheck,
+  Users2,
+  Wallet,
+  X,
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
+const NAV_ITEMS = [
+  { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { to: '/', label: 'Manage Users', icon: Users2 },
+  { to: '/api-credits', label: 'Vehicle API Sales', icon: Wallet },
+  { to: '/api-keys', label: 'Vehicle API Keys', icon: KeyRound, matchPrefix: true },
+  { to: '/fitness-work', label: 'Fitness Work', icon: ClipboardCheck },
+];
+
 // Less used pages, tucked away behind the "More" arrow
-const MORE_PATHS = ['/blogs', '/vehicle-registrations', '/export'];
+const MORE_ITEMS = [
+  { to: '/blogs', label: 'Manage Blogs', icon: Newspaper },
+  { to: '/vehicle-registrations', label: 'Vehicle Registrations', icon: Car },
+  { to: '/export', label: 'Export Data', icon: Download },
+];
 
 const Sidebar = ({ isOpen, onClose }) => {
   const location = useLocation();
   const { isAuthenticated, loading } = useAuth();
-  const isOnMorePage = MORE_PATHS.includes(location.pathname);
+  const isOnMorePage = MORE_ITEMS.some((item) => item.to === location.pathname);
   const [showMore, setShowMore] = useState(false);
   // Keep the group open while one of its pages is showing
   const moreOpen = showMore || isOnMorePage;
@@ -24,189 +49,88 @@ const Sidebar = ({ isOpen, onClose }) => {
     return null;
   }
 
+  const renderLink = (item) => {
+    const active = item.matchPrefix ? location.pathname.startsWith(item.to) : location.pathname === item.to;
+    const Icon = item.icon;
+    return (
+      <Link
+        key={item.to}
+        to={item.to}
+        onClick={handleLinkClick}
+        aria-current={active ? 'page' : undefined}
+        className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${
+          active ? 'bg-stone-900 text-white' : 'text-stone-600 hover:bg-stone-100 hover:text-stone-900'
+        }`}
+      >
+        <Icon className="h-4 w-4 shrink-0" />
+        <span className="truncate">{item.label}</span>
+      </Link>
+    );
+  };
+
   return (
     <>
       {/* Overlay for mobile */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/40 z-40 md:hidden"
           onClick={onClose}
         ></div>
       )}
 
       {/* Sidebar */}
-      <div
+      <aside
         className={`
-          fixed md:static inset-y-0 left-0 z-50
-          w-52 bg-indigo-900 text-white
+          fixed md:sticky md:top-0 inset-y-0 left-0 z-50 md:h-screen
+          w-60 flex flex-col gap-6 border-r border-stone-200 bg-[#fbfaf7] p-4 md:p-5
           transform transition-transform duration-300 ease-in-out
           md:transform-none
           ${isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         `}
       >
         {/* Logo */}
-        <div className="p-4 border-b border-indigo-700 flex justify-between items-center">
-          <div>
-            <h1 className="text-lg font-bold">RTO Sarthi</h1>
-            <p className="text-[11px] text-indigo-300 mt-0.5">Admin Panel</p>
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-stone-900">
+              <ShieldCheck className="h-5 w-5 text-white" strokeWidth={2.25} />
+            </div>
+            <div>
+              <p className="text-sm font-semibold leading-tight text-stone-900">RTO Sarthi</p>
+              <p className="text-xs text-stone-500">Admin Panel</p>
+            </div>
           </div>
           {/* Close button for mobile */}
           <button
             onClick={onClose}
-            className="md:hidden p-1 rounded-lg hover:bg-indigo-800 transition-colors"
+            className="md:hidden flex h-8 w-8 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-100 hover:text-stone-800"
             aria-label="Close menu"
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
+            <X className="h-4 w-4" />
           </button>
         </div>
 
         {/* Menu */}
-        <nav className="p-3 space-y-1.5">
-          <Link
-            to="/dashboard"
-            onClick={handleLinkClick}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-              location.pathname === '/dashboard'
-                ? 'bg-white text-indigo-800 font-bold'
-                : 'text-indigo-200 hover:bg-indigo-800'
-            }`}
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a1 1 0 00-1-1H5a1 1 0 00-1 1v6a1 1 0 001 1h3a1 1 0 001-1zm0 0V9a1 1 0 011-1h3a1 1 0 011 1v10m0 0h3a1 1 0 001-1V5a1 1 0 00-1-1h-3a1 1 0 00-1 1v14z" />
-            </svg>
-            <span className="truncate">Dashboard</span>
-          </Link>
-
-          <Link
-            to="/"
-            onClick={handleLinkClick}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-              location.pathname === '/'
-                ? 'bg-white text-indigo-800 font-bold'
-                : 'text-indigo-200 hover:bg-indigo-800'
-            }`}
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-            </svg>
-            <span className="truncate">Manage Users</span>
-          </Link>
-
-          <Link
-            to="/api-credits"
-            onClick={handleLinkClick}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-              location.pathname === '/api-credits'
-                ? 'bg-white text-indigo-800 font-bold'
-                : 'text-indigo-200 hover:bg-indigo-800'
-            }`}
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-            <span className="truncate">Vehicle API Sales</span>
-          </Link>
-
-          <Link
-            to="/api-keys"
-            onClick={handleLinkClick}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-              location.pathname.startsWith('/api-keys')
-                ? 'bg-white text-indigo-800 font-bold'
-                : 'text-indigo-200 hover:bg-indigo-800'
-            }`}
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-            </svg>
-            <span className="truncate">Vehicle API Keys</span>
-          </Link>
-
-          <Link
-            to="/fitness-work"
-            onClick={handleLinkClick}
-            className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-              location.pathname === '/fitness-work'
-                ? 'bg-white text-indigo-800 font-bold'
-                : 'text-indigo-200 hover:bg-indigo-800'
-            }`}
-          >
-            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-            </svg>
-            <span className="truncate">Fitness Work</span>
-          </Link>
+        <nav className="flex flex-col gap-1 overflow-y-auto" aria-label="Admin navigation">
+          {NAV_ITEMS.map(renderLink)}
 
           <button
             type="button"
             onClick={() => setShowMore((v) => !v)}
             disabled={isOnMorePage}
             aria-expanded={moreOpen}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-indigo-300 hover:bg-indigo-800 transition-all cursor-pointer disabled:cursor-default disabled:hover:bg-transparent"
+            className="mt-2 flex items-center gap-3 rounded-lg px-3 py-2 text-xs font-semibold uppercase tracking-wide text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 cursor-pointer disabled:cursor-default disabled:hover:bg-transparent"
           >
-            <svg
-              className={`w-4 h-4 flex-shrink-0 transition-transform ${moreOpen ? 'rotate-90' : ''}`}
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-            <span className="truncate">{moreOpen ? 'Less' : 'More'}</span>
+            <ChevronRight className={`h-4 w-4 shrink-0 transition-transform ${moreOpen ? 'rotate-90' : ''}`} />
+            {moreOpen ? 'Less' : 'More'}
           </button>
 
           {moreOpen && (
-            <div className="space-y-1.5 pl-2 border-l border-indigo-700 ml-3">
-              <Link
-                to="/blogs"
-                onClick={handleLinkClick}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                  location.pathname === '/blogs'
-                    ? 'bg-white text-indigo-800 font-bold'
-                    : 'text-indigo-200 hover:bg-indigo-800'
-                }`}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                </svg>
-                <span className="truncate">Manage Blogs</span>
-              </Link>
-
-              <Link
-                to="/vehicle-registrations"
-                onClick={handleLinkClick}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                  location.pathname === '/vehicle-registrations'
-                    ? 'bg-white text-indigo-800 font-bold'
-                    : 'text-indigo-200 hover:bg-indigo-800'
-                }`}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span className="truncate">Vehicle Registrations</span>
-              </Link>
-
-              <Link
-                to="/export"
-                onClick={handleLinkClick}
-                className={`flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm transition-all ${
-                  location.pathname === '/export'
-                    ? 'bg-white text-indigo-800 font-bold'
-                    : 'text-indigo-200 hover:bg-indigo-800'
-                }`}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span className="truncate">Export Data</span>
-              </Link>
+            <div className="ml-3 flex flex-col gap-1 border-l border-stone-200 pl-2">
+              {MORE_ITEMS.map(renderLink)}
             </div>
           )}
         </nav>
-      </div>
+      </aside>
     </>
   );
 };
