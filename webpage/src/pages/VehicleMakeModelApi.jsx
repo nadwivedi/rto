@@ -3,12 +3,14 @@ import ProductLanding from '../components/ProductLanding'
 import { IconShield, IconCar, IconWallet, IconSearch, IconCode, IconMapPin, IconCheck, IconChart } from '../components/Icons'
 import { makeModelApiFaqs } from '../data/makeModelApi'
 import { LOOKUP_PRICE } from '../data/vehicleInfo'
+import { requestBlock } from '../data/vehicleApi'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
 const linkClass = 'font-semibold text-brand-800 hover:underline'
 
 const responseExample = `{
   "success": true,
+  "message": "Vehicle details fetched successfully",
   "vehicleNumber": "DL3CAB7788",
   "data": {
     "REGN_NO": "DL3CAB7788",
@@ -82,10 +84,10 @@ export default function VehicleMakeModelApi() {
         ],
       }}
       code={{
-        label: 'Sample response',
+        label: 'API demo',
         title: 'Make and model in the API response',
         description: 'MAKER_DESC is the maker and MAKER_MODEL is the model, followed by class, body, fuel, CC, seating and year.',
-        blocks: [{ label: 'JSON response (make & model fields)', code: responseExample }],
+        blocks: [requestBlock('DL3CAB7788'), { label: 'JSON response (make & model fields)', code: responseExample }],
         note: 'Sample data, shortened to the make and model fields. Owner, financer, PUC, fitness and tax details are also returned wherever available.',
       }}
       features={{

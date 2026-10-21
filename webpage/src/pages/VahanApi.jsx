@@ -3,12 +3,14 @@ import ProductLanding from '../components/ProductLanding'
 import { IconWallet, IconCheck, IconShield, IconChart, IconCar, IconClock, IconDocument, IconMapPin } from '../components/Icons'
 import { vahanApiFaqs } from '../data/vahanApi'
 import { LOOKUP_PRICE } from '../data/vehicleInfo'
+import { requestBlock } from '../data/vehicleApi'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
 const linkClass = 'font-semibold text-brand-800 hover:underline'
 
 const responseExample = `{
   "success": true,
+  "message": "Vehicle details fetched successfully",
   "vehicleNumber": "MH12AB1234",
   "data": {
     "REGN_NO": "MH12AB1234",
@@ -103,10 +105,10 @@ export default function VahanApi() {
         ],
       }}
       code={{
-        label: 'Sample response',
+        label: 'API demo',
         title: 'Vahan API sample response with complete vehicle details',
         description: 'Owner, address, chassis, engine, financer, insurance, PUC, fitness, tax, blacklist and NOC.',
-        blocks: [{ label: 'JSON response', code: responseExample }],
+        blocks: [requestBlock('MH12AB1234'), { label: 'JSON response', code: responseExample }],
         note: 'Sample data. Details are returned wherever they are available on the vehicle record.',
       }}
       features={{

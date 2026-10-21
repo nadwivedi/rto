@@ -3,12 +3,14 @@ import ProductLanding from '../components/ProductLanding'
 import { IconMapPin, IconCar, IconSearch, IconWallet, IconDocument, IconCode, IconClock, IconShield, IconChart, IconUsers, IconCheck } from '../components/Icons'
 import { vehicleDetailsApiIndiaFaqs } from '../data/vehicleDetailsApiIndia'
 import { LOOKUP_PRICE } from '../data/vehicleInfo'
+import { requestBlock } from '../data/vehicleApi'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
 const linkClass = 'font-semibold text-brand-800 hover:underline'
 
 const responseExample = `{
   "success": true,
+  "message": "Vehicle details fetched successfully",
   "vehicleNumber": "23BH4512AB",
   "data": {
     "REGN_NO": "23BH4512AB",
@@ -93,10 +95,10 @@ export default function VehicleDetailsApiIndia() {
         ],
       }}
       code={{
-        label: 'Sample response',
+        label: 'API demo',
         title: 'Vehicle details API response for a BH series car',
         description: 'State numbers, BH series, two-wheelers and commercial vehicles all return the same fields.',
-        blocks: [{ label: 'JSON response', code: responseExample }],
+        blocks: [requestBlock('23BH4512AB'), { label: 'JSON response', code: responseExample }],
         note: 'Sample data. Details are returned wherever they are available on the vehicle record.',
       }}
       features={[{

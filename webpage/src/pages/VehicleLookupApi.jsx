@@ -3,12 +3,14 @@ import ProductLanding from '../components/ProductLanding'
 import { IconSearch, IconCheck, IconDocument, IconChart, IconClock, IconMapPin, IconWallet, IconShield } from '../components/Icons'
 import { lookupApiFaqs } from '../data/lookupApi'
 import { LOOKUP_PRICE } from '../data/vehicleInfo'
+import { requestBlock } from '../data/vehicleApi'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
 const linkClass = 'font-semibold text-brand-800 hover:underline'
 
 const responseExample = `{
   "success": true,
+  "message": "Vehicle details fetched successfully",
   "vehicleNumber": "UP32HK9087",
   "data": {
     "REGN_NO": "UP32HK9087",
@@ -82,10 +84,10 @@ export default function VehicleLookupApi() {
         ],
       }}
       code={{
-        label: 'Sample response',
+        label: 'API demo',
         title: 'What a vehicle lookup returns',
         description: 'Status, RTO, owner, maker, model, chassis, engine, validity, financer, blacklist and NOC.',
-        blocks: [{ label: 'JSON response', code: responseExample }],
+        blocks: [requestBlock('UP32HK9087'), { label: 'JSON response', code: responseExample }],
         note: 'Sample data. Details are returned wherever they are available on the vehicle record.',
       }}
       features={{

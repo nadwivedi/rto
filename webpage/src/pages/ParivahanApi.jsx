@@ -3,12 +3,14 @@ import ProductLanding from '../components/ProductLanding'
 import { IconWallet, IconCheck, IconClock, IconDocument, IconChart, IconShield, IconMapPin, IconCode } from '../components/Icons'
 import { parivahanApiFaqs } from '../data/parivahanApi'
 import { LOOKUP_PRICE } from '../data/vehicleInfo'
+import { requestBlock } from '../data/vehicleApi'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
 const linkClass = 'font-semibold text-brand-800 hover:underline'
 
 const responseExample = `{
   "success": true,
+  "message": "Vehicle details fetched successfully",
   "vehicleNumber": "DL3CBX7781",
   "data": {
     "REGN_NO": "DL3CBX7781",
@@ -85,10 +87,10 @@ export default function ParivahanApi() {
         ],
       }}
       code={{
-        label: 'Sample response',
+        label: 'API demo',
         title: 'Parivahan API response for a vehicle number',
         description: 'Cars, bikes, commercial vehicles and BH series numbers return the same fields.',
-        blocks: [{ label: 'JSON response', code: responseExample }],
+        blocks: [requestBlock('DL3CBX7781'), { label: 'JSON response', code: responseExample }],
         note: 'Sample data. Details are returned wherever they are available on the vehicle record.',
       }}
       features={[{
