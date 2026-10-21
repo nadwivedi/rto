@@ -274,7 +274,7 @@ const ApiKeyDetail = () => {
 
   const { apiKey, stats, days, sales } = detail
   const endpoint = `${BACKEND_URL}/api/v1/vehicle-info`
-  const curl = `curl -H "x-api-key: ${apiKey.key}" "${endpoint}?vno=CG12BU5574"`
+  const curl = `curl -H "x-api-key: ${apiKey.key}" "${endpoint}?vno=CG04AB1234"`
   const daysWithCalls = days.filter((d) => d.total > 0)
 
   return (
@@ -385,7 +385,7 @@ const ApiKeyDetail = () => {
         <div className='mt-3 grid grid-cols-1 xl:grid-cols-2 gap-3 text-xs text-gray-600'>
           <div className='space-y-1.5'>
             <p>
-              <span className='font-semibold text-gray-800'>Endpoint:</span> <code className='break-all'>GET {endpoint}?vno=CG12BU5574</code>
+              <span className='font-semibold text-gray-800'>Endpoint:</span> <code className='break-all'>GET {endpoint}?vno=CG04AB1234</code>
             </p>
             <p>
               <span className='font-semibold text-gray-800'>Key:</span> send in the <code>x-api-key</code> header (or as <code>&amp;key=</code> in the URL).
@@ -400,7 +400,7 @@ const ApiKeyDetail = () => {
 {`{
   "success": true,
   "message": "Vehicle details fetched successfully",
-  "vehicleNumber": "CG12BU5574",
+  "vehicleNumber": "CG04AB1234",
   "data": { "OWNER_NAME": "...", "MAKER_MODEL": "...", ... },
   "usage": { "limit": ${apiKey.callLimit}, "used": ${apiKey.callCount}, "remaining": ${apiKey.remaining} }
 }`}

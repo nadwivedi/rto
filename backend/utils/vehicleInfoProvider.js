@@ -40,7 +40,7 @@ const recordProviderUsage = async (usage, { vehicleNumber, userId } = {}) => {
   }
 }
 
-// 'cg 12-bu 5574' -> 'CG12BU5574'
+// 'cg 04-ab 1234' -> 'CG04AB1234'
 const cleanVehicleNumber = (raw) => String(raw || '').replace(/[\s-]/g, '').toUpperCase()
 
 /**

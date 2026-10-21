@@ -5,7 +5,7 @@ Get vehicle (RC) details by vehicle number.
 ## Request
 
 ```
-GET https://api.rtosarthi.com/api/v1/vehicle-info?vno=CG12BU5574
+GET https://api.rtosarthi.com/api/v1/vehicle-info?vno=CG04AB1234
 x-api-key: YOUR_API_KEY
 ```
 
@@ -19,7 +19,7 @@ Keep your API key secret and call the API from your server, not from browser Jav
 ```json
 {
   "success": true,
-  "vehicleNumber": "CG12BU5574",
+  "vehicleNumber": "CG04AB1234",
   "data": {
     "OWNER_NAME": "RAM KUMAR",
     "MAKER_MODEL": "ACE GOLD",
@@ -47,11 +47,11 @@ On an error, `success` is `false` and `message` says what went wrong.
 ## Example
 
 ```bash
-curl -H "x-api-key: YOUR_API_KEY" "https://api.rtosarthi.com/api/v1/vehicle-info?vno=CG12BU5574"
+curl -H "x-api-key: YOUR_API_KEY" "https://api.rtosarthi.com/api/v1/vehicle-info?vno=CG04AB1234"
 ```
 
 ```js
-const res = await fetch('https://api.rtosarthi.com/api/v1/vehicle-info?vno=CG12BU5574', {
+const res = await fetch('https://api.rtosarthi.com/api/v1/vehicle-info?vno=CG04AB1234', {
   headers: { 'x-api-key': 'YOUR_API_KEY' }
 })
 const body = await res.json()

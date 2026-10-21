@@ -650,7 +650,7 @@ const VehicleDetails = () => {
                 type="text"
                 value={vehicleNo}
                 onChange={(e) => setVehicleNo(e.target.value.toUpperCase())}
-                placeholder="ENTER VEHICLE NUMBER (e.g. CG12BU5574, MH02AB1234)"
+                placeholder="ENTER VEHICLE NUMBER (e.g. CG04AB1234, MH02AB1234)"
                 className="w-full px-3.5 py-3 text-slate-900 font-mono font-bold tracking-wider text-base sm:text-lg uppercase bg-transparent outline-none placeholder:normal-case placeholder:font-sans placeholder:text-slate-400 placeholder:text-sm placeholder:tracking-normal"
                 autoFocus
               />

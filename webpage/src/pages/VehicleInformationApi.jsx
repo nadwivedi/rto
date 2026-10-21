@@ -8,7 +8,7 @@ const s = (t) => <strong className="text-slate-700">{t}</strong>
 
 const responseExample = `{
   "success": true,
-  "vehicleNumber": "CG12BU5574",
+  "vehicleNumber": "CG04AB1234",
   "data": {
     "OWNER_NAME": "RAM KUMAR",
     "PRESENT_ADDRESS": "WARD NO 12, TELIBANDHA, RAIPUR, CHHATTISGARH 492001",

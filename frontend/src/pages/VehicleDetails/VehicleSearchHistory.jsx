@@ -480,7 +480,7 @@ const VehicleSearchHistory = () => {
                 value={searchTerm}
                 onChange={(e) => handleSearchInputChange(e.target.value)}
                 placeholder={
-                  searchType === 'vehicleNumber' ? 'Type vehicle registration number (e.g. CG12BU5574)...'
+                  searchType === 'vehicleNumber' ? 'Type vehicle registration number (e.g. CG04AB1234)...'
                   : searchType === 'ownerName' ? 'Type owner name to search database...'
                   : searchType === 'rtoLocation' ? 'Type RTO location or district name...'
                   : 'Type to search database by vehicle no, owner name, RTO location, maker...'

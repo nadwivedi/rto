@@ -26,7 +26,7 @@ const lookupVehicle = async (req, res) => {
     if (!rawVno || typeof rawVno !== 'string' || !rawVno.trim()) {
       return res.status(400).json({
         success: false,
-        message: 'Vehicle registration number is required (e.g., CG12BU5574).'
+        message: 'Vehicle registration number is required (e.g., CG04AB1234).'
       })
     }
 
@@ -213,12 +213,12 @@ const buildHistoryQuery = (userId, rawSearch, searchType = 'all') => {
     const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const regex = new RegExp(escaped, 'i')
 
-    // For vehicle number, also strip spaces/dashes so "CG 12 BU 5574" matches "CG12BU5574"
+    // For vehicle number, also strip spaces/dashes so "CG 04 AB 1234" matches "CG04AB1234"
     const cleanSearch = search.replace(/[\s-]/g, '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
     const cleanRegex = new RegExp(cleanSearch, 'i')
 
     if (searchType === 'vehicleNumber') {
-      // Match either cleaned (CG12BU5574) or original input
+      // Match either cleaned (CG04AB1234) or original input
       query.$or = [
         { vehicleNumber: cleanRegex },
         { vehicleNumber: regex }

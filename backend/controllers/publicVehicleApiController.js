@@ -30,7 +30,7 @@ const logCall = async (apiKey, req, startedAt, entry) => {
 }
 
 /**
- * GET/POST /api/v1/vehicle-info?vno=CG12BU5574
+ * GET/POST /api/v1/vehicle-info?vno=CG04AB1234
  * Key in the `x-api-key` header (or `key` in the query / body).
  * Only calls that return vehicle details use up the key's limit.
  */
@@ -60,7 +60,7 @@ exports.lookupVehicle = async (req, res) => {
   const rawVno = req.query.vno || body.vno
   const vehicleNumber = typeof rawVno === 'string' ? cleanVehicleNumber(rawVno) : ''
   if (vehicleNumber.length < 4) {
-    return reply(400, { success: false, message: 'A valid vehicle registration number is required (vno=CG12BU5574).' }, { vehicleNumber })
+    return reply(400, { success: false, message: 'A valid vehicle registration number is required (vno=CG04AB1234).' }, { vehicleNumber })
   }
 
   // Take one call off the limit up front, so two calls at the same moment can't both use the last one
