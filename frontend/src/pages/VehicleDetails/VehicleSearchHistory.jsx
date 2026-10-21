@@ -5,33 +5,22 @@ import { toast } from 'react-toastify'
 import {
   Search,
   ArrowLeft,
-  Home,
-  Truck,
   History,
-  Trash2,
   Eye,
-  Download,
-  FileText,
   RefreshCw,
-  Calendar,
-  User,
-  Shield,
-  FileCheck,
   ChevronLeft,
   ChevronRight,
   Car,
-  Clock,
   X,
-  Building2,
-  Fuel,
   CheckCircle2,
-  AlertTriangle,
-  Phone,
   UserPlus,
-  Users
+  Users,
+  Save
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import RcFormsMenu from './RcFormsMenu'
+import { ExpiryStatus } from './historyUi'
+import { saveVehicleRecords } from '../../utils/saveVehicleRecords'
 import { toInputDate } from '../../utils/dateHelpers'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
@@ -59,28 +48,17 @@ const LEAD_OPTIONS = [
   { value: 'in', label: 'Already in leads' }
 ]
 const NO_FILTERS = { docType: 'all', expiry: 'any', leadFilter: 'all' }
+const SEARCH_TYPE_OPTIONS = [
+  { value: 'all', label: 'All fields' },
+  { value: 'vehicleNumber', label: 'Vehicle no' },
+  { value: 'ownerName', label: 'Owner name' },
+  { value: 'rtoLocation', label: 'RTO location' }
+]
 
 const filterSelectClass = (isActive) =>
   `px-3 py-2.5 border rounded-xl text-xs font-semibold outline-none cursor-pointer ${
     isActive ? 'bg-indigo-50 border-indigo-400 text-indigo-700' : 'bg-slate-50 border-slate-200 text-slate-700'
   }`
-
-// Expiry date of one document, coloured red when expired and amber when 30 days or less are left
-const ExpiryCell = ({ item, type, value }) => {
-  const doc = item.documents?.find((d) => d.type === type)
-  const isExpired = doc && doc.daysLeft < 0
-  const isSoon = doc && doc.daysLeft >= 0 && doc.daysLeft <= 30
-  return (
-    <span className={`font-semibold ${isExpired ? 'text-red-600' : isSoon ? 'text-amber-600' : 'text-slate-800'}`}>
-      {value || 'NA'}
-      {(isExpired || isSoon) && (
-        <span className="block text-[10px] font-bold uppercase">
-          {isExpired ? 'Expired' : doc.daysLeft === 0 ? 'Today' : `${doc.daysLeft}d left`}
-        </span>
-      )}
-    </span>
-  )
-}
 
 const VehicleSearchHistory = () => {
   const navigate = useNavigate()
@@ -91,6 +69,9 @@ const VehicleSearchHistory = () => {
   const canMoveToLeads = !isStaff || (Boolean(user?.permissions?.add) && canOpenLeads)
   // RC forms the admin switched on for this user
   const rcFormTypes = ['form23', 'tempRc', 'nlParticular'].filter((t) => user?.features?.[t] === true)
+  // Save to Vehicle Registration, Fitness, Insurance and PUC (switched on from admin)
+  const canSaveRecords = user?.features?.saveVehicleRecords === true
+  const [savingId, setSavingId] = useState(null)
 
   const [historyList, setHistoryList] = useState([])
   const [loading, setLoading] = useState(true)
@@ -335,18 +316,13 @@ const VehicleSearchHistory = () => {
     }
   }
 
-  const formatTime = (dateStr) => {
-    if (!dateStr) return ''
-    try {
-      const d = new Date(dateStr)
-      return d.toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      })
-    } catch {
-      return ''
-    }
+  // Full details of a saved search, from the database (NO API call)
+  const openDetail = (item) => navigate(`/vehicle-details?historyId=${item._id}`)
+
+  const handleSave = async (item) => {
+    setSavingId(item._id)
+    await saveVehicleRecords({ historyId: item._id })
+    setSavingId(null)
   }
 
   const formatDateTime = (dateStr) => {
@@ -368,57 +344,28 @@ const VehicleSearchHistory = () => {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800">
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6">
+      <div className="max-w-6xl mx-auto px-3 sm:px-6 py-6 space-y-4">
         {/* Top Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate('/')}
-              className="p-2.5 bg-white hover:bg-slate-100 rounded-xl border border-slate-200 shadow-sm text-slate-600 transition cursor-pointer"
-              title="Back to Home Dashboard"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
             <button
               onClick={() => navigate('/vehicle-details')}
               className="p-2.5 bg-white hover:bg-slate-100 rounded-xl border border-slate-200 shadow-sm text-slate-600 transition cursor-pointer"
-              title="Vehicle Lookup"
+              title="Back to Vehicle Lookup"
             >
-              <Truck className="w-5 h-5" />
+              <ArrowLeft className="w-5 h-5" />
             </button>
             <div className="ml-1">
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                  <History className="w-6 h-6 text-indigo-600" />
-                  Vehicle Search History
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200">
-                  {pagination.total} Total Saved
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
+                <History className="w-6 h-6 text-indigo-600" />
+                Vehicle Search History
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {pagination.total} saved ·{' '}
+                <span className={`font-semibold ${quota.rcSearchRemaining <= 0 ? 'text-rose-600' : quota.rcSearchRemaining <= 3 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                  {quota.rcSearchRemaining} of {quota.rcSearchLimit} searches left
                 </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Complete database records of all verified vehicle searches performed in your account
               </p>
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-                  quota.rcSearchRemaining <= 0
-                    ? 'bg-rose-100 text-rose-800 border-rose-300'
-                    : quota.rcSearchRemaining <= 3
-                    ? 'bg-amber-100 text-amber-800 border-amber-300'
-                    : 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                }`}>
-                  <span className={`w-2 h-2 rounded-full ${
-                    quota.rcSearchRemaining <= 0 ? 'bg-rose-500 animate-ping' : quota.rcSearchRemaining <= 3 ? 'bg-amber-500' : 'bg-emerald-500'
-                  }`}></span>
-                  {quota.rcSearchRemaining} Limits Left
-                </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  Lifetime Searches: <b>{quota.rcSearchCount}</b>
-                </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                  Total Limit: <b>{quota.rcSearchLimit}</b>
-                </span>
-              </div>
             </div>
           </div>
 
@@ -426,152 +373,95 @@ const VehicleSearchHistory = () => {
             {canOpenLeads && (
               <button
                 onClick={() => navigate('/leads')}
-                className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl shadow-sm text-xs sm:text-sm font-bold transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-xl shadow-sm text-xs sm:text-sm font-semibold transition cursor-pointer"
               >
                 <Users className="w-4 h-4" />
-                Lead Management
+                Leads
               </button>
             )}
             <button
               onClick={() => navigate('/vehicle-details')}
-              className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm text-xs sm:text-sm font-bold transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm text-xs sm:text-sm font-semibold transition cursor-pointer"
             >
               <Search className="w-4 h-4" />
-              New Live Search
+              New Search
             </button>
           </div>
         </div>
 
-        {/* Filter / Search Bar */}
-        <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm space-y-3">
-          {/* Search Type Pills */}
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mr-1">Search by:</span>
-            {[
-              { key: 'all', label: 'All Fields' },
-              { key: 'vehicleNumber', label: '🚗 Vehicle No' },
-              { key: 'ownerName', label: '👤 Owner Name' },
-              { key: 'rtoLocation', label: '📍 RTO Location' }
-            ].map((opt) => (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => handleSearchTypeChange(opt.key)}
-                className={`px-3 py-1 rounded-full text-[11px] font-bold border transition cursor-pointer ${
-                  searchType === opt.key
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                    : 'bg-slate-50 text-slate-600 border-slate-200 hover:border-indigo-400 hover:text-indigo-600'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-
-          {/* Search input + actions */}
-          <form onSubmit={handleSearchSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-            <div className="relative flex-1">
-              {loading
-                ? <RefreshCw className="w-4 h-4 text-indigo-500 animate-spin absolute left-3.5 top-1/2 -translate-y-1/2" />
-                : <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              }
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => handleSearchInputChange(e.target.value)}
-                placeholder={
-                  searchType === 'vehicleNumber' ? 'Type vehicle registration number (e.g. CG04AB1234)...'
-                  : searchType === 'ownerName' ? 'Type owner name to search database...'
-                  : searchType === 'rtoLocation' ? 'Type RTO location or district name...'
-                  : 'Type to search database by vehicle no, owner name, RTO location, maker...'
-                }
-                className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:border-indigo-500 outline-none transition"
-              />
-              {searchTerm && (
-                <button
-                  type="button"
-                  onClick={handleResetSearch}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex items-center gap-2">
-              <select
-                value={limit}
-                onChange={(e) => {
-                  const newLimit = parseInt(e.target.value)
-                  setLimit(newLimit)
-                  setCurrentPage(1)
-                  fetchHistory(1, searchTerm, newLimit, searchType)
-                }}
-                className="px-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700 outline-none cursor-pointer"
-                title="Rows per page"
-              >
-                <option value={10}>10 per page</option>
-                <option value={20}>20 per page</option>
-                <option value={50}>50 per page</option>
-                <option value={100}>100 per page</option>
-              </select>
+        {/* Search + filters in one bar */}
+        <form
+          onSubmit={handleSearchSubmit}
+          className="bg-white rounded-2xl p-3 border border-slate-200 shadow-sm flex flex-wrap items-center gap-2"
+        >
+          <div className="relative flex-1 min-w-[220px]">
+            {loading
+              ? <RefreshCw className="w-4 h-4 text-indigo-500 animate-spin absolute left-3.5 top-1/2 -translate-y-1/2" />
+              : <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            }
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => handleSearchInputChange(e.target.value)}
+              placeholder="Search vehicle no, owner, RTO..."
+              className="w-full pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:border-indigo-500 outline-none transition"
+            />
+            {searchTerm && (
               <button
                 type="button"
-                onClick={handleResetAll}
-                className="p-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl transition cursor-pointer"
-                title="Reset search and filters"
+                onClick={handleResetSearch}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
               >
-                <RefreshCw className="w-4 h-4" />
-              </button>
-            </div>
-          </form>
-
-          {/* Expiry + lead filters */}
-          <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100">
-            <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide mr-1">Expiry filter:</span>
-            <select
-              value={filters.docType}
-              onChange={(e) => handleFilterChange('docType', e.target.value)}
-              className={filterSelectClass(filters.docType !== 'all')}
-              aria-label="Document"
-            >
-              {DOC_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
-            <select
-              value={filters.expiry}
-              onChange={(e) => handleFilterChange('expiry', e.target.value)}
-              className={filterSelectClass(filters.expiry !== 'any')}
-              aria-label="Expiry"
-            >
-              {EXPIRY_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
-            <select
-              value={filters.leadFilter}
-              onChange={(e) => handleFilterChange('leadFilter', e.target.value)}
-              className={filterSelectClass(filters.leadFilter !== 'all')}
-              aria-label="Lead Management status"
-            >
-              {LEAD_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-            </select>
-            {hasFilters && (
-              <button
-                type="button"
-                onClick={() => {
-                  setFilters(NO_FILTERS)
-                  setCurrentPage(1)
-                  fetchHistory(1, searchTerm, limit, searchType, NO_FILTERS)
-                }}
-                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
-              >
-                Clear filters
+                <X className="w-4 h-4" />
               </button>
             )}
           </div>
-        </div>
+          <select
+            value={searchType}
+            onChange={(e) => handleSearchTypeChange(e.target.value)}
+            className={filterSelectClass(searchType !== 'all')}
+            aria-label="Search by"
+          >
+            {SEARCH_TYPE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+          <select
+            value={filters.docType}
+            onChange={(e) => handleFilterChange('docType', e.target.value)}
+            className={filterSelectClass(filters.docType !== 'all')}
+            aria-label="Document"
+          >
+            {DOC_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+          <select
+            value={filters.expiry}
+            onChange={(e) => handleFilterChange('expiry', e.target.value)}
+            className={filterSelectClass(filters.expiry !== 'any')}
+            aria-label="Expiry"
+          >
+            {EXPIRY_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+          <select
+            value={filters.leadFilter}
+            onChange={(e) => handleFilterChange('leadFilter', e.target.value)}
+            className={filterSelectClass(filters.leadFilter !== 'all')}
+            aria-label="Lead Management status"
+          >
+            {LEAD_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+          </select>
+          {(hasFilters || searchTerm || searchType !== 'all') && (
+            <button
+              type="button"
+              onClick={handleResetAll}
+              className="px-2 text-xs font-semibold text-indigo-600 hover:text-indigo-800 underline cursor-pointer"
+            >
+              Clear
+            </button>
+          )}
+        </form>
 
-        {/* TABLE VIEW CONTAINER */}
+        {/* List */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          {loading ? (
+          {loading && historyList.length === 0 ? (
             <div className="p-16 text-center text-slate-500 text-sm">
               <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-indigo-600" />
               <p className="font-semibold text-slate-700">Loading saved search history...</p>
@@ -636,10 +526,10 @@ const VehicleSearchHistory = () => {
 
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs sm:text-sm border-collapse">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider select-none">
+                  <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider select-none">
                     <tr>
                       {canMoveToLeads && (
-                        <th className="py-3.5 pl-4 pr-1 w-8">
+                        <th className="py-3 pl-4 pr-1 w-8">
                           <input
                             type="checkbox"
                             checked={selectAllMatching || allOnPageSelected}
@@ -650,32 +540,25 @@ const VehicleSearchHistory = () => {
                           />
                         </th>
                       )}
-                      <th className="py-3.5 px-4 text-center w-12">#</th>
-                      <th className="py-3.5 px-4 min-w-[200px]">Vehicle & Owner</th>
-                      <th className="py-3.5 px-4 min-w-[200px]">Maker & Model</th>
-                      <th className="py-3.5 px-4 min-w-[160px] hidden md:table-cell">Registered RTO</th>
-                      <th className="py-3.5 px-3 min-w-[110px] hidden lg:table-cell">Fitness Upto</th>
-                      <th className="py-3.5 px-3 min-w-[110px] hidden lg:table-cell">Insurance Upto</th>
-                      <th className="py-3.5 px-3 min-w-[110px] hidden xl:table-cell">Road Tax Upto</th>
-                      <th className="py-3.5 px-3 min-w-[110px] hidden xl:table-cell">PUC Upto</th>
-                      <th className="py-3.5 px-4 min-w-[170px]">Search Time</th>
-                      <th className="py-3.5 px-4 text-right min-w-[130px] sticky right-0 bg-slate-50">Actions</th>
+                      <th className="py-3 px-4">Vehicle</th>
+                      <th className="py-3 px-4 hidden sm:table-cell">Expiry</th>
+                      <th className="py-3 px-4 hidden md:table-cell">Searched</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {historyList.map((item, index) => {
-                      const serialNumber = (currentPage - 1) * limit + index + 1
+                    {historyList.map((item) => {
                       const inLeads = Boolean(item.lead?.isOpen)
                       const isSelected = !inLeads && (selectAllMatching || selected.has(item._id))
-                      // Documents that need attention: expired or 30 days or less left
-                      const alerts = (item.documents || []).filter((doc) => doc.daysLeft <= 30)
+                      const searchedAt = item.lastSearchedAt || item.updatedAt
+                      const busy = pdfId === item._id || particularId === item._id || deletingId === item._id
                       return (
                         <tr
                           key={item._id}
-                          className={`transition group ${isSelected ? 'bg-indigo-50/70' : 'hover:bg-indigo-50/40'}`}
+                          className={`transition ${isSelected ? 'bg-indigo-50/70' : 'hover:bg-slate-50'}`}
                         >
                           {canMoveToLeads && (
-                            <td className="py-3.5 pl-4 pr-1">
+                            <td className="py-3 pl-4 pr-1">
                               <input
                                 type="checkbox"
                                 checked={isSelected}
@@ -688,165 +571,73 @@ const VehicleSearchHistory = () => {
                             </td>
                           )}
 
-                          {/* Serial Number */}
-                          <td className="py-3.5 px-4 text-center text-slate-400 font-mono text-xs">
-                            {serialNumber}
-                          </td>
-
-                          {/* Plate Look + Owner Name + Mobile No below */}
-                          <td className="py-3.5 px-4">
-                            <div className="flex flex-col items-start gap-1.5">
-                              <span className="inline-flex items-center bg-slate-900 text-white rounded-lg shadow-sm font-mono font-black text-xs sm:text-sm tracking-wider overflow-hidden border border-slate-800">
-                                <span className="bg-blue-800 text-[9px] text-white px-1.5 py-0.5 font-sans font-black flex items-center leading-none">
-                                  IND
+                          {/* Vehicle no + owner; everything else is on the detail page */}
+                          <td className="py-3 px-4">
+                            <button
+                              type="button"
+                              onClick={() => openDetail(item)}
+                              className="text-left cursor-pointer group"
+                              title="View full details"
+                            >
+                              <span className="font-mono font-bold text-slate-900 tracking-wide group-hover:text-indigo-700">
+                                {item.vehicleNumber}
+                              </span>
+                              <span className="block text-xs text-slate-500 line-clamp-1">{item.ownerName || 'NA'}</span>
+                            </button>
+                            <div className="flex flex-wrap items-center gap-1 mt-1">
+                              {inLeads && (
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
+                                  <CheckCircle2 className="w-3 h-3" />
+                                  In Leads
                                 </span>
-                                <span className="px-2.5 py-0.5">{item.vehicleNumber}</span>
-                              </span>
-                              <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-900">
-                                <User className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                                <span className="line-clamp-1">{item.ownerName || 'NA'}</span>
-                              </div>
-                              {(item.mobileNo || item.rawResponse?.MOBILE_NO) &&
-                               (item.mobileNo !== 'NA' && item.rawResponse?.MOBILE_NO !== 'NA') && (
-                                <div className="flex items-center gap-1 text-[11px] text-slate-600 font-medium">
-                                  <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                                  <span>{item.mobileNo || item.rawResponse?.MOBILE_NO}</span>
-                                </div>
                               )}
-                              {/* Is this vehicle already in Lead Management? */}
-                              {item.lead && (
-                                inLeads ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => canOpenLeads && navigate('/leads')}
-                                    className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 ${canOpenLeads ? 'cursor-pointer hover:bg-emerald-200' : 'cursor-default'}`}
-                                    title="This vehicle is already in Lead Management"
-                                  >
-                                    <CheckCircle2 className="w-3 h-3" />
-                                    In Leads
-                                  </button>
-                                ) : (
-                                  <span
-                                    className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200"
-                                    title="An earlier lead for this vehicle is closed, so it can be moved again"
-                                  >
-                                    Lead {item.lead.status === 'converted' ? 'converted' : 'lost'}
-                                  </span>
-                                )
-                              )}
-                              {/* Expiry alerts, for screens too narrow to show every date column */}
-                              {alerts.length > 0 && (
-                                <div className="flex flex-wrap gap-1 xl:hidden">
-                                  {alerts.map((doc) => (
-                                    <span
-                                      key={doc.type}
-                                      className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                                        doc.daysLeft < 0 ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
-                                      }`}
-                                    >
-                                      {doc.type === 'Tax' ? 'Road Tax' : doc.type}{' '}
-                                      {doc.daysLeft < 0 ? 'expired' : doc.daysLeft === 0 ? 'today' : `${doc.daysLeft}d left`}
-                                    </span>
-                                  ))}
-                                </div>
-                              )}
+                              <div className="sm:hidden"><ExpiryStatus documents={item.documents} /></div>
                             </div>
                           </td>
 
-                          {/* Maker & Model */}
-                          <td className="py-3.5 px-4 text-slate-700">
-                            <span className="font-medium text-[11px] sm:text-xs leading-snug break-words whitespace-normal block max-w-[240px]">
-                              {item.makerModel || 'NA'}
-                            </span>
+                          <td className="py-3 px-4 hidden sm:table-cell">
+                            <ExpiryStatus documents={item.documents} />
                           </td>
 
-
-                          {/* Registered RTO */}
-                          <td className="py-3.5 px-4 text-slate-600 hidden md:table-cell text-xs">
-                            <span className="line-clamp-1 flex items-center gap-1">
-                              <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                              {item.registeredAt || 'NA'}
-                            </span>
+                          <td className="py-3 px-4 hidden md:table-cell text-xs text-slate-500 whitespace-nowrap" title={formatDateTime(searchedAt)}>
+                            {formatDate(searchedAt)}
                           </td>
 
-                          {/* Fitness */}
-                          <td className="py-3.5 px-3 hidden lg:table-cell text-xs">
-                            <ExpiryCell item={item} type="Fitness" value={item.fitnessUpto} />
-                          </td>
-
-                          {/* Insurance */}
-                          <td className="py-3.5 px-3 hidden lg:table-cell text-xs">
-                            <ExpiryCell item={item} type="Insurance" value={item.insuranceUpto} />
-                          </td>
-
-                          {/* Tax */}
-                          <td className="py-3.5 px-3 hidden xl:table-cell text-xs">
-                            <ExpiryCell item={item} type="Tax" value={item.taxUpto} />
-                          </td>
-
-                          {/* PUC */}
-                          <td className="py-3.5 px-3 hidden xl:table-cell text-xs">
-                            <ExpiryCell item={item} type="PUC" value={item.pucUpto || item.rawResponse?.PUCC_UPTO || item.rawResponse?.PUC_UPTO} />
-                          </td>
-
-                          {/* Search Date on top & Time on bottom */}
-                          <td className="py-3.5 px-4 text-xs">
-                            <div className="flex flex-col items-start gap-0.5 whitespace-nowrap">
-                              <span className="flex items-center gap-1 font-semibold text-slate-800">
-                                <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                                {formatDate(item.lastSearchedAt || item.updatedAt)}
-                              </span>
-                              <span className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                                <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                                {formatTime(item.lastSearchedAt || item.updatedAt)}
-                              </span>
-                            </div>
-                          </td>
-
-                          {/* Actions */}
-                          <td className="py-3.5 px-4 text-right sticky right-0 bg-white group-hover:bg-indigo-50/40 transition">
-                            <div className="flex items-center justify-end gap-1.5">
+                          {/* Actions: View, Save, and the rest behind "..." */}
+                          <td className="py-3 px-4 text-right">
+                            <div className="flex items-center justify-end gap-1">
                               <button
-                                onClick={() => navigate(`/vehicle-details?historyId=${item._id}`)}
-                                className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition cursor-pointer shadow-sm"
-                                title="View saved detail from database (No API call)"
+                                onClick={() => openDetail(item)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg text-xs transition cursor-pointer"
+                                title="View full details (No API call)"
                               >
                                 <Eye className="w-3.5 h-3.5" />
                                 View
                               </button>
-                              <button
-                                onClick={() => handleDownloadPdf(item)}
-                                disabled={pdfId === item._id}
-                                className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition cursor-pointer disabled:opacity-50"
-                                title="Download RC PDF"
-                              >
-                                {pdfId === item._id ? (
-                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <Download className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                              <button
-                                onClick={() => handleDownloadParticular(item)}
-                                disabled={particularId === item._id}
-                                className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition cursor-pointer disabled:opacity-50"
-                                title="Download Particular PDF"
-                              >
-                                {particularId === item._id ? (
-                                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <FileText className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                              {rcFormTypes.length > 0 && <RcFormsMenu historyId={item._id} types={rcFormTypes} />}
-                              <button
-                                onClick={() => handleDeleteItem(item._id, item.vehicleNumber)}
-                                disabled={deletingId === item._id}
-                                className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
-                                title="Delete from history"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
+                              {canSaveRecords && (
+                                <button
+                                  onClick={() => handleSave(item)}
+                                  disabled={savingId === item._id}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 font-semibold rounded-lg text-xs transition cursor-pointer disabled:opacity-50"
+                                  title="Save to Vehicle Registration, Fitness, Insurance and PUC (fee 0)"
+                                >
+                                  {savingId === item._id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                                  Save
+                                </button>
+                              )}
+                              {busy ? (
+                                <span className="p-1.5"><RefreshCw className="w-4 h-4 animate-spin text-slate-400" /></span>
+                              ) : (
+                                <RcFormsMenu
+                                  historyId={item._id}
+                                  types={rcFormTypes}
+                                  actions={[
+                                    { label: 'Download RC PDF', onClick: () => handleDownloadPdf(item) },
+                                    { label: 'Download Particular', onClick: () => handleDownloadParticular(item) },
+                                    { label: 'Delete from history', danger: true, onClick: () => handleDeleteItem(item._id, item.vehicleNumber) }
+                                  ]}
+                                />
+                              )}
                             </div>
                           </td>
                         </tr>
@@ -856,34 +647,49 @@ const VehicleSearchHistory = () => {
                 </table>
               </div>
 
-              {/* Pagination Controls Footer */}
-              <div className="bg-slate-50 border-t border-slate-200 p-4 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-semibold text-slate-600">
-                <span>
-                  Showing {(currentPage - 1) * limit + 1} to{' '}
-                  {Math.min(currentPage * limit, pagination.total)} of {pagination.total} records
-                </span>
+              {/* Footer: count, rows per page, pages */}
+              <div className="border-t border-slate-200 px-4 py-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-semibold text-slate-600">
+                <div className="flex items-center gap-3">
+                  <span>
+                    {(currentPage - 1) * limit + 1}-{Math.min(currentPage * limit, pagination.total)} of {pagination.total}
+                  </span>
+                  <select
+                    value={limit}
+                    onChange={(e) => {
+                      const newLimit = parseInt(e.target.value)
+                      setLimit(newLimit)
+                      setCurrentPage(1)
+                      fetchHistory(1, searchTerm, newLimit, searchType)
+                    }}
+                    className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 outline-none cursor-pointer"
+                    title="Rows per page"
+                  >
+                    <option value={10}>10 / page</option>
+                    <option value={20}>20 / page</option>
+                    <option value={50}>50 / page</option>
+                    <option value={100}>100 / page</option>
+                  </select>
+                </div>
 
                 {pagination.totalPages > 1 && (
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                       disabled={currentPage <= 1}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 transition cursor-pointer"
+                      className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 transition cursor-pointer"
+                      aria-label="Previous page"
                     >
                       <ChevronLeft className="w-4 h-4" />
-                      Previous
                     </button>
-
-                    <div className="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-800">
+                    <span className="px-2">
                       Page {currentPage} of {pagination.totalPages}
-                    </div>
-
+                    </span>
                     <button
                       onClick={() => setCurrentPage((p) => Math.min(pagination.totalPages, p + 1))}
                       disabled={currentPage >= pagination.totalPages}
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 transition cursor-pointer"
+                      className="p-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 transition cursor-pointer"
+                      aria-label="Next page"
                     >
-                      Next
                       <ChevronRight className="w-4 h-4" />
                     </button>
                   </div>

@@ -1,8 +1,10 @@
+const mongoose = require('mongoose')
 const User = require('../models/User')
 const VehicleRegistration = require('../models/VehicleRegistration')
 const Fitness = require('../models/Fitness')
 const Insurance = require('../models/Insurance')
 const Puc = require('../models/Puc')
+const VehicleSearchHistory = require('../models/VehicleSearchHistory')
 const { checkUserAndQueueAlerts } = require('../jobs/whatsappDailyExpiryChecker')
 const { parseExpiryDate } = require('../utils/vehicleExpiry')
 
@@ -154,7 +156,15 @@ const saveVehicleRecords = async (req, res) => {
       return res.status(403).json({ success: false, message: 'Save vehicle records is not enabled for your account. Please contact admin.' })
     }
 
-    const data = req.body?.data
+    // RC details on screen, or a saved search history record (by id)
+    let data = req.body?.data
+    if (req.body?.historyId) {
+      if (!mongoose.isValidObjectId(req.body.historyId)) {
+        return res.status(400).json({ success: false, message: 'Invalid history record' })
+      }
+      const record = await VehicleSearchHistory.findOne({ _id: req.body.historyId, userId }).select('vehicleNumber rawResponse').lean()
+      data = record?.rawResponse && { ...record.rawResponse, REGN_NO: record.rawResponse.REGN_NO || record.vehicleNumber }
+    }
     const vehicleNumber = String(data?.REGN_NO || '').replace(/[\s-]/g, '').toUpperCase()
     if (!data || typeof data !== 'object' || vehicleNumber.length < 4) {
       return res.status(400).json({ success: false, message: 'Vehicle details are required' })

@@ -13,8 +13,6 @@ import {
   User,
   MapPin,
   Phone,
-  Calendar,
-  Clock,
   CheckCircle2,
   AlertTriangle,
   Copy,
@@ -33,7 +31,6 @@ import {
   Award,
   Layers,
   X,
-  Trash2,
   Eye,
   Database,
   ChevronLeft,
@@ -44,6 +41,8 @@ import {
 import { useAuth } from '../../context/AuthContext'
 import RcFormModal from '../forms/components/RcFormModal'
 import RcFormsMenu from './RcFormsMenu'
+import { ExpiryStatus } from './historyUi'
+import { saveVehicleRecords } from '../../utils/saveVehicleRecords'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
@@ -430,33 +429,17 @@ const VehicleDetails = () => {
   // Saves the RC on screen into the user's sections with 0 fee (NO API call)
   const handleSaveRecords = async () => {
     if (!vehicleData) return
-    try {
-      setSavingRecords(true)
-      const res = await axios.post(
-        `${API_URL}/api/vehicle-info/save-records`,
-        { data: vehicleData },
-        { withCredentials: true }
-      )
-      const { vehicleNumber, registration, fitness, insurance, puc } = res.data.data
-      const describe = (label, r) => {
-        if (r.status === 'created') return `${label}: added`
-        if (r.status === 'updated') return `${label}: updated`
-        if (r.status === 'exists') return `${label}: already saved`
-        return `${label}: no date on RC`
-      }
-      const lines = [
-        describe('Vehicle', registration),
-        describe('Fitness', fitness),
-        describe('Insurance', insurance),
-        describe('PUC', puc)
-      ]
-      toast.success(`${vehicleNumber} saved. ${lines.join(' | ')}`, { autoClose: 6000 })
-    } catch (err) {
-      console.error('Save records error:', err)
-      toast.error(err.response?.data?.message || 'Failed to save vehicle records')
-    } finally {
-      setSavingRecords(false)
-    }
+    setSavingRecords(true)
+    await saveVehicleRecords({ data: vehicleData })
+    setSavingRecords(false)
+  }
+
+  // Save for a recent-search row, from its saved record
+  const [savingHistoryId, setSavingHistoryId] = useState(null)
+  const handleSaveHistoryRecords = async (item) => {
+    setSavingHistoryId(item._id)
+    await saveVehicleRecords({ historyId: item._id })
+    setSavingHistoryId(null)
   }
 
   const handlePrint = () => {
@@ -485,20 +468,6 @@ const VehicleDetails = () => {
       })
     } catch {
       return dateStr
-    }
-  }
-
-  const formatTime = (dateStr) => {
-    if (!dateStr) return ''
-    try {
-      const d = new Date(dateStr)
-      return d.toLocaleTimeString('en-IN', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      })
-    } catch {
-      return ''
     }
   }
 
@@ -1385,45 +1354,33 @@ const VehicleDetails = () => {
           </div>
         )}
 
-        {/* DEDICATED SEARCH HISTORY SECTION AT THE BOTTOM (Top 10 Recent) */}
-        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200 shadow-sm print:hidden">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 pb-4 border-b border-slate-100">
-            <div className="flex items-center gap-2.5">
-              <div className="p-2.5 bg-indigo-50 text-indigo-600 rounded-xl">
-                <History className="w-5 h-5" />
-              </div>
-              <div>
-                <h3 className="font-bold text-slate-900 text-base flex items-center gap-2">
-                  Recent 10 Vehicle Searches
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                    {historyPagination.total} Total Saved
-                  </span>
-                </h3>
-                <p className="text-xs text-slate-500">
-                  Click 'View Details' on any vehicle to view complete details from database (No API call required)
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2 self-end sm:self-auto">
+        {/* Recent searches (top 10) - full details open in the results above, no API call */}
+        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm print:hidden">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h3 className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
+              <History className="w-4 h-4 text-indigo-600" />
+              Recent Searches
+              <span className="text-xs font-medium text-slate-400">({historyPagination.total})</span>
+            </h3>
+            <div className="flex items-center gap-2">
               <button
                 onClick={() => fetchHistory(1, historySearch)}
-                className="p-2 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl border border-slate-200 transition cursor-pointer"
-                title="Refresh Recent History"
+                className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                title="Refresh"
               >
                 <RefreshCw className={`w-4 h-4 ${historyLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
                 onClick={() => navigate('/vehicle-search-history')}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl border border-indigo-200 transition cursor-pointer"
+                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
               >
-                <span>View Full History ({historyPagination.total}) →</span>
+                View all →
               </button>
             </div>
           </div>
 
           {/* History Search/Filter Bar */}
-          <div className="mb-4">
+          <div className="mb-3">
             <div className="relative">
               <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
               <input
@@ -1433,7 +1390,7 @@ const VehicleDetails = () => {
                   setHistorySearch(e.target.value)
                   fetchHistory(1, e.target.value)
                 }}
-                placeholder="Filter saved history by vehicle number, owner name, maker, location..."
+                placeholder="Filter by vehicle no, owner..."
                 className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:border-indigo-500 outline-none transition"
               />
               {historySearch && (
@@ -1467,132 +1424,65 @@ const VehicleDetails = () => {
               </p>
             </div>
           ) : (
-            <div className="space-y-4">
-              <div className="overflow-x-auto rounded-xl border border-slate-200">
-                <table className="w-full text-left text-xs sm:text-sm border-collapse">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    <tr>
-                      <th className="py-3 px-4">Vehicle & Owner</th>
-                      <th className="py-3 px-4 hidden md:table-cell">Maker & Model</th>
-                      <th className="py-3 px-4 hidden lg:table-cell">Fitness / Ins. Upto</th>
-                      <th className="py-3 px-4">Search Time</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {historyList.map((item) => (
-                      <tr key={item._id} className="hover:bg-indigo-50/40 transition">
-                        <td className="py-3 px-4">
-                          <div className="flex flex-col items-start gap-1">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 bg-slate-900 text-white rounded text-xs font-mono font-bold">
-                              <span className="text-[9px] text-blue-300 font-sans">IND</span>
-                              {item.vehicleNumber}
-                            </span>
-                            <div className="flex items-center gap-1 text-xs font-semibold text-slate-900">
-                              <User className="w-3 h-3 text-indigo-500 shrink-0" />
-                              <span className="line-clamp-1">{item.ownerName || 'NA'}</span>
-                            </div>
-                            {(item.mobileNo || item.rawResponse?.MOBILE_NO) &&
-                             (item.mobileNo !== 'NA' && item.rawResponse?.MOBILE_NO !== 'NA') && (
-                              <div className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                                <Phone className="w-3 h-3 text-slate-400 shrink-0" />
-                                <span>{item.mobileNo || item.rawResponse?.MOBILE_NO}</span>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-slate-600 hidden md:table-cell">
-                          <span className="font-medium text-[11px] sm:text-xs leading-snug break-words whitespace-normal block max-w-[220px]">
-                            {item.makerModel || 'NA'}
-                          </span>
-                        </td>
-
-                        <td className="py-3 px-4 text-slate-600 hidden lg:table-cell text-xs">
-                          <div>
-                            Fit: <span className="font-medium text-slate-800">{item.fitnessUpto || 'NA'}</span>
-                          </div>
-                          <div>
-                            Ins: <span className="font-medium text-slate-800">{item.insuranceUpto || 'NA'}</span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-xs">
-                          <div className="flex flex-col items-start gap-0.5 whitespace-nowrap">
-                            <span className="flex items-center gap-1 font-semibold text-slate-800">
-                              <Calendar className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                              {formatDate(item.lastSearchedAt || item.updatedAt)}
-                            </span>
-                            <span className="flex items-center gap-1 text-[11px] text-slate-500 font-medium">
-                              <Clock className="w-3 h-3 text-slate-400 shrink-0" />
-                              {formatTime(item.lastSearchedAt || item.updatedAt)}
-                            </span>
-                          </div>
-                        </td>
-                        <td className="py-3 px-4 text-right">
-                          <div className="flex items-center justify-end gap-1.5">
-                            <button
-                              onClick={() => handleViewSavedRecord(item)}
-                              className="inline-flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg text-xs transition cursor-pointer shadow-sm"
-                              title="View saved detail from database (No API call)"
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              View Details
-                            </button>
-                            <button
-                              onClick={() => handleDownloadHistoryPdf(item)}
-                              disabled={historyPdfId === item._id}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 font-bold rounded-lg text-xs transition cursor-pointer disabled:opacity-50"
-                              title="Download RC PDF"
-                            >
-                              {historyPdfId === item._id ? (
-                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <Download className="w-3.5 h-3.5" />
-                              )}
-                              RC PDF
-                            </button>
-                            <button
-                              onClick={() => handleDownloadHistoryParticular(item)}
-                              disabled={historyParticularId === item._id}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 font-bold rounded-lg text-xs transition cursor-pointer disabled:opacity-50"
-                              title="Download Particular PDF"
-                            >
-                              {historyParticularId === item._id ? (
-                                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                              ) : (
-                                <FileText className="w-3.5 h-3.5" />
-                              )}
-                              Particular
-                            </button>
-                            {rcFormTypes.length > 0 && <RcFormsMenu historyId={item._id} types={rcFormTypes} />}
-                            <button
-                              onClick={() => handleDeleteHistoryItem(item._id, item.vehicleNumber)}
-                              disabled={deletingId === item._id}
-                              className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer"
-                              title="Delete from history"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Show All History Button */}
-              <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                <span className="text-slate-500">
-                  Showing {Math.min(10, historyList.length)} most recent vehicle searches out of {historyPagination.total} total
-                </span>
-                <button
-                  onClick={() => navigate('/vehicle-search-history')}
-                  className="w-full sm:w-auto px-5 py-2.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold rounded-xl shadow-sm hover:shadow transition flex items-center justify-center gap-2 cursor-pointer text-xs sm:text-sm"
-                >
-                  <History className="w-4 h-4" />
-                  <span>Show All Vehicle Search History ({historyPagination.total}) →</span>
-                </button>
-              </div>
+            <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl">
+              {historyList.map((item) => {
+                const searchedAt = item.lastSearchedAt || item.updatedAt
+                const busy = historyPdfId === item._id || historyParticularId === item._id || deletingId === item._id
+                return (
+                  <div key={item._id} className="flex items-center gap-3 px-3 sm:px-4 py-2.5 hover:bg-slate-50 transition">
+                    <button
+                      type="button"
+                      onClick={() => handleViewSavedRecord(item)}
+                      className="min-w-0 flex-1 text-left cursor-pointer group"
+                      title="View full details (No API call)"
+                    >
+                      <span className="font-mono font-bold text-sm text-slate-900 tracking-wide group-hover:text-indigo-700">
+                        {item.vehicleNumber}
+                      </span>
+                      <span className="block text-xs text-slate-500 truncate">{item.ownerName || 'NA'}</span>
+                    </button>
+                    <div className="hidden sm:block w-48 shrink-0">
+                      <ExpiryStatus documents={item.documents} />
+                    </div>
+                    <span className="hidden md:block w-24 shrink-0 text-xs text-slate-400" title={formatDateTime(searchedAt)}>
+                      {formatDate(searchedAt)}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                      <button
+                        onClick={() => handleViewSavedRecord(item)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg text-xs transition cursor-pointer"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        View
+                      </button>
+                      {canSaveRecords && (
+                        <button
+                          onClick={() => handleSaveHistoryRecords(item)}
+                          disabled={savingHistoryId === item._id}
+                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 font-semibold rounded-lg text-xs transition cursor-pointer disabled:opacity-50"
+                          title="Save to Vehicle Registration, Fitness, Insurance and PUC (fee 0)"
+                        >
+                          {savingHistoryId === item._id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+                          Save
+                        </button>
+                      )}
+                      {busy ? (
+                        <span className="p-1.5"><RefreshCw className="w-4 h-4 animate-spin text-slate-400" /></span>
+                      ) : (
+                        <RcFormsMenu
+                          historyId={item._id}
+                          types={rcFormTypes}
+                          actions={[
+                            { label: 'Download RC PDF', onClick: () => handleDownloadHistoryPdf(item) },
+                            { label: 'Download Particular', onClick: () => handleDownloadHistoryParticular(item) },
+                            { label: 'Delete from history', danger: true, onClick: () => handleDeleteHistoryItem(item._id, item.vehicleNumber) }
+                          ]}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>

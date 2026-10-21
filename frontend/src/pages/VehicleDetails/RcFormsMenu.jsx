@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import axios from 'axios'
 import { toast } from 'react-toastify'
-import { FileCheck, ChevronDown, RefreshCw } from 'lucide-react'
+import { FileCheck, ChevronDown, RefreshCw, MoreHorizontal } from 'lucide-react'
 import RcFormModal from '../forms/components/RcFormModal'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
@@ -21,9 +21,12 @@ const ITEMS = [
  * "RC Forms" dropdown for a saved vehicle search row: Form 23 or Temporary RC, filled from the
  * saved RC data (no API credit) or blank. The menu and the form are portalled to <body> so the
  * table's scroll container does not clip them.
+ * With `actions` ({ label, hint, onClick, danger }) it becomes the row's "More" menu: those
+ * actions come first, then the RC forms, behind a compact "..." button.
  */
-const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc', 'nlParticular'] }) => {
+const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc', 'nlParticular'], actions }) => {
   const items = ITEMS.filter((it) => types.includes(it.type))
+  const extra = actions || []
   const btnRef = useRef(null)
   const menuRef = useRef(null)
   const [menuPos, setMenuPos] = useState(null)
@@ -51,14 +54,15 @@ const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc', 'nlParticular'] }
     if (menuPos) return setMenuPos(null)
     const r = btnRef.current.getBoundingClientRect()
     const width = 220
-    const height = items.length * 50 + 10
+    const height = (items.length + extra.length) * 50 + 10
     // Open upwards when there is no room below (last rows of the table)
     const top = r.bottom + 4 + height > window.innerHeight ? Math.max(8, r.top - height - 4) : r.bottom + 4
     setMenuPos({ top, left: Math.max(8, Math.min(r.right - width, window.innerWidth - width - 8)), width })
   }
 
-  const choose = async ({ type, filled }) => {
+  const choose = async ({ type, filled, onClick }) => {
     setMenuPos(null)
+    if (onClick) return onClick()
     if (!filled) return setOpen({ type, data: null })
     try {
       setLoading(true)
@@ -78,6 +82,19 @@ const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc', 'nlParticular'] }
 
   return (
     <>
+      {actions ? (
+        <button
+          ref={btnRef}
+          onClick={toggleMenu}
+          disabled={loading}
+          className='p-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition cursor-pointer disabled:opacity-50'
+          title='More actions'
+          aria-haspopup='menu'
+          aria-expanded={Boolean(menuPos)}
+        >
+          {loading ? <RefreshCw className='w-4 h-4 animate-spin' /> : <MoreHorizontal className='w-4 h-4' />}
+        </button>
+      ) : (
       <button
         ref={btnRef}
         onClick={toggleMenu}
@@ -91,6 +108,7 @@ const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc', 'nlParticular'] }
         RC Forms
         <ChevronDown className='w-3 h-3' />
       </button>
+      )}
 
       {menuPos && createPortal(
         <div
@@ -99,15 +117,36 @@ const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc', 'nlParticular'] }
           className='fixed z-[65] bg-white rounded-xl border border-slate-200 shadow-xl py-1 overflow-hidden'
           style={{ top: menuPos.top, left: menuPos.left, width: menuPos.width }}
         >
+          {extra.filter((it) => !it.danger).map((it) => (
+            <button
+              key={it.label}
+              role='menuitem'
+              onClick={() => choose(it)}
+              className='w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition cursor-pointer'
+            >
+              {it.label}
+              {it.hint && <span className='block text-[10px] font-normal text-slate-500'>{it.hint}</span>}
+            </button>
+          ))}
           {items.map((it, i) => (
             <button
               key={it.label}
               role='menuitem'
               onClick={() => choose(it)}
-              className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-800 transition cursor-pointer ${i > 0 && it.type !== items[i - 1].type ? 'border-t border-slate-100' : ''}`}
+              className={`w-full text-left px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-sky-50 hover:text-sky-800 transition cursor-pointer ${(i > 0 && it.type !== items[i - 1].type) || (i === 0 && extra.some((it) => !it.danger)) ? 'border-t border-slate-100' : ''}`}
             >
               {it.label}
               <span className='block text-[10px] font-normal text-slate-500'>{it.hint}</span>
+            </button>
+          ))}
+          {extra.filter((it) => it.danger).map((it) => (
+            <button
+              key={it.label}
+              role='menuitem'
+              onClick={() => choose(it)}
+              className='w-full text-left px-3 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 border-t border-slate-100 transition cursor-pointer'
+            >
+              {it.label}
             </button>
           ))}
         </div>,
