@@ -6,20 +6,16 @@ import {
   Search,
   ArrowLeft,
   History,
-  Eye,
   RefreshCw,
   ChevronLeft,
   ChevronRight,
   Car,
   X,
-  CheckCircle2,
   UserPlus,
-  Users,
-  Save
+  Users
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
-import RcFormsMenu from './RcFormsMenu'
-import { ExpiryStatus } from './historyUi'
+import { HistoryCard } from './historyUi'
 import { saveVehicleRecords } from '../../utils/saveVehicleRecords'
 import { toInputDate } from '../../utils/dateHelpers'
 
@@ -302,20 +298,6 @@ const VehicleSearchHistory = () => {
     }
   }
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A'
-    try {
-      const d = new Date(dateStr)
-      return d.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
-    } catch {
-      return dateStr
-    }
-  }
-
   // Full details of a saved search, from the database (NO API call)
   const openDetail = (item) => navigate(`/vehicle-details?historyId=${item._id}`)
 
@@ -323,23 +305,6 @@ const VehicleSearchHistory = () => {
     setSavingId(item._id)
     await saveVehicleRecords({ historyId: item._id })
     setSavingId(null)
-  }
-
-  const formatDateTime = (dateStr) => {
-    if (!dateStr) return 'N/A'
-    try {
-      const d = new Date(dateStr)
-      return d.toLocaleString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      })
-    } catch {
-      return dateStr
-    }
   }
 
   return (
@@ -460,7 +425,7 @@ const VehicleSearchHistory = () => {
         </form>
 
         {/* List */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="bg-slate-100/60 rounded-2xl border border-slate-200 overflow-hidden">
           {loading && historyList.length === 0 ? (
             <div className="p-16 text-center text-slate-500 text-sm">
               <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-3 text-indigo-600" />
@@ -524,127 +489,40 @@ const VehicleSearchHistory = () => {
                 </div>
               )}
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs sm:text-sm border-collapse">
-                  <thead className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-500 uppercase tracking-wider select-none">
-                    <tr>
-                      {canMoveToLeads && (
-                        <th className="py-3 pl-4 pr-1 w-8">
-                          <input
-                            type="checkbox"
-                            checked={selectAllMatching || allOnPageSelected}
-                            onChange={toggleAllOnPage}
-                            disabled={selectableIds.length === 0}
-                            className="w-4 h-4 cursor-pointer accent-indigo-600 disabled:cursor-default"
-                            aria-label="Select all on this page"
-                          />
-                        </th>
-                      )}
-                      <th className="py-3 px-4">Vehicle</th>
-                      <th className="py-3 px-4 hidden sm:table-cell">Expiry</th>
-                      <th className="py-3 px-4 hidden md:table-cell">Searched</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-100">
-                    {historyList.map((item) => {
-                      const inLeads = Boolean(item.lead?.isOpen)
-                      const isSelected = !inLeads && (selectAllMatching || selected.has(item._id))
-                      const searchedAt = item.lastSearchedAt || item.updatedAt
-                      const busy = pdfId === item._id || particularId === item._id || deletingId === item._id
-                      return (
-                        <tr
-                          key={item._id}
-                          className={`transition ${isSelected ? 'bg-indigo-50/70' : 'hover:bg-slate-50'}`}
-                        >
-                          {canMoveToLeads && (
-                            <td className="py-3 pl-4 pr-1">
-                              <input
-                                type="checkbox"
-                                checked={isSelected}
-                                onChange={() => toggleOne(item._id)}
-                                disabled={inLeads}
-                                className="w-4 h-4 cursor-pointer accent-indigo-600 disabled:cursor-default"
-                                aria-label={`Select ${item.vehicleNumber}`}
-                                title={inLeads ? 'Already in Lead Management' : undefined}
-                              />
-                            </td>
-                          )}
+              {canMoveToLeads && selectableIds.length > 0 && (
+                <label className="flex items-center gap-2 px-4 pt-3 text-xs font-semibold text-slate-600 cursor-pointer select-none w-fit">
+                  <input
+                    type="checkbox"
+                    checked={selectAllMatching || allOnPageSelected}
+                    onChange={toggleAllOnPage}
+                    className="w-4 h-4 cursor-pointer accent-indigo-600"
+                  />
+                  Select all on this page
+                </label>
+              )}
 
-                          {/* Vehicle no + owner; everything else is on the detail page */}
-                          <td className="py-3 px-4">
-                            <button
-                              type="button"
-                              onClick={() => openDetail(item)}
-                              className="text-left cursor-pointer group"
-                              title="View full details"
-                            >
-                              <span className="font-mono font-bold text-slate-900 tracking-wide group-hover:text-indigo-700">
-                                {item.vehicleNumber}
-                              </span>
-                              <span className="block text-xs text-slate-500 line-clamp-1">{item.ownerName || 'NA'}</span>
-                            </button>
-                            <div className="flex flex-wrap items-center gap-1 mt-1">
-                              {inLeads && (
-                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700">
-                                  <CheckCircle2 className="w-3 h-3" />
-                                  In Leads
-                                </span>
-                              )}
-                              <div className="sm:hidden"><ExpiryStatus documents={item.documents} /></div>
-                            </div>
-                          </td>
-
-                          <td className="py-3 px-4 hidden sm:table-cell">
-                            <ExpiryStatus documents={item.documents} />
-                          </td>
-
-                          <td className="py-3 px-4 hidden md:table-cell text-xs text-slate-500 whitespace-nowrap" title={formatDateTime(searchedAt)}>
-                            {formatDate(searchedAt)}
-                          </td>
-
-                          {/* Actions: View, Save, and the rest behind "..." */}
-                          <td className="py-3 px-4 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <button
-                                onClick={() => openDetail(item)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg text-xs transition cursor-pointer"
-                                title="View full details (No API call)"
-                              >
-                                <Eye className="w-3.5 h-3.5" />
-                                View
-                              </button>
-                              {canSaveRecords && (
-                                <button
-                                  onClick={() => handleSave(item)}
-                                  disabled={savingId === item._id}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 font-semibold rounded-lg text-xs transition cursor-pointer disabled:opacity-50"
-                                  title="Save to Vehicle Registration, Fitness, Insurance and PUC (fee 0)"
-                                >
-                                  {savingId === item._id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                                  Save
-                                </button>
-                              )}
-                              {busy ? (
-                                <span className="p-1.5"><RefreshCw className="w-4 h-4 animate-spin text-slate-400" /></span>
-                              ) : (
-                                <RcFormsMenu
-                                  historyId={item._id}
-                                  types={rcFormTypes}
-                                  actions={[
-                                    { label: 'Download RC PDF', onClick: () => handleDownloadPdf(item) },
-                                    { label: 'Download Particular', onClick: () => handleDownloadParticular(item) },
-                                    { label: 'Delete from history', danger: true, onClick: () => handleDeleteItem(item._id, item.vehicleNumber) }
-                                  ]}
-                                />
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+              {/* One card per saved search */}
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 p-3 sm:p-4">
+                {historyList.map((item) => (
+                  <HistoryCard
+                    key={item._id}
+                    item={item}
+                    onView={() => openDetail(item)}
+                    onSave={() => handleSave(item)}
+                    onRcPdf={() => handleDownloadPdf(item)}
+                    onParticular={() => handleDownloadParticular(item)}
+                    onDelete={() => handleDeleteItem(item._id, item.vehicleNumber)}
+                    canSave={canSaveRecords}
+                    rcFormTypes={rcFormTypes}
+                    saving={savingId === item._id}
+                    pdfLoading={pdfId === item._id}
+                    particularLoading={particularId === item._id}
+                    deleting={deletingId === item._id}
+                    selectable={canMoveToLeads}
+                    selected={!item.lead?.isOpen && (selectAllMatching || selected.has(item._id))}
+                    onToggleSelect={() => toggleOne(item._id)}
+                  />
+                ))}
               </div>
 
               {/* Footer: count, rows per page, pages */}

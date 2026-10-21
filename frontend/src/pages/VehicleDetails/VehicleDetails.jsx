@@ -31,7 +31,6 @@ import {
   Award,
   Layers,
   X,
-  Eye,
   Database,
   ChevronLeft,
   ChevronRight,
@@ -40,8 +39,7 @@ import {
 
 import { useAuth } from '../../context/AuthContext'
 import RcFormModal from '../forms/components/RcFormModal'
-import RcFormsMenu from './RcFormsMenu'
-import { ExpiryStatus } from './historyUi'
+import { HistoryCard } from './historyUi'
 import { saveVehicleRecords } from '../../utils/saveVehicleRecords'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
@@ -454,20 +452,6 @@ const VehicleDetails = () => {
       return parsed < new Date()
     } catch {
       return false
-    }
-  }
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) return 'N/A'
-    try {
-      const d = new Date(dateStr)
-      return d.toLocaleDateString('en-IN', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric'
-      })
-    } catch {
-      return dateStr
     }
   }
 
@@ -1424,65 +1408,24 @@ const VehicleDetails = () => {
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100 border border-slate-200 rounded-xl">
-              {historyList.map((item) => {
-                const searchedAt = item.lastSearchedAt || item.updatedAt
-                const busy = historyPdfId === item._id || historyParticularId === item._id || deletingId === item._id
-                return (
-                  <div key={item._id} className="flex items-center gap-3 px-3 sm:px-4 py-2.5 hover:bg-slate-50 transition">
-                    <button
-                      type="button"
-                      onClick={() => handleViewSavedRecord(item)}
-                      className="min-w-0 flex-1 text-left cursor-pointer group"
-                      title="View full details (No API call)"
-                    >
-                      <span className="font-mono font-bold text-sm text-slate-900 tracking-wide group-hover:text-indigo-700">
-                        {item.vehicleNumber}
-                      </span>
-                      <span className="block text-xs text-slate-500 truncate">{item.ownerName || 'NA'}</span>
-                    </button>
-                    <div className="hidden sm:block w-48 shrink-0">
-                      <ExpiryStatus documents={item.documents} />
-                    </div>
-                    <span className="hidden md:block w-24 shrink-0 text-xs text-slate-400" title={formatDateTime(searchedAt)}>
-                      {formatDate(searchedAt)}
-                    </span>
-                    <div className="flex items-center gap-1 shrink-0">
-                      <button
-                        onClick={() => handleViewSavedRecord(item)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg text-xs transition cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        View
-                      </button>
-                      {canSaveRecords && (
-                        <button
-                          onClick={() => handleSaveHistoryRecords(item)}
-                          disabled={savingHistoryId === item._id}
-                          className="inline-flex items-center gap-1 px-2.5 py-1.5 bg-violet-50 hover:bg-violet-100 text-violet-700 font-semibold rounded-lg text-xs transition cursor-pointer disabled:opacity-50"
-                          title="Save to Vehicle Registration, Fitness, Insurance and PUC (fee 0)"
-                        >
-                          {savingHistoryId === item._id ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
-                          Save
-                        </button>
-                      )}
-                      {busy ? (
-                        <span className="p-1.5"><RefreshCw className="w-4 h-4 animate-spin text-slate-400" /></span>
-                      ) : (
-                        <RcFormsMenu
-                          historyId={item._id}
-                          types={rcFormTypes}
-                          actions={[
-                            { label: 'Download RC PDF', onClick: () => handleDownloadHistoryPdf(item) },
-                            { label: 'Download Particular', onClick: () => handleDownloadHistoryParticular(item) },
-                            { label: 'Delete from history', danger: true, onClick: () => handleDeleteHistoryItem(item._id, item.vehicleNumber) }
-                          ]}
-                        />
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+              {historyList.map((item) => (
+                <HistoryCard
+                  key={item._id}
+                  item={item}
+                  onView={() => handleViewSavedRecord(item)}
+                  onSave={() => handleSaveHistoryRecords(item)}
+                  onRcPdf={() => handleDownloadHistoryPdf(item)}
+                  onParticular={() => handleDownloadHistoryParticular(item)}
+                  onDelete={() => handleDeleteHistoryItem(item._id, item.vehicleNumber)}
+                  canSave={canSaveRecords}
+                  rcFormTypes={rcFormTypes}
+                  saving={savingHistoryId === item._id}
+                  pdfLoading={historyPdfId === item._id}
+                  particularLoading={historyParticularId === item._id}
+                  deleting={deletingId === item._id}
+                />
+              ))}
             </div>
           )}
         </div>
