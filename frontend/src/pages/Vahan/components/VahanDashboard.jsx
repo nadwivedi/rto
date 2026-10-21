@@ -1,5 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import axios from 'axios'
+import * as XLSX from 'xlsx'
+import { toast } from 'react-toastify'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL
 
@@ -319,6 +321,32 @@ const VahanDashboard = () => {
     { key: 'permit', label: 'Permit' }
   ]
 
+  // Excel export of exactly what the selected filter shows (All, Fitness, PUC...)
+  const handleExport = () => {
+    if (filteredRecords.length === 0) {
+      toast.info('No records to export')
+      return
+    }
+    const rows = filteredRecords.map((record, index) => ({
+      'S.No': index + 1,
+      'Document': record.docType,
+      'Vehicle Number': record.vehicleNumber || '',
+      'Owner / Party': record.ownerName || record.partyName || '',
+      'Mobile Number': record.mobileNumber || record.mobileNo || record.mobile || '',
+      'Valid From': formatDate(record.validFrom) === '-' ? '' : formatDate(record.validFrom),
+      'Valid To': formatDate(record.validTo) === '-' ? '' : formatDate(record.validTo),
+      'Days Left': getDaysRemaining(record.validTo) ?? '',
+      'WhatsApp Alert': record.whatsappLog?.status || 'not sent'
+    }))
+    const worksheet = XLSX.utils.json_to_sheet(rows)
+    worksheet['!cols'] = [{ wch: 6 }, { wch: 22 }, { wch: 16 }, { wch: 28 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 14 }]
+    const workbook = XLSX.utils.book_new()
+    const label = filterButtons.find(btn => btn.key === filter)?.label || 'All'
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Expiry Soon')
+    XLSX.writeFile(workbook, `Expiry_Soon_${label.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.xlsx`)
+    toast.success(`Exported ${rows.length} ${label === 'All' ? '' : `${label} `}records`)
+  }
+
   const counts = {
     all: allRecords.length,
     tax: allRecords.filter(r => r.docType === 'Road Tax').length,
@@ -333,8 +361,17 @@ const VahanDashboard = () => {
     <div className='flex-1 flex flex-col p-2 sm:p-3 overflow-auto'>
       <div className='flex flex-col gap-3 flex-1 min-h-0'>
         <section className='min-w-0 flex flex-col flex-1'>
-          <div className='mb-3 grid grid-cols-1 items-center gap-3 text-center md:grid-cols-[auto_1fr]'>
-            <h2 className='text-left text-base font-bold text-gray-800 lg:text-[15px] xl:text-base 2xl:text-lg'>Expiry Soon</h2>
+          <div className='mb-3 grid grid-cols-1 items-center gap-3 text-center md:grid-cols-[auto_1fr_auto]'>
+            <div className='flex items-center justify-between gap-2'>
+              <h2 className='text-left text-base font-bold text-gray-800 lg:text-[15px] xl:text-base 2xl:text-lg'>Expiry Soon</h2>
+              <button
+                onClick={handleExport}
+                disabled={loading || filteredRecords.length === 0}
+                className='md:hidden inline-flex items-center gap-1 rounded-md bg-green-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-green-700 disabled:opacity-50 cursor-pointer'
+              >
+                Export Excel
+              </button>
+            </div>
 
             <div className='flex flex-wrap justify-center gap-1 lg:gap-1 xl:gap-1.5 2xl:gap-2'>
               {filterButtons.map(btn => (
@@ -351,6 +388,18 @@ const VahanDashboard = () => {
                 </button>
               ))}
             </div>
+
+            <button
+              onClick={handleExport}
+              disabled={loading || filteredRecords.length === 0}
+              className='hidden md:inline-flex items-center gap-1.5 rounded-md bg-green-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-green-700 disabled:opacity-50 cursor-pointer'
+              title='Download the records shown below as Excel'
+            >
+              <svg className='w-3.5 h-3.5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' />
+              </svg>
+              Export Excel
+            </button>
           </div>
 
           {loading ? (
