@@ -1,11 +1,17 @@
 import { useState } from 'react'
-import apiDoc from '../../../docs/VEHICLE_INFO_API.md?raw'
+import apiDocMd from '../../../docs/VEHICLE_INFO_API.md?raw'
+import apiDocTxt from '../../../docs/VEHICLE_INFO_API.txt?raw'
 
 const FILE_NAME = 'RTO-Sarthi-Vehicle-Info-API'
 const MESSAGE = 'RTO Sarthi Vehicle Info API documentation'
+// .txt opens on any phone; .md suits developers who read Markdown
+const FORMATS = {
+  txt: { doc: apiDocTxt, type: 'text/plain' },
+  md: { doc: apiDocMd, type: 'text/markdown' }
+}
 
-const download = (text, name) => {
-  const url = URL.createObjectURL(new Blob([text], { type: 'text/markdown' }))
+const download = (text, name, type) => {
+  const url = URL.createObjectURL(new Blob([text], { type }))
   const a = document.createElement('a')
   a.href = url
   a.download = name
@@ -14,21 +20,21 @@ const download = (text, name) => {
 }
 
 /**
- * Shares docs/VEHICLE_INFO_API.md as a file through the phone / PC share sheet (pick WhatsApp).
+ * Shares docs/VEHICLE_INFO_API.txt (or .md) as a file through the phone / PC share sheet (pick WhatsApp).
  * With `apiKey`, the customer's key is filled in for YOUR_API_KEY.
  * Where files can't be shared, the file is downloaded and WhatsApp opens to attach it.
  */
 const ShareApiDocButton = ({ apiKey, className = '' }) => {
   const [note, setNote] = useState('')
-  const text = apiKey ? apiDoc.replaceAll('YOUR_API_KEY', apiKey) : apiDoc
+  const [format, setFormat] = useState('txt')
+  const { doc, type } = FORMATS[format]
+  const text = apiKey ? doc.replaceAll('YOUR_API_KEY', apiKey) : doc
+  const name = `${FILE_NAME}.${format}`
 
   const share = async () => {
     setNote('')
-    // Some phones only share known file types, so try .md and then the same text as .txt
-    const files = [
-      new File([text], `${FILE_NAME}.md`, { type: 'text/markdown' }),
-      new File([text], `${FILE_NAME}.txt`, { type: 'text/plain' })
-    ]
+    // Some phones only share known file types, so a .md that can't be shared goes as .txt
+    const files = [new File([text], name, { type }), new File([text], `${FILE_NAME}.txt`, { type: 'text/plain' })]
     const file = files.find((f) => navigator.canShare?.({ files: [f] }))
     if (file) {
       try {
@@ -38,13 +44,28 @@ const ShareApiDocButton = ({ apiKey, className = '' }) => {
       }
       return
     }
-    download(text, `${FILE_NAME}.md`)
+    download(text, name, type)
     window.open(`https://wa.me/?text=${encodeURIComponent(`${MESSAGE} (file attached)`)}`, '_blank', 'noopener')
     setNote('File downloaded. Attach it in the WhatsApp chat.')
   }
 
   return (
     <span className='inline-flex flex-wrap items-center gap-1.5'>
+      <span className='inline-flex rounded-lg border border-gray-300 p-0.5' role='group' aria-label='File type'>
+        {Object.keys(FORMATS).map((f) => (
+          <button
+            key={f}
+            type='button'
+            onClick={() => setFormat(f)}
+            aria-pressed={format === f}
+            className={`px-2 py-1.5 text-[11px] font-bold uppercase rounded-md cursor-pointer ${
+              format === f ? 'bg-gray-800 text-white' : 'text-gray-500 hover:text-gray-800'
+            }`}
+          >
+            .{f}
+          </button>
+        ))}
+      </span>
       <button
         type='button'
         onClick={share}
@@ -58,7 +79,7 @@ const ShareApiDocButton = ({ apiKey, className = '' }) => {
       </button>
       <button
         type='button'
-        onClick={() => download(text, `${FILE_NAME}.md`)}
+        onClick={() => download(text, name, type)}
         className='px-3 py-2 text-xs sm:text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer'
       >
         Download

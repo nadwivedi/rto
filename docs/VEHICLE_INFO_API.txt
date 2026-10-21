@@ -1,0 +1,167 @@
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   RTO SARTHI · VEHICLE INFO API
+   Vehicle (RC) details by vehicle number
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Get the RC details of any Indian vehicle
+number as JSON, in seconds.
+
+
+━━ 1. YOUR API KEY ━━━━━━━━━━━━━━━━━━━━
+
+   YOUR_API_KEY
+
+   ⚠ Keep this key secret. Call the API
+     from your server, not from browser
+     JavaScript or a mobile app.
+
+
+━━ 2. REQUEST ━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   Method   GET
+   URL      https://api.rtosarthi.com/api/v1/vehicle-info?vno=CG04AB1234
+   Header   x-api-key: YOUR_API_KEY
+
+   ▸ vno        Vehicle number, e.g.
+                CG04AB1234 or 23BH4512AB
+                (spaces and dashes are fine)
+   ▸ x-api-key  Your API key (header)
+
+   POST also works: same URL, same header,
+   JSON body  {"vno": "CG04AB1234"}
+
+
+━━ 3. SUCCESS RESPONSE (200) ━━━━━━━━━━
+
+{
+  "success": true,
+  "message": "Vehicle details fetched successfully",
+  "vehicleNumber": "CG04AB1234",
+  "data": {
+    "REGN_NO": "CG04AB1234",
+    "REGISTERED_AT": "RAIPUR RTO, CHHATTISGARH",
+    "OWNER_NAME": "RAM KUMAR",
+    "OWNER_SERIAL_NO": "1",
+    "VEHICLE_CLASS": "GOODS CARRIER (LGV)",
+    "MAKER_DESC": "TATA MOTORS LTD",
+    "MAKER_MODEL": "ACE GOLD",
+    "FUEL_DESC": "DIESEL",
+    "CHASI_NO": "MAT445123K1A12345",
+    "ENG_NO": "275IDI12ABC345",
+    "REGN_DT": "15-Jun-2019",
+    "FINANCER_DETAILS": "SHRIRAM FINANCE LTD",
+    "INSURANCE_COMP": "TATA AIG GENERAL INSURANCE",
+    "INSURANCE_UPTO": "12-Mar-2027",
+    "PUCC_UPTO": "20-Dec-2026",
+    "FIT_UPTO": "14-Jun-2027",
+    "TAX_UPTO": "31-Mar-2027",
+    "BLACKLIST_STATUS": "NA"
+  },
+  "usage": { "limit": 1000, "used": 101, "remaining": 899 }
+}
+
+   Sample data. Fields come wherever they
+   are available on the vehicle record.
+
+   ▸ usage.remaining = calls you have left
+   ▸ Only successful calls use your limit
+
+
+━━ 4. MAIN FIELDS IN "data" ━━━━━━━━━━━
+
+   REGN_NO ............ Vehicle number
+   REGISTERED_AT ...... RTO and state
+   OWNER_NAME ......... Registered owner
+   OWNER_SERIAL_NO .... 1 = first owner
+   PRESENT_ADDRESS .... Owner's address
+   VEHICLE_CLASS ...... LMV, 2WN, LGV…
+   MAKER_DESC ......... Manufacturer
+   MAKER_MODEL ........ Model / variant
+   FUEL_DESC .......... Fuel type
+   FUEL_NORMS ......... BS IV, BS VI…
+   CHASI_NO ........... Chassis number
+   ENG_NO ............. Engine number
+   REGN_DT ............ Registration date
+   REGN_UPTO .......... Registration valid
+   FINANCER_DETAILS ... Financer
+   INSURANCE_COMP ..... Insurance company
+   INS_POLICY_NO ...... Policy number
+   INSURANCE_UPTO ..... Insurance valid
+   PUCC_UPTO .......... PUC valid
+   FIT_UPTO ........... Fitness valid
+   TAX_UPTO ........... Tax valid (LTT =
+                        lifetime tax)
+   BLACKLIST_STATUS ... Blacklist
+   NOC_DETAILS ........ NOC
+
+
+━━ 5. ERRORS ━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   On an error "success" is false and
+   "message" says what went wrong.
+   Errors never use up a call.
+
+   400  Vehicle number missing / invalid
+   401  API key missing or wrong
+   403  Limit used up, or key switched off
+   404  Vehicle not found
+   502  Service busy, try again
+
+
+━━ 6. EXAMPLES ━━━━━━━━━━━━━━━━━━━━━━━━
+
+── cURL ──
+
+curl -H "x-api-key: YOUR_API_KEY" "https://api.rtosarthi.com/api/v1/vehicle-info?vno=CG04AB1234"
+
+── Node.js ──
+
+const res = await fetch('https://api.rtosarthi.com/api/v1/vehicle-info?vno=CG04AB1234', {
+  headers: { 'x-api-key': 'YOUR_API_KEY' }
+})
+const body = await res.json()
+
+if (body.success) console.log(body.data, body.usage.remaining)
+else console.log(body.message)
+
+── PHP ──
+
+$ch = curl_init('https://api.rtosarthi.com/api/v1/vehicle-info?vno=CG04AB1234');
+curl_setopt_array($ch, [
+  CURLOPT_RETURNTRANSFER => true,
+  CURLOPT_HTTPHEADER => ['x-api-key: YOUR_API_KEY'],
+  CURLOPT_TIMEOUT => 30,
+]);
+$body = json_decode(curl_exec($ch), true);
+curl_close($ch);
+
+echo $body['success'] ? $body['data']['MAKER_MODEL'] : $body['message'];
+
+── Python ──
+
+import requests
+
+res = requests.get(
+    "https://api.rtosarthi.com/api/v1/vehicle-info",
+    params={"vno": "CG04AB1234"},
+    headers={"x-api-key": "YOUR_API_KEY"},
+    timeout=30,
+)
+body = res.json()
+print(body["data"] if body["success"] else body["message"])
+
+
+━━ 7. TIPS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+   ✔ Set a timeout of about 30 seconds.
+     On a 502, wait a little and retry once.
+   ✔ Save the response if you need the same
+     vehicle again, instead of calling twice.
+   ✔ Recharge before usage.remaining
+     reaches 0.
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+   To recharge or get a new key,
+   contact RTO Sarthi on call or WhatsApp.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
