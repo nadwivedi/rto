@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ApiKeySaleModal from '../components/ApiKeySaleModal'
+import ApiKeyDeleteModal from '../components/ApiKeyDeleteModal'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -42,6 +43,8 @@ const ApiKeys = () => {
   const [createError, setCreateError] = useState('')
   const [creating, setCreating] = useState(false)
   const [sellKey, setSellKey] = useState(null)
+  const [deleteKey, setDeleteKey] = useState(null)
+  const [togglingId, setTogglingId] = useState(null)
 
   const loadKeys = useCallback(async () => {
     try {
@@ -73,6 +76,30 @@ const ApiKeys = () => {
       setTimeout(() => setCopiedId(null), 1500)
     } catch {
       setError('Could not copy. Open the key to copy it by hand.')
+    }
+  }
+
+  const toggleActive = async (apiKey) => {
+    const on = !apiKey.active
+    if (!on && !confirm(`Switch off "${apiKey.name}"? All calls with it will be refused until you switch it on again.`)) return
+    try {
+      setTogglingId(apiKey._id)
+      setError('')
+      setSuccess('')
+      const res = await fetch(`${BACKEND_URL}/api/admin/api-keys/${apiKey._id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ active: on })
+      })
+      const json = await res.json()
+      if (!json.success) return setError(json.message || 'Failed to update')
+      setSuccess(`"${apiKey.name}" switched ${on ? 'on' : 'off'}`)
+      await loadKeys()
+    } catch {
+      setError('Failed to update')
+    } finally {
+      setTogglingId(null)
     }
   }
 
@@ -190,6 +217,21 @@ const ApiKeys = () => {
                           >
                             Sell Calls
                           </button>
+                          <button
+                            onClick={() => toggleActive(k)}
+                            disabled={togglingId === k._id}
+                            className={`ml-1.5 px-2.5 py-1 rounded-lg border font-semibold disabled:opacity-50 cursor-pointer ${
+                              k.active ? 'border-amber-300 text-amber-700 hover:bg-amber-50' : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
+                            }`}
+                          >
+                            {k.active ? 'Switch Off' : 'Switch On'}
+                          </button>
+                          <button
+                            onClick={() => setDeleteKey(k)}
+                            className='ml-1.5 px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 font-semibold hover:bg-rose-50 cursor-pointer'
+                          >
+                            Delete
+                          </button>
                           <Link
                             to={`/api-keys/${k._id}`}
                             className='ml-1.5 px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700'
@@ -213,6 +255,18 @@ const ApiKeys = () => {
           onClose={() => setSellKey(null)}
           onSaved={(message) => {
             setSellKey(null)
+            setSuccess(message)
+            loadKeys()
+          }}
+        />
+      )}
+
+      {deleteKey && (
+        <ApiKeyDeleteModal
+          apiKey={deleteKey}
+          onClose={() => setDeleteKey(null)}
+          onDeleted={(message) => {
+            setDeleteKey(null)
             setSuccess(message)
             loadKeys()
           }}
