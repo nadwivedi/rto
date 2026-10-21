@@ -178,6 +178,7 @@ const Users = () => {
     features_form23: false,
     features_tempRc: false,
     features_nlParticular: false,
+    features_saveVehicleRecords: false,
     rcSearchLimit: 0,
     rcSearchCount: 0
   })
@@ -351,7 +352,8 @@ const Users = () => {
           forms: formData.features_forms,
           form23: formData.features_form23,
           tempRc: formData.features_tempRc,
-          nlParticular: formData.features_nlParticular
+          nlParticular: formData.features_nlParticular,
+          saveVehicleRecords: formData.features_saveVehicleRecords
         }
       }
       delete bodyData.features_greenTax
@@ -364,6 +366,7 @@ const Users = () => {
       delete bodyData.features_form23
       delete bodyData.features_tempRc
       delete bodyData.features_nlParticular
+      delete bodyData.features_saveVehicleRecords
       // Shown in the form for reference only; the limit changes through Vehicle API Sales
       delete bodyData.rcSearchLimit
       delete bodyData.rcSearchCount
@@ -393,7 +396,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, rcSearchLimit: 0, rcSearchCount: 0 })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -433,6 +436,7 @@ const Users = () => {
       features_form23: user.features?.form23 ?? false,
       features_tempRc: user.features?.tempRc ?? false,
       features_nlParticular: user.features?.nlParticular ?? false,
+      features_saveVehicleRecords: user.features?.saveVehicleRecords ?? false,
       rcSearchLimit: user.rcSearchLimit ?? 0,
       rcSearchCount: user.rcSearchCount ?? 0
     })
@@ -445,7 +449,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, rcSearchLimit: 0, rcSearchCount: 0 })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
   }
 
   const openDeleteModal = (user) => {
@@ -1570,6 +1574,16 @@ const Users = () => {
                       className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
                     />
                     NL Particulars
+                  </label>
+                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer' title='Show a Save button in RC Details that adds the vehicle to Vehicle Registration, Fitness, Insurance and PUC with 0 fee'>
+                    <input
+                      type='checkbox'
+                      name='features_saveVehicleRecords'
+                      checked={formData.features_saveVehicleRecords}
+                      onChange={handleChange}
+                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
+                    />
+                    Save Records (RC)
                   </label>
                 </div>
 

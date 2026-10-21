@@ -37,7 +37,8 @@ import {
   Eye,
   Database,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Save
 } from 'lucide-react'
 
 import { useAuth } from '../../context/AuthContext'
@@ -59,6 +60,9 @@ const VehicleDetails = () => {
   const rcFormTypes = [canForm23 && 'form23', canTempRc && 'tempRc', canNlParticular && 'nlParticular'].filter(Boolean)
   const BLANK_LABELS = { form23: 'Blank Form 23', tempRc: 'Blank Temp RC', nlParticular: 'Blank NL Particulars' }
   const [rcForm, setRcForm] = useState(null)
+  // Save adds the vehicle to Vehicle Registration, Fitness, Insurance and PUC (switched on from admin: features.saveVehicleRecords)
+  const canSaveRecords = user?.features?.saveVehicleRecords === true
+  const [savingRecords, setSavingRecords] = useState(false)
 
   const [vehicleNo, setVehicleNo] = useState('')
   const [loading, setLoading] = useState(false)
@@ -423,6 +427,38 @@ const VehicleDetails = () => {
     }
   }
 
+  // Saves the RC on screen into the user's sections with 0 fee (NO API call)
+  const handleSaveRecords = async () => {
+    if (!vehicleData) return
+    try {
+      setSavingRecords(true)
+      const res = await axios.post(
+        `${API_URL}/api/vehicle-info/save-records`,
+        { data: vehicleData },
+        { withCredentials: true }
+      )
+      const { vehicleNumber, registration, fitness, insurance, puc } = res.data.data
+      const describe = (label, r) => {
+        if (r.status === 'created') return `${label}: added`
+        if (r.status === 'updated') return `${label}: updated`
+        if (r.status === 'exists') return `${label}: already saved`
+        return `${label}: no date on RC`
+      }
+      const lines = [
+        describe('Vehicle', registration),
+        describe('Fitness', fitness),
+        describe('Insurance', insurance),
+        describe('PUC', puc)
+      ]
+      toast.success(`${vehicleNumber} saved. ${lines.join(' | ')}`, { autoClose: 6000 })
+    } catch (err) {
+      console.error('Save records error:', err)
+      toast.error(err.response?.data?.message || 'Failed to save vehicle records')
+    } finally {
+      setSavingRecords(false)
+    }
+  }
+
   const handlePrint = () => {
     window.print()
   }
@@ -592,6 +628,17 @@ const VehicleDetails = () => {
                   >
                     <FileCheck className="w-4 h-4" />
                     NL Particulars
+                  </button>
+                )}
+                {canSaveRecords && (
+                  <button
+                    onClick={handleSaveRecords}
+                    disabled={savingRecords}
+                    title="Save to Vehicle Registration, Fitness, Insurance and PUC (fee 0)"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-violet-50 hover:bg-violet-100 disabled:opacity-60 text-violet-700 rounded-xl border border-violet-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+                  >
+                    <Save className="w-4 h-4" />
+                    {savingRecords ? 'Saving...' : 'Save'}
                   </button>
                 )}
                 <button

@@ -117,7 +117,8 @@ const userSchema = new mongoose.Schema({
     forms: { type: Boolean, default: false },
     form23: { type: Boolean, default: false },
     tempRc: { type: Boolean, default: false },
-    nlParticular: { type: Boolean, default: false }
+    nlParticular: { type: Boolean, default: false },
+    saveVehicleRecords: { type: Boolean, default: false }
   },
   rcSearchLimit: {
     type: Number,

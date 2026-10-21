@@ -1,12 +1,16 @@
 const express = require('express')
 const router = express.Router()
 const vehicleInfoController = require('../controllers/vehicleInfoController')
+const { saveVehicleRecords } = require('../controllers/vehicleRecordSaveController')
 
 // POST RC card PDF export (built from already-loaded data, NO API call)
 router.post('/rc-pdf', vehicleInfoController.downloadRcPdf)
 
 // POST Vehicle Particulars PDF export (built from already-loaded data, NO API call)
 router.post('/particular-pdf', vehicleInfoController.downloadParticularPdf)
+
+// POST save the loaded RC into Vehicle Registration, Fitness, Insurance and PUC (NO API call)
+router.post('/save-records', saveVehicleRecords)
 
 // GET search quota status for current user
 router.get('/quota', vehicleInfoController.getQuotaStatus)
