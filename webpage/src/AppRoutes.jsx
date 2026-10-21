@@ -11,7 +11,6 @@ import VehicleInformationSoftware from './pages/VehicleInformationSoftware'
 import VehicleInformationApi from './pages/VehicleInformationApi'
 import VahanApi from './pages/VahanApi'
 import ParivahanApi from './pages/ParivahanApi'
-import VehicleApiDocs from './pages/VehicleApiDocs'
 import VehicleLookupApi from './pages/VehicleLookupApi'
 import VehicleInsuranceApi from './pages/VehicleInsuranceApi'
 import VehicleDetailsApiIndia from './pages/VehicleDetailsApiIndia'
@@ -54,7 +53,6 @@ export default function AppRoutes() {
         <Route path="vehicle-information-api" element={<VehicleInformationApi />} />
         <Route path="vahan-api" element={<VahanApi />} />
         <Route path="parivahan-api" element={<ParivahanApi />} />
-        <Route path="vehicle-api-documentation" element={<VehicleApiDocs />} />
         <Route path="vehicle-lookup-api" element={<VehicleLookupApi />} />
         <Route path="vehicle-insurance-api" element={<VehicleInsuranceApi />} />
         <Route path="api-for-vehicle-details" element={<Navigate to="/vehicle-details-api" replace />} />

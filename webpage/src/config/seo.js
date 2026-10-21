@@ -121,13 +121,6 @@ export const PAGE_SEO = {
     path: '/vehicle-insurance-api',
     keywords: 'vehicle insurance API, vehicle insurance details API, vehicle insurance status API, check vehicle insurance by vehicle number API, vehicle insurance expiry API, insurance validity API, car insurance API India, bike insurance details API, motor insurance API, vehicle insurance check API, vehicle insurance policy number API, insurance expiry date by vehicle number, previous insurer API, vehicle insurance API for agents, fleet insurance check API, vehicle insurance API price, RTO Sarthi insurance API',
   },
-  '/vehicle-api-documentation': {
-    title: `Vehicle API Documentation - Endpoint, GET Request & JSON Response | RTO Sarthi`,
-    description:
-      'RTO Sarthi vehicle API documentation: endpoint URL, x-api-key authentication, GET request by vehicle number, sample JSON response, all fields, error codes and cURL, Node.js, PHP & Python examples.',
-    path: '/vehicle-api-documentation',
-    keywords: 'vehicle API documentation, vehicle details API documentation, RC API documentation, vahan API documentation, vehicle info API docs, vehicle number API JSON response, vehicle API sample response, vehicle API GET request, vehicle API PHP example, vehicle API Python example, vehicle API Node.js example, vehicle API error codes, RTO Sarthi API docs',
-  },
   '/parivahan-api': {
     title: `Parivahan API to Get Vehicle Details - Cost from ₹1.5 per Search | RTO Sarthi`,
     description:

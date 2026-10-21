@@ -3,7 +3,6 @@ import ProductLanding from '../components/ProductLanding'
 import { IconWallet, IconCheck, IconShield, IconChart, IconCar, IconClock, IconDocument, IconMapPin } from '../components/Icons'
 import { vehicleInfoApiFaqs } from '../data/vehicleInfoApi'
 import { LOOKUP_PRICE } from '../data/vehicleInfo'
-import { requestBlock } from '../data/vehicleApi'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
 
@@ -72,10 +71,10 @@ export default function VehicleInformationApi() {
         ],
       }}
       code={{
-        label: 'API demo',
+        label: 'Sample response',
         title: 'Complete vehicle details in one JSON response',
         description: 'Owner and address, chassis and engine number, insurance, PUC, fitness and tax.',
-        blocks: [requestBlock('CG04AB1234'), { label: 'JSON response', code: responseExample }],
+        blocks: [{ label: 'JSON response', code: responseExample }],
         note: 'Sample data. Details are returned wherever they are available on the vehicle record.',
       }}
       features={{

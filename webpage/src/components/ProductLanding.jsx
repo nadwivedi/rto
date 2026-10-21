@@ -6,7 +6,6 @@ import PageHero from './PageHero'
 import VideoEmbed from './VideoEmbed'
 import RelatedSolutions from './RelatedSolutions'
 import { IconCheck, IconUsers } from './Icons'
-import { API_DOCS_PATH } from '../data/vehicleApi'
 import {
   container,
   section,
@@ -119,12 +118,6 @@ export default function ProductLanding({
             </div>
           ))}
           {code.note && <p className="text-sm text-slate-600">{code.note}</p>}
-          <p className="text-sm text-slate-600">
-            Endpoint, parameters, every response field, errors and code examples:{' '}
-            <Link to={API_DOCS_PATH} className={linkClass}>
-              Vehicle API documentation
-            </Link>
-          </p>
         </div>
       </div>,
     )

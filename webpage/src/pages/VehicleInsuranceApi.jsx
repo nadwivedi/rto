@@ -3,7 +3,6 @@ import ProductLanding from '../components/ProductLanding'
 import { IconShield, IconClock, IconWhatsApp, IconChart, IconCar, IconMapPin, IconCheck, IconCode } from '../components/Icons'
 import { insuranceApiFaqs } from '../data/insuranceApi'
 import { LOOKUP_PRICE } from '../data/vehicleInfo'
-import { requestBlock } from '../data/vehicleApi'
 
 const s = (t) => <strong className="text-slate-700">{t}</strong>
 const linkClass = 'font-semibold text-brand-800 hover:underline'
@@ -81,10 +80,10 @@ export default function VehicleInsuranceApi() {
         ],
       }}
       code={{
-        label: 'API demo',
+        label: 'Sample response',
         title: 'Insurance details in the API response',
         description: 'INSURANCE_COMP is the insurer, INS_POLICY_NO the policy number and INSURANCE_UPTO the expiry date.',
-        blocks: [requestBlock('GJ01RT2468'), { label: 'JSON response (insurance fields)', code: responseExample }],
+        blocks: [{ label: 'JSON response (insurance fields)', code: responseExample }],
         note: 'Sample data, shortened. Details are returned wherever they are available on the vehicle record.',
       }}
       features={{

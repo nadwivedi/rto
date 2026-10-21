@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ApiKeySaleModal from '../components/ApiKeySaleModal'
 import ApiKeyDeleteModal from '../components/ApiKeyDeleteModal'
+import ShareApiDocButton from '../components/ShareApiDocButton'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -133,16 +134,19 @@ const ApiKeys = () => {
             Keys you share with customers to fetch vehicle details from their own software. Each key has its own limit.
           </p>
         </div>
-        <button
-          onClick={() => {
-            setCreateForm({ name: '', userId: '', note: '' })
-            setCreateError('')
-            setShowCreate(true)
-          }}
-          className='px-4 py-2 sm:px-5 sm:py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-sm shadow-lg shadow-indigo-200 cursor-pointer'
-        >
-          + New API Key
-        </button>
+        <div className='flex flex-wrap items-center gap-2'>
+          <ShareApiDocButton />
+          <button
+            onClick={() => {
+              setCreateForm({ name: '', userId: '', note: '' })
+              setCreateError('')
+              setShowCreate(true)
+            }}
+            className='px-4 py-2 sm:px-5 sm:py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-sm shadow-lg shadow-indigo-200 cursor-pointer'
+          >
+            + New API Key
+          </button>
+        </div>
       </div>
 
       {success && <div className='mb-5 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium'>{success}</div>}

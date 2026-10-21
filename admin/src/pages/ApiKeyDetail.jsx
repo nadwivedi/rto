@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import ApiKeySaleModal from '../components/ApiKeySaleModal'
 import ApiKeyDeleteModal from '../components/ApiKeyDeleteModal'
+import ShareApiDocButton from '../components/ShareApiDocButton'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const IST = 'Asia/Kolkata'
@@ -380,6 +381,10 @@ const ApiKeyDetail = () => {
           <button onClick={() => copy(apiKey.key, 'key')} className='px-3 py-2 text-xs font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 cursor-pointer'>
             {copied === 'key' ? 'Copied' : 'Copy Key'}
           </button>
+        </div>
+        <div className='mt-2 flex flex-wrap items-center gap-2'>
+          <ShareApiDocButton apiKey={apiKey.key} />
+          <span className='text-xs text-gray-500'>API doc with this key filled in. Pick WhatsApp to send it to the customer.</span>
         </div>
 
         <div className='mt-3 grid grid-cols-1 xl:grid-cols-2 gap-3 text-xs text-gray-600'>

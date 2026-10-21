@@ -2,7 +2,6 @@ import { rtoManagementFaqs, RTO_MANAGEMENT_PATH, VIDEO_ID } from '../data/rtoMan
 import { vehicleInfoFaqs, VEHICLE_INFO_PATH } from '../data/vehicleInfo'
 import { vehicleInfoApiFaqs, VEHICLE_INFO_API_PATH } from '../data/vehicleInfoApi'
 import { vahanApiFaqs, VAHAN_API_PATH } from '../data/vahanApi'
-import { apiDocsFaqs, API_DOCS_PATH } from '../data/vehicleApi'
 import { parivahanApiFaqs, PARIVAHAN_API_PATH } from '../data/parivahanApi'
 import { lookupApiFaqs, LOOKUP_API_PATH } from '../data/lookupApi'
 import { insuranceApiFaqs, INSURANCE_API_PATH } from '../data/insuranceApi'
@@ -105,19 +104,6 @@ const PRODUCT_PAGES = {
       'Colour and manufacturing month and year',
       'Two-wheelers, cars and commercial vehicles from all states of India',
       'Pay only for successful searches',
-    ],
-  },
-  [API_DOCS_PATH]: {
-    name: 'Vehicle API Documentation',
-    faqs: apiDocsFaqs,
-    category: 'DeveloperApplication',
-    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
-    features: [
-      'One GET endpoint with the vehicle number',
-      'x-api-key header authentication',
-      'Vehicle details as JSON with usage in every response',
-      'Clear HTTP status codes and error messages',
-      'cURL, Node.js, PHP and Python examples',
     ],
   },
   [PARIVAHAN_API_PATH]: {
