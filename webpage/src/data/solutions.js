@@ -32,6 +32,7 @@ export const SOLUTION_GROUPS = [
       { to: '/vehicle-details-api', label: 'Vehicle Details API India', desc: 'API for getting vehicle details of any Indian vehicle number, incl. BH series, for insurance, used car, loan and fleet software' },
       { to: '/vehicle-make-and-model-api', label: 'Vehicle Make and Model API', desc: 'Maker, model, class, fuel, BS norms, CC, seating and year from any vehicle number' },
       { to: '/vehicle-insurance-api', label: 'Vehicle Insurance API', desc: 'Insurer, policy number and insurance expiry of any vehicle number for agents, fleets and insurtech' },
+      { to: '/vehicle-rc-verification-api', label: 'Vehicle RC Verification API', desc: 'Verify RC by vehicle number: owner, chassis, engine, status, financer, blacklist & NOC as JSON' },
       { to: '/vehicle-lookup-api', label: 'Vehicle Lookup API', desc: 'Look up any registration number: status, owner, chassis & engine, validity, financer, blacklist & NOC' },
       { to: '/parivahan-api', label: 'Parivahan API', desc: 'Parivahan API to get vehicle details by vehicle number, cost from ₹1.5 per search with no monthly fee' },
       { to: '/vahan-api', label: 'Vahan API for Vehicle Details', desc: 'Owner, chassis, engine, financer, insurance, PUC, fitness, blacklist & NOC by vehicle number' },

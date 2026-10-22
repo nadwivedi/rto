@@ -131,6 +131,7 @@ export default function VehicleLookupApi() {
       }}
       related={[
         { to: '/vahan-api', label: 'Vahan API' },
+        { to: '/vehicle-rc-verification-api', label: 'Vehicle RC verification API' },
         { to: '/vehicle-insurance-api', label: 'Vehicle insurance API' },
         { to: '/vehicle-make-and-model-api', label: 'Vehicle make and model API' },
       ]}

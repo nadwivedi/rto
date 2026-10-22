@@ -13,6 +13,7 @@ import VahanApi from './pages/VahanApi'
 import ParivahanApi from './pages/ParivahanApi'
 import VehicleLookupApi from './pages/VehicleLookupApi'
 import VehicleInsuranceApi from './pages/VehicleInsuranceApi'
+import VehicleRcVerificationApi from './pages/VehicleRcVerificationApi'
 import VehicleDetailsApiIndia from './pages/VehicleDetailsApiIndia'
 import VehicleMakeModelApi from './pages/VehicleMakeModelApi'
 import RcDownloadSoftware from './pages/RcDownloadSoftware'
@@ -55,6 +56,7 @@ export default function AppRoutes() {
         <Route path="parivahan-api" element={<ParivahanApi />} />
         <Route path="vehicle-lookup-api" element={<VehicleLookupApi />} />
         <Route path="vehicle-insurance-api" element={<VehicleInsuranceApi />} />
+        <Route path="vehicle-rc-verification-api" element={<VehicleRcVerificationApi />} />
         <Route path="api-for-vehicle-details" element={<Navigate to="/vehicle-details-api" replace />} />
         <Route path="vehicle-details-api" element={<VehicleDetailsApiIndia />} />
         <Route path="vehicle-make-and-model-api" element={<VehicleMakeModelApi />} />

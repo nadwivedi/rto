@@ -78,6 +78,7 @@ export default function RcVerificationSoftware() {
         { to: '/rc-download-software', label: 'RC download software' },
         { to: '/vehicle-information-software', label: 'Vehicle information software' },
         { to: '/vehicle-information-api', label: 'Vehicle information API' },
+        { to: '/vehicle-rc-verification-api', label: 'Vehicle RC verification API' },
       ]}
       faq={{
         title: 'RC verification software — FAQ',

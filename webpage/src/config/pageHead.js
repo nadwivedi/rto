@@ -5,6 +5,7 @@ import { vahanApiFaqs, VAHAN_API_PATH } from '../data/vahanApi'
 import { parivahanApiFaqs, PARIVAHAN_API_PATH } from '../data/parivahanApi'
 import { lookupApiFaqs, LOOKUP_API_PATH } from '../data/lookupApi'
 import { insuranceApiFaqs, INSURANCE_API_PATH } from '../data/insuranceApi'
+import { rcVerificationApiFaqs, RC_VERIFICATION_API_PATH } from '../data/rcVerificationApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
 import { homeFaqs } from '../data/home'
@@ -135,6 +136,22 @@ const PRODUCT_PAGES = {
       'Vehicles from all states of India',
       'Pay only for successful searches',
       'Usage and remaining searches in every response',
+    ],
+  },
+  [RC_VERIFICATION_API_PATH]: {
+    name: 'Vehicle RC Verification API',
+    faqs: rcVerificationApiFaqs,
+    alternateName: ['RC Verification API', 'RC Check API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful RC verification' },
+    features: [
+      'RC details by vehicle number as JSON',
+      'Owner name, chassis and engine number to match the RC',
+      'Registration status, date and validity',
+      'Financer, blacklist and NOC status',
+      'Insurance, PUC, fitness and road tax validity',
+      'Vehicles from all states of India, including BH series',
+      'Pay only for successful verifications',
     ],
   },
   [LOOKUP_API_PATH]: {

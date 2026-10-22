@@ -121,6 +121,13 @@ export const PAGE_SEO = {
     path: '/vehicle-insurance-api',
     keywords: 'vehicle insurance API, vehicle insurance details API, vehicle insurance status API, check vehicle insurance by vehicle number API, vehicle insurance expiry API, insurance validity API, car insurance API India, bike insurance details API, motor insurance API, vehicle insurance check API, vehicle insurance policy number API, insurance expiry date by vehicle number, previous insurer API, vehicle insurance API for agents, fleet insurance check API, vehicle insurance API price, RTO Sarthi insurance API',
   },
+  '/vehicle-rc-verification-api': {
+    title: `Vehicle RC Verification API - Verify RC by Vehicle Number from ₹1.5 | RTO Sarthi`,
+    description:
+      'Vehicle RC verification API for India: verify RC by vehicle number - owner, chassis, engine, model, status, financer, blacklist & NOC as JSON. All states. From ₹1.5 per verification.',
+    path: '/vehicle-rc-verification-api',
+    keywords: 'vehicle RC verification API, RC verification API, RC verification API India, vehicle RC verification, RC check API, verify RC by vehicle number API, RC details verification API, RC owner verification API, chassis number verification API, engine number verification API, RC status check API, vehicle registration verification API, vehicle verification API India, RC verification API for loan, RC verification API for insurance, RC verification API for used cars, bulk RC verification API, RC verification API price, RC verification API provider, RTO Sarthi RC verification API',
+  },
   '/parivahan-api': {
     title: `Parivahan API to Get Vehicle Details - Cost from ₹1.5 per Search | RTO Sarthi`,
     description:
