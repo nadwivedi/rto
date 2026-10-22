@@ -10,6 +10,7 @@ import { vehicleVerificationApiFaqs, VEHICLE_VERIFICATION_API_PATH } from '../da
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
 import { vehicleDataApiFaqs, VEHICLE_DATA_API_PATH } from '../data/vehicleDataApi'
+import { carDetailsApiFaqs, CAR_DETAILS_API_PATH } from '../data/carDetailsApi'
 import { homeFaqs } from '../data/home'
 import { rcDownloadFaqs, RC_DOWNLOAD_PATH } from '../data/rcDownload'
 import { freeDownloadFaqs, FREE_DOWNLOAD_PATH } from '../data/freeDownload'
@@ -139,6 +140,22 @@ const PRODUCT_PAGES = {
       'Financer, blacklist and NOC status',
       'Vehicles from all states of India, including BH series',
       'No monthly or setup fee, GST invoice',
+      'Pay only for successful searches',
+    ],
+  },
+  [CAR_DETAILS_API_PATH]: {
+    name: 'Car Details API',
+    faqs: carDetailsApiFaqs,
+    alternateName: ['Car Details API India', 'Car Number Details API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful car search' },
+    features: [
+      'Car details by registration number as JSON',
+      'Maker, model and variant, body type and fuel',
+      'Engine CC, emission norms, seating, colour and manufacturing year',
+      'Owner count, chassis and engine number',
+      'Insurance and PUC validity',
+      'Cars from all states of India, including BH series',
       'Pay only for successful searches',
     ],
   },

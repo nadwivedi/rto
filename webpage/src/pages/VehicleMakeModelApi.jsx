@@ -131,6 +131,7 @@ export default function VehicleMakeModelApi() {
         ],
       }}
       related={[
+        { to: '/car-details-api', label: 'Car details API' },
         { to: '/vehicle-details-api', label: 'Vehicle details API India' },
         { to: '/vehicle-information-api', label: 'Vehicle information API' },
         { to: '/vahan-api', label: 'Vahan API' },
