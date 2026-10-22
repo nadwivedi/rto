@@ -8,6 +8,7 @@ import { insuranceApiFaqs, INSURANCE_API_PATH } from '../data/insuranceApi'
 import { rcVerificationApiFaqs, RC_VERIFICATION_API_PATH } from '../data/rcVerificationApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
+import { vehicleDataApiFaqs, VEHICLE_DATA_API_PATH } from '../data/vehicleDataApi'
 import { homeFaqs } from '../data/home'
 import { rcDownloadFaqs, RC_DOWNLOAD_PATH } from '../data/rcDownload'
 import { freeDownloadFaqs, FREE_DOWNLOAD_PATH } from '../data/freeDownload'
@@ -119,6 +120,23 @@ const PRODUCT_PAGES = {
       'Insurance, PUC, fitness and road tax validity',
       'Financer, blacklist and NOC status',
       'All states of India, including BH series',
+      'No monthly or setup fee, GST invoice',
+      'Pay only for successful searches',
+    ],
+  },
+  [VEHICLE_DATA_API_PATH]: {
+    name: 'Vehicle Data API India',
+    faqs: vehicleDataApiFaqs,
+    alternateName: ['Vehicle Data API', 'Vehicle Registration Data API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Complete vehicle data by registration number as JSON',
+      'Registration, owner, maker, model and specifications',
+      'Chassis and engine number',
+      'Insurance, PUC, fitness and road tax validity',
+      'Financer, blacklist and NOC status',
+      'Vehicles from all states of India, including BH series',
       'No monthly or setup fee, GST invoice',
       'Pay only for successful searches',
     ],
