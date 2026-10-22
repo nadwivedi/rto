@@ -119,7 +119,14 @@ export const PAGE_SEO = {
     description:
       'Car details API for India: get car maker, model, variant, fuel, CC, seating, colour, year, owner count, chassis, engine, insurance & PUC from any car number as JSON. From ₹1.5.',
     path: '/car-details-api',
-    keywords: 'car details API, car details API India, car details by number API, car number details API, car registration details API, car number plate API, car info API, car information API India, car lookup API, car model by number API, car variant API, car owner count API, car insurance details API, car details API for used cars, car details API for insurance, car details API for car loans, car RC details API, car details JSON API, car details API price, RTO Sarthi car details API',
+    keywords: 'car details API, car details API India, car details by number API, car number details API, car registration details API, car number plate API, car lookup API, car model by number API, car variant API, car owner count API, car insurance details API, car details API for used cars, car details API for insurance, car details API for car loans, car RC details API, car details JSON API, car details API price, RTO Sarthi car details API',
+  },
+  '/car-information-api': {
+    title: `Car Information API & Car Info API India - from ₹1.5 per Search | RTO Sarthi`,
+    description:
+      'Car information API (car info API) for India: get any car’s full record by number - registration, owner count, chassis, engine, insurance, PUC, fitness, tax, financer, blacklist & NOC. From ₹1.5.',
+    path: '/car-information-api',
+    keywords: 'car information API, car info API, car information API India, car info API India, car information by number API, car info by number plate API, car number information API, car registration information API, car info lookup API, car history API India, car owner count API, car loan check API, car hypothecation check API, car blacklist check API, car insurance info API, used car information API, car information JSON API, car info API price, car information API provider India, RTO Sarthi car information API',
   },
   '/vehicle-make-and-model-api': {
     title: `Vehicle Make and Model API - by Vehicle Number from ₹1.5 | RTO Sarthi`,
