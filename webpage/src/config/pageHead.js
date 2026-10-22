@@ -6,6 +6,7 @@ import { parivahanApiFaqs, PARIVAHAN_API_PATH } from '../data/parivahanApi'
 import { lookupApiFaqs, LOOKUP_API_PATH } from '../data/lookupApi'
 import { insuranceApiFaqs, INSURANCE_API_PATH } from '../data/insuranceApi'
 import { rcVerificationApiFaqs, RC_VERIFICATION_API_PATH } from '../data/rcVerificationApi'
+import { vehicleVerificationApiFaqs, VEHICLE_VERIFICATION_API_PATH } from '../data/vehicleVerificationApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
 import { vehicleDataApiFaqs, VEHICLE_DATA_API_PATH } from '../data/vehicleDataApi'
@@ -172,10 +173,27 @@ const PRODUCT_PAGES = {
       'Pay only for successful verifications',
     ],
   },
+  [VEHICLE_VERIFICATION_API_PATH]: {
+    name: 'Vehicle Verification API',
+    faqs: vehicleVerificationApiFaqs,
+    alternateName: ['Vehicle Check API', 'Vehicle Verification API India'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle verification' },
+    features: [
+      'Vehicle verification by registration number as JSON',
+      'Registration status, validity and registering RTO',
+      'Chassis and engine number, owner, maker and model',
+      'Insurance, PUC, fitness and road tax validity',
+      'Financer, blacklist and NOC status',
+      'Bulk verification with remaining searches in every response',
+      'Vehicles from all states of India, including BH series',
+      'Pay only for successful verifications',
+    ],
+  },
   [LOOKUP_API_PATH]: {
     name: 'Vehicle Lookup API',
     faqs: lookupApiFaqs,
-    alternateName: ['Vehicle Registration Lookup API', 'Vehicle Verification API'],
+    alternateName: ['Vehicle Registration Lookup API', 'Registration Number Lookup API'],
     category: 'DeveloperApplication',
     offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
     features: [

@@ -133,7 +133,14 @@ export const PAGE_SEO = {
     description:
       'Vehicle RC verification API for India: verify RC by vehicle number - owner, chassis, engine, model, status, financer, blacklist & NOC as JSON. All states. From ₹1.5 per verification.',
     path: '/vehicle-rc-verification-api',
-    keywords: 'vehicle RC verification API, RC verification API, RC verification API India, vehicle RC verification, RC check API, verify RC by vehicle number API, RC details verification API, RC owner verification API, chassis number verification API, engine number verification API, RC status check API, vehicle registration verification API, vehicle verification API India, RC verification API for loan, RC verification API for insurance, RC verification API for used cars, bulk RC verification API, RC verification API price, RC verification API provider, RTO Sarthi RC verification API',
+    keywords: 'vehicle RC verification API, RC verification API, RC verification API India, vehicle RC verification, RC check API, verify RC by vehicle number API, RC details verification API, RC owner verification API, chassis number verification API, engine number verification API, RC status check API, RC verification API for loan, RC verification API for insurance, RC verification API for used cars, bulk RC verification API, RC verification API price, RC verification API provider, RTO Sarthi RC verification API',
+  },
+  '/vehicle-verification-api': {
+    title: `Vehicle Verification API India - Verify Vehicle by Number from ₹1.5 | RTO Sarthi`,
+    description:
+      'Vehicle verification API for India: verify any vehicle by number - registration status, chassis, engine, owner, insurance, PUC, fitness, tax, financer, blacklist & NOC as JSON. From ₹1.5.',
+    path: '/vehicle-verification-api',
+    keywords: 'vehicle verification API, vehicle verification API India, vehicle check API, vehicle verification by number API, vehicle number verification API, vehicle registration verification API, vehicle background check API, vehicle onboarding verification API, fleet vehicle verification API, driver vehicle verification API, vehicle KYC API, commercial vehicle verification API, vehicle insurance verification API, vehicle fitness verification API, vehicle blacklist check API, vehicle hypothecation check API, bulk vehicle verification API, vehicle verification API price, vehicle verification API provider India, RTO Sarthi vehicle verification API',
   },
   '/parivahan-api': {
     title: `Parivahan API to Get Vehicle Details - Cost from ₹1.5 per Search | RTO Sarthi`,
@@ -147,7 +154,7 @@ export const PAGE_SEO = {
     description:
       'Vehicle lookup API for India: look up any registration number for status, RTO, owner, model, chassis, engine, insurance, PUC, fitness, financer, blacklist & NOC. From ₹1.5.',
     path: '/vehicle-lookup-api',
-    keywords: 'vehicle lookup API, vehicle lookup API India, vehicle registration lookup API, registration number lookup API, vehicle number lookup API, number plate lookup API, licence plate lookup API India, car lookup API, bike lookup API, vehicle verification API, vehicle check API, chassis number verification API, vehicle blacklist check API, vehicle hypothecation check API, bulk vehicle lookup API, RC lookup API, vehicle lookup API price, RTO Sarthi vehicle lookup API',
+    keywords: 'vehicle lookup API, vehicle lookup API India, vehicle registration lookup API, registration number lookup API, vehicle number lookup API, number plate lookup API, licence plate lookup API India, car lookup API, bike lookup API, chassis number verification API, vehicle hypothecation check API, bulk vehicle lookup API, RC lookup API, vehicle lookup API price, RTO Sarthi vehicle lookup API',
   },
   '/rc-download-software': {
     title: `RC Download Software for RTO Agents - Download RC at ₹1.5 | RTO Sarthi`,
