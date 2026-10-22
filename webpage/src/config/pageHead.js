@@ -19,6 +19,7 @@ import { drivingSchoolFaqs, DRIVING_SCHOOL_PATH } from '../data/drivingSchool'
 import { documentExpiryFaqs, DOCUMENT_EXPIRY_PATH } from '../data/documentExpiry'
 import { expiryReminderFaqs, EXPIRY_REMINDER_PATH } from '../data/expiryReminder'
 import { rcVerificationFaqs, RC_VERIFICATION_PATH } from '../data/rcVerification'
+import { vehicleDetailsSoftwareFaqs, VEHICLE_DETAILS_SOFTWARE_PATH } from '../data/vehicleDetailsSoftware'
 import { nationalPermitFaqs, NATIONAL_PERMIT_PATH } from '../data/nationalPermit'
 import { drivingLicenceFaqs, DRIVING_LICENCE_PATH } from '../data/drivingLicence'
 import { learningLicenceFaqs, LEARNING_LICENCE_PATH } from '../data/learningLicence'
@@ -309,6 +310,7 @@ const PRODUCT_PAGES = {
   [DOCUMENT_EXPIRY_PATH]: { name: 'Document Expiry Reminder Software', faqs: documentExpiryFaqs },
   [EXPIRY_REMINDER_PATH]: { name: 'Vehicle Document Expiry Reminder Software', faqs: expiryReminderFaqs },
   [RC_VERIFICATION_PATH]: { name: 'RC Verification Software', faqs: rcVerificationFaqs },
+  [VEHICLE_DETAILS_SOFTWARE_PATH]: { name: 'Vehicle Details Software', faqs: vehicleDetailsSoftwareFaqs },
   [NATIONAL_PERMIT_PATH]: { name: 'National Permit Renewal Reminder Software', faqs: nationalPermitFaqs },
   [DRIVING_LICENCE_PATH]: { name: 'Driving Licence Software', faqs: drivingLicenceFaqs },
   [LEARNING_LICENCE_PATH]: {

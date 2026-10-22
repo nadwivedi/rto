@@ -26,6 +26,7 @@ export const SOLUTION_GROUPS = [
     description: 'Search any vehicle number for RC details, from ₹1.5 per search.',
     items: [
       { to: '/vehicle-information-software', label: 'Vehicle Information Software', desc: 'Vehicle number search: RC & Particular download, tax, e-challan, fitness, PUC & insurance status' },
+      { to: '/vehicle-details-software', label: 'Vehicle Details Software', desc: 'Search any vehicle number, download RC & Particulars, print Form 23, save to records with WhatsApp reminders' },
       { to: '/rc-download-software', label: 'RC Download Software', desc: 'Download RC of any vehicle at just ₹1.5: smart card style RC PDF for RTO agents' },
       { to: '/rc-verification-software', label: 'RC Verification Software', desc: 'Verify RC of any vehicle at ₹1.5: owner, chassis, engine, HP & blacklist, plus bulk verification' },
     ],
