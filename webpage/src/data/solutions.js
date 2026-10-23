@@ -43,6 +43,7 @@ export const SOLUTION_GROUPS = [
       { to: '/car-information-api', label: 'Car Information API', desc: 'Car info API: full car record by number with owner count, validity dates, financer, blacklist & NOC' },
       { to: '/vehicle-make-and-model-api', label: 'Vehicle Make and Model API', desc: 'Maker, model, class, fuel, BS norms, CC, seating and year from any vehicle number' },
       { to: '/vehicle-insurance-api', label: 'Vehicle Insurance API', desc: 'Insurer, policy number and insurance expiry of any vehicle number for agents, fleets and insurtech' },
+      { to: '/vehicle-puc-details-api', label: 'Vehicle PUC Details API', desc: 'RC to PUC details: PUC certificate number and validity of any vehicle number as JSON' },
       { to: '/vehicle-verification-api', label: 'Vehicle Verification API', desc: 'Verify any vehicle before onboarding: registration status, validity dates, financer, blacklist & NOC' },
       { to: '/vehicle-rc-verification-api', label: 'Vehicle RC Verification API', desc: 'Verify RC by vehicle number: owner, chassis, engine, status, financer, blacklist & NOC as JSON' },
       { to: '/rc-to-chassis-number-api', label: 'RC to Chassis Number API', desc: 'Chassis number (VIN) and engine number of any vehicle from its RC number, as JSON' },

@@ -170,6 +170,13 @@ export const PAGE_SEO = {
     path: '/rc-to-chassis-number-api',
     keywords: 'RC to chassis number API, RC to chassis number, vehicle number to chassis number API, vehicle number to chassis number, get chassis number by vehicle number, chassis number by registration number API, chassis number lookup API India, chassis number API, VIN by vehicle number India, vehicle number to VIN API, RC to engine number API, engine number by vehicle number, chassis and engine number API, chassis number check API, chassis number from RC, chassis number API for insurance, chassis number API for spare parts, chassis number API price, RTO Sarthi chassis number API',
   },
+  '/vehicle-puc-details-api': {
+    title: `Vehicle PUC Details API & RC to PUC Details API - from ₹1.5 | RTO Sarthi`,
+    description:
+      'Vehicle PUC details API (RC to PUC details API) for India: get PUC certificate number and PUC valid-up-to date of any vehicle number as JSON, with model, fuel, BS norms & insurance. From ₹1.5.',
+    path: '/vehicle-puc-details-api',
+    keywords: 'vehicle PUC details API, RC to PUC details API, PUC details API, PUC API India, vehicle PUC API, PUC status API, PUC check API, PUC check by vehicle number API, PUC validity API, PUC expiry API, PUC certificate API, PUC certificate number API, PUCC API, pollution certificate API, pollution under control API, PUC details by vehicle number, RC to PUC details, vehicle number to PUC details, bulk PUC check API, PUC API for insurance, PUC API for fleet, PUC details API price, RTO Sarthi PUC API',
+  },
   '/parivahan-api': {
     title: `Parivahan API to Get Vehicle Details - Cost from ₹1.5 per Search | RTO Sarthi`,
     description:

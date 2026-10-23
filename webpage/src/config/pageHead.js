@@ -8,6 +8,7 @@ import { insuranceApiFaqs, INSURANCE_API_PATH } from '../data/insuranceApi'
 import { rcVerificationApiFaqs, RC_VERIFICATION_API_PATH } from '../data/rcVerificationApi'
 import { vehicleVerificationApiFaqs, VEHICLE_VERIFICATION_API_PATH } from '../data/vehicleVerificationApi'
 import { rcToChassisApiFaqs, RC_TO_CHASSIS_API_PATH } from '../data/rcToChassisApi'
+import { pucDetailsApiFaqs, PUC_DETAILS_API_PATH } from '../data/pucDetailsApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
 import { vehicleDataApiFaqs, VEHICLE_DATA_API_PATH } from '../data/vehicleDataApi'
@@ -236,6 +237,20 @@ const PRODUCT_PAGES = {
       'Chassis number (VIN) and engine number by vehicle number as JSON',
       'Maker, model, class, fuel and manufacturing date',
       'Registration date and status',
+      'Vehicles from all states of India, including BH series',
+      'Pay only for successful searches',
+    ],
+  },
+  [PUC_DETAILS_API_PATH]: {
+    name: 'Vehicle PUC Details API',
+    faqs: pucDetailsApiFaqs,
+    alternateName: ['RC to PUC Details API', 'PUC Status API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'PUC certificate number and PUC valid-up-to date by vehicle number as JSON',
+      'Maker, model, class, fuel and emission norms',
+      'Insurance, fitness and road tax validity',
       'Vehicles from all states of India, including BH series',
       'Pay only for successful searches',
     ],
