@@ -98,7 +98,7 @@ export const PAGE_SEO = {
     description:
       'Vehicle information API provider for India: get RC details by vehicle number as JSON - owner, model, chassis, engine, insurance, tax, fitness & PUC. From ₹1.5 per search.',
     path: '/vehicle-information-api',
-    keywords: 'vehicle information API, vehicle information API India, vehicle details API, vehicle number API, RC details API, RC API, RC verification API, vehicle RC API, vehicle registration API India, vehicle owner details API, vehicle API provider, vehicle information API provider, cheapest vehicle information API, vehicle information API price, vehicle number search API, chassis number API, insurance validity API, vehicle data API, RTO API, RTO vehicle API, RTO Sarthi vehicle information API',
+    keywords: 'vehicle information API, vehicle information API India, vehicle details API, vehicle number API, RC details API, RC API, RC verification API, vehicle RC API, vehicle registration API India, vehicle owner details API, vehicle API provider, vehicle information API provider, cheapest vehicle information API, vehicle information API price, vehicle number search API, insurance validity API, vehicle data API, RTO API, RTO vehicle API, RTO Sarthi vehicle information API',
   },
   '/vahan-api': {
     title: `Vahan API for Vehicle Details - RC Data from ₹1.5 per Search | RTO Sarthi`,
@@ -162,6 +162,13 @@ export const PAGE_SEO = {
       'Vehicle verification API for India: verify any vehicle by number - registration status, chassis, engine, owner, insurance, PUC, fitness, tax, financer, blacklist & NOC as JSON. From ₹1.5.',
     path: '/vehicle-verification-api',
     keywords: 'vehicle verification API, vehicle verification API India, vehicle check API, vehicle verification by number API, vehicle number verification API, vehicle registration verification API, vehicle background check API, vehicle onboarding verification API, fleet vehicle verification API, driver vehicle verification API, vehicle KYC API, commercial vehicle verification API, vehicle insurance verification API, vehicle fitness verification API, vehicle blacklist check API, vehicle hypothecation check API, bulk vehicle verification API, vehicle verification API price, vehicle verification API provider India, RTO Sarthi vehicle verification API',
+  },
+  '/rc-to-chassis-number-api': {
+    title: `RC to Chassis Number API - Chassis & Engine No. by Vehicle Number | RTO Sarthi`,
+    description:
+      'RC to chassis number API for India: get the chassis number (VIN) and engine number of any vehicle from its RC number as JSON, with maker, model and manufacturing date. From ₹1.5 per search.',
+    path: '/rc-to-chassis-number-api',
+    keywords: 'RC to chassis number API, RC to chassis number, vehicle number to chassis number API, vehicle number to chassis number, get chassis number by vehicle number, chassis number by registration number API, chassis number lookup API India, chassis number API, VIN by vehicle number India, vehicle number to VIN API, RC to engine number API, engine number by vehicle number, chassis and engine number API, chassis number check API, chassis number from RC, chassis number API for insurance, chassis number API for spare parts, chassis number API price, RTO Sarthi chassis number API',
   },
   '/parivahan-api': {
     title: `Parivahan API to Get Vehicle Details - Cost from ₹1.5 per Search | RTO Sarthi`,

@@ -7,6 +7,7 @@ import { lookupApiFaqs, LOOKUP_API_PATH } from '../data/lookupApi'
 import { insuranceApiFaqs, INSURANCE_API_PATH } from '../data/insuranceApi'
 import { rcVerificationApiFaqs, RC_VERIFICATION_API_PATH } from '../data/rcVerificationApi'
 import { vehicleVerificationApiFaqs, VEHICLE_VERIFICATION_API_PATH } from '../data/vehicleVerificationApi'
+import { rcToChassisApiFaqs, RC_TO_CHASSIS_API_PATH } from '../data/rcToChassisApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
 import { vehicleDataApiFaqs, VEHICLE_DATA_API_PATH } from '../data/vehicleDataApi'
@@ -223,6 +224,20 @@ const PRODUCT_PAGES = {
       'Bulk verification with remaining searches in every response',
       'Vehicles from all states of India, including BH series',
       'Pay only for successful verifications',
+    ],
+  },
+  [RC_TO_CHASSIS_API_PATH]: {
+    name: 'RC to Chassis Number API',
+    faqs: rcToChassisApiFaqs,
+    alternateName: ['Vehicle Number to Chassis Number API', 'Chassis Number Lookup API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Chassis number (VIN) and engine number by vehicle number as JSON',
+      'Maker, model, class, fuel and manufacturing date',
+      'Registration date and status',
+      'Vehicles from all states of India, including BH series',
+      'Pay only for successful searches',
     ],
   },
   [LOOKUP_API_PATH]: {

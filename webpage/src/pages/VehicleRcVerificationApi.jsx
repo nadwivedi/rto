@@ -129,6 +129,7 @@ export default function VehicleRcVerificationApi() {
         ],
       }}
       related={[
+        { to: '/rc-to-chassis-number-api', label: 'RC to chassis number API' },
         { to: '/vehicle-verification-api', label: 'Vehicle verification API' },
         { to: '/vehicle-lookup-api', label: 'Vehicle lookup API' },
         { to: '/vahan-api', label: 'Vahan API' },
