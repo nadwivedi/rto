@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import ApiKeySaleModal from '../components/ApiKeySaleModal'
+import { Pencil, Power, Trash2 } from 'lucide-react'
 import ApiKeyDeleteModal from '../components/ApiKeyDeleteModal'
+import RowMenu from '../components/RowMenu'
 import ShareApiDocButton from '../components/ShareApiDocButton'
 import { PROVIDER_OPTIONS } from '../components/apiProviders'
 
@@ -47,6 +49,9 @@ const ApiKeys = () => {
   const [sellKey, setSellKey] = useState(null)
   const [deleteKey, setDeleteKey] = useState(null)
   const [togglingId, setTogglingId] = useState(null)
+  const [editing, setEditing] = useState(null)
+  const [editError, setEditError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const loadKeys = useCallback(async () => {
     try {
@@ -104,6 +109,54 @@ const ApiKeys = () => {
       setTogglingId(null)
     }
   }
+
+  const openEdit = (apiKey) => {
+    setEditing({
+      _id: apiKey._id,
+      name: apiKey.name,
+      userId: apiKey.userId?._id || '',
+      provider: apiKey.provider || 'api1',
+      note: apiKey.note || ''
+    })
+    setEditError('')
+  }
+
+  const saveEdit = async (e) => {
+    e.preventDefault()
+    if (!editing.name.trim()) return setEditError('Name cannot be empty')
+    try {
+      setSaving(true)
+      setEditError('')
+      const { _id, ...body } = editing
+      const res = await fetch(`${BACKEND_URL}/api/admin/api-keys/${_id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      })
+      const json = await res.json()
+      if (!json.success) return setEditError(json.message || 'Failed to update')
+      setEditing(null)
+      setSuccess('API key updated')
+      await loadKeys()
+    } catch {
+      setEditError('Failed to update')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const rowActions = (k) => [
+    { label: 'Edit', icon: Pencil, onClick: () => openEdit(k) },
+    {
+      label: k.active ? 'Deactivate' : 'Activate',
+      icon: Power,
+      tone: k.active ? undefined : 'success',
+      disabled: togglingId === k._id,
+      onClick: () => toggleActive(k)
+    },
+    { label: 'Delete', icon: Trash2, tone: 'danger', onClick: () => setDeleteKey(k) }
+  ]
 
   const handleCreate = async (e) => {
     e.preventDefault()
@@ -221,33 +274,21 @@ const ApiKeys = () => {
                         <td className={`${td} text-right tabular-nums text-gray-700 whitespace-nowrap`}>{formatRupees(k.soldAmount)}</td>
                         <td className={`${td} text-gray-500 whitespace-nowrap`}>{formatDateTime(k.lastUsedAt)}</td>
                         <td className={`${td} text-right whitespace-nowrap`}>
-                          <button
-                            onClick={() => setSellKey(k)}
-                            className='px-2.5 py-1 rounded-lg border border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer'
-                          >
-                            Sell Calls
-                          </button>
-                          <button
-                            onClick={() => toggleActive(k)}
-                            disabled={togglingId === k._id}
-                            className={`ml-1.5 px-2.5 py-1 rounded-lg border font-semibold disabled:opacity-50 cursor-pointer ${
-                              k.active ? 'border-amber-300 text-amber-700 hover:bg-amber-50' : 'border-emerald-300 text-emerald-700 hover:bg-emerald-50'
-                            }`}
-                          >
-                            {k.active ? 'Switch Off' : 'Switch On'}
-                          </button>
-                          <button
-                            onClick={() => setDeleteKey(k)}
-                            className='ml-1.5 px-2.5 py-1 rounded-lg border border-rose-200 text-rose-600 font-semibold hover:bg-rose-50 cursor-pointer'
-                          >
-                            Delete
-                          </button>
-                          <Link
-                            to={`/api-keys/${k._id}`}
-                            className='ml-1.5 px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700'
-                          >
-                            Details
-                          </Link>
+                          <div className='flex items-center justify-end gap-1.5'>
+                            <button
+                              onClick={() => setSellKey(k)}
+                              className='px-2.5 py-1 rounded-lg border border-gray-300 font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer'
+                            >
+                              Sell Calls
+                            </button>
+                            <Link
+                              to={`/api-keys/${k._id}`}
+                              className='px-2.5 py-1 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700'
+                            >
+                              Details
+                            </Link>
+                            <RowMenu items={rowActions(k)} label={`Actions for ${k.name}`} />
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -269,6 +310,67 @@ const ApiKeys = () => {
             loadKeys()
           }}
         />
+      )}
+
+      {editing && (
+        <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto'>
+          <div className='flex items-start justify-center min-h-full px-3 py-8 sm:py-16'>
+            <form onSubmit={saveEdit} className='bg-white rounded-lg shadow-xl max-w-md w-full p-5 space-y-3'>
+              <h2 className='text-lg font-bold text-gray-800'>Edit API Key</h2>
+              <div>
+                <label className={labelClass}>Name</label>
+                <input value={editing.name} onChange={(e) => setEditing((f) => ({ ...f, name: e.target.value }))} className={inputClass} autoFocus />
+              </div>
+              <div>
+                <label className={labelClass}>Linked User</label>
+                <select value={editing.userId} onChange={(e) => setEditing((f) => ({ ...f, userId: e.target.value }))} className={`${inputClass} cursor-pointer`}>
+                  <option value=''>No user</option>
+                  {users.map((u) => (
+                    <option key={u._id} value={u._id}>
+                      {u.name} · {u.mobile1}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>Vehicle data source</label>
+                <select
+                  value={editing.provider}
+                  onChange={(e) => setEditing((f) => ({ ...f, provider: e.target.value }))}
+                  className={`${inputClass} cursor-pointer`}
+                >
+                  {PROVIDER_OPTIONS.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+                <p className='text-[11px] text-gray-400 mt-1'>Which API this key's calls go to. The customer always gets the same response format.</p>
+              </div>
+              <div>
+                <label className={labelClass}>Note</label>
+                <input value={editing.note} onChange={(e) => setEditing((f) => ({ ...f, note: e.target.value }))} className={inputClass} />
+              </div>
+              {editError && <div className='p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700'>{editError}</div>}
+              <div className='flex gap-2 pt-1'>
+                <button
+                  type='button'
+                  onClick={() => setEditing(null)}
+                  className='flex-1 px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 cursor-pointer'
+                >
+                  Cancel
+                </button>
+                <button
+                  type='submit'
+                  disabled={saving}
+                  className='flex-1 px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 cursor-pointer'
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
 
       {deleteKey && (
