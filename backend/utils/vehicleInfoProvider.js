@@ -91,49 +91,83 @@ const PROVIDERS = {
   api2: 'API 2'
 }
 
-// API 2 field names (any case) -> the names API 1 uses, so every customer gets the same JSON
+// API 2 field names (any case) -> the names API 1 uses, so every customer gets the same JSON.
+// Its cubic_capacity and seating_capacity are left out: they come back with the same values
+// even when no vehicle is found.
 const API2_FIELDS = {
-  REGN_NO: ['regno', 'reg_no', 'vehicle_number', 'registration_number'],
-  STATUS: ['rc_status', 'vehicle_status', 'registration_status'],
-  REGISTERED_AT: ['registered_at', 'rto', 'rto_name', 'registering_authority'],
-  REGN_DT: ['regn_dt', 'reg_date', 'registration_date'],
-  REGN_UPTO: ['regn_upto', 'reg_upto', 'registration_upto', 'registration_valid_upto'],
-  OWNER_NAME: ['owner_name', 'owner', 'ownername'],
-  OWNER_SERIAL_NO: ['owner_serial_no', 'owner_sr_no', 'owner_count', 'ownership'],
-  F_NAME: ['father_name', 'f_name'],
-  MAKER_DESC: ['maker_desc', 'maker', 'manufacturer', 'maker_name'],
-  MAKER_MODEL: ['maker_model', 'model', 'vehicle_model', 'model_name'],
-  VEHICLE_CLASS: ['vehicle_class', 'vehicle_class_desc', 'class', 'vh_class'],
-  BODY_TYPE: ['body_type', 'body_type_desc'],
-  FUEL_DESC: ['fuel_desc', 'fuel_type', 'fuel'],
-  NORMS_DESC: ['norms_desc', 'fuel_norms', 'norms', 'emission_norms'],
-  CUBIC_CAP: ['cubic_capacity', 'cubic_cap', 'cc'],
-  SEAT_CAP: ['seating_capacity', 'seat_cap', 'seats'],
-  COLOR: ['color', 'colour', 'vehicle_color'],
-  MANU_MONTH_YR: ['manu_month_yr', 'manufacturing_date', 'manufacture_date', 'mfg_date'],
-  CHASI_NO: ['chasi_no', 'chassis_no', 'chassis_number', 'chassis'],
-  ENG_NO: ['eng_no', 'engine_no', 'engine_number', 'engine'],
-  FINANCER_DETAILS: ['financer_details', 'financer_name', 'financer', 'financier'],
-  INSURANCE_COMP: ['insurance_comp', 'insurance_company', 'insurer'],
-  INS_POLICY_NO: ['ins_policy_no', 'insurance_policy_no', 'policy_no', 'policy_number'],
-  INSURANCE_UPTO: ['insurance_upto', 'insurance_valid_upto', 'insurance_expiry', 'insurance_validity'],
-  PUCC_NO: ['pucc_no', 'puc_no', 'puc_number'],
-  PUCC_UPTO: ['pucc_upto', 'puc_upto', 'puc_valid_upto', 'puc_validity'],
-  FIT_UPTO: ['fit_upto', 'fitness_upto', 'fitness_valid_upto', 'fitness_validity'],
-  TAX_UPTO: ['tax_upto', 'tax_paid_upto', 'tax_valid_upto'],
+  REGN_NO: ['regno', 'vehicle_number'],
+  STATUS: ['rc_status', 'vehicle_status'],
+  REGISTERED_AT: [],
+  REGN_DT: ['registrationdate', 'regdate', 'reg_date'],
+  REGN_UPTO: ['regn_upto', 'registration_upto'],
+  OWNER_NAME: ['owner_name'],
+  OWNER_SERIAL_NO: ['owner_serial_no'],
+  MAKER_DESC: ['make', 'maker'],
+  MAKER_MODEL: ['model'],
+  VEHICLE_CLASS: ['vehicle_class'],
+  BODY_TYPE: ['body_type'],
+  FUEL_DESC: ['fuel_type', 'fueltype'],
+  NORMS_DESC: ['norms_desc', 'fuel_norms'],
+  CUBIC_CAP: ['engine_cc', 'cc', 'enginecc', 'enginecapacity'],
+  SEAT_CAP: [],
+  COLOR: ['color', 'colour'],
+  MANU_MONTH_YR: ['mfg_mnth_yr'],
+  CHASI_NO: ['chassisno', 'chassis_no'],
+  ENG_NO: ['engineno', 'engine_no'],
+  FINANCER_DETAILS: ['financer_name', 'hypo'],
+  INSURANCE_COMP: ['ins_company', 'insurance_company'],
+  INS_POLICY_NO: ['policy_no', 'insurance_policy_no'],
+  INSURANCE_UPTO: ['prevpolicyexpirydate', 'f_prevpolicyexpirydate', 'insurance_upto'],
+  PUCC_NO: ['pucc_no', 'puc_no'],
+  PUCC_UPTO: ['pucc_upto', 'puc_upto'],
+  FIT_UPTO: ['fitness_upto', 'fit_upto'],
+  TAX_UPTO: ['tax_upto'],
   PERMIT_TYPE: ['permit_type'],
-  BLACKLIST_STATUS: ['blacklist_status', 'blacklisted'],
-  NOC_DETAILS: ['noc_details', 'noc']
+  BLACKLIST_STATUS: ['blacklist_status'],
+  NOC_DETAILS: ['noc_details']
 }
+const API2_DATE_FIELDS = ['REGN_DT', 'REGN_UPTO', 'INSURANCE_UPTO', 'PUCC_UPTO', 'FIT_UPTO', 'TAX_UPTO']
+
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+// '2023-02-14' or '14/02/2023' -> '14-Feb-2023', the date format API 1 uses
+const toApi1Date = (value) => {
+  const s = String(value).trim()
+  let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (m) return MONTHS[Number(m[2]) - 1] ? `${m[3]}-${MONTHS[Number(m[2]) - 1]}-${m[1]}` : s
+  m = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/)
+  if (m) return MONTHS[Number(m[2]) - 1] ? `${m[1]}-${MONTHS[Number(m[2]) - 1]}-${m[3]}` : s
+  return s
+}
+
+// A value worth sending: not empty and not the provider's 'NA' placeholder
+const isReal = (v) => v !== undefined && v !== null && !/^(|na|n\/a|null|none|-)$/i.test(String(v).trim())
 
 const mapApi2Fields = (raw) => {
   const byName = new Map(Object.entries(raw).map(([k, v]) => [k.toLowerCase(), v]))
+  const get = (...names) => names.map((n) => byName.get(n)).find(isReal)
   const data = {}
   for (const [field, names] of Object.entries(API2_FIELDS)) {
-    const value = names.map((n) => byName.get(n)).find((v) => v !== undefined && v !== null && String(v).trim() !== '')
+    const value = get(...names)
     if (value !== undefined) data[field] = typeof value === 'string' ? value.trim() : value
   }
+
+  const owner = [get('firstname', 'first_name'), get('lastname', 'last_name')].filter(Boolean).join(' ').trim()
+  if (!data.OWNER_NAME && owner) data.OWNER_NAME = owner
+  const rtoName = get('rto_name')
+  const rtoState = get('rto_state')
+  if (rtoName) data.REGISTERED_AT = rtoState ? `${rtoName} RTO, ${rtoState}` : `${rtoName} RTO`
+  const variant = get('variant')
+  if (data.MAKER_MODEL && variant && !String(data.MAKER_MODEL).includes(variant)) data.MAKER_MODEL = `${data.MAKER_MODEL} ${variant}`
+  for (const field of API2_DATE_FIELDS) if (data[field]) data[field] = toApi1Date(data[field])
   return data
+}
+
+// Same set of fields on every API 2 reply, 'NA' where API 2 has no value, so customers' code
+// never meets a missing field
+const fillApi2Fields = (data) => {
+  const filled = {}
+  for (const field of Object.keys(API2_FIELDS)) filled[field] = data[field] ?? 'NA'
+  return filled
 }
 
 // API 2: GET <VEHICLE_INFO_API2_URL>?key=<VEHICLE_INFO_API2_KEY>&no=<vehicle number>. It answers
@@ -165,7 +199,7 @@ const fetchFromApi2 = async (vehicleNumber) => {
     return { found: false, charged: null, message: 'Vehicle details not found. Please check registration number.' }
   }
   if (!data.REGN_NO) data.REGN_NO = vehicleNumber
-  return { found: true, data, charged: null }
+  return { found: true, data: fillApi2Fields(data), charged: null }
 }
 
 /**
