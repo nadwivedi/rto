@@ -43,7 +43,7 @@ const ApiKeys = () => {
   const [copiedId, setCopiedId] = useState(null)
 
   const [showCreate, setShowCreate] = useState(false)
-  const [createForm, setCreateForm] = useState({ name: '', userId: '', website: '', note: '', provider: 'api1' })
+  const [createForm, setCreateForm] = useState({ name: '', contactMobile: '', contactEmail: '', userId: '', website: '', note: '', provider: 'api1' })
   const [createError, setCreateError] = useState('')
   const [creating, setCreating] = useState(false)
   const [sellKey, setSellKey] = useState(null)
@@ -114,6 +114,8 @@ const ApiKeys = () => {
     setEditing({
       _id: apiKey._id,
       name: apiKey.name,
+      contactMobile: apiKey.contactMobile || '',
+      contactEmail: apiKey.contactEmail || '',
       userId: apiKey.userId?._id || '',
       provider: apiKey.provider || 'api1',
       website: apiKey.website || '',
@@ -193,7 +195,7 @@ const ApiKeys = () => {
           <ShareApiDocButton />
           <button
             onClick={() => {
-              setCreateForm({ name: '', userId: '', website: '', note: '', provider: 'api1' })
+              setCreateForm({ name: '', contactMobile: '', contactEmail: '', userId: '', website: '', note: '', provider: 'api1' })
               setCreateError('')
               setShowCreate(true)
             }}
@@ -256,6 +258,9 @@ const ApiKeys = () => {
                             </span>
                           )}
                           <div className='text-gray-400'>{k.userId ? `${k.userId.name} · ${k.userId.mobile1}` : 'No user linked'}</div>
+                          {(k.contactMobile || k.contactEmail) && (
+                            <div className='text-gray-500'>{[k.contactMobile, k.contactEmail].filter(Boolean).join(' · ')}</div>
+                          )}
                           {k.website && <div className='text-gray-400 truncate max-w-[220px]'>{k.website}</div>}
                         </td>
                         <td className={`${td} whitespace-nowrap`}>
@@ -322,6 +327,34 @@ const ApiKeys = () => {
               <div>
                 <label className={labelClass}>Name</label>
                 <input value={editing.name} onChange={(e) => setEditing((f) => ({ ...f, name: e.target.value }))} className={inputClass} autoFocus />
+              </div>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div>
+                  <label className={labelClass}>
+                    Mobile <span className='text-rose-500'>*</span>
+                  </label>
+                  <input
+                    type='tel'
+                    inputMode='numeric'
+                    required
+                    value={editing.contactMobile}
+                    onChange={(e) => setEditing((f) => ({ ...f, contactMobile: e.target.value }))}
+                    placeholder='10-digit mobile'
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    Email <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <input
+                    type='email'
+                    value={editing.contactEmail}
+                    onChange={(e) => setEditing((f) => ({ ...f, contactEmail: e.target.value }))}
+                    placeholder='name@company.com'
+                    className={inputClass}
+                  />
+                </div>
               </div>
               <div>
                 <label className={labelClass}>Linked User</label>
@@ -415,6 +448,34 @@ const ApiKeys = () => {
                   autoFocus
                   className={inputClass}
                 />
+              </div>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div>
+                  <label className={labelClass}>
+                    Mobile <span className='text-rose-500'>*</span>
+                  </label>
+                  <input
+                    type='tel'
+                    inputMode='numeric'
+                    required
+                    value={createForm.contactMobile}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, contactMobile: e.target.value }))}
+                    placeholder='10-digit mobile'
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    Email <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <input
+                    type='email'
+                    value={createForm.contactEmail}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, contactEmail: e.target.value }))}
+                    placeholder='name@company.com'
+                    className={inputClass}
+                  />
+                </div>
               </div>
               <div>
                 <label className={labelClass}>

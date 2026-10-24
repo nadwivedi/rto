@@ -47,6 +47,16 @@ const apiKeySchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    // The customer's contact: mobile is asked for every new key, email is optional
+    contactMobile: {
+      type: String,
+      trim: true
+    },
+    contactEmail: {
+      type: String,
+      trim: true,
+      lowercase: true
+    },
     // Optional: the customer's website
     website: {
       type: String,

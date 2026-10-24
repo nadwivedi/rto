@@ -49,6 +49,23 @@ const withRemaining = (key) => ({
   remaining: Math.max(0, (key.callLimit || 0) - (key.callCount || 0))
 })
 
+// '+91 98765-43210' -> '9876543210'; resolves to { value } or { error }
+const readMobile = (raw) => {
+  let digits = String(raw || '').replace(/\D/g, '')
+  if (digits.length === 12 && digits.startsWith('91')) digits = digits.slice(2)
+  if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1)
+  if (!digits) return { error: 'Please enter the mobile number' }
+  if (!/^[6-9]\d{9}$/.test(digits)) return { error: 'Please enter a valid 10-digit mobile number' }
+  return { value: digits }
+}
+
+// Optional email; resolves to { value } (empty when not given) or { error }
+const readEmail = (raw) => {
+  const value = String(raw || '').trim().toLowerCase()
+  if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) return { error: 'Please enter a valid email address' }
+  return { value }
+}
+
 // Validates the optional user link; resolves to { userId } or { error }
 const readUserId = async (userId) => {
   if (!userId) return { userId: null }
@@ -114,8 +131,12 @@ exports.getApiKeys = async (req, res) => {
 
 exports.createApiKey = async (req, res) => {
   try {
-    const { name, userId, note, provider, website } = req.body || {}
+    const { name, userId, note, provider, website, contactMobile, contactEmail } = req.body || {}
     if (!name || !String(name).trim()) return badRequest(res, 'Please enter a name for this API key')
+    const mobile = readMobile(contactMobile)
+    if (mobile.error) return badRequest(res, mobile.error)
+    const email = readEmail(contactEmail)
+    if (email.error) return badRequest(res, email.error)
     if (provider !== undefined && !PROVIDERS[provider]) return badRequest(res, 'Please choose API 1 or API 2')
 
     const link = await readUserId(userId)
@@ -126,6 +147,8 @@ exports.createApiKey = async (req, res) => {
       key: ApiKey.generateKey(),
       userId: link.userId || undefined,
       provider: provider || 'api1',
+      contactMobile: mobile.value,
+      contactEmail: email.value || undefined,
       website: website && String(website).trim() ? String(website).trim() : undefined,
       note: note && String(note).trim() ? String(note).trim() : undefined
     })
@@ -144,14 +167,14 @@ exports.createApiKey = async (req, res) => {
   }
 }
 
-// Change name / linked user / vehicle info source / website / note / on-off
+// Change name / linked user / vehicle info source / contact / website / note / on-off
 exports.updateApiKey = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return badRequest(res, 'Invalid API key')
     const apiKey = await ApiKey.findById(req.params.id)
     if (!apiKey) return notFound(res)
 
-    const { name, userId, note, active, provider, website } = req.body || {}
+    const { name, userId, note, active, provider, website, contactMobile, contactEmail } = req.body || {}
     const changes = []
 
     if (name !== undefined) {
@@ -172,6 +195,18 @@ exports.updateApiKey = async (req, res) => {
       const current = apiKey.provider || 'api1'
       if (current !== provider) changes.push({ field: 'Vehicle data source', from: PROVIDERS[current], to: PROVIDERS[provider] })
       apiKey.provider = provider
+    }
+    if (contactMobile !== undefined) {
+      const mobile = readMobile(contactMobile)
+      if (mobile.error) return badRequest(res, mobile.error)
+      if ((apiKey.contactMobile || '') !== mobile.value) changes.push({ field: 'Mobile', from: apiKey.contactMobile || null, to: mobile.value })
+      apiKey.contactMobile = mobile.value
+    }
+    if (contactEmail !== undefined) {
+      const email = readEmail(contactEmail)
+      if (email.error) return badRequest(res, email.error)
+      if ((apiKey.contactEmail || '') !== email.value) changes.push({ field: 'Email', from: apiKey.contactEmail || null, to: email.value || null })
+      apiKey.contactEmail = email.value || undefined
     }
     if (website !== undefined) {
       const value = String(website).trim()

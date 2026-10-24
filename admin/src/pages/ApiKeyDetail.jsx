@@ -328,11 +328,29 @@ const ApiKeyDetail = () => {
             )}
             {apiKey.note && <span className='text-gray-400'> · {apiKey.note}</span>}
           </p>
+          <p className='text-xs sm:text-sm text-gray-600 mt-0.5'>
+            {'Contact: '}
+            {apiKey.contactMobile ? (
+              <a href={`tel:+91${apiKey.contactMobile}`} className='font-semibold text-indigo-600 hover:underline'>
+                {apiKey.contactMobile}
+              </a>
+            ) : (
+              <span className='text-amber-600'>no mobile yet, add it with Edit</span>
+            )}
+            {apiKey.contactEmail && (
+              <>
+                {' · '}
+                <a href={`mailto:${apiKey.contactEmail}`} className='text-indigo-600 hover:underline'>
+                  {apiKey.contactEmail}
+                </a>
+              </>
+            )}
+          </p>
         </div>
         <div className='flex flex-wrap gap-2'>
           <button
             onClick={() => {
-              setEditing({ name: apiKey.name, userId: apiKey.userId?._id || '', website: apiKey.website || '', note: apiKey.note || '', provider: apiKey.provider || 'api1' })
+              setEditing({ name: apiKey.name, contactMobile: apiKey.contactMobile || '', contactEmail: apiKey.contactEmail || '', userId: apiKey.userId?._id || '', website: apiKey.website || '', note: apiKey.note || '', provider: apiKey.provider || 'api1' })
               setEditError('')
             }}
             className='px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold text-sm cursor-pointer'
@@ -746,6 +764,34 @@ const ApiKeyDetail = () => {
               <div>
                 <label className={labelClass}>Name</label>
                 <input value={editing.name} onChange={(e) => setEditing((f) => ({ ...f, name: e.target.value }))} className={inputClass} autoFocus />
+              </div>
+              <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                <div>
+                  <label className={labelClass}>
+                    Mobile <span className='text-rose-500'>*</span>
+                  </label>
+                  <input
+                    type='tel'
+                    inputMode='numeric'
+                    required
+                    value={editing.contactMobile}
+                    onChange={(e) => setEditing((f) => ({ ...f, contactMobile: e.target.value }))}
+                    placeholder='10-digit mobile'
+                    className={inputClass}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    Email <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <input
+                    type='email'
+                    value={editing.contactEmail}
+                    onChange={(e) => setEditing((f) => ({ ...f, contactEmail: e.target.value }))}
+                    placeholder='name@company.com'
+                    className={inputClass}
+                  />
+                </div>
               </div>
               <div>
                 <label className={labelClass}>Linked User</label>
