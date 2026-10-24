@@ -40,6 +40,20 @@ const recordProviderUsage = async (usage, { vehicleNumber, userId } = {}) => {
   }
 }
 
+const NOT_FOUND_TEXT = /not\s*found|no\s*record|invalid/i
+const DETAIL_FIELDS = ['OWNER_NAME', 'MAKER_DESC', 'MAKER_MODEL', 'VEHICLE_CLASS', 'CHASI_NO', 'ENG_NO', 'REGN_DT']
+
+/**
+ * The provider answers an unknown number with a normal-looking reply such as
+ * { REGN_NO: 'Vehicle Details not Found' } and no error flag. Treat a reply as a
+ * real vehicle only when at least one detail field holds a real value.
+ */
+const hasVehicleDetails = (data) =>
+  DETAIL_FIELDS.some((field) => {
+    const value = String(data[field] ?? '').trim()
+    return value !== '' && !NOT_FOUND_TEXT.test(value)
+  })
+
 // 'cg 04-ab 1234' -> 'CG04AB1234'
 const cleanVehicleNumber = (raw) => String(raw || '').replace(/[\s-]/g, '').toUpperCase()
 
@@ -73,11 +87,15 @@ const fetchVehicleInfo = async (vehicleNumber, { userId } = {}) => {
   // Recorded before the error check so a "not found" reply still updates the quota
   await recordProviderUsage(data?._usage, { vehicleNumber, userId })
 
-  if (!data || data.error || data.status === 'error' || data.status === false) {
+  if (!data || typeof data !== 'object' || data.error || data.status === 'error' || data.status === false) {
     return {
       found: false,
       message: data?.message || data?.error || 'Vehicle details not found. Please check registration number.'
     }
+  }
+
+  if (!hasVehicleDetails(data)) {
+    return { found: false, message: 'Vehicle details not found. Please check registration number.' }
   }
 
   return { found: true, data }
