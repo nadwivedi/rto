@@ -313,13 +313,26 @@ const ApiKeyDetail = () => {
             {apiKey.userId ? `${apiKey.userId.name} · ${apiKey.userId.mobile1}` : 'No user linked'} · Created {formatDate(apiKey.createdAt)}
             {' · Source: '}
             <span className='font-semibold text-gray-700'>{providerLabel(apiKey.provider)}</span>
+            {apiKey.website && (
+              <>
+                {' · '}
+                <a
+                  href={/^https?:\/\//i.test(apiKey.website) ? apiKey.website : `https://${apiKey.website}`}
+                  target='_blank'
+                  rel='noopener noreferrer'
+                  className='text-indigo-600 hover:underline'
+                >
+                  {apiKey.website}
+                </a>
+              </>
+            )}
             {apiKey.note && <span className='text-gray-400'> · {apiKey.note}</span>}
           </p>
         </div>
         <div className='flex flex-wrap gap-2'>
           <button
             onClick={() => {
-              setEditing({ name: apiKey.name, userId: apiKey.userId?._id || '', note: apiKey.note || '', provider: apiKey.provider || 'api1' })
+              setEditing({ name: apiKey.name, userId: apiKey.userId?._id || '', website: apiKey.website || '', note: apiKey.note || '', provider: apiKey.provider || 'api1' })
               setEditError('')
             }}
             className='px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold text-sm cursor-pointer'
@@ -759,6 +772,17 @@ const ApiKeyDetail = () => {
                   ))}
                 </select>
                 <p className='text-[11px] text-gray-400 mt-1'>Which API this key's calls go to. The customer always gets the same response format.</p>
+              </div>
+              <div>
+                <label className={labelClass}>
+                  Website <span className='text-gray-400'>(Opt)</span>
+                </label>
+                <input
+                  value={editing.website}
+                  onChange={(e) => setEditing((f) => ({ ...f, website: e.target.value }))}
+                  placeholder='e.g. sharmainsurance.com'
+                  className={inputClass}
+                />
               </div>
               <div>
                 <label className={labelClass}>Note</label>

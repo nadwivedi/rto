@@ -306,7 +306,8 @@ exports.getUsage = async (req, res) => {
       RcSearchUsage.findOne({}).sort({ date: 1 }).select('date').lean(),
       ApiKeyCall.aggregate([
         { $match: { date: { $gte: from28, $lte: today }, ...CHARGED_KEY_CALL } },
-        { $group: { _id: { apiKeyId: '$apiKeyId', date: '$date' }, count: { $sum: 1 } } }
+        // Calls logged before `source` was saved were all API 1
+        { $group: { _id: { apiKeyId: '$apiKeyId', date: '$date', source: { $ifNull: ['$source', 'rtosarthi_api1'] } }, count: { $sum: 1 } } }
       ]),
       ApiKeyCall.findOne(CHARGED_KEY_CALL).sort({ date: 1 }).select('date').lean()
     ])
@@ -315,27 +316,36 @@ exports.getUsage = async (req, res) => {
     const dayMap = new Map()
     for (let i = 0; i < 28; i++) {
       const date = shiftDate(today, -i)
-      dayMap.set(date, { date, count: 0, appCount: 0, keyCount: 0, users: 0, keys: 0 })
+      dayMap.set(date, { date, count: 0, appCount: 0, keyCount: 0, api1Count: 0, api2Count: 0, users: 0, keys: 0, keyIds: new Set() })
     }
 
-    const totals = { today: 0, last7: 0, last28: 0, appLast28: 0, keyLast28: 0 }
+    const totals = { today: 0, last7: 0, last28: 0, appLast28: 0, keyLast28: 0, api1Last28: 0, api2Last28: 0, api1Today: 0, api2Today: 0 }
     // Adds one day's count to the day, the totals and the user / key row it belongs to
     const add = (map, id, base, row, kind) => {
       const day = dayMap.get(row.date)
       if (!day || !row.count) return
       day.count += row.count
       if (kind === 'key') {
+        const api = row.source === 'rtosarthi_api2' ? 'api2' : 'api1'
         day.keyCount += row.count
-        day.keys += 1
+        day[`${api}Count`] += row.count
+        // A key can have API 1 and API 2 calls on the same day; count it once
+        if (!day.keyIds.has(id)) {
+          day.keyIds.add(id)
+          day.keys += 1
+        }
         totals.keyLast28 += row.count
+        totals[`${api}Last28`] += row.count
+        if (row.date === today) totals[`${api}Today`] += row.count
       } else {
         day.appCount += row.count
         day.users += 1
         totals.appLast28 += row.count
       }
 
-      if (!map.has(id)) map.set(id, { ...base, today: 0, last7: 0, last28: 0 })
+      if (!map.has(id)) map.set(id, { ...base, today: 0, last7: 0, last28: 0, api1Last28: 0, api2Last28: 0 })
       const usage = map.get(id)
+      if (kind === 'key') usage[row.source === 'rtosarthi_api2' ? 'api2Last28' : 'api1Last28'] += row.count
       usage.last28 += row.count
       totals.last28 += row.count
       if (row.date >= from7) {
@@ -352,8 +362,8 @@ exports.getUsage = async (req, res) => {
     for (const row of rows) add(userMap, String(row.userId), { userId: row.userId }, row, 'user')
     const keyMap = new Map()
     for (const row of keyRows) {
-      const { apiKeyId, date } = row._id
-      add(keyMap, String(apiKeyId), { apiKeyId }, { date, count: row.count }, 'key')
+      const { apiKeyId, date, source } = row._id
+      add(keyMap, String(apiKeyId), { apiKeyId }, { date, source, count: row.count }, 'key')
     }
 
     const [users, keys] = await Promise.all([
@@ -361,7 +371,7 @@ exports.getUsage = async (req, res) => {
         .select('name mobile1 rcSearchLimit rcSearchCount')
         .lean(),
       ApiKey.find({ _id: { $in: Array.from(keyMap.values()).map((k) => k.apiKeyId) } })
-        .select('name callLimit callCount active userId')
+        .select('name callLimit callCount active userId provider')
         .populate('userId', 'name')
         .lean()
     ])
@@ -390,7 +400,7 @@ exports.getUsage = async (req, res) => {
           avg7: average(totals.last7, 7),
           avg28: average(totals.last28, 28)
         },
-        days: Array.from(dayMap.values()),
+        days: Array.from(dayMap.values()).map(({ keyIds, ...day }) => day),
         users: Array.from(userMap.values())
           .map((usage) => {
             const user = usersById.get(String(usage.userId))
@@ -411,6 +421,7 @@ exports.getUsage = async (req, res) => {
               ...usage,
               name: key?.name,
               active: key ? key.active : false,
+              provider: key?.provider || 'api1',
               userName: key?.userId?.name || '',
               callLimit: key?.callLimit || 0,
               callCount: key?.callCount || 0,

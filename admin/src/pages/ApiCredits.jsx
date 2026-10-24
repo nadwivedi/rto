@@ -659,6 +659,14 @@ const ApiCredits = () => {
               />
             </div>
 
+            <p className='mb-3 text-[11px] text-gray-500'>
+              API key calls · today: API 1 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Today)}</span>
+              {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Today)}</span>
+              {' · last 28 days: '}API 1 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Last28)}</span>
+              {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Last28)}</span>
+              {' · '}App <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.appLast28)}</span>
+            </p>
+
             <div className='grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-5'>
               {/* Day-wise */}
               <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
@@ -669,7 +677,8 @@ const ApiCredits = () => {
                     <tr className='border-b border-gray-100 bg-gray-50/60'>
                       <th className={`${th} text-left`}>Day</th>
                       <th className={`${th} text-right`}>App</th>
-                      <th className={`${th} text-right`}>API Keys</th>
+                      <th className={`${th} text-right`} title='API key calls served by API 1'>API 1</th>
+                      <th className={`${th} text-right`} title='API key calls served by API 2'>API 2</th>
                       <th className={`${th} text-right`}>Total</th>
                       <th className={`${th} text-right`} title='Users and API keys that searched that day'>Active</th>
                     </tr>
@@ -682,7 +691,8 @@ const ApiCredits = () => {
                           {day.date === usage.today && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
                         </td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.appCount)}</td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.keyCount)}</td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api1Count)}</td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api2Count)}</td>
                         <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                           {formatNumber(day.count)}
                         </td>
@@ -724,7 +734,13 @@ const ApiCredits = () => {
                                       {u.name || 'Deleted API key'}
                                     </Link>
                                     <div className='text-gray-400'>
-                                      <span className='mr-1 rounded bg-indigo-50 px-1 py-px text-[10px] font-bold uppercase text-indigo-600'>API key</span>
+                                      <span
+                                        className={`mr-1 rounded px-1 py-px text-[10px] font-bold uppercase ${
+                                          u.provider === 'api2' ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-600'
+                                        }`}
+                                      >
+                                        API key · {u.provider === 'api2' ? 'API 2' : 'API 1'}
+                                      </span>
                                       {u.userName}
                                       {!u.active && <span className='ml-1 text-rose-500'>· off</span>}
                                     </div>

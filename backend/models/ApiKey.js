@@ -47,6 +47,11 @@ const apiKeySchema = new mongoose.Schema(
       type: Boolean,
       default: true
     },
+    // Optional: the customer's website
+    website: {
+      type: String,
+      trim: true
+    },
     note: {
       type: String,
       trim: true

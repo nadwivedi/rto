@@ -114,7 +114,7 @@ exports.getApiKeys = async (req, res) => {
 
 exports.createApiKey = async (req, res) => {
   try {
-    const { name, userId, note, provider } = req.body || {}
+    const { name, userId, note, provider, website } = req.body || {}
     if (!name || !String(name).trim()) return badRequest(res, 'Please enter a name for this API key')
     if (provider !== undefined && !PROVIDERS[provider]) return badRequest(res, 'Please choose API 1 or API 2')
 
@@ -126,6 +126,7 @@ exports.createApiKey = async (req, res) => {
       key: ApiKey.generateKey(),
       userId: link.userId || undefined,
       provider: provider || 'api1',
+      website: website && String(website).trim() ? String(website).trim() : undefined,
       note: note && String(note).trim() ? String(note).trim() : undefined
     })
 
@@ -143,14 +144,14 @@ exports.createApiKey = async (req, res) => {
   }
 }
 
-// Change name / linked user / vehicle info source / note / on-off
+// Change name / linked user / vehicle info source / website / note / on-off
 exports.updateApiKey = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return badRequest(res, 'Invalid API key')
     const apiKey = await ApiKey.findById(req.params.id)
     if (!apiKey) return notFound(res)
 
-    const { name, userId, note, active, provider } = req.body || {}
+    const { name, userId, note, active, provider, website } = req.body || {}
     const changes = []
 
     if (name !== undefined) {
@@ -171,6 +172,11 @@ exports.updateApiKey = async (req, res) => {
       const current = apiKey.provider || 'api1'
       if (current !== provider) changes.push({ field: 'Vehicle data source', from: PROVIDERS[current], to: PROVIDERS[provider] })
       apiKey.provider = provider
+    }
+    if (website !== undefined) {
+      const value = String(website).trim()
+      if ((apiKey.website || '') !== value) changes.push({ field: 'Website', from: apiKey.website || null, to: value || null })
+      apiKey.website = value || undefined
     }
     if (note !== undefined) {
       apiKey.note = String(note).trim() || undefined

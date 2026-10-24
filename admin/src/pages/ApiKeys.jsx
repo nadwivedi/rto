@@ -43,7 +43,7 @@ const ApiKeys = () => {
   const [copiedId, setCopiedId] = useState(null)
 
   const [showCreate, setShowCreate] = useState(false)
-  const [createForm, setCreateForm] = useState({ name: '', userId: '', note: '', provider: 'api1' })
+  const [createForm, setCreateForm] = useState({ name: '', userId: '', website: '', note: '', provider: 'api1' })
   const [createError, setCreateError] = useState('')
   const [creating, setCreating] = useState(false)
   const [sellKey, setSellKey] = useState(null)
@@ -116,6 +116,7 @@ const ApiKeys = () => {
       name: apiKey.name,
       userId: apiKey.userId?._id || '',
       provider: apiKey.provider || 'api1',
+      website: apiKey.website || '',
       note: apiKey.note || ''
     })
     setEditError('')
@@ -192,7 +193,7 @@ const ApiKeys = () => {
           <ShareApiDocButton />
           <button
             onClick={() => {
-              setCreateForm({ name: '', userId: '', note: '', provider: 'api1' })
+              setCreateForm({ name: '', userId: '', website: '', note: '', provider: 'api1' })
               setCreateError('')
               setShowCreate(true)
             }}
@@ -255,6 +256,7 @@ const ApiKeys = () => {
                             </span>
                           )}
                           <div className='text-gray-400'>{k.userId ? `${k.userId.name} · ${k.userId.mobile1}` : 'No user linked'}</div>
+                          {k.website && <div className='text-gray-400 truncate max-w-[220px]'>{k.website}</div>}
                         </td>
                         <td className={`${td} whitespace-nowrap`}>
                           <code className='text-gray-600'>{maskKey(k.key)}</code>
@@ -348,6 +350,17 @@ const ApiKeys = () => {
                 <p className='text-[11px] text-gray-400 mt-1'>Which API this key's calls go to. The customer always gets the same response format.</p>
               </div>
               <div>
+                <label className={labelClass}>
+                  Website <span className='text-gray-400'>(Opt)</span>
+                </label>
+                <input
+                  value={editing.website}
+                  onChange={(e) => setEditing((f) => ({ ...f, website: e.target.value }))}
+                  placeholder='e.g. sharmainsurance.com'
+                  className={inputClass}
+                />
+              </div>
+              <div>
                 <label className={labelClass}>Note</label>
                 <input value={editing.note} onChange={(e) => setEditing((f) => ({ ...f, note: e.target.value }))} className={inputClass} />
               </div>
@@ -434,6 +447,17 @@ const ApiKeys = () => {
                   ))}
                 </select>
                 <p className='text-[11px] text-gray-400 mt-1'>Which API this key's calls go to. The customer always gets the same response format.</p>
+              </div>
+              <div>
+                <label className={labelClass}>
+                  Website <span className='text-gray-400'>(Opt)</span>
+                </label>
+                <input
+                  value={createForm.website}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, website: e.target.value }))}
+                  placeholder='e.g. sharmainsurance.com'
+                  className={inputClass}
+                />
               </div>
               <div>
                 <label className={labelClass}>
