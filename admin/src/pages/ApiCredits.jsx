@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import RcApiUsageCard from '../components/RcApiUsageCard'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
@@ -70,6 +70,15 @@ const ApiCredits = () => {
 
   const [summary, setSummary] = useState(null)
   const [usage, setUsage] = useState(null)
+  // App users and API keys in one list, most used first
+  const usageRows = useMemo(
+    () =>
+      [
+        ...(usage?.users || []).map((u) => ({ ...u, rowKey: `u-${u.userId}`, left: u.rcSearchRemaining })),
+        ...(usage?.apiKeys || []).map((k) => ({ ...k, rowKey: `k-${k.apiKeyId}`, isKey: true, left: k.remaining }))
+      ].sort((a, b) => b.last28 - a.last28 || b.last7 - a.last7),
+    [usage]
+  )
   const [transactions, setTransactions] = useState([])
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalRecords: 0 })
   const [users, setUsers] = useState([])
@@ -654,12 +663,15 @@ const ApiCredits = () => {
               {/* Day-wise */}
               <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
                 <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Day-wise usage · last 7 days</h3>
+                <div className='overflow-x-auto'>
                 <table className='w-full'>
                   <thead>
                     <tr className='border-b border-gray-100 bg-gray-50/60'>
                       <th className={`${th} text-left`}>Day</th>
-                      <th className={`${th} text-right`}>Searches</th>
-                      <th className={`${th} text-right`}>Users Active</th>
+                      <th className={`${th} text-right`}>App</th>
+                      <th className={`${th} text-right`}>API Keys</th>
+                      <th className={`${th} text-right`}>Total</th>
+                      <th className={`${th} text-right`} title='Users and API keys that searched that day'>Active</th>
                     </tr>
                   </thead>
                   <tbody className='divide-y divide-gray-100'>
@@ -669,23 +681,26 @@ const ApiCredits = () => {
                           {formatDay(day.date)}
                           {day.date === usage.today && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
                         </td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.appCount)}</td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.keyCount)}</td>
                         <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                           {formatNumber(day.count)}
                         </td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.users)}</td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber((day.users || 0) + (day.keys || 0))}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
+                </div>
               </div>
 
               {/* User-wise */}
               <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col'>
                 <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>
-                  Usage by user
-                  {usage?.users?.length > 0 && <span className='font-normal text-gray-400'> ({usage.users.length})</span>}
+                  Usage by user &amp; API key
+                  {usageRows.length > 0 && <span className='font-normal text-gray-400'> ({usageRows.length})</span>}
                 </h3>
-                {usage?.users?.length ? (
+                {usageRows.length ? (
                   // Side by side (xl) the list takes the height of the day-wise card and scrolls; stacked it is capped to about the same height
                   <div className='relative max-h-[340px] overflow-auto xl:max-h-none xl:flex-1 xl:min-h-0'>
                     <div className='xl:absolute xl:inset-0 xl:overflow-auto'>
@@ -700,19 +715,34 @@ const ApiCredits = () => {
                           </tr>
                         </thead>
                         <tbody className='divide-y divide-gray-100'>
-                          {usage.users.map((u) => (
-                            <tr key={u.userId} className='hover:bg-gray-50/80 transition-colors'>
+                          {usageRows.map((u) => (
+                            <tr key={u.rowKey} className='hover:bg-gray-50/80 transition-colors'>
                               <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'>
-                                <div className='font-semibold text-gray-900'>{u.name || 'Deleted user'}</div>
-                                <div className='text-gray-400'>{u.mobile1 || ''}</div>
+                                {u.isKey ? (
+                                  <>
+                                    <Link to={`/api-keys/${u.apiKeyId}`} className='font-semibold text-gray-900 hover:text-indigo-600'>
+                                      {u.name || 'Deleted API key'}
+                                    </Link>
+                                    <div className='text-gray-400'>
+                                      <span className='mr-1 rounded bg-indigo-50 px-1 py-px text-[10px] font-bold uppercase text-indigo-600'>API key</span>
+                                      {u.userName}
+                                      {!u.active && <span className='ml-1 text-rose-500'>· off</span>}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className='font-semibold text-gray-900'>{u.name || 'Deleted user'}</div>
+                                    <div className='text-gray-400'>{u.mobile1 || ''}</div>
+                                  </>
+                                )}
                               </td>
                               <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.today ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                                 {formatNumber(u.today)}
                               </td>
                               <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last7)}</td>
                               <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last28)}</td>
-                              <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.rcSearchRemaining <= 0 ? 'font-bold text-rose-600' : 'text-gray-700'}`}>
-                                {formatNumber(u.rcSearchRemaining)}
+                              <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.left <= 0 ? 'font-bold text-rose-600' : 'text-gray-700'}`}>
+                                {formatNumber(u.left)}
                               </td>
                             </tr>
                           ))}
@@ -721,7 +751,7 @@ const ApiCredits = () => {
                     </div>
                   </div>
                 ) : (
-                  <p className='p-6 text-center text-sm text-gray-500'>No user has searched in the last 28 days.</p>
+                  <p className='p-6 text-center text-sm text-gray-500'>No user or API key has searched in the last 28 days.</p>
                 )}
               </div>
             </div>

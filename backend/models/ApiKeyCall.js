@@ -84,5 +84,7 @@ const apiKeyCallSchema = new mongoose.Schema(
 apiKeyCallSchema.index({ apiKeyId: 1, createdAt: -1 })
 apiKeyCallSchema.index({ apiKeyId: 1, date: 1 })
 apiKeyCallSchema.index({ apiKeyId: 1, vehicleNumber: 1 })
+// Day-wise usage across all keys (admin API Usage)
+apiKeyCallSchema.index({ date: 1 })
 
 module.exports = mongoose.model('ApiKeyCall', apiKeyCallSchema)

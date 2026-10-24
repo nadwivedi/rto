@@ -3,6 +3,8 @@ const ApiCreditTransaction = require('../models/ApiCreditTransaction')
 const User = require('../models/User')
 const RcSearchUsage = require('../models/RcSearchUsage')
 const ApiKeySale = require('../models/ApiKeySale')
+const ApiKey = require('../models/ApiKey')
+const ApiKeyCall = require('../models/ApiKeyCall')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity } = require('../utils/activityLog')
 
@@ -288,36 +290,52 @@ const shiftDate = (iso, days) => {
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10)
 }
 
-// How many searches users actually made: day-wise for the last 28 days, and per user for today / 7 / 28 days
+// API key calls that used the key's limit. Calls logged before `charged` existed count when they returned details.
+const CHARGED_KEY_CALL = { $or: [{ charged: true }, { charged: { $exists: false }, success: true }] }
+
+// How many searches were actually made, by app users (RC search) and by API keys:
+// day-wise for the last 28 days, and per user / per key for today / 7 / 28 days
 exports.getUsage = async (req, res) => {
   try {
     const today = RcSearchUsage.todayIST()
     const from7 = shiftDate(today, -6)
     const from28 = shiftDate(today, -27)
 
-    const [rows, firstRow] = await Promise.all([
+    const [rows, firstRow, keyRows, firstKeyCall] = await Promise.all([
       RcSearchUsage.find({ date: { $gte: from28, $lte: today } }).select('userId date count').lean(),
-      RcSearchUsage.findOne({}).sort({ date: 1 }).select('date').lean()
+      RcSearchUsage.findOne({}).sort({ date: 1 }).select('date').lean(),
+      ApiKeyCall.aggregate([
+        { $match: { date: { $gte: from28, $lte: today }, ...CHARGED_KEY_CALL } },
+        { $group: { _id: { apiKeyId: '$apiKeyId', date: '$date' }, count: { $sum: 1 } } }
+      ]),
+      ApiKeyCall.findOne(CHARGED_KEY_CALL).sort({ date: 1 }).select('date').lean()
     ])
 
     // One entry per day, newest first, including days with no searches
     const dayMap = new Map()
     for (let i = 0; i < 28; i++) {
       const date = shiftDate(today, -i)
-      dayMap.set(date, { date, count: 0, users: 0 })
+      dayMap.set(date, { date, count: 0, appCount: 0, keyCount: 0, users: 0, keys: 0 })
     }
 
-    const userMap = new Map()
-    const totals = { today: 0, last7: 0, last28: 0 }
-    for (const row of rows) {
+    const totals = { today: 0, last7: 0, last28: 0, appLast28: 0, keyLast28: 0 }
+    // Adds one day's count to the day, the totals and the user / key row it belongs to
+    const add = (map, id, base, row, kind) => {
       const day = dayMap.get(row.date)
-      if (!day || !row.count) continue
+      if (!day || !row.count) return
       day.count += row.count
-      day.users += 1
+      if (kind === 'key') {
+        day.keyCount += row.count
+        day.keys += 1
+        totals.keyLast28 += row.count
+      } else {
+        day.appCount += row.count
+        day.users += 1
+        totals.appLast28 += row.count
+      }
 
-      const key = String(row.userId)
-      if (!userMap.has(key)) userMap.set(key, { userId: row.userId, today: 0, last7: 0, last28: 0 })
-      const usage = userMap.get(key)
+      if (!map.has(id)) map.set(id, { ...base, today: 0, last7: 0, last28: 0 })
+      const usage = map.get(id)
       usage.last28 += row.count
       totals.last28 += row.count
       if (row.date >= from7) {
@@ -330,13 +348,29 @@ exports.getUsage = async (req, res) => {
       }
     }
 
-    const users = await User.find({ _id: { $in: Array.from(userMap.values()).map((u) => u.userId) } })
-      .select('name mobile1 rcSearchLimit rcSearchCount')
-      .lean()
+    const userMap = new Map()
+    for (const row of rows) add(userMap, String(row.userId), { userId: row.userId }, row, 'user')
+    const keyMap = new Map()
+    for (const row of keyRows) {
+      const { apiKeyId, date } = row._id
+      add(keyMap, String(apiKeyId), { apiKeyId }, { date, count: row.count }, 'key')
+    }
+
+    const [users, keys] = await Promise.all([
+      User.find({ _id: { $in: Array.from(userMap.values()).map((u) => u.userId) } })
+        .select('name mobile1 rcSearchLimit rcSearchCount')
+        .lean(),
+      ApiKey.find({ _id: { $in: Array.from(keyMap.values()).map((k) => k.apiKeyId) } })
+        .select('name callLimit callCount active userId')
+        .populate('userId', 'name')
+        .lean()
+    ])
     const usersById = new Map(users.map((u) => [String(u._id), u]))
+    const keysById = new Map(keys.map((k) => [String(k._id), k]))
 
     // Counting started when this feature went live, so averages only use the days that were counted
-    const trackingSince = firstRow?.date || null
+    const firstDates = [firstRow?.date, firstKeyCall?.date].filter(Boolean).sort()
+    const trackingSince = firstDates[0] || null
     const trackedDays = trackingSince
       ? Math.round((Date.parse(today) - Date.parse(trackingSince)) / 86400000) + 1
       : 0
@@ -367,6 +401,20 @@ exports.getUsage = async (req, res) => {
               rcSearchLimit: user?.rcSearchLimit || 0,
               rcSearchCount: user?.rcSearchCount || 0,
               rcSearchRemaining: Math.max(0, (user?.rcSearchLimit || 0) - (user?.rcSearchCount || 0))
+            }
+          })
+          .sort((a, b) => b.last28 - a.last28 || b.last7 - a.last7),
+        apiKeys: Array.from(keyMap.values())
+          .map((usage) => {
+            const key = keysById.get(String(usage.apiKeyId))
+            return {
+              ...usage,
+              name: key?.name,
+              active: key ? key.active : false,
+              userName: key?.userId?.name || '',
+              callLimit: key?.callLimit || 0,
+              callCount: key?.callCount || 0,
+              remaining: Math.max(0, (key?.callLimit || 0) - (key?.callCount || 0))
             }
           })
           .sort((a, b) => b.last28 - a.last28 || b.last7 - a.last7)
