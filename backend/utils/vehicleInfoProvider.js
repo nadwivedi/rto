@@ -170,15 +170,14 @@ const fillApi2Fields = (data) => {
   return filled
 }
 
-// API 2: GET <VEHICLE_INFO_API2_URL>?key=<VEHICLE_INFO_API2_KEY>&no=<vehicle number>. It answers
-// an unknown number with HTTP 404 and status 'Failed', and sends no usage counter.
+// API 2: VEHICLE_INFO_API2_URL is the full URL up to the vehicle number, e.g.
+// https://host/vehicle?key=xxx&no= , and the number is added at the end. It answers an unknown
+// number with HTTP 404 and status 'Failed', and sends no usage counter.
 const fetchFromApi2 = async (vehicleNumber) => {
   const apiUrl = process.env.VEHICLE_INFO_API2_URL
-  const apiKey = process.env.VEHICLE_INFO_API2_KEY
-  if (!apiUrl || !apiKey) throw new Error('API 2 is not set up (VEHICLE_INFO_API2_URL / VEHICLE_INFO_API2_KEY)')
+  if (!apiUrl) throw new Error('API 2 is not set up (VEHICLE_INFO_API2_URL)')
 
-  const response = await axios.get(apiUrl, {
-    params: { key: apiKey, no: vehicleNumber },
+  const response = await axios.get(`${apiUrl}${encodeURIComponent(vehicleNumber)}`, {
     timeout: 20000,
     validateStatus: (status) => status < 500,
     headers: { Accept: 'application/json, text/plain, */*' }
