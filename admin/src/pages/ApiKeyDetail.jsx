@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import ApiKeySaleModal from '../components/ApiKeySaleModal'
 import ApiKeyDeleteModal from '../components/ApiKeyDeleteModal'
 import ShareApiDocButton from '../components/ShareApiDocButton'
+import { PROVIDER_OPTIONS, providerLabel } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const IST = 'Asia/Kolkata'
@@ -297,13 +298,15 @@ const ApiKeyDetail = () => {
           </h1>
           <p className='text-xs sm:text-sm text-gray-600 mt-1'>
             {apiKey.userId ? `${apiKey.userId.name} · ${apiKey.userId.mobile1}` : 'No user linked'} · Created {formatDate(apiKey.createdAt)}
+            {' · Source: '}
+            <span className='font-semibold text-gray-700'>{providerLabel(apiKey.provider)}</span>
             {apiKey.note && <span className='text-gray-400'> · {apiKey.note}</span>}
           </p>
         </div>
         <div className='flex flex-wrap gap-2'>
           <button
             onClick={() => {
-              setEditing({ name: apiKey.name, userId: apiKey.userId?._id || '', note: apiKey.note || '' })
+              setEditing({ name: apiKey.name, userId: apiKey.userId?._id || '', note: apiKey.note || '', provider: apiKey.provider || 'api1' })
               setEditError('')
             }}
             className='px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold text-sm cursor-pointer'
@@ -726,6 +729,21 @@ const ApiKeyDetail = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className={labelClass}>Vehicle data source</label>
+                <select
+                  value={editing.provider}
+                  onChange={(e) => setEditing((f) => ({ ...f, provider: e.target.value }))}
+                  className={`${inputClass} cursor-pointer`}
+                >
+                  {PROVIDER_OPTIONS.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+                <p className='text-[11px] text-gray-400 mt-1'>Which API this key's calls go to. The customer always gets the same response format.</p>
               </div>
               <div>
                 <label className={labelClass}>Note</label>

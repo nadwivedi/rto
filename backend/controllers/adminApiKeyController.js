@@ -5,6 +5,7 @@ const ApiKeyCall = require('../models/ApiKeyCall')
 const User = require('../models/User')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity } = require('../utils/activityLog')
+const { PROVIDERS } = require('../utils/vehicleInfoProvider')
 
 const IST = 'Asia/Kolkata'
 
@@ -113,8 +114,9 @@ exports.getApiKeys = async (req, res) => {
 
 exports.createApiKey = async (req, res) => {
   try {
-    const { name, userId, note } = req.body || {}
+    const { name, userId, note, provider } = req.body || {}
     if (!name || !String(name).trim()) return badRequest(res, 'Please enter a name for this API key')
+    if (provider !== undefined && !PROVIDERS[provider]) return badRequest(res, 'Please choose API 1 or API 2')
 
     const link = await readUserId(userId)
     if (link.error) return badRequest(res, link.error)
@@ -123,6 +125,7 @@ exports.createApiKey = async (req, res) => {
       name: String(name).trim(),
       key: ApiKey.generateKey(),
       userId: link.userId || undefined,
+      provider: provider || 'api1',
       note: note && String(note).trim() ? String(note).trim() : undefined
     })
 
@@ -140,14 +143,14 @@ exports.createApiKey = async (req, res) => {
   }
 }
 
-// Change name / linked user / note / on-off
+// Change name / linked user / vehicle info source / note / on-off
 exports.updateApiKey = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return badRequest(res, 'Invalid API key')
     const apiKey = await ApiKey.findById(req.params.id)
     if (!apiKey) return notFound(res)
 
-    const { name, userId, note, active } = req.body || {}
+    const { name, userId, note, active, provider } = req.body || {}
     const changes = []
 
     if (name !== undefined) {
@@ -162,6 +165,12 @@ exports.updateApiKey = async (req, res) => {
         changes.push({ field: 'User', from: apiKey.userId ? String(apiKey.userId) : null, to: link.userId ? String(link.userId) : null })
       }
       apiKey.userId = link.userId || undefined
+    }
+    if (provider !== undefined) {
+      if (!PROVIDERS[provider]) return badRequest(res, 'Please choose API 1 or API 2')
+      const current = apiKey.provider || 'api1'
+      if (current !== provider) changes.push({ field: 'Vehicle data source', from: PROVIDERS[current], to: PROVIDERS[provider] })
+      apiKey.provider = provider
     }
     if (note !== undefined) {
       apiKey.note = String(note).trim() || undefined

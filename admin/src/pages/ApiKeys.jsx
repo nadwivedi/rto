@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import ApiKeySaleModal from '../components/ApiKeySaleModal'
 import ApiKeyDeleteModal from '../components/ApiKeyDeleteModal'
 import ShareApiDocButton from '../components/ShareApiDocButton'
+import { PROVIDER_OPTIONS } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -40,7 +41,7 @@ const ApiKeys = () => {
   const [copiedId, setCopiedId] = useState(null)
 
   const [showCreate, setShowCreate] = useState(false)
-  const [createForm, setCreateForm] = useState({ name: '', userId: '', note: '' })
+  const [createForm, setCreateForm] = useState({ name: '', userId: '', note: '', provider: 'api1' })
   const [createError, setCreateError] = useState('')
   const [creating, setCreating] = useState(false)
   const [sellKey, setSellKey] = useState(null)
@@ -138,7 +139,7 @@ const ApiKeys = () => {
           <ShareApiDocButton />
           <button
             onClick={() => {
-              setCreateForm({ name: '', userId: '', note: '' })
+              setCreateForm({ name: '', userId: '', note: '', provider: 'api1' })
               setCreateError('')
               setShowCreate(true)
             }}
@@ -193,6 +194,11 @@ const ApiKeys = () => {
                           {!k.active && (
                             <span className='ml-1.5 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-100 text-gray-500 border border-gray-200'>
                               Off
+                            </span>
+                          )}
+                          {k.provider === 'api2' && (
+                            <span className='ml-1.5 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200'>
+                              API 2
                             </span>
                           )}
                           <div className='text-gray-400'>{k.userId ? `${k.userId.name} · ${k.userId.mobile1}` : 'No user linked'}</div>
@@ -311,6 +317,21 @@ const ApiKeys = () => {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div>
+                <label className={labelClass}>Vehicle data source</label>
+                <select
+                  value={createForm.provider}
+                  onChange={(e) => setCreateForm((f) => ({ ...f, provider: e.target.value }))}
+                  className={`${inputClass} cursor-pointer`}
+                >
+                  {PROVIDER_OPTIONS.map((p) => (
+                    <option key={p.value} value={p.value}>
+                      {p.label}
+                    </option>
+                  ))}
+                </select>
+                <p className='text-[11px] text-gray-400 mt-1'>Which API this key's calls go to. The customer always gets the same response format.</p>
               </div>
               <div>
                 <label className={labelClass}>

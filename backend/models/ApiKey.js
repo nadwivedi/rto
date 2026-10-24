@@ -36,6 +36,12 @@ const apiKeySchema = new mongoose.Schema(
       default: 0,
       min: 0
     },
+    // Which vehicle info source this key's calls go to (see utils/vehicleInfoProvider PROVIDERS)
+    provider: {
+      type: String,
+      enum: ['api1', 'api2'],
+      default: 'api1'
+    },
     // Switched off keys are refused without calling the provider
     active: {
       type: Boolean,

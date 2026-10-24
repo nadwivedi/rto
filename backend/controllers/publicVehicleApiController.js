@@ -81,7 +81,7 @@ exports.lookupVehicle = async (req, res) => {
   }
 
   try {
-    const result = await fetchVehicleInfo(vehicleNumber, { userId: apiKey.userId })
+    const result = await fetchVehicleInfo(vehicleNumber, { userId: apiKey.userId, provider: apiKey.provider })
     if (!result.found) {
       await refund()
       return reply(404, { success: false, message: result.message }, { vehicleNumber, charged: false })
