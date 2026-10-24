@@ -62,14 +62,17 @@ Keep your API key secret and call the API from your server, not from browser Jav
     "BLACKLIST_STATUS": "NA",
     "NOC_DETAILS": "NA"
   },
+  "source": "rtosarthi_api1",
   "usage": { "limit": 1000, "used": 101, "remaining": 899 }
 }
 ```
 
-Sample data. Fields are returned wherever they are available on the vehicle record.
+Sample data. Fields are returned wherever they are available on the vehicle record. A field with no value is `"NA"`.
 
 `usage.remaining` is how many calls you have left.
 Only successful calls use up your limit.
+
+`source` says which RTO Sarthi API served the call: `rtosarthi_api1` or `rtosarthi_api2`. The fields in `data` are the same for both. Every reply has `source` and `usage`, including errors.
 
 ## Main fields in `data`
 

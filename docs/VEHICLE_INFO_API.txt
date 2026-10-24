@@ -57,14 +57,20 @@ number as JSON, in seconds.
     "TAX_UPTO": "31-Mar-2027",
     "BLACKLIST_STATUS": "NA"
   },
+  "source": "rtosarthi_api1",
   "usage": { "limit": 1000, "used": 101, "remaining": 899 }
 }
 
    Sample data. Fields come wherever they
    are available on the vehicle record.
+   A field with no value is "NA".
 
    ▸ usage.remaining = calls you have left
    ▸ Only successful calls use your limit
+   ▸ source = which RTO Sarthi API served
+     the call (rtosarthi_api1 or
+     rtosarthi_api2). The data fields are
+     the same for both.
 
 
 ━━ 4. MAIN FIELDS IN "data" ━━━━━━━━━━━
