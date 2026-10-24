@@ -132,6 +132,7 @@ export default function CarDetailsApi() {
         ],
       }}
       related={[
+        { to: '/motorcycle-api-india', label: 'Motorcycle API India' },
         { to: '/car-information-api', label: 'Car information API' },
         { to: '/vehicle-make-and-model-api', label: 'Vehicle make and model API' },
         { to: '/vehicle-details-api', label: 'Vehicle details API India' },

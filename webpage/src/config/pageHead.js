@@ -15,6 +15,7 @@ import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
 import { vehicleDataApiFaqs, VEHICLE_DATA_API_PATH } from '../data/vehicleDataApi'
 import { carDetailsApiFaqs, CAR_DETAILS_API_PATH } from '../data/carDetailsApi'
 import { carInformationApiFaqs, CAR_INFORMATION_API_PATH } from '../data/carInformationApi'
+import { motorcycleApiFaqs, MOTORCYCLE_API_PATH } from '../data/motorcycleApi'
 import { homeFaqs } from '../data/home'
 import { rcDownloadFaqs, RC_DOWNLOAD_PATH } from '../data/rcDownload'
 import { freeDownloadFaqs, FREE_DOWNLOAD_PATH } from '../data/freeDownload'
@@ -177,6 +178,22 @@ const PRODUCT_PAGES = {
       'Insurance, PUC, fitness and road tax validity',
       'Financer, blacklist and NOC status',
       'Cars from all states of India, including BH series',
+      'Pay only for successful searches',
+    ],
+  },
+  [MOTORCYCLE_API_PATH]: {
+    name: 'Motorcycle API India',
+    faqs: motorcycleApiFaqs,
+    alternateName: ['Bike Details API India', 'Two Wheeler Details API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Bike and scooter details by registration number as JSON',
+      'Maker, model, engine CC, fuel and emission norms',
+      'Manufacturing date, owner name and owner count',
+      'Chassis and engine number',
+      'Insurance and PUC validity, financer and blacklist',
+      'Petrol and electric two-wheelers from all states, including BH series',
       'Pay only for successful searches',
     ],
   },

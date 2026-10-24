@@ -112,14 +112,14 @@ export const PAGE_SEO = {
     description:
       'Vehicle details API India: API for getting vehicle details by vehicle number - owner, model, chassis, engine, insurance, PUC, fitness & tax as JSON. All states & BH series. From ₹1.5.',
     path: '/vehicle-details-api',
-    keywords: 'vehicle details API India, vehicle details API, vehicle detail API, API for getting vehicle details, API for vehicle details, API to get vehicle details, get vehicle details by vehicle number API, vehicle number to details API, API for RC details, vehicle details API for insurance, vehicle details API for used cars, vehicle details API for loan verification, fleet vehicle details API, vehicle details API provider in India, vehicle details API price in India, vehicle details by number API, vehicle number details API, RC details API India, bike details API India, truck details API, BH series vehicle details API, vehicle owner details API India, vehicle details JSON API, vehicle details API for developers, all India vehicle details API, cheapest vehicle details API India, best vehicle details API India, gaadi number se details API, RTO Sarthi vehicle details API',
+    keywords: 'vehicle details API India, vehicle details API, vehicle detail API, API for getting vehicle details, API for vehicle details, API to get vehicle details, get vehicle details by vehicle number API, vehicle number to details API, API for RC details, vehicle details API for insurance, vehicle details API for used cars, vehicle details API for loan verification, fleet vehicle details API, vehicle details API provider in India, vehicle details API price in India, vehicle details by number API, vehicle number details API, RC details API India, truck details API, BH series vehicle details API, vehicle owner details API India, vehicle details JSON API, vehicle details API for developers, all India vehicle details API, cheapest vehicle details API India, best vehicle details API India, gaadi number se details API, RTO Sarthi vehicle details API',
   },
   '/vehicle-data-api': {
     title: `Vehicle Data API India - Complete Vehicle Data by Number from ₹1.5 | RTO Sarthi`,
     description:
       'Vehicle data API India: complete vehicle data by registration number as JSON - owner, model, specs, chassis, engine, insurance, PUC, fitness, tax, financer & NOC. All states. From ₹1.5.',
     path: '/vehicle-data-api',
-    keywords: 'vehicle data API India, vehicle data API, Indian vehicle data API, vehicle data API by registration number, vehicle registration data API, RTO vehicle data API, vehicle database API India, vehicle data JSON API, car data API India, bike data API India, vehicle owner data API, vehicle specification data API, vehicle data API for insurance, vehicle data API for loans, vehicle data API for used cars, fleet vehicle data API, bulk vehicle data API, vehicle data API price India, vehicle data API provider India, RTO Sarthi vehicle data API',
+    keywords: 'vehicle data API India, vehicle data API, Indian vehicle data API, vehicle data API by registration number, vehicle registration data API, RTO vehicle data API, vehicle database API India, vehicle data JSON API, car data API India, vehicle owner data API, vehicle specification data API, vehicle data API for insurance, vehicle data API for loans, vehicle data API for used cars, fleet vehicle data API, bulk vehicle data API, vehicle data API price India, vehicle data API provider India, RTO Sarthi vehicle data API',
   },
   '/car-details-api': {
     title: `Car Details API India - Car Model, Variant & Insurance by Number from ₹1.5 | RTO Sarthi`,
@@ -134,6 +134,13 @@ export const PAGE_SEO = {
       'Car information API (car info API) for India: get any car’s full record by number - registration, owner count, chassis, engine, insurance, PUC, fitness, tax, financer, blacklist & NOC. From ₹1.5.',
     path: '/car-information-api',
     keywords: 'car information API, car info API, car information API India, car info API India, car information by number API, car info by number plate API, car number information API, car registration information API, car info lookup API, car history API India, car owner count API, car loan check API, car hypothecation check API, car blacklist check API, car insurance info API, used car information API, car information JSON API, car info API price, car information API provider India, RTO Sarthi car information API',
+  },
+  '/motorcycle-api-india': {
+    title: `Motorcycle API India - Bike Details by Number from ₹1.5 | RTO Sarthi`,
+    description:
+      'Motorcycle API in India: get bike and scooter details by number - maker, model, engine CC, fuel, BS norms, owner count, chassis, engine, insurance, PUC & financer as JSON. From ₹1.5 per search.',
+    path: '/motorcycle-api-india',
+    keywords: 'motorcycle API India, motorcycle API, motorcycle details API, bike API India, bike details API, bike details API India, bike data API India, bike lookup API, bike number details API, bike details by number API, two wheeler API India, two wheeler details API, two wheeler vehicle details API, scooter details API, scooter API India, electric scooter details API, bike registration details API, bike owner details API, bike CC by number, bike model by number plate API, bike chassis number API, bike PUC check API, used bike check API, two wheeler loan check API, motorcycle API price India, RTO Sarthi motorcycle API',
   },
   '/vehicle-make-and-model-api': {
     title: `Vehicle Make and Model API - by Vehicle Number from ₹1.5 | RTO Sarthi`,
@@ -196,7 +203,7 @@ export const PAGE_SEO = {
     description:
       'Vehicle lookup API for India: look up any registration number for status, RTO, owner, model, chassis, engine, insurance, PUC, fitness, financer, blacklist & NOC. From ₹1.5.',
     path: '/vehicle-lookup-api',
-    keywords: 'vehicle lookup API, vehicle lookup API India, vehicle registration lookup API, registration number lookup API, vehicle number lookup API, number plate lookup API, licence plate lookup API India, car lookup API, bike lookup API, chassis number verification API, vehicle hypothecation check API, bulk vehicle lookup API, RC lookup API, vehicle lookup API price, RTO Sarthi vehicle lookup API',
+    keywords: 'vehicle lookup API, vehicle lookup API India, vehicle registration lookup API, registration number lookup API, vehicle number lookup API, number plate lookup API, licence plate lookup API India, car lookup API, chassis number verification API, vehicle hypothecation check API, bulk vehicle lookup API, RC lookup API, vehicle lookup API price, RTO Sarthi vehicle lookup API',
   },
   '/rc-download-software': {
     title: `RC Download Software for RTO Agents - Download RC at ₹1.5 | RTO Sarthi`,
