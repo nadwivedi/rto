@@ -91,42 +91,60 @@ const PROVIDERS = {
   api2: 'API 2'
 }
 
-// API 2 field names (any case) -> the names API 1 uses, so every customer gets the same JSON.
-// Its cubic_capacity and seating_capacity are left out: they come back with the same values
-// even when no vehicle is found.
+// The fields API 1 sends, in its order. API 2 replies are turned into exactly these fields,
+// so a customer gets the same JSON from either API.
+const API1_FIELDS = [
+  'REGN_NO', 'REGN_DT', 'REGN_UPTO', 'OWNER_NAME', 'F_NAME', 'STATE_CD', 'RTO_CD', 'PRESENT_ADDRESS',
+  'PERMANENT_ADDRESS', 'MOBILE_NO', 'CHASI_NO', 'ENG_NO', 'MAKER_DESC', 'MAKER_MODEL', 'BODY_TYPE_DESC',
+  'FUEL_DESC', 'COLOR', 'FIT_UPTO', 'INSURANCE_COMP', 'INSURANCE_UPTO', 'MANU_MONTH_YR', 'POLICY_NO',
+  'PUC_UPTO', 'INS_POLICY_NO', 'FINANCER_DETAILS', 'PERMIT_NO', 'PERMIT_ISSUE_DATE', 'RC_NP_NO',
+  'REGISTERED_AT', 'STATUS_AS_ON', 'PUCC_UPTO', 'PUCC_NO', 'STATUS', 'VEHICLE_SURRENDERED_TO_DEALER',
+  'CURRENTADD_STATENAME', 'CURRENTADD_DISTRICTCODE', 'CURRENTADD_PINCODE', 'VEHICLE_CLASS',
+  'VEHICLE_CATEGORY', 'SEATING_CAPACITY', 'SLEEPER_CAPACITY', 'STANDING_CAPACITY', 'OWNER_SERIAL_NO',
+  'UNLADEN_WEIGHT', 'LADEN_WEIGHT', 'WHEELBASE', 'NO_OF_CYLINDERS', 'CUBIC_CAPACITY', 'FUEL_NORMS',
+  'TAX_UPTO', 'BLACKLIST_STATUS', 'NOC_DETAILS', 'IS_COMMERCIAL'
+]
+
+// API 1 field <- API 2 field names (any case), first one with a real value wins.
+// API 2's `status` is the request result (Success / Failed), not the RC status, and its
+// cubic_capacity / seating_capacity come back with the same values even when no vehicle is
+// found, so none of them are used.
 const API2_FIELDS = {
-  REGN_NO: ['regno', 'vehicle_number'],
-  STATUS: ['rc_status', 'vehicle_status'],
-  REGISTERED_AT: [],
-  REGN_DT: ['registrationdate', 'regdate', 'reg_date'],
+  REGN_NO: ['regno', 'registration_number', 'vehicle_number'],
+  REGN_DT: ['registration_date', 'registrationdate', 'regdate', 'reg_date'],
   REGN_UPTO: ['regn_upto', 'registration_upto'],
-  OWNER_NAME: ['owner_name'],
-  OWNER_SERIAL_NO: ['owner_serial_no'],
-  MAKER_DESC: ['make', 'maker'],
-  MAKER_MODEL: ['model'],
-  VEHICLE_CLASS: ['vehicle_class'],
-  BODY_TYPE: ['body_type'],
-  FUEL_DESC: ['fuel_type', 'fueltype'],
-  NORMS_DESC: ['norms_desc', 'fuel_norms'],
-  CUBIC_CAP: ['engine_cc', 'cc', 'enginecc', 'enginecapacity'],
-  SEAT_CAP: [],
-  COLOR: ['color', 'colour'],
-  MANU_MONTH_YR: ['mfg_mnth_yr'],
+  F_NAME: ['father_name'],
+  RTO_CD: ['rtocode'],
+  MOBILE_NO: ['mobile_no'],
   CHASI_NO: ['chassisno', 'chassis_no'],
   ENG_NO: ['engineno', 'engine_no'],
-  FINANCER_DETAILS: ['financer_name', 'hypo'],
-  INSURANCE_COMP: ['ins_company', 'insurance_company'],
-  INS_POLICY_NO: ['policy_no', 'insurance_policy_no'],
-  INSURANCE_UPTO: ['prevpolicyexpirydate', 'f_prevpolicyexpirydate', 'insurance_upto'],
-  PUCC_NO: ['pucc_no', 'puc_no'],
-  PUCC_UPTO: ['pucc_upto', 'puc_upto'],
+  MAKER_DESC: ['make', 'maker'],
+  MAKER_MODEL: ['maker_model', 'model', 'modal_name'],
+  BODY_TYPE_DESC: ['body_type'],
+  FUEL_DESC: ['fuel_type', 'fueltype'],
+  COLOR: ['color', 'colour'],
   FIT_UPTO: ['fitness_upto', 'fit_upto'],
+  INSURANCE_COMP: ['insurance_company', 'ins_company'],
+  INSURANCE_UPTO: ['insurance_upto', 'insurance_expiry', 'prevpolicyexpirydate', 'f_prevpolicyexpirydate'],
+  MANU_MONTH_YR: ['mfg_mnth_yr'],
+  POLICY_NO: ['policy_no', 'insurance_policy_no'],
+  INS_POLICY_NO: ['policy_no', 'insurance_policy_no'],
+  PUC_UPTO: ['puc_upto', 'pucc_upto'],
+  PUCC_UPTO: ['puc_upto', 'pucc_upto'],
+  PUCC_NO: ['pucc_no', 'puc_no'],
+  FINANCER_DETAILS: ['financer_name', 'hypo'],
+  PERMIT_NO: ['permit_no'],
+  REGISTERED_AT: ['registered_rto'],
+  STATUS: ['rc_status', 'vehicle_status'],
+  VEHICLE_CLASS: ['vehicle_class'],
+  OWNER_SERIAL_NO: ['owner_serial_no'],
+  CUBIC_CAPACITY: ['engine_cc', 'cc', 'enginecc', 'enginecapacity'],
+  FUEL_NORMS: ['fuel_norms', 'norms_desc'],
   TAX_UPTO: ['tax_upto'],
-  PERMIT_TYPE: ['permit_type'],
   BLACKLIST_STATUS: ['blacklist_status'],
   NOC_DETAILS: ['noc_details']
 }
-const API2_DATE_FIELDS = ['REGN_DT', 'REGN_UPTO', 'INSURANCE_UPTO', 'PUCC_UPTO', 'FIT_UPTO', 'TAX_UPTO']
+const API2_DATE_FIELDS = ['REGN_DT', 'REGN_UPTO', 'FIT_UPTO', 'INSURANCE_UPTO', 'PUC_UPTO', 'PUCC_UPTO']
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 // '2023-02-14' or '14/02/2023' -> '14-Feb-2023', the date format API 1 uses
@@ -139,8 +157,8 @@ const toApi1Date = (value) => {
   return s
 }
 
-// A value worth sending: not empty and not the provider's 'NA' placeholder
-const isReal = (v) => v !== undefined && v !== null && !/^(|na|n\/a|null|none|-)$/i.test(String(v).trim())
+// A value worth sending: not empty, not the provider's 'NA' placeholder and not masked (N*****N)
+const isReal = (v) => v !== undefined && v !== null && !/^(|na|n\/a|null|none|-)$/i.test(String(v).trim()) && !String(v).includes('*')
 
 const mapApi2Fields = (raw) => {
   const byName = new Map(Object.entries(raw).map(([k, v]) => [k.toLowerCase(), v]))
@@ -148,25 +166,38 @@ const mapApi2Fields = (raw) => {
   const data = {}
   for (const [field, names] of Object.entries(API2_FIELDS)) {
     const value = get(...names)
-    if (value !== undefined) data[field] = typeof value === 'string' ? value.trim() : value
+    if (value !== undefined) data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
   }
 
+  // API 2 masks owner_name but sends the full name split in firstname / lastname
   const owner = [get('firstname', 'first_name'), get('lastname', 'last_name')].filter(Boolean).join(' ').trim()
-  if (!data.OWNER_NAME && owner) data.OWNER_NAME = owner
-  const rtoName = get('rto_name')
-  const rtoState = get('rto_state')
-  if (rtoName) data.REGISTERED_AT = rtoState ? `${rtoName} RTO, ${rtoState}` : `${rtoName} RTO`
+  if (owner) data.OWNER_NAME = owner
+  else if (get('owner_name')) data.OWNER_NAME = String(get('owner_name')).trim()
+
+  if (!data.REGISTERED_AT && get('rto_name')) {
+    data.REGISTERED_AT = get('rto_state') ? `${get('rto_name')} RTO, ${get('rto_state')}` : `${get('rto_name')} RTO`
+  }
+  // 'CG12' / 'CG-12' -> state CG, RTO 12
+  const rto = String(get('rto', 'code') || '').match(/^([A-Za-z]{2})-?(\d+)/)
+  if (rto) {
+    data.STATE_CD = rto[1].toUpperCase()
+    if (!data.RTO_CD) data.RTO_CD = rto[2]
+  }
+  // No ownership change means the first owner
+  if (data.OWNER_SERIAL_NO === undefined && /^no$/i.test(String(get('ownershipchange') || ''))) data.OWNER_SERIAL_NO = 1
+  if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
+    data.CUBIC_CAPACITY = Number(data.CUBIC_CAPACITY).toFixed(2)
+  }
   const variant = get('variant')
   if (data.MAKER_MODEL && variant && !String(data.MAKER_MODEL).includes(variant)) data.MAKER_MODEL = `${data.MAKER_MODEL} ${variant}`
   for (const field of API2_DATE_FIELDS) if (data[field]) data[field] = toApi1Date(data[field])
   return data
 }
 
-// Same set of fields on every API 2 reply, 'NA' where API 2 has no value, so customers' code
-// never meets a missing field
+// API 1's fields in API 1's order, 'NA' where API 2 has no value
 const fillApi2Fields = (data) => {
   const filled = {}
-  for (const field of Object.keys(API2_FIELDS)) filled[field] = data[field] ?? 'NA'
+  for (const field of API1_FIELDS) filled[field] = data[field] ?? 'NA'
   return filled
 }
 

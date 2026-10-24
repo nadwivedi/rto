@@ -13,6 +13,11 @@ const apiKeyCallSchema = new mongoose.Schema(
       trim: true,
       uppercase: true
     },
+    // Which of our APIs served the call: 'rtosarthi_api1' or 'rtosarthi_api2'
+    source: {
+      type: String,
+      trim: true
+    },
     // Vehicle details were returned
     success: {
       type: Boolean,

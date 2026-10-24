@@ -56,6 +56,19 @@ const ResultBadge = ({ call }) =>
     </span>
   )
 
+// Which of our APIs served the call (calls logged before this was saved show nothing)
+const SourceTag = ({ call }) =>
+  call.source ? (
+    <span
+      className={`ml-1 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${
+        call.source === 'rtosarthi_api2' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-indigo-50 text-indigo-600 border-indigo-200'
+      }`}
+      title={call.source}
+    >
+      {call.source === 'rtosarthi_api2' ? 'API 2' : 'API 1'}
+    </span>
+  ) : null
+
 const th = 'px-2.5 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wider'
 const td = 'px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'
 const smallInput = 'px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
@@ -589,8 +602,9 @@ const ApiKeyDetail = () => {
                         <span className='text-gray-500'>{call.message}</span>
                       )}
                     </td>
-                    <td className={td}>
+                    <td className={`${td} whitespace-nowrap`}>
                       <ResultBadge call={call} />
+                      <SourceTag call={call} />
                     </td>
                     <td className={`${td} text-right tabular-nums text-gray-700`}>{call.remaining ?? '-'}</td>
                     <td className={`${td} text-right tabular-nums text-gray-500 whitespace-nowrap`}>
@@ -638,6 +652,7 @@ const ApiKeyDetail = () => {
                 <div>
                   <h2 className='text-lg font-bold text-gray-800 flex items-center gap-2'>
                     {openCall.vehicleNumber || 'No vehicle number'} <ResultBadge call={openCall} />
+                    <SourceTag call={openCall} />
                   </h2>
                   <p className='text-xs text-gray-500 mt-0.5'>
                     {formatDateTime(openCall.createdAt)} · {openCall.message}

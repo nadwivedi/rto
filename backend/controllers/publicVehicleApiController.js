@@ -48,9 +48,12 @@ exports.lookupVehicle = async (req, res) => {
     return res.status(401).json({ success: false, message: 'Invalid API key' })
   }
 
+  // Which of our APIs served the call, sent back on every reply and saved in the log
+  const source = apiKey.provider === 'api2' ? 'rtosarthi_api2' : 'rtosarthi_api1'
+
   const reply = async (statusCode, payload, entry = {}) => {
-    await logCall(apiKey, req, startedAt, { statusCode, success: statusCode === 200, message: payload.message, ...entry })
-    return res.status(statusCode).json({ ...payload, usage: usageOf(apiKey) })
+    await logCall(apiKey, req, startedAt, { statusCode, success: statusCode === 200, message: payload.message, source, ...entry })
+    return res.status(statusCode).json({ ...payload, source, usage: usageOf(apiKey) })
   }
 
   if (!apiKey.active) {
