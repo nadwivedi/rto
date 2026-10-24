@@ -153,6 +153,7 @@ export default function VehicleDetailsApiIndia() {
         ],
       }}
       related={[
+        { to: '/vehicle-registration-details-api', label: 'Vehicle registration details API' },
         { to: '/vahan-api', label: 'Vahan API' },
         { to: '/vehicle-data-api', label: 'Vehicle data API India' },
         { to: '/parivahan-api', label: 'Parivahan API' },

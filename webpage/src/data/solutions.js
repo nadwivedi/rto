@@ -38,6 +38,7 @@ export const SOLUTION_GROUPS = [
     items: [
       { to: '/vehicle-information-api', label: 'Vehicle Information API', desc: 'RC details by vehicle number for your software as JSON, from ₹1.5 per successful search' },
       { to: '/vehicle-details-api', label: 'Vehicle Details API India', desc: 'API for getting vehicle details of any Indian vehicle number, incl. BH series, for insurance, used car, loan and fleet software' },
+      { to: '/vehicle-registration-details-api', label: 'Vehicle Registration Details API', desc: 'Registration date, validity, RTO, status and owner count of any vehicle number as JSON' },
       { to: '/vehicle-data-api', label: 'Vehicle Data API India', desc: 'Complete vehicle data by registration number as JSON: registration, owner, specs, validity, financer & NOC' },
       { to: '/car-details-api', label: 'Car Details API', desc: 'Car model, variant, fuel, CC, year, owner count and insurance from any car number' },
       { to: '/car-information-api', label: 'Car Information API', desc: 'Car info API: full car record by number with owner count, validity dates, financer, blacklist & NOC' },

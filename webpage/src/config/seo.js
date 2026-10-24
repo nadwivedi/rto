@@ -105,14 +105,14 @@ export const PAGE_SEO = {
     description:
       'Vahan API for vehicle details by vehicle number: owner, address, chassis, engine, financer, insurance, PUC, fitness & tax as JSON. All states. From ₹1.5 per search.',
     path: '/vahan-api',
-    keywords: 'vahan API, vahan API for vehicle details, vahan vehicle details API, vahan API India, vahan RC API, vahan API price, vahan API provider, vahan database API, vahan vehicle API, vahan API for vehicle owner details, vahan API for chassis number, vahan API for insurance details, vehicle details API by vehicle number, RC details API India, vehicle registration details API, cheapest vahan API, RTO Sarthi vahan API',
+    keywords: 'vahan API, vahan API for vehicle details, vahan vehicle details API, vahan API India, vahan RC API, vahan API price, vahan API provider, vahan database API, vahan vehicle API, vahan API for vehicle owner details, vahan API for chassis number, vahan API for insurance details, vehicle details API by vehicle number, RC details API India, cheapest vahan API, RTO Sarthi vahan API',
   },
   '/vehicle-details-api': {
     title: `Vehicle Details API India - API for Getting Vehicle Details from ₹1.5 | RTO Sarthi`,
     description:
       'Vehicle details API India: API for getting vehicle details by vehicle number - owner, model, chassis, engine, insurance, PUC, fitness & tax as JSON. All states & BH series. From ₹1.5.',
     path: '/vehicle-details-api',
-    keywords: 'vehicle details API India, vehicle details API, vehicle detail API, API for getting vehicle details, API for vehicle details, API to get vehicle details, get vehicle details by vehicle number API, vehicle number to details API, API for RC details, vehicle details API for insurance, vehicle details API for used cars, vehicle details API for loan verification, fleet vehicle details API, vehicle details API provider in India, vehicle details API price in India, vehicle details by number API, vehicle number details API, vehicle registration details API India, RC details API India, bike details API India, truck details API, BH series vehicle details API, vehicle owner details API India, vehicle details JSON API, vehicle details API for developers, all India vehicle details API, cheapest vehicle details API India, best vehicle details API India, gaadi number se details API, RTO Sarthi vehicle details API',
+    keywords: 'vehicle details API India, vehicle details API, vehicle detail API, API for getting vehicle details, API for vehicle details, API to get vehicle details, get vehicle details by vehicle number API, vehicle number to details API, API for RC details, vehicle details API for insurance, vehicle details API for used cars, vehicle details API for loan verification, fleet vehicle details API, vehicle details API provider in India, vehicle details API price in India, vehicle details by number API, vehicle number details API, RC details API India, bike details API India, truck details API, BH series vehicle details API, vehicle owner details API India, vehicle details JSON API, vehicle details API for developers, all India vehicle details API, cheapest vehicle details API India, best vehicle details API India, gaadi number se details API, RTO Sarthi vehicle details API',
   },
   '/vehicle-data-api': {
     title: `Vehicle Data API India - Complete Vehicle Data by Number from ₹1.5 | RTO Sarthi`,
@@ -176,6 +176,13 @@ export const PAGE_SEO = {
       'Vehicle PUC details API (RC to PUC details API) for India: get PUC certificate number and PUC valid-up-to date of any vehicle number as JSON, with model, fuel, BS norms & insurance. From ₹1.5.',
     path: '/vehicle-puc-details-api',
     keywords: 'vehicle PUC details API, RC to PUC details API, PUC details API, PUC API India, vehicle PUC API, PUC status API, PUC check API, PUC check by vehicle number API, PUC validity API, PUC expiry API, PUC certificate API, PUC certificate number API, PUCC API, pollution certificate API, pollution under control API, PUC details by vehicle number, RC to PUC details, vehicle number to PUC details, bulk PUC check API, PUC API for insurance, PUC API for fleet, PUC details API price, RTO Sarthi PUC API',
+  },
+  '/vehicle-registration-details-api': {
+    title: `Vehicle Registration Details API India - RC Registration Record from ₹1.5 | RTO Sarthi`,
+    description:
+      'Vehicle registration details API for India: registration date, valid-up-to, registering RTO, status, owner & owner count, class, model, chassis, engine, NOC & blacklist by number as JSON. From ₹1.5.',
+    path: '/vehicle-registration-details-api',
+    keywords: 'vehicle registration details API, vehicle registration details API India, registration details API, vehicle registration API, vehicle registration API India, registration number details API, vehicle registration date API, registration validity API, registration expiry API, vehicle registration status API, registering RTO API, RTO by vehicle number API, vehicle owner count API, registration certificate details API, RC registration details API, vehicle registration record API, BH series registration details API, vehicle registration details by number, vehicle registration details API price, RTO Sarthi registration details API',
   },
   '/parivahan-api': {
     title: `Parivahan API to Get Vehicle Details - Cost from ₹1.5 per Search | RTO Sarthi`,

@@ -18,6 +18,7 @@ import VehicleRcVerificationApi from './pages/VehicleRcVerificationApi'
 import VehicleVerificationApi from './pages/VehicleVerificationApi'
 import RcToChassisApi from './pages/RcToChassisApi'
 import VehiclePucDetailsApi from './pages/VehiclePucDetailsApi'
+import VehicleRegistrationDetailsApi from './pages/VehicleRegistrationDetailsApi'
 import VehicleDetailsApiIndia from './pages/VehicleDetailsApiIndia'
 import VehicleDataApi from './pages/VehicleDataApi'
 import CarDetailsApi from './pages/CarDetailsApi'
@@ -68,6 +69,7 @@ export default function AppRoutes() {
         <Route path="vehicle-verification-api" element={<VehicleVerificationApi />} />
         <Route path="rc-to-chassis-number-api" element={<RcToChassisApi />} />
         <Route path="vehicle-puc-details-api" element={<VehiclePucDetailsApi />} />
+        <Route path="vehicle-registration-details-api" element={<VehicleRegistrationDetailsApi />} />
         <Route path="api-for-vehicle-details" element={<Navigate to="/vehicle-details-api" replace />} />
         <Route path="vehicle-details-api" element={<VehicleDetailsApiIndia />} />
         <Route path="vehicle-data-api" element={<VehicleDataApi />} />
