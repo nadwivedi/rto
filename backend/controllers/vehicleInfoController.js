@@ -109,18 +109,22 @@ const lookupVehicle = async (req, res) => {
       }
     }
 
-    // ── Increment user's lifetime search count ──
-    const updatedUser = await User.findByIdAndUpdate(
-      targetUserId,
-      { $inc: { rcSearchCount: 1 } },
-      { new: true }
-    ).select('rcSearchLimit rcSearchCount')
+    // ── Increment user's lifetime search count, only when the provider used one of our credits ──
+    const charged = result.charged !== false
+    let updatedUser = null
+    if (charged) {
+      updatedUser = await User.findByIdAndUpdate(
+        targetUserId,
+        { $inc: { rcSearchCount: 1 } },
+        { new: true }
+      ).select('rcSearchLimit rcSearchCount')
 
-    // Day-wise usage for the admin's Vehicle API Sales page
-    await RcSearchUsage.recordSearch(targetUserId)
+      // Day-wise usage for the admin's Vehicle API Sales page
+      await RcSearchUsage.recordSearch(targetUserId)
+    }
 
     const newLimit = updatedUser?.rcSearchLimit || currentLimit
-    const newCount = updatedUser?.rcSearchCount || (currentCount + 1)
+    const newCount = updatedUser?.rcSearchCount || (charged ? currentCount + 1 : currentCount)
     const newRemaining = Math.max(0, newLimit - newCount)
 
     return res.status(200).json({

@@ -13,10 +13,22 @@ const apiKeyCallSchema = new mongoose.Schema(
       trim: true,
       uppercase: true
     },
-    // Vehicle details were returned (and one call was used from the limit)
+    // Vehicle details were returned
     success: {
       type: Boolean,
       default: false
+    },
+    // One call was used from the key's limit (only when the provider used one of our credits)
+    charged: {
+      type: Boolean,
+      default: false
+    },
+    // The provider's own counter after this call, to check `charged` against
+    providerUsed: {
+      type: Number
+    },
+    providerRemaining: {
+      type: Number
     },
     // HTTP status sent to the caller
     statusCode: {

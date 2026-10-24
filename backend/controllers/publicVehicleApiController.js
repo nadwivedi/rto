@@ -84,16 +84,22 @@ exports.lookupVehicle = async (req, res) => {
     const result = await fetchVehicleInfo(vehicleNumber, { userId: apiKey.userId })
     if (!result.found) {
       await refund()
-      return reply(404, { success: false, message: result.message }, { vehicleNumber })
+      return reply(404, { success: false, message: result.message }, { vehicleNumber, charged: false })
     }
 
     // The provider's own account quota is ours, not the customer's
     const { _usage, ...data } = result.data
+    // Only count the call when it used one of our provider credits
+    const charged = result.charged !== false
+    if (!charged) await refund()
     return reply(
       200,
       { success: true, message: 'Vehicle details fetched successfully', vehicleNumber, data },
       {
         vehicleNumber,
+        charged,
+        providerUsed: Number(_usage?.used) || undefined,
+        providerRemaining: Number(_usage?.remaining) || undefined,
         response: data,
         ownerName: data.OWNER_NAME || '',
         makerModel: `${data.MAKER_DESC || ''} ${data.MAKER_MODEL || ''}`.trim()

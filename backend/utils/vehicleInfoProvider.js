@@ -1,7 +1,39 @@
 const axios = require('axios')
 const ApiUsage = require('../models/ApiUsage')
+const ProviderCharge = require('../models/ProviderCharge')
 
 const VEHICLE_INFO_PROVIDER = 'vehicleInfo'
+
+const toNumber = (value) => {
+  const n = Number(value)
+  return value !== null && value !== '' && Number.isFinite(n) ? n : undefined
+}
+
+/**
+ * Did this lookup use one of our provider credits? The provider's `used` counter goes up by
+ * one for every credit, so each new value is saved once (unique index). Seeing a value that
+ * is already saved means the provider did not charge for this call.
+ * Resolves to true / false, or null when the reply has no counter (caller decides).
+ */
+const providerCharged = async (usage, vehicleNumber) => {
+  const used = toNumber(usage?.used)
+  if (used === undefined) return null
+  const totalLimit = toNumber(usage.total_limit)
+  try {
+    await ProviderCharge.create({
+      provider: VEHICLE_INFO_PROVIDER,
+      totalLimit: totalLimit ?? null,
+      used,
+      remaining: toNumber(usage.remaining),
+      vehicleNumber
+    })
+    return true
+  } catch (err) {
+    if (err?.code === 11000) return false
+    console.error('Failed to check provider charge:', err.message)
+    return null
+  }
+}
 
 /**
  * The provider reports its own account quota on every response as
@@ -12,10 +44,6 @@ const VEHICLE_INFO_PROVIDER = 'vehicleInfo'
 const recordProviderUsage = async (usage, { vehicleNumber, userId } = {}) => {
   if (!usage || typeof usage !== 'object') return
 
-  const toNumber = (value) => {
-    const n = Number(value)
-    return value !== null && value !== '' && Number.isFinite(n) ? n : undefined
-  }
   const totalLimit = toNumber(usage.total_limit)
   const used = toNumber(usage.used)
   const remaining = toNumber(usage.remaining)
@@ -58,8 +86,9 @@ const hasVehicleDetails = (data) =>
 const cleanVehicleNumber = (raw) => String(raw || '').replace(/[\s-]/g, '').toUpperCase()
 
 /**
- * One live lookup at the vehicle info provider (uses one provider credit).
- * Resolves to { found: true, data } or { found: false, message }.
+ * One live lookup at the vehicle info provider.
+ * Resolves to { found: true, data, charged } or { found: false, message, charged }, where
+ * `charged` says whether the provider used one of our credits (null when it did not say).
  * Throws when the provider can't be reached (network error, timeout, 5xx).
  */
 const fetchVehicleInfo = async (vehicleNumber, { userId } = {}) => {
@@ -86,19 +115,21 @@ const fetchVehicleInfo = async (vehicleNumber, { userId } = {}) => {
 
   // Recorded before the error check so a "not found" reply still updates the quota
   await recordProviderUsage(data?._usage, { vehicleNumber, userId })
+  const charged = await providerCharged(data?._usage, vehicleNumber)
 
   if (!data || typeof data !== 'object' || data.error || data.status === 'error' || data.status === false) {
     return {
       found: false,
+      charged,
       message: data?.message || data?.error || 'Vehicle details not found. Please check registration number.'
     }
   }
 
   if (!hasVehicleDetails(data)) {
-    return { found: false, message: 'Vehicle details not found. Please check registration number.' }
+    return { found: false, charged, message: 'Vehicle details not found. Please check registration number.' }
   }
 
-  return { found: true, data }
+  return { found: true, data, charged }
 }
 
 module.exports = { fetchVehicleInfo, recordProviderUsage, cleanVehicleNumber }
