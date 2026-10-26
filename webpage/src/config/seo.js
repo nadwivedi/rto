@@ -191,6 +191,13 @@ export const PAGE_SEO = {
     path: '/vehicle-puc-details-api',
     keywords: 'vehicle PUC details API, RC to PUC details API, PUC details API, PUC API India, vehicle PUC API, PUC status API, PUC check API, PUC check by vehicle number API, PUC validity API, PUC expiry API, PUC certificate API, PUC certificate number API, PUCC API, pollution certificate API, pollution under control API, PUC details by vehicle number, RC to PUC details, vehicle number to PUC details, bulk PUC check API, PUC API for insurance, PUC API for fleet, PUC details API price, RTO Sarthi PUC API',
   },
+  '/vehicle-fitness-details-api': {
+    title: `Vehicle Fitness Details API - Check Fitness Validity by Number from ₹1.5 | RTO Sarthi`,
+    description:
+      'Vehicle fitness details API for India: get the fitness valid-up-to date of any vehicle number as JSON, with vehicle class, permit, insurance, PUC & road tax validity. All states. From ₹1.5.',
+    path: '/vehicle-fitness-details-api',
+    keywords: 'vehicle fitness details API, vehicle fitness API, vehicle fitness API India, fitness details API, fitness status API, fitness check API, vehicle fitness check by vehicle number API, fitness validity API, fitness expiry API, fitness certificate API, vehicle fitness certificate API, FIT_UPTO API, RC to fitness details API, vehicle number to fitness details, fitness details by vehicle number, commercial vehicle fitness API, truck fitness check API, bus fitness check API, fleet fitness check API, bulk fitness check API, fitness API for insurance, vehicle fitness details API price, RTO Sarthi fitness API',
+  },
   '/vehicle-registration-details-api': {
     title: `Vehicle Registration Details API India - RC Registration Record from ₹1.5 | RTO Sarthi`,
     description:

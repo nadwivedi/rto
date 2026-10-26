@@ -10,6 +10,7 @@ import { vehicleVerificationApiFaqs, VEHICLE_VERIFICATION_API_PATH } from '../da
 import { rcToChassisApiFaqs, RC_TO_CHASSIS_API_PATH } from '../data/rcToChassisApi'
 import { rcToRegistrationDateApiFaqs, RC_TO_REGISTRATION_DATE_API_PATH } from '../data/rcToRegistrationDateApi'
 import { pucDetailsApiFaqs, PUC_DETAILS_API_PATH } from '../data/pucDetailsApi'
+import { fitnessDetailsApiFaqs, FITNESS_DETAILS_API_PATH } from '../data/fitnessDetailsApi'
 import { registrationDetailsApiFaqs, REGISTRATION_DETAILS_API_PATH } from '../data/registrationDetailsApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
@@ -285,6 +286,20 @@ const PRODUCT_PAGES = {
       'PUC certificate number and PUC valid-up-to date by vehicle number as JSON',
       'Maker, model, class, fuel and emission norms',
       'Insurance, fitness and road tax validity',
+      'Vehicles from all states of India, including BH series',
+      'Pay only for successful searches',
+    ],
+  },
+  [FITNESS_DETAILS_API_PATH]: {
+    name: 'Vehicle Fitness Details API',
+    faqs: fitnessDetailsApiFaqs,
+    alternateName: ['Vehicle Fitness API', 'Fitness Status API', 'Fitness Check by Vehicle Number API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Fitness valid-up-to date by vehicle number as JSON',
+      'Vehicle class, registration status and permit number',
+      'Insurance, PUC and road tax validity',
       'Vehicles from all states of India, including BH series',
       'Pay only for successful searches',
     ],

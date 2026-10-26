@@ -124,6 +124,7 @@ export default function VehiclePucDetailsApi() {
         ],
       }}
       related={[
+        { to: '/vehicle-fitness-details-api', label: 'Vehicle fitness details API' },
         { to: '/vehicle-insurance-api', label: 'Vehicle insurance API' },
         { to: '/puc-agent-software', label: 'PUC agent software' },
         { to: '/vahan-api', label: 'Vahan API' },
