@@ -143,6 +143,72 @@ const saveDocument = async (Model, { userId, vehicleNumber, validToIso, validFro
   return { status: 'created', validFrom, validTo }
 }
 
+const SAVE_DISABLED_MESSAGE = 'Save vehicle records is not enabled for your account. Please contact admin.'
+
+const canSaveRecords = async (userId) => {
+  const userDoc = await User.findById(userId).select('features').lean()
+  return Boolean(userDoc?.features?.saveVehicleRecords)
+}
+
+// Saves one RC into Vehicle Registration, Fitness, Insurance and PUC.
+// Returns what happened to each, and whether any document record was added.
+const saveRecordsFromRc = async (userId, vehicleNumber, data) => {
+  const { vehicle, result: registration } = await saveRegistration(userId, vehicleNumber, data)
+
+  const ownerName = clean(data.OWNER_NAME)
+  const mobileNumber = cleanMobile(data.MOBILE_NO)
+  const common = { userId, vehicleNumber }
+  const shared = { ownerName, mobileNumber, partyId: vehicle.partyId || undefined, date: todayDmy() }
+
+  const fitnessUpto = parseExpiryDate(clean(data.FIT_UPTO))
+  const fitness = await saveDocument(Fitness, {
+    ...common,
+    validToIso: fitnessUpto,
+    validFrom: fitnessUpto && periodStart(fitnessUpto, { years: 1 }),
+    fields: shared
+  })
+
+  const insuranceUpto = parseExpiryDate(clean(data.INSURANCE_UPTO))
+  const insuranceFrom = parseExpiryDate(clean(data.INSURANCE_FROM))
+  const insurance = await saveDocument(Insurance, {
+    ...common,
+    validToIso: insuranceUpto,
+    validFrom: insuranceFrom ? isoToDmy(insuranceFrom) : insuranceUpto && periodStart(insuranceUpto, { years: 1 }),
+    fields: {
+      policyNumber: firstOf(data, ['INS_POLICY_NO', 'POLICY_NO']),
+      policyHolderName: ownerName,
+      insuranceCompany: clean(data.INSURANCE_COMP),
+      mobileNumber,
+      partyId: shared.partyId,
+      date: shared.date
+    }
+  })
+
+  const pucUpto = parseExpiryDate(firstOf(data, ['PUCC_UPTO', 'PUC_UPTO']))
+  const pucFrom = parseExpiryDate(firstOf(data, ['PUCC_FROM', 'PUC_FROM']))
+  const puc = await saveDocument(Puc, {
+    ...common,
+    validToIso: pucUpto,
+    validFrom: pucFrom ? isoToDmy(pucFrom) : pucUpto && periodStart(pucUpto, { months: 6 }),
+    fields: { ...shared, vehicleModel: clean(data.MAKER_MODEL) }
+  })
+
+  return {
+    result: { vehicleNumber, registration, fitness, insurance, puc },
+    addedDocument: [fitness, insurance, puc].some(r => r.status === 'created')
+  }
+}
+
+const queueExpiryAlerts = (userId) => {
+  try { checkUserAndQueueAlerts(userId) } catch (e) { console.error('[WhatsApp] Trigger error (save vehicle records):', e) }
+}
+
+// RC data of a saved search, with REGN_NO filled in from the history row when the response lacks it
+const rcFromHistory = (record) =>
+  record?.rawResponse && { ...record.rawResponse, REGN_NO: record.rawResponse.REGN_NO || record.vehicleNumber }
+
+const toVehicleNumber = (data) => String(data?.REGN_NO || '').replace(/[\s-]/g, '').toUpperCase()
+
 /**
  * Saves the RC details on screen into the user's own sections (NO API call):
  * Vehicle Registration, Fitness, Insurance and PUC, with every fee set to 0.
@@ -151,9 +217,8 @@ const saveDocument = async (Model, { userId, vehicleNumber, validToIso, validFro
 const saveVehicleRecords = async (req, res) => {
   try {
     const userId = req.user.id
-    const userDoc = await User.findById(userId).select('features').lean()
-    if (!userDoc?.features?.saveVehicleRecords) {
-      return res.status(403).json({ success: false, message: 'Save vehicle records is not enabled for your account. Please contact admin.' })
+    if (!(await canSaveRecords(userId))) {
+      return res.status(403).json({ success: false, message: SAVE_DISABLED_MESSAGE })
     }
 
     // RC details on screen, or a saved search history record (by id)
@@ -163,61 +228,20 @@ const saveVehicleRecords = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Invalid history record' })
       }
       const record = await VehicleSearchHistory.findOne({ _id: req.body.historyId, userId }).select('vehicleNumber rawResponse').lean()
-      data = record?.rawResponse && { ...record.rawResponse, REGN_NO: record.rawResponse.REGN_NO || record.vehicleNumber }
+      data = rcFromHistory(record)
     }
-    const vehicleNumber = String(data?.REGN_NO || '').replace(/[\s-]/g, '').toUpperCase()
+    const vehicleNumber = toVehicleNumber(data)
     if (!data || typeof data !== 'object' || vehicleNumber.length < 4) {
       return res.status(400).json({ success: false, message: 'Vehicle details are required' })
     }
 
-    const { vehicle, result: registration } = await saveRegistration(userId, vehicleNumber, data)
-
-    const ownerName = clean(data.OWNER_NAME)
-    const mobileNumber = cleanMobile(data.MOBILE_NO)
-    const common = { userId, vehicleNumber }
-    const shared = { ownerName, mobileNumber, partyId: vehicle.partyId || undefined, date: todayDmy() }
-
-    const fitnessUpto = parseExpiryDate(clean(data.FIT_UPTO))
-    const fitness = await saveDocument(Fitness, {
-      ...common,
-      validToIso: fitnessUpto,
-      validFrom: fitnessUpto && periodStart(fitnessUpto, { years: 1 }),
-      fields: shared
-    })
-
-    const insuranceUpto = parseExpiryDate(clean(data.INSURANCE_UPTO))
-    const insuranceFrom = parseExpiryDate(clean(data.INSURANCE_FROM))
-    const insurance = await saveDocument(Insurance, {
-      ...common,
-      validToIso: insuranceUpto,
-      validFrom: insuranceFrom ? isoToDmy(insuranceFrom) : insuranceUpto && periodStart(insuranceUpto, { years: 1 }),
-      fields: {
-        policyNumber: firstOf(data, ['INS_POLICY_NO', 'POLICY_NO']),
-        policyHolderName: ownerName,
-        insuranceCompany: clean(data.INSURANCE_COMP),
-        mobileNumber,
-        partyId: shared.partyId,
-        date: shared.date
-      }
-    })
-
-    const pucUpto = parseExpiryDate(firstOf(data, ['PUCC_UPTO', 'PUC_UPTO']))
-    const pucFrom = parseExpiryDate(firstOf(data, ['PUCC_FROM', 'PUC_FROM']))
-    const puc = await saveDocument(Puc, {
-      ...common,
-      validToIso: pucUpto,
-      validFrom: pucFrom ? isoToDmy(pucFrom) : pucUpto && periodStart(pucUpto, { months: 6 }),
-      fields: { ...shared, vehicleModel: clean(data.MAKER_MODEL) }
-    })
-
-    if ([fitness, insurance, puc].some(r => r.status === 'created')) {
-      try { checkUserAndQueueAlerts(userId) } catch (e) { console.error('[WhatsApp] Trigger error (save vehicle records):', e) }
-    }
+    const { result, addedDocument } = await saveRecordsFromRc(userId, vehicleNumber, data)
+    if (addedDocument) queueExpiryAlerts(userId)
 
     return res.status(200).json({
       success: true,
       message: `Records saved for ${vehicleNumber}`,
-      data: { vehicleNumber, registration, fitness, insurance, puc }
+      data: result
     })
   } catch (error) {
     console.error('Save vehicle records error:', error)
@@ -225,4 +249,45 @@ const saveVehicleRecords = async (req, res) => {
   }
 }
 
-module.exports = { saveVehicleRecords }
+/**
+ * Saves several saved searches at once (NO API call). `records` are search history rows with rawResponse.
+ * Vehicles already in Vehicle Registration are skipped; use the single Save to refresh one of those.
+ */
+const saveHistoryRecords = async (userId, records) => {
+  const vehicleNumbers = records.map(record => toVehicleNumber(rcFromHistory(record))).filter(Boolean)
+  const existing = await VehicleRegistration.find({ userId, registrationNumber: { $in: vehicleNumbers } })
+    .select('registrationNumber')
+    .lean()
+  const savedNumbers = new Set(existing.map(vehicle => vehicle.registrationNumber))
+
+  let saved = 0
+  let alreadySaved = 0
+  let failed = 0
+  let addedAnyDocument = false
+  for (const record of records) {
+    const data = rcFromHistory(record)
+    const vehicleNumber = toVehicleNumber(data)
+    if (!data || vehicleNumber.length < 4) {
+      failed++
+      continue
+    }
+    if (savedNumbers.has(vehicleNumber)) {
+      alreadySaved++
+      continue
+    }
+    try {
+      const { addedDocument } = await saveRecordsFromRc(userId, vehicleNumber, data)
+      savedNumbers.add(vehicleNumber)
+      addedAnyDocument = addedAnyDocument || addedDocument
+      saved++
+    } catch (error) {
+      console.error(`Bulk save vehicle records error (${vehicleNumber}):`, error)
+      failed++
+    }
+  }
+
+  if (addedAnyDocument) queueExpiryAlerts(userId)
+  return { saved, alreadySaved, failed }
+}
+
+module.exports = { saveVehicleRecords, saveHistoryRecords, canSaveRecords, SAVE_DISABLED_MESSAGE }

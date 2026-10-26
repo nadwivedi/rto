@@ -4,7 +4,7 @@ import { toast } from 'react-toastify'
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
 
 // Saves an RC into Vehicle Registration, Fitness, Insurance and PUC with 0 fee (NO API call).
-// payload: { data } for the RC on screen, or { historyId } for a saved search row.
+// payload: { data } for the RC on screen, or { historyId } for a saved search row. Returns true when saved.
 export const saveVehicleRecords = async (payload) => {
   try {
     const res = await axios.post(`${API_URL}/api/vehicle-info/save-records`, payload, { withCredentials: true })
@@ -22,8 +22,10 @@ export const saveVehicleRecords = async (payload) => {
       describe('PUC', puc)
     ]
     toast.success(`${vehicleNumber} saved. ${lines.join(' | ')}`, { autoClose: 6000 })
+    return true
   } catch (err) {
     console.error('Save records error:', err)
     toast.error(err.response?.data?.message || 'Failed to save vehicle records')
+    return false
   }
 }

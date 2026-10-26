@@ -3,15 +3,19 @@ const VehicleSearchHistory = require('../models/VehicleSearchHistory')
 const User = require('../models/User')
 const RcSearchUsage = require('../models/RcSearchUsage')
 const Lead = require('../models/Lead')
+const VehicleRegistration = require('../models/VehicleRegistration')
 const { fetchVehicleInfo } = require('../utils/vehicleInfoProvider')
 const { VEHICLE_DOC_TYPES, getVehicleDocuments, matchExpiry, leadPriorityFor } = require('../utils/vehicleExpiry')
+const { saveHistoryRecords, canSaveRecords, SAVE_DISABLED_MESSAGE } = require('./vehicleRecordSaveController')
 
 const EXPIRY_FILTERS = ['expired', '30', '60', '90', '180', '365']
 const LEAD_FILTERS = ['in', 'notIn']
+const SAVED_FILTERS = ['saved', 'notSaved']
 // Expiry dates are stored as text, so the expiry / lead filters are applied in memory.
 // This caps how many of a user's saved lookups one request will scan.
 const HISTORY_SCAN_LIMIT = 5000
 const MOVE_TO_LEADS_LIMIT = 1000
+const BULK_SAVE_LIMIT = 500
 // Everything the history table and the lead builder need, without the heavy rawResponse
 const HISTORY_LIST_FIELDS = 'vehicleNumber ownerName mobileNo makerModel status registeredAt insuranceUpto fitnessUpto taxUpto pucUpto searchCount lastSearchedAt createdAt updatedAt rawResponse.MOBILE_NO rawResponse.PUCC_UPTO rawResponse.PUC_UPTO'
 
@@ -255,14 +259,16 @@ const readHistoryFilters = (source = {}) => {
   const docType = VEHICLE_DOC_TYPES.includes(source.docType) ? source.docType : 'all'
   const expiry = EXPIRY_FILTERS.includes(String(source.expiry)) ? String(source.expiry) : 'any'
   const leadFilter = LEAD_FILTERS.includes(source.leadFilter) ? source.leadFilter : 'all'
+  const savedFilter = SAVED_FILTERS.includes(source.savedFilter) ? source.savedFilter : 'all'
   // The client sends its local date so "expired" matches the user's calendar, not the server's
   const today = /^\d{4}-\d{2}-\d{2}$/.test(source.today || '') ? source.today : new Date().toISOString().slice(0, 10)
   return {
     docType,
     expiry,
     leadFilter,
+    savedFilter,
     today,
-    isActive: docType !== 'all' || expiry !== 'any' || leadFilter !== 'all'
+    isActive: docType !== 'all' || expiry !== 'any' || leadFilter !== 'all' || savedFilter !== 'all'
   }
 }
 
@@ -286,13 +292,28 @@ const findLeadsByVehicle = async (userId, vehicleNumbers) => {
   return byVehicle
 }
 
-// Adds what the page shows next to each record: parsed document expiries and its lead, if any
+// Vehicle numbers that are already saved in the user's Vehicle Registration
+const findSavedVehicles = async (userId, vehicleNumbers) => {
+  if (!vehicleNumbers.length) return new Set()
+  const vehicles = await VehicleRegistration.find({ userId, registrationNumber: { $in: vehicleNumbers } })
+    .select('registrationNumber')
+    .lean()
+  return new Set(vehicles.map(vehicle => vehicle.registrationNumber))
+}
+
+// Adds what the page shows next to each record: parsed document expiries, its lead, if any,
+// and whether it is already saved to Vehicle Registration
 const annotateHistory = async (userId, records, today) => {
-  const leads = await findLeadsByVehicle(userId, records.map(record => record.vehicleNumber))
+  const vehicleNumbers = records.map(record => record.vehicleNumber)
+  const [leads, savedVehicles] = await Promise.all([
+    findLeadsByVehicle(userId, vehicleNumbers),
+    findSavedVehicles(userId, vehicleNumbers)
+  ])
   return records.map(record => ({
     ...record,
     documents: getVehicleDocuments(record, today),
-    lead: leads.get(record.vehicleNumber) || null
+    lead: leads.get(record.vehicleNumber) || null,
+    saved: savedVehicles.has(record.vehicleNumber)
   }))
 }
 
@@ -308,6 +329,8 @@ const scanHistory = async (userId, query, filters) => {
   for (const record of await annotateHistory(userId, records, filters.today)) {
     if (filters.leadFilter === 'in' && !record.lead?.isOpen) continue
     if (filters.leadFilter === 'notIn' && record.lead?.isOpen) continue
+    if (filters.savedFilter === 'saved' && !record.saved) continue
+    if (filters.savedFilter === 'notSaved' && record.saved) continue
 
     const matched = matchExpiry(record.documents, filters)
     if (!matched) continue
@@ -323,7 +346,7 @@ const scanHistory = async (userId, query, filters) => {
 /**
  * Get paginated full search history for user.
  * Optional filters: docType (Insurance | Fitness | Tax | PUC), expiry (expired | 30 | 60 | 90 | 180 | 365 days),
- * leadFilter (in | notIn lead management).
+ * leadFilter (in | notIn lead management), savedFilter (saved | notSaved to Vehicle Registration).
  */
 const getSearchHistory = async (req, res) => {
   try {
@@ -475,6 +498,51 @@ const moveHistoryToLeads = async (req, res) => {
   } catch (error) {
     console.error('Error moving search history to leads:', error)
     return res.status(500).json({ success: false, message: 'Failed to move vehicles to lead management' })
+  }
+}
+
+/**
+ * Save saved lookups into Vehicle Registration, Fitness, Insurance and PUC (NO API call).
+ * Body: { ids: [...] } for picked rows, or { selectAll: true, search, searchType } plus the history filters.
+ * Vehicles that are already saved are skipped.
+ */
+const saveHistoryToRecords = async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' })
+    }
+    if (!(await canSaveRecords(req.user.id))) {
+      return res.status(403).json({ success: false, message: SAVE_DISABLED_MESSAGE })
+    }
+
+    let ids
+    if (req.body.selectAll === true) {
+      const query = buildHistoryQuery(req.user.id, req.body.search, req.body.searchType)
+      const matches = await scanHistory(req.user.id, query, readHistoryFilters(req.body))
+      ids = matches.filter(record => !record.saved).map(record => record._id)
+    } else {
+      ids = (Array.isArray(req.body.ids) ? req.body.ids : []).filter(id => mongoose.isValidObjectId(id))
+      if (!ids.length) {
+        return res.status(400).json({ success: false, message: 'Select at least one vehicle to save' })
+      }
+    }
+
+    if (ids.length > BULK_SAVE_LIMIT) {
+      return res.status(400).json({
+        success: false,
+        message: `You can save up to ${BULK_SAVE_LIMIT} vehicles at a time. Narrow the filters and try again.`
+      })
+    }
+
+    const records = await VehicleSearchHistory.find({ userId: req.user.id, _id: { $in: ids } })
+      .select('vehicleNumber rawResponse')
+      .lean()
+    const { saved, alreadySaved, failed } = await saveHistoryRecords(req.user.id, records)
+
+    return res.status(200).json({ success: true, saved, alreadySaved, failed })
+  } catch (error) {
+    console.error('Error saving search history to records:', error)
+    return res.status(500).json({ success: false, message: 'Failed to save vehicle records' })
   }
 }
 
@@ -717,6 +785,7 @@ module.exports = {
   getSavedVehicleByVno,
   getSearchHistory,
   moveHistoryToLeads,
+  saveHistoryToRecords,
   getHistoryById,
   deleteHistoryItem,
   clearSearchHistory,

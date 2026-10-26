@@ -12,7 +12,8 @@ import {
   Car,
   X,
   UserPlus,
-  Users
+  Users,
+  Save
 } from 'lucide-react'
 import { useAuth } from '../../context/AuthContext'
 import { HistoryCard } from './historyUi'
@@ -43,7 +44,12 @@ const LEAD_OPTIONS = [
   { value: 'notIn', label: 'Not in leads' },
   { value: 'in', label: 'Already in leads' }
 ]
-const NO_FILTERS = { docType: 'all', expiry: 'any', leadFilter: 'all' }
+const SAVED_OPTIONS = [
+  { value: 'all', label: 'Saved & not saved' },
+  { value: 'notSaved', label: 'Not saved' },
+  { value: 'saved', label: 'Already saved' }
+]
+const NO_FILTERS = { docType: 'all', expiry: 'any', leadFilter: 'all', savedFilter: 'all' }
 const SEARCH_TYPE_OPTIONS = [
   { value: 'all', label: 'All fields' },
   { value: 'vehicleNumber', label: 'Vehicle no' },
@@ -78,6 +84,7 @@ const VehicleSearchHistory = () => {
   const [selected, setSelected] = useState(() => new Set())
   const [selectAllMatching, setSelectAllMatching] = useState(false)
   const [moving, setMoving] = useState(false)
+  const [bulkSaving, setBulkSaving] = useState(false)
   const [currentPage, setCurrentPage] = useState(1)
   const [limit, setLimit] = useState(20)
   const [pagination, setPagination] = useState({ total: 0, totalPages: 1, limit: 20 })
@@ -145,6 +152,7 @@ const VehicleSearchHistory = () => {
       if (activeFilters.docType !== 'all') url += `&docType=${activeFilters.docType}`
       if (activeFilters.expiry !== 'any') url += `&expiry=${activeFilters.expiry}`
       if (activeFilters.leadFilter !== 'all') url += `&leadFilter=${activeFilters.leadFilter}`
+      if (activeFilters.savedFilter !== 'all') url += `&savedFilter=${activeFilters.savedFilter}`
 
       const response = await axios.get(url, { withCredentials: true })
       if (response.data.success) {
@@ -202,7 +210,7 @@ const VehicleSearchHistory = () => {
     fetchHistory(1, '', limit, 'all')
   }
 
-  const hasFilters = filters.docType !== 'all' || filters.expiry !== 'any' || filters.leadFilter !== 'all'
+  const hasFilters = filters.docType !== 'all' || filters.expiry !== 'any' || filters.leadFilter !== 'all' || filters.savedFilter !== 'all'
 
   const handleFilterChange = (key, value) => {
     const next = { ...filters, [key]: value }
@@ -221,8 +229,10 @@ const VehicleSearchHistory = () => {
     fetchHistory(1, '', limit, 'all', NO_FILTERS)
   }
 
-  // A vehicle that already has an open lead can't be moved again, so it can't be ticked
-  const selectableIds = historyList.filter((item) => !item.lead?.isOpen).map((item) => item._id)
+  // A row can be ticked while it can still be moved to leads or saved; when both are done, it can't
+  const canSelect = canMoveToLeads || canSaveRecords
+  const hasActionLeft = (item) => (canMoveToLeads && !item.lead?.isOpen) || (canSaveRecords && !item.saved)
+  const selectableIds = historyList.filter(hasActionLeft).map((item) => item._id)
   const allOnPageSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id))
   const selectedCount = selectAllMatching ? pagination.total : selected.size
 
@@ -279,6 +289,39 @@ const VehicleSearchHistory = () => {
     }
   }
 
+  const handleSaveSelected = async () => {
+    if (!selectedCount) return
+    if (selectAllMatching && !window.confirm(`Save all ${pagination.total} matching vehicles to Vehicle Registration, Fitness, Insurance and PUC?`)) return
+    try {
+      setBulkSaving(true)
+      const res = await axios.post(
+        `${API_URL}/api/vehicle-info/history/save-records`,
+        {
+          ...filters,
+          today: toInputDate(new Date()),
+          ...(selectAllMatching ? { selectAll: true, search: searchTerm, searchType } : { ids: [...selected] })
+        },
+        { withCredentials: true }
+      )
+      const { saved = 0, alreadySaved = 0, failed = 0 } = res.data
+      const skipped = [
+        alreadySaved ? `${alreadySaved} already saved` : '',
+        failed ? `${failed} failed` : ''
+      ].filter(Boolean).join(', ')
+      if (saved) {
+        toast.success(`${saved} vehicle${saved > 1 ? 's' : ''} saved to Vehicle Registration, Fitness, Insurance and PUC${skipped ? ` · ${skipped}` : ''}`)
+      } else {
+        toast.info(skipped ? `Nothing saved: ${skipped}` : 'Nothing to save')
+      }
+      fetchHistory(currentPage, searchTerm, limit, searchType)
+    } catch (err) {
+      console.error('Bulk save error:', err)
+      toast.error(err.response?.data?.message || 'Failed to save vehicle records')
+    } finally {
+      setBulkSaving(false)
+    }
+  }
+
   const handleDeleteItem = async (id, vehicleNumber) => {
     if (!window.confirm(`Remove ${vehicleNumber} from your search history?`)) return
     try {
@@ -303,8 +346,9 @@ const VehicleSearchHistory = () => {
 
   const handleSave = async (item) => {
     setSavingId(item._id)
-    await saveVehicleRecords({ historyId: item._id })
+    const saved = await saveVehicleRecords({ historyId: item._id })
     setSavingId(null)
+    if (saved) setHistoryList((list) => list.map((row) => (row._id === item._id ? { ...row, saved: true } : row)))
   }
 
   return (
@@ -413,6 +457,16 @@ const VehicleSearchHistory = () => {
           >
             {LEAD_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
           </select>
+          {canSaveRecords && (
+            <select
+              value={filters.savedFilter}
+              onChange={(e) => handleFilterChange('savedFilter', e.target.value)}
+              className={filterSelectClass(filters.savedFilter !== 'all')}
+              aria-label="Saved to Vehicle Registration"
+            >
+              {SAVED_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+            </select>
+          )}
           {(hasFilters || searchTerm || searchType !== 'all') && (
             <button
               type="button"
@@ -453,8 +507,8 @@ const VehicleSearchHistory = () => {
             </div>
           ) : (
             <div>
-              {/* Selection bar: move the ticked vehicles to Lead Management */}
-              {canMoveToLeads && selectedCount > 0 && (
+              {/* Selection bar: save the ticked vehicles or move them to Lead Management */}
+              {canSelect && selectedCount > 0 && (
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3 bg-indigo-50 border-b border-indigo-100 text-xs sm:text-sm">
                   <span className="font-bold text-indigo-900">
                     {selectAllMatching ? `All ${pagination.total} matching vehicles selected` : `${selected.size} selected`}
@@ -476,20 +530,34 @@ const VehicleSearchHistory = () => {
                     >
                       Clear
                     </button>
-                    <button
-                      type="button"
-                      onClick={handleMoveToLeads}
-                      disabled={moving}
-                      className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition cursor-pointer disabled:opacity-60"
-                    >
-                      {moving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-                      Move to Lead Management
-                    </button>
+                    {canSaveRecords && (
+                      <button
+                        type="button"
+                        onClick={handleSaveSelected}
+                        disabled={bulkSaving || moving}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-bold rounded-xl shadow-sm transition cursor-pointer disabled:opacity-60"
+                        title="Save to Vehicle Registration, Fitness, Insurance and PUC (fee 0). Already saved vehicles are skipped."
+                      >
+                        {bulkSaving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        Save Selected
+                      </button>
+                    )}
+                    {canMoveToLeads && (
+                      <button
+                        type="button"
+                        onClick={handleMoveToLeads}
+                        disabled={moving || bulkSaving}
+                        className="inline-flex items-center gap-1.5 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-sm transition cursor-pointer disabled:opacity-60"
+                      >
+                        {moving ? <RefreshCw className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                        Move to Lead Management
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
 
-              {canMoveToLeads && selectableIds.length > 0 && (
+              {canSelect && selectableIds.length > 0 && (
                 <label className="flex items-center gap-2 px-4 pt-3 text-xs font-semibold text-slate-600 cursor-pointer select-none w-fit">
                   <input
                     type="checkbox"
@@ -518,8 +586,10 @@ const VehicleSearchHistory = () => {
                     pdfLoading={pdfId === item._id}
                     particularLoading={particularId === item._id}
                     deleting={deletingId === item._id}
-                    selectable={canMoveToLeads}
-                    selected={!item.lead?.isOpen && (selectAllMatching || selected.has(item._id))}
+                    selectable={canSelect}
+                    selected={hasActionLeft(item) && (selectAllMatching || selected.has(item._id))}
+                    selectDisabled={!hasActionLeft(item)}
+                    selectDisabledReason={canSaveRecords && canMoveToLeads ? 'Already saved and in Lead Management' : canSaveRecords ? 'Already saved' : 'Already in Lead Management'}
                     onToggleSelect={() => toggleOne(item._id)}
                   />
                 ))}

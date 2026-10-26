@@ -1,5 +1,5 @@
 import React from 'react'
-import { Shield, FileCheck, Receipt, Leaf, Clock, Eye, Save, Download, FileText, Trash2, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { Shield, FileCheck, Receipt, Leaf, Clock, Eye, Save, Download, FileText, Trash2, RefreshCw, CheckCircle2, Database } from 'lucide-react'
 import RcFormsMenu from './RcFormsMenu'
 
 const formatSearchedAt = (dateStr) => {
@@ -54,6 +54,8 @@ export const HistoryCard = ({
   deleting,
   selectable,
   selected,
+  selectDisabled,
+  selectDisabledReason,
   onToggleSelect
 }) => {
   const docOf = (type) => item.documents?.find((d) => d.type === type)
@@ -69,10 +71,10 @@ export const HistoryCard = ({
             type="checkbox"
             checked={selected}
             onChange={onToggleSelect}
-            disabled={inLeads}
+            disabled={selectDisabled}
             className="mt-1 w-4 h-4 cursor-pointer accent-indigo-600 disabled:cursor-default"
             aria-label={`Select ${item.vehicleNumber}`}
-            title={inLeads ? 'Already in Lead Management' : undefined}
+            title={selectDisabled ? selectDisabledReason : undefined}
           />
         )}
         <button type="button" onClick={onView} className="min-w-0 flex-1 text-left cursor-pointer group" title="View full details">
@@ -85,6 +87,15 @@ export const HistoryCard = ({
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 shrink-0">
             <CheckCircle2 className="w-3 h-3" />
             In Leads
+          </span>
+        )}
+        {item.saved && (
+          <span
+            className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-violet-50 text-violet-700 shrink-0"
+            title="Saved to Vehicle Registration"
+          >
+            <Database className="w-3 h-3" />
+            Saved
           </span>
         )}
         {onDelete && (

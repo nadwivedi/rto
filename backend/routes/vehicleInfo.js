@@ -24,6 +24,9 @@ router.delete('/history', vehicleInfoController.clearSearchHistory)
 // POST move saved lookups into Lead Management (NO API call)
 router.post('/history/move-to-leads', vehicleInfoController.moveHistoryToLeads)
 
+// POST save picked lookups into Vehicle Registration, Fitness, Insurance and PUC (NO API call)
+router.post('/history/save-records', vehicleInfoController.saveHistoryToRecords)
+
 // GET RC card PDF for a saved history item (NO API call)
 router.get('/history/:id/rc-pdf', vehicleInfoController.downloadHistoryRcPdf)
 
