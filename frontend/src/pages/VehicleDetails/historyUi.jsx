@@ -1,5 +1,5 @@
 import React from 'react'
-import { Shield, FileCheck, Leaf, Clock, Eye, Save, Download, FileText, Trash2, RefreshCw, CheckCircle2 } from 'lucide-react'
+import { Shield, FileCheck, Receipt, Leaf, Clock, Eye, Save, Download, FileText, Trash2, RefreshCw, CheckCircle2 } from 'lucide-react'
 import RcFormsMenu from './RcFormsMenu'
 
 const formatSearchedAt = (dateStr) => {
@@ -36,7 +36,7 @@ const Validity = ({ icon, label, value, doc }) => {
 const actionBtn = 'inline-flex items-center justify-center gap-1 px-2.5 py-1.5 font-semibold rounded-lg text-xs transition cursor-pointer disabled:opacity-50'
 
 /**
- * Card for one saved vehicle search: insurance / fitness / PUC validity and search time,
+ * Card for one saved vehicle search: insurance / fitness / tax / PUC validity and search time,
  * with View, Save, RC PDF and Particular as buttons. Only the RC forms sit in a dropdown.
  */
 export const HistoryCard = ({
@@ -103,6 +103,7 @@ export const HistoryCard = ({
       <div className="mt-3 space-y-1.5 rounded-xl bg-slate-50 px-3 py-2.5">
         <Validity icon={Shield} label="Insurance" value={item.insuranceUpto} doc={docOf('Insurance')} />
         <Validity icon={FileCheck} label="Fitness" value={item.fitnessUpto} doc={docOf('Fitness')} />
+        <Validity icon={Receipt} label="Tax" value={item.taxUpto} doc={docOf('Tax')} />
         <Validity icon={Leaf} label="PUC" value={pucUpto} doc={docOf('PUC')} />
       </div>
 
