@@ -8,6 +8,7 @@ import { insuranceApiFaqs, INSURANCE_API_PATH } from '../data/insuranceApi'
 import { rcVerificationApiFaqs, RC_VERIFICATION_API_PATH } from '../data/rcVerificationApi'
 import { vehicleVerificationApiFaqs, VEHICLE_VERIFICATION_API_PATH } from '../data/vehicleVerificationApi'
 import { rcToChassisApiFaqs, RC_TO_CHASSIS_API_PATH } from '../data/rcToChassisApi'
+import { rcToRegistrationDateApiFaqs, RC_TO_REGISTRATION_DATE_API_PATH } from '../data/rcToRegistrationDateApi'
 import { pucDetailsApiFaqs, PUC_DETAILS_API_PATH } from '../data/pucDetailsApi'
 import { registrationDetailsApiFaqs, REGISTRATION_DETAILS_API_PATH } from '../data/registrationDetailsApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
@@ -255,6 +256,21 @@ const PRODUCT_PAGES = {
       'Chassis number (VIN) and engine number by vehicle number as JSON',
       'Maker, model, class, fuel and manufacturing date',
       'Registration date and status',
+      'Vehicles from all states of India, including BH series',
+      'Pay only for successful searches',
+    ],
+  },
+  [RC_TO_REGISTRATION_DATE_API_PATH]: {
+    name: 'RC to Registration Date API',
+    faqs: rcToRegistrationDateApiFaqs,
+    alternateName: ['Vehicle Number to Registration Date API', 'Vehicle Registration Date API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Registration date and registration valid up to date by vehicle number as JSON',
+      'Manufacturing month and year for vehicle age',
+      'Registering RTO and registration status',
+      'Maker, model, class and fuel',
       'Vehicles from all states of India, including BH series',
       'Pay only for successful searches',
     ],

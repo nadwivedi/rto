@@ -49,6 +49,7 @@ export const SOLUTION_GROUPS = [
       { to: '/vehicle-verification-api', label: 'Vehicle Verification API', desc: 'Verify any vehicle before onboarding: registration status, validity dates, financer, blacklist & NOC' },
       { to: '/vehicle-rc-verification-api', label: 'Vehicle RC Verification API', desc: 'Verify RC by vehicle number: owner, chassis, engine, status, financer, blacklist & NOC as JSON' },
       { to: '/rc-to-chassis-number-api', label: 'RC to Chassis Number API', desc: 'Chassis number (VIN) and engine number of any vehicle from its RC number, as JSON' },
+      { to: '/rc-to-registration-date-api', label: 'RC to Registration Date API', desc: 'Registration date, validity and manufacturing date of any vehicle from its RC number, as JSON' },
       { to: '/vehicle-lookup-api', label: 'Vehicle Lookup API', desc: 'Look up any registration number: status, owner, chassis & engine, validity, financer, blacklist & NOC' },
       { to: '/parivahan-api', label: 'Parivahan API', desc: 'Parivahan API to get vehicle details by vehicle number, cost from ₹1.5 per search with no monthly fee' },
       { to: '/vahan-api', label: 'Vahan API for Vehicle Details', desc: 'Owner, chassis, engine, financer, insurance, PUC, fitness, blacklist & NOC by vehicle number' },

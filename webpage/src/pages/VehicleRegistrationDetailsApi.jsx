@@ -126,6 +126,7 @@ export default function VehicleRegistrationDetailsApi() {
         ],
       }}
       related={[
+        { to: '/rc-to-registration-date-api', label: 'RC to registration date API' },
         { to: '/vehicle-details-api', label: 'Vehicle details API India' },
         { to: '/vahan-api', label: 'Vahan API' },
         { to: '/vehicle-lookup-api', label: 'Vehicle lookup API' },

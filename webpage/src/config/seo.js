@@ -177,6 +177,13 @@ export const PAGE_SEO = {
     path: '/rc-to-chassis-number-api',
     keywords: 'RC to chassis number API, RC to chassis number, vehicle number to chassis number API, vehicle number to chassis number, get chassis number by vehicle number, chassis number by registration number API, chassis number lookup API India, chassis number API, VIN by vehicle number India, vehicle number to VIN API, RC to engine number API, engine number by vehicle number, chassis and engine number API, chassis number check API, chassis number from RC, chassis number API for insurance, chassis number API for spare parts, chassis number API price, RTO Sarthi chassis number API',
   },
+  '/rc-to-registration-date-api': {
+    title: `RC to Registration Date API - Vehicle Registration Date by Number | RTO Sarthi`,
+    description:
+      'RC to registration date API for India: get the registration date and registration validity of any vehicle from its RC number as JSON, with manufacturing date, RTO and status. From ₹1.5 per search.',
+    path: '/rc-to-registration-date-api',
+    keywords: 'RC to registration date API, RC to registration date, vehicle number to registration date API, vehicle registration date API, get registration date by vehicle number, vehicle registration date check, registration date by RC number, vehicle age API India, vehicle age by number, RC registration validity API, registration valid upto API, REGN_DT API, vehicle manufacturing date API, registration date lookup API India, vehicle registration date API price, RTO Sarthi registration date API',
+  },
   '/vehicle-puc-details-api': {
     title: `Vehicle PUC Details API & RC to PUC Details API - from ₹1.5 | RTO Sarthi`,
     description:
