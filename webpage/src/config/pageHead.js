@@ -11,6 +11,7 @@ import { rcToChassisApiFaqs, RC_TO_CHASSIS_API_PATH } from '../data/rcToChassisA
 import { rcToRegistrationDateApiFaqs, RC_TO_REGISTRATION_DATE_API_PATH } from '../data/rcToRegistrationDateApi'
 import { pucDetailsApiFaqs, PUC_DETAILS_API_PATH } from '../data/pucDetailsApi'
 import { fitnessDetailsApiFaqs, FITNESS_DETAILS_API_PATH } from '../data/fitnessDetailsApi'
+import { roadTaxDetailsApiFaqs, ROAD_TAX_DETAILS_API_PATH } from '../data/roadTaxDetailsApi'
 import { registrationDetailsApiFaqs, REGISTRATION_DETAILS_API_PATH } from '../data/registrationDetailsApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
@@ -300,6 +301,20 @@ const PRODUCT_PAGES = {
       'Fitness valid-up-to date by vehicle number as JSON',
       'Vehicle class, registration status and permit number',
       'Insurance, PUC and road tax validity',
+      'Vehicles from all states of India, including BH series',
+      'Pay only for successful searches',
+    ],
+  },
+  [ROAD_TAX_DETAILS_API_PATH]: {
+    name: 'RC to Road Tax Details API',
+    faqs: roadTaxDetailsApiFaqs,
+    alternateName: ['Vehicle Road Tax API', 'Road Tax Status API', 'Road Tax Check by Vehicle Number API'],
+    category: 'DeveloperApplication',
+    offer: { price: '1.5', description: 'Starting price per successful vehicle search' },
+    features: [
+      'Road tax paid-up-to date or lifetime tax (LTT) by vehicle number as JSON',
+      'Vehicle class, registering RTO and permit number',
+      'Fitness, insurance and PUC validity',
       'Vehicles from all states of India, including BH series',
       'Pay only for successful searches',
     ],

@@ -198,6 +198,13 @@ export const PAGE_SEO = {
     path: '/vehicle-fitness-details-api',
     keywords: 'vehicle fitness details API, vehicle fitness API, vehicle fitness API India, fitness details API, fitness status API, fitness check API, vehicle fitness check by vehicle number API, fitness validity API, fitness expiry API, fitness certificate API, vehicle fitness certificate API, FIT_UPTO API, RC to fitness details API, vehicle number to fitness details, fitness details by vehicle number, commercial vehicle fitness API, truck fitness check API, bus fitness check API, fleet fitness check API, bulk fitness check API, fitness API for insurance, vehicle fitness details API price, RTO Sarthi fitness API',
   },
+  '/rc-to-road-tax-details-api': {
+    title: `RC to Road Tax Details API - Road Tax Validity by Vehicle Number from ₹1.5 | RTO Sarthi`,
+    description:
+      'RC to road tax details API for India: get the road tax paid-up-to date or lifetime tax (LTT) of any vehicle number as JSON, with vehicle class, permit, fitness, insurance & PUC validity. From ₹1.5.',
+    path: '/rc-to-road-tax-details-api',
+    keywords: 'RC to road tax details API, RC to road tax API, road tax details API, road tax API India, vehicle road tax API, road tax status API, road tax check API, road tax check by vehicle number API, vehicle tax details API, vehicle tax API, tax paid upto API, TAX_UPTO API, road tax validity API, road tax expiry API, lifetime tax check API, LTT check API, road tax details by vehicle number, vehicle number to road tax details, commercial vehicle tax check API, truck road tax check API, fleet road tax check API, bulk road tax check API, road tax details API price, RTO Sarthi road tax API',
+  },
   '/vehicle-registration-details-api': {
     title: `Vehicle Registration Details API India - RC Registration Record from ₹1.5 | RTO Sarthi`,
     description:

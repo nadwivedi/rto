@@ -123,6 +123,7 @@ export default function VehicleFitnessDetailsApi() {
         ],
       }}
       related={[
+        { to: '/rc-to-road-tax-details-api', label: 'RC to road tax details API' },
         { to: '/vehicle-puc-details-api', label: 'Vehicle PUC details API' },
         { to: '/vehicle-insurance-api', label: 'Vehicle insurance API' },
         { to: '/vehicle-verification-api', label: 'Vehicle verification API' },
