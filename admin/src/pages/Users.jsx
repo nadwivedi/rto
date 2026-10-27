@@ -196,6 +196,10 @@ const Users = () => {
   const [deletePassword, setDeletePassword] = useState('')
   const [deleteError, setDeleteError] = useState('')
   const [deletingId, setDeletingId] = useState(null)
+  const [cleanTarget, setCleanTarget] = useState(null)
+  const [cleanConfirm, setCleanConfirm] = useState('')
+  const [cleanError, setCleanError] = useState('')
+  const [cleaningId, setCleaningId] = useState(null)
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -474,6 +478,54 @@ const Users = () => {
     setDeleteError('')
   }
 
+  const openCleanModal = (user) => {
+    setCleanTarget(user)
+    setCleanConfirm('')
+    setCleanError('')
+  }
+
+  const closeCleanModal = () => {
+    setCleanTarget(null)
+    setCleanConfirm('')
+    setCleanError('')
+  }
+
+  const handleCleanData = async (e) => {
+    e.preventDefault()
+    if (!cleanTarget) return
+
+    if (cleanConfirm.trim().toLowerCase() !== 'confirm') {
+      setCleanError('Type confirm to clean all data of this user.')
+      return
+    }
+
+    try {
+      setCleaningId(cleanTarget._id)
+      setCleanError('')
+      setError('')
+      setSuccess('')
+
+      const response = await fetch(`${BACKEND_URL}/api/admin/users/${cleanTarget._id}/clean-data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ confirm: 'confirm' })
+      })
+      const data = await response.json()
+      if (data.success) {
+        setSuccess(`Backup emailed and all data of "${cleanTarget.name}" cleaned (${data.data.totalRecords} records deleted).`)
+        closeCleanModal()
+        fetchUsers()
+      } else {
+        setCleanError(data.message || 'Failed to clean user data')
+      }
+    } catch {
+      setCleanError('Failed to clean user data')
+    } finally {
+      setCleaningId(null)
+    }
+  }
+
   const handleDelete = async (e) => {
     e.preventDefault()
     if (!deleteTarget) return
@@ -617,6 +669,16 @@ const Users = () => {
       >
         <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
           <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
+        </svg>
+      </button>
+      <button
+        onClick={() => openCleanModal(user)}
+        disabled={cleaningId === user._id}
+        className='p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-md transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer'
+        title='Clean data (email backup, then delete all user data)'
+      >
+        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m-11 7l6-6m0 6l-6-6' />
         </svg>
       </button>
       <button
@@ -1223,6 +1285,86 @@ const Users = () => {
                     className='flex-1 px-4 py-2 text-sm font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-wait cursor-pointer'
                   >
                     {deletingId === deleteTarget._id ? 'Deleting...' : 'Delete User'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Clean User Data Confirmation */}
+      {cleanTarget && (
+        <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto'>
+          <div className='flex items-start justify-center min-h-full px-3 py-8 sm:py-16'>
+            <div className='bg-white rounded-lg shadow-xl max-w-md w-full p-5'>
+              <div className='flex items-start gap-3'>
+                <div className='w-10 h-10 shrink-0 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center'>
+                  <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z' />
+                  </svg>
+                </div>
+                <div className='min-w-0'>
+                  <h2 className='text-lg font-bold text-gray-800'>Clean all data of this user?</h2>
+                  <p className='text-xs text-gray-500 mt-0.5'>
+                    A full backup is emailed first, then all of the user's records (vehicles, DL, permits, fitness, tax, insurance, bills, parties, payments, etc.) are permanently deleted. The account itself stays.
+                  </p>
+                </div>
+              </div>
+
+              {/* Whose data is being cleaned */}
+              <div className='mt-4 p-3 rounded-lg bg-gray-50 border border-gray-200'>
+                <div className='text-sm font-semibold text-gray-900 break-words'>
+                  {cleanTarget.name}
+                </div>
+                <div className='text-xs text-gray-600 mt-0.5'>
+                  {cleanTarget.mobile1}
+                  {cleanTarget.state && <span className='text-gray-400'> · {cleanTarget.state}</span>}
+                  {cleanTarget.rto && <span className='text-gray-400'> · {cleanTarget.rto}</span>}
+                </div>
+                {cleanTarget.email && (
+                  <div className='text-xs text-gray-400 break-words'>{cleanTarget.email}</div>
+                )}
+              </div>
+
+              <form onSubmit={handleCleanData} className='mt-4'>
+                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                  Type <strong>confirm</strong> to clean all data
+                </label>
+                <input
+                  type='text'
+                  value={cleanConfirm}
+                  onChange={(e) => {
+                    setCleanConfirm(e.target.value)
+                    setCleanError('')
+                  }}
+                  autoFocus
+                  autoComplete='off'
+                  placeholder='confirm'
+                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent'
+                />
+
+                {cleanError && (
+                  <div className='mt-3 p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700'>
+                    {cleanError}
+                  </div>
+                )}
+
+                <div className='flex gap-2 mt-5'>
+                  <button
+                    type='button'
+                    onClick={closeCleanModal}
+                    disabled={cleaningId === cleanTarget._id}
+                    className='flex-1 px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer'
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type='submit'
+                    disabled={cleaningId === cleanTarget._id || cleanConfirm.trim().toLowerCase() !== 'confirm'}
+                    className='flex-1 px-4 py-2 text-sm font-semibold rounded-lg bg-orange-600 text-white hover:bg-orange-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer'
+                  >
+                    {cleaningId === cleanTarget._id ? 'Backing up & cleaning...' : 'Clean Data'}
                   </button>
                 </div>
               </form>

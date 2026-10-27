@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
+const { backupAndCleanUserData } = require('../utils/userDataClean')
 
 // '' / null clears a money field, a number >= 0 sets it, anything else is ignored (returns false)
 const parseMoney = (value) => {
@@ -624,6 +625,61 @@ exports.deleteUser = async (req, res) => {
     res.json({
       success: true,
       message: 'User deleted successfully'
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: getSimplifiedTimestamp()
+    })
+  }
+}
+
+// Clean all of a user's data (keeps the account). Emails a backup first.
+exports.cleanUserData = async (req, res) => {
+  try {
+    if (req.body?.confirm !== 'confirm') {
+      return res.status(400).json({
+        success: false,
+        message: 'Type "confirm" to clean this user data'
+      })
+    }
+
+    const user = await User.findById(req.params.id).select('-password').lean()
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      })
+    }
+
+    let result
+    try {
+      result = await backupAndCleanUserData(user)
+    } catch (error) {
+      logError(error, req)
+      return res.status(500).json({
+        success: false,
+        message: 'Backup email could not be sent, so no data was deleted. Please try again.'
+      })
+    }
+
+    recordActivity(req, {
+      action: 'delete',
+      entity: 'user',
+      entityId: user._id,
+      entityName: user.name,
+      summary: `Cleaned all data of user ${user.name} (${user.mobile1}): ${result.totalRecords} records deleted after email backup`
+    })
+
+    res.json({
+      success: true,
+      message: `Backup emailed and ${result.totalRecords} records deleted`,
+      data: result
     })
   } catch (error) {
     logError(error, req)

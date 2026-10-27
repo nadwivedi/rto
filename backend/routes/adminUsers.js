@@ -23,6 +23,9 @@ router.get('/', adminUserController.getAllUsers)
 // Generate frontend access token for a user
 router.post('/:id/access-token', adminUserController.generateUserAccessToken)
 
+// Email a backup of all the user's data, then delete it (account stays)
+router.post('/:id/clean-data', adminUserController.cleanUserData)
+
 // Get single user by ID
 router.get('/:id', adminUserController.getUserById)
 
