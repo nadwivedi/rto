@@ -108,7 +108,7 @@ const userSchema = new mongoose.Schema({
     min: 0
   },
   // Money received so far against the plan fee (lifetimeFee or yearlyPrice).
-  // Pending = plan fee - paidAmount
+  // Not set means the full fee was paid. Pending = plan fee - paidAmount
   paidAmount: {
     type: Number,
     min: 0

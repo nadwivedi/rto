@@ -668,10 +668,12 @@ const Users = () => {
   const renderFeeStatus = (user, className = '') => {
     const fee = planFeeOf(user)
     if (!fee && user.paidAmount == null) return null
-    const pending = Math.max(0, fee - (user.paidAmount || 0))
+    // No paid amount recorded means the full fee was paid
+    const paid = user.paidAmount ?? fee
+    const pending = Math.max(0, fee - paid)
     return (
-      <div className={className} title={`Fee ₹${fee} · Paid ₹${user.paidAmount || 0}`}>
-        <span className='text-gray-500'>Paid ₹{formatMoney(user.paidAmount)} of ₹{formatMoney(fee)}</span>
+      <div className={className} title={`Fee ₹${fee} · Paid ₹${paid}`}>
+        <span className='text-gray-500'>Paid ₹{formatMoney(paid)} of ₹{formatMoney(fee)}</span>
         {pending > 0 ? (
           <span className='ml-1 font-semibold text-amber-600'>· ₹{formatMoney(pending)} pending</span>
         ) : (
@@ -1520,7 +1522,7 @@ const Users = () => {
                     name='paidAmount'
                     value={formData.paidAmount}
                     onChange={handleChange}
-                    placeholder='0'
+                    placeholder={`${formatMoney(planFeeOf(formData))} (full)`}
                     min='0'
                     step='0.01'
                     className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
@@ -1531,7 +1533,8 @@ const Users = () => {
                     Pending (₹)
                   </label>
                   {(() => {
-                    const pending = Math.round((planFeeOf(formData) - (Number(formData.paidAmount) || 0)) * 100) / 100
+                    // Left blank = full fee paid
+                    const pending = formData.paidAmount === '' ? 0 : Math.round((planFeeOf(formData) - (Number(formData.paidAmount) || 0)) * 100) / 100
                     return (
                       <div
                         className={`w-full px-3 py-2 text-sm rounded-lg border font-semibold tabular-nums ${

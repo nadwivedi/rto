@@ -16,9 +16,12 @@ const parseMoney = (value) => {
 // The fee a user owes is their plan fee: the lifetime fee, or the yearly price
 const planFee = (user) => (user.planType === 'lifetime' ? user.lifetimeFee : user.yearlyPrice) || 0
 
+// No paidAmount means the full fee was paid (credit is rare, so that's the default)
+const feePaid = (user) => user.paidAmount ?? planFee(user)
+
 const feeFields = (user) => ({
   paidAmount: user.paidAmount,
-  pendingAmount: Math.max(0, planFee(user) - (user.paidAmount || 0))
+  pendingAmount: Math.max(0, planFee(user) - feePaid(user))
 })
 
 // User fields tracked in the activity log, with the label shown there
@@ -647,10 +650,11 @@ exports.getUserStatistics = async (req, res) => {
         $addFields: {
           planFee: {
             $ifNull: [{ $cond: [{ $eq: ['$planType', 'lifetime'] }, '$lifetimeFee', '$yearlyPrice'] }, 0]
-          },
-          paid: { $ifNull: ['$paidAmount', 0] }
+          }
         }
       },
+      // No paidAmount means the full fee was paid
+      { $addFields: { paid: { $ifNull: ['$paidAmount', '$planFee'] } } },
       {
         $group: {
           _id: null,
