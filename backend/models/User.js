@@ -107,12 +107,8 @@ const userSchema = new mongoose.Schema({
     type: Number,
     min: 0
   },
-  // What the user has to pay in all, and how much of it has come in so far.
-  // Pending = totalFee - paidAmount
-  totalFee: {
-    type: Number,
-    min: 0
-  },
+  // Money received so far against the plan fee (lifetimeFee or yearlyPrice).
+  // Pending = plan fee - paidAmount
   paidAmount: {
     type: Number,
     min: 0

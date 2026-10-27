@@ -170,7 +170,6 @@ const Users = () => {
     monthlyPrice: '',
     yearlyPrice: '',
     lifetimeFee: '',
-    totalFee: '',
     paidAmount: '',
     password: '',
     features_greenTax: false,
@@ -338,8 +337,8 @@ const Users = () => {
       return
     }
 
-    if ((formData.totalFee !== '' && Number(formData.totalFee) < 0) || (formData.paidAmount !== '' && Number(formData.paidAmount) < 0)) {
-      setError('Total fee and paid amount must be 0 or more')
+    if (formData.paidAmount !== '' && Number(formData.paidAmount) < 0) {
+      setError('Paid amount must be 0 or more')
       return
     }
 
@@ -406,7 +405,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', totalFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -435,7 +434,6 @@ const Users = () => {
       monthlyPrice: user.monthlyPrice ?? '',
       yearlyPrice: user.yearlyPrice ?? '',
       lifetimeFee: user.lifetimeFee ?? '',
-      totalFee: user.totalFee ?? '',
       paidAmount: user.paidAmount ?? '',
       password: '',
       features_greenTax: user.features?.greenTax ?? false,
@@ -461,7 +459,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', totalFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
   }
 
   const openDeleteModal = (user) => {
@@ -663,13 +661,17 @@ const Users = () => {
     ) : null
   }
 
-  // Total fee, how much has been paid and what is still to come in
+  // The plan fee (lifetime fee or yearly price) is what the user owes
+  const planFeeOf = (plan) => Number(plan.planType === 'lifetime' ? plan.lifetimeFee : plan.yearlyPrice) || 0
+
+  // How much of the plan fee has been paid and what is still to come in
   const renderFeeStatus = (user, className = '') => {
-    if (user.totalFee == null && user.paidAmount == null) return null
-    const pending = Math.max(0, (user.totalFee || 0) - (user.paidAmount || 0))
+    const fee = planFeeOf(user)
+    if (!fee && user.paidAmount == null) return null
+    const pending = Math.max(0, fee - (user.paidAmount || 0))
     return (
-      <div className={className} title={`Total fee ₹${user.totalFee || 0} · Paid ₹${user.paidAmount || 0}`}>
-        <span className='text-gray-500'>Paid ₹{formatMoney(user.paidAmount)} of ₹{formatMoney(user.totalFee)}</span>
+      <div className={className} title={`Fee ₹${fee} · Paid ₹${user.paidAmount || 0}`}>
+        <span className='text-gray-500'>Paid ₹{formatMoney(user.paidAmount)} of ₹{formatMoney(fee)}</span>
         {pending > 0 ? (
           <span className='ml-1 font-semibold text-amber-600'>· ₹{formatMoney(pending)} pending</span>
         ) : (
@@ -1508,25 +1510,10 @@ const Users = () => {
               </div>
               )}
 
-              <div className='grid grid-cols-3 gap-2 sm:gap-3'>
+              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
                 <div>
                   <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Total Fee (₹)
-                  </label>
-                  <input
-                    type='number'
-                    name='totalFee'
-                    value={formData.totalFee}
-                    onChange={handleChange}
-                    placeholder='0'
-                    min='0'
-                    step='0.01'
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  />
-                </div>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Paid (₹)
+                    Paid (₹) <span className='text-gray-400'>of ₹{formatMoney(planFeeOf(formData))}</span>
                   </label>
                   <input
                     type='number'
@@ -1544,7 +1531,7 @@ const Users = () => {
                     Pending (₹)
                   </label>
                   {(() => {
-                    const pending = Math.round(((Number(formData.totalFee) || 0) - (Number(formData.paidAmount) || 0)) * 100) / 100
+                    const pending = Math.round((planFeeOf(formData) - (Number(formData.paidAmount) || 0)) * 100) / 100
                     return (
                       <div
                         className={`w-full px-3 py-2 text-sm rounded-lg border font-semibold tabular-nums ${
