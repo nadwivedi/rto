@@ -31,6 +31,11 @@ const apiKeySaleSchema = new mongoose.Schema(
       required: true,
       min: 0
     },
+    // Money received so far against amount (rows saved before this existed count as fully paid)
+    paidAmount: {
+      type: Number,
+      min: 0
+    },
     // Business date of the sale (chosen by the admin)
     date: {
       type: Date,

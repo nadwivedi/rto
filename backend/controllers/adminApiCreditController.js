@@ -7,6 +7,7 @@ const ApiKey = require('../models/ApiKey')
 const ApiKeyCall = require('../models/ApiKeyCall')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity } = require('../utils/activityLog')
+const { PAID_EXPR, salePaid, parsePaid } = require('../utils/salePayment')
 
 const IST = 'Asia/Kolkata'
 
@@ -78,7 +79,7 @@ exports.getTransactions = async (req, res) => {
 // Record a purchase from the provider, or a sale to a user (which raises the user's limit)
 exports.createTransaction = async (req, res) => {
   try {
-    const { type, userId, quantity, rate, date, note } = req.body
+    const { type, userId, quantity, rate, date, note, paidAmount } = req.body
 
     if (type !== 'purchase' && type !== 'sale') {
       return badRequest(res, 'Type must be purchase or sale')
@@ -99,6 +100,11 @@ exports.createTransaction = async (req, res) => {
       return badRequest(res, 'Please enter a valid date')
     }
 
+    const amount = roundMoney(qty * price)
+    // Only sales track money still to come in
+    const paid = type === 'sale' ? parsePaid(paidAmount, amount) : { value: undefined }
+    if (paid.error) return badRequest(res, paid.error)
+
     let user = null
     if (type === 'sale') {
       if (!userId || !mongoose.isValidObjectId(userId)) {
@@ -115,7 +121,8 @@ exports.createTransaction = async (req, res) => {
       userId: type === 'sale' ? userId : undefined,
       quantity: qty,
       rate: price,
-      amount: roundMoney(qty * price),
+      amount,
+      paidAmount: paid.value,
       date: dealDate,
       note: note && String(note).trim() ? String(note).trim() : undefined
     })
@@ -151,6 +158,7 @@ exports.createTransaction = async (req, res) => {
         { field: 'Quantity', from: null, to: qty },
         { field: 'Rate', from: null, to: price },
         { field: 'Amount', from: null, to: transaction.amount },
+        ...(type === 'sale' ? [{ field: 'Paid', from: null, to: transaction.paidAmount }] : []),
         ...(updatedUser ? [{ field: 'User RC Search Limit', from: updatedUser.rcSearchLimit - qty, to: updatedUser.rcSearchLimit }] : []),
         ...(transaction.note ? [{ field: 'Note', from: null, to: transaction.note }] : [])
       ]
@@ -180,14 +188,19 @@ exports.createTransaction = async (req, res) => {
   }
 }
 
-// Change the rate of an entry. Only the price moves: the quantity (and so the user's limit) stays as it is.
-exports.updateTransactionRate = async (req, res) => {
+// Change the rate and/or the money received on an entry.
+// The quantity (and so the user's limit) never moves here.
+exports.updateTransaction = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return badRequest(res, 'Invalid entry')
 
-    const { rate } = req.body || {}
+    const { rate, paidAmount } = req.body || {}
+    const hasRate = rate !== undefined
+    const hasPaid = paidAmount !== undefined
+    if (!hasRate && !hasPaid) return badRequest(res, 'Nothing to update')
+
     const price = Number(rate)
-    if (rate === '' || rate === null || rate === undefined || Number.isNaN(price) || price < 0) {
+    if (hasRate && (rate === '' || rate === null || Number.isNaN(price) || price < 0)) {
       return badRequest(res, 'Rate per API call is required')
     }
 
@@ -196,33 +209,52 @@ exports.updateTransactionRate = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Entry not found' })
     }
 
+    const isSale = transaction.type === 'sale'
     const oldRate = transaction.rate
     const oldAmount = transaction.amount
-    transaction.rate = price
-    transaction.amount = roundMoney(transaction.quantity * price)
+    const oldPaid = isSale ? salePaid(transaction) : undefined
+    if (hasRate) {
+      transaction.rate = price
+      transaction.amount = roundMoney(transaction.quantity * price)
+    }
+    if (isSale) {
+      if (hasPaid) {
+        const paid = parsePaid(paidAmount, transaction.amount)
+        if (paid.error) return badRequest(res, paid.error)
+        transaction.paidAmount = paid.value
+      } else if (transaction.paidAmount != null && transaction.paidAmount > transaction.amount) {
+        // A lower rate can't leave more money received than the sale is worth
+        transaction.paidAmount = transaction.amount
+      }
+    }
     await transaction.save()
 
+    const changes = []
     if (oldRate !== transaction.rate) {
+      changes.push({ field: 'Rate', from: oldRate, to: transaction.rate }, { field: 'Amount', from: oldAmount, to: transaction.amount })
+    }
+    if (isSale && oldPaid !== salePaid(transaction)) {
+      changes.push({ field: 'Paid', from: oldPaid, to: salePaid(transaction) })
+    }
+    if (changes.length) {
       const userName = transaction.userId?.name
       recordActivity(req, {
         action: 'update',
         entity: 'api_credit',
         entityId: transaction._id,
-        entityName: transaction.type === 'sale' ? userName || 'Deleted user' : 'Provider purchase',
-        summary:
-          transaction.type === 'sale'
-            ? `Changed rate of sale of ${transaction.quantity} vehicle API calls to ${userName || 'a deleted user'}: ₹${oldRate} → ₹${transaction.rate}`
-            : `Changed rate of purchase of ${transaction.quantity} vehicle API calls: ₹${oldRate} → ₹${transaction.rate}`,
-        changes: [
-          { field: 'Rate', from: oldRate, to: transaction.rate },
-          { field: 'Amount', from: oldAmount, to: transaction.amount }
-        ]
+        entityName: isSale ? userName || 'Deleted user' : 'Provider purchase',
+        summary: isSale
+          ? `Edited sale of ${transaction.quantity} vehicle API calls to ${userName || 'a deleted user'}: ${changes.map((ch) => `${ch.field} ₹${ch.from} → ₹${ch.to}`).join(', ')}`
+          : `Changed rate of purchase of ${transaction.quantity} vehicle API calls: ₹${oldRate} → ₹${transaction.rate}`,
+        changes
       })
     }
 
     res.json({
       success: true,
-      message: `Rate updated to ₹${transaction.rate}. Amount is now ₹${transaction.amount}.`,
+      message: isSale
+        ? `Saved. Amount ₹${transaction.amount}, paid ₹${salePaid(transaction)}, pending ₹${roundMoney(transaction.amount - salePaid(transaction))}.`
+        : `Rate updated to ₹${transaction.rate}. Amount is now ₹${transaction.amount}.`,
       data: transaction
     })
   } catch (error) {
@@ -451,6 +483,7 @@ exports.getSummary = async (req, res) => {
             _id: '$type',
             quantity: { $sum: '$quantity' },
             amount: { $sum: '$amount' },
+            paid: { $sum: PAID_EXPR },
             entries: { $sum: 1 }
           }
         }
@@ -475,6 +508,7 @@ exports.getSummary = async (req, res) => {
             _id: '$userId',
             quantity: { $sum: '$quantity' },
             amount: { $sum: '$amount' },
+            paid: { $sum: PAID_EXPR },
             entries: { $sum: 1 },
             lastDate: { $max: '$date' }
           }
@@ -492,6 +526,7 @@ exports.getSummary = async (req, res) => {
             rcSearchCount: { $ifNull: ['$user.rcSearchCount', 0] },
             quantity: 1,
             amount: 1,
+            paid: 1,
             entries: 1,
             lastDate: 1
           }
@@ -500,7 +535,7 @@ exports.getSummary = async (req, res) => {
       ApiCreditTransaction.findOne({ type: 'purchase' }).sort({ date: -1, createdAt: -1 }).select('rate').lean(),
       ApiCreditTransaction.findOne({ type: 'sale' }).sort({ date: -1, createdAt: -1 }).select('rate').lean(),
       // Calls sold on API keys are sales of the same provider calls
-      ApiKeySale.aggregate([{ $group: { _id: null, quantity: { $sum: '$quantity' }, amount: { $sum: '$amount' } } }]),
+      ApiKeySale.aggregate([{ $group: { _id: null, quantity: { $sum: '$quantity' }, amount: { $sum: '$amount' }, paid: { $sum: PAID_EXPR } } }]),
       ApiKeySale.aggregate([
         {
           $group: {
@@ -514,11 +549,15 @@ exports.getSummary = async (req, res) => {
       ApiKeySale.aggregate([{ $match: todayMatch }, todayTotal])
     ])
 
-    const pick = (type) => byType.find((t) => t._id === type) || { quantity: 0, amount: 0, entries: 0 }
+    const pick = (type) => byType.find((t) => t._id === type) || { quantity: 0, amount: 0, paid: 0, entries: 0 }
     const purchase = pick('purchase')
     const userSale = pick('sale')
-    const keySale = keySales[0] || { quantity: 0, amount: 0 }
-    const sale = { quantity: userSale.quantity + keySale.quantity, amount: userSale.amount + keySale.amount }
+    const keySale = keySales[0] || { quantity: 0, amount: 0, paid: 0 }
+    const sale = {
+      quantity: userSale.quantity + keySale.quantity,
+      amount: userSale.amount + keySale.amount,
+      paid: userSale.paid + keySale.paid
+    }
 
     const avgBuyRate = purchase.quantity ? purchase.amount / purchase.quantity : null
     const avgSellRate = sale.quantity ? sale.amount / sale.quantity : null
@@ -554,6 +593,10 @@ exports.getSummary = async (req, res) => {
           // Part of the sold figures that came from API keys
           keySoldQty: keySale.quantity,
           keySoldAmount: roundMoney(keySale.amount),
+          // Money actually received on sales, and what users / API key customers still owe
+          receivedAmount: roundMoney(sale.paid),
+          pendingAmount: roundMoney(sale.amount - sale.paid),
+          keyPendingAmount: roundMoney(keySale.amount - keySale.paid),
           avgBuyRate: avgBuyRate === null ? null : roundMoney(avgBuyRate),
           avgSellRate: avgSellRate === null ? null : roundMoney(avgSellRate),
           // Money in from users minus money out to the provider
@@ -578,6 +621,8 @@ exports.getSummary = async (req, res) => {
         users: byUser.map((u) => ({
           ...u,
           amount: roundMoney(u.amount),
+          paid: roundMoney(u.paid),
+          pending: roundMoney(u.amount - u.paid),
           rcSearchRemaining: Math.max(0, (u.rcSearchLimit || 0) - (u.rcSearchCount || 0))
         }))
       }

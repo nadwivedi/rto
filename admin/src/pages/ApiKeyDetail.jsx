@@ -263,6 +263,30 @@ const ApiKeyDetail = () => {
     }
   }
 
+  // Record how much of a sale has come in so far
+  const editSalePaid = async (sale) => {
+    const current = sale.paidAmount ?? sale.amount
+    const input = prompt(`Amount received for this sale of ${formatRupees(sale.amount)} (₹):`, String(current))
+    if (input === null || input.trim() === '' || Number(input) === current) return
+    try {
+      setBusy(true)
+      const res = await fetch(`${BACKEND_URL}/api/admin/api-keys/${id}/sales/${sale._id}/paid`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paidAmount: input.trim() })
+      })
+      const json = await res.json()
+      if (!json.success) return setError(json.message || 'Failed to save payment')
+      setSuccess(json.message)
+      await loadDetail()
+    } catch {
+      setError('Failed to save payment')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const viewCall = async (call) => {
     setOpenCall(call)
     setOpenCallLoading(true)
@@ -393,7 +417,13 @@ const ApiKeyDetail = () => {
           accent={apiKey.remaining <= 0 ? 'text-rose-600' : 'text-emerald-700'}
           sub={apiKey.remaining <= 0 ? 'Limit exhausted · calls are refused' : 'calls the customer can still make'}
         />
-        <Tile label='Sold For' value={formatRupees(stats.soldAmount)} sub={`${formatNumber(stats.soldQty)} calls in ${sales.length} sale(s)`} />
+        <Tile
+          label='Sold For'
+          value={formatRupees(stats.soldAmount)}
+          sub={`${formatNumber(stats.soldQty)} calls in ${sales.length} sale(s) · ${
+            stats.pendingAmount > 0 ? `${formatRupees(stats.pendingAmount)} pending` : 'fully paid'
+          }`}
+        />
       </div>
       <div className='grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-5'>
         <Tile label='Calls Today' value={formatNumber(stats.today)} />
@@ -531,19 +561,38 @@ const ApiKeyDetail = () => {
                     <th className={`${th} text-right`}>API Calls</th>
                     <th className={`${th} text-right`}>Rate</th>
                     <th className={`${th} text-right`}>Amount</th>
+                    <th className={`${th} text-right`}>Paid</th>
+                    <th className={`${th} text-right`}>Pending</th>
                     <th className={`${th} text-left`}>Note</th>
                     <th className={th}></th>
                   </tr>
                 </thead>
                 <tbody className='divide-y divide-gray-100'>
-                  {sales.map((sale) => (
+                  {sales.map((sale) => {
+                    const paid = sale.paidAmount ?? sale.amount
+                    const pending = Math.round((sale.amount - paid) * 100) / 100
+                    return (
                     <tr key={sale._id} className='hover:bg-gray-50/80'>
                       <td className={`${td} text-gray-700 whitespace-nowrap`}>{formatDate(sale.date)}</td>
                       <td className={`${td} text-right tabular-nums text-gray-700`}>{formatNumber(sale.quantity)}</td>
                       <td className={`${td} text-right tabular-nums text-gray-700`}>{formatRupees(sale.rate)}</td>
                       <td className={`${td} text-right tabular-nums font-bold text-gray-900`}>{formatRupees(sale.amount)}</td>
+                      <td className={`${td} text-right tabular-nums text-gray-700`}>{formatRupees(paid)}</td>
+                      <td className={`${td} text-right tabular-nums font-semibold ${pending > 0 ? 'text-amber-600' : 'text-emerald-700'}`}>
+                        {pending > 0 ? formatRupees(pending) : 'Paid'}
+                      </td>
                       <td className={`${td} text-gray-500 max-w-[180px] truncate`} title={sale.note || ''}>{sale.note || '-'}</td>
-                      <td className={`${td} text-right`}>
+                      <td className={`${td} text-right whitespace-nowrap`}>
+                        <button
+                          onClick={() => editSalePaid(sale)}
+                          disabled={busy}
+                          className='p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md disabled:opacity-40 cursor-pointer'
+                          title='Update amount paid'
+                        >
+                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
+                          </svg>
+                        </button>
                         <button
                           onClick={() => deleteSale(sale)}
                           disabled={busy}
@@ -556,7 +605,8 @@ const ApiKeyDetail = () => {
                         </button>
                       </td>
                     </tr>
-                  ))}
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

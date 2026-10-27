@@ -42,7 +42,10 @@ const formatRupees = (n) =>
 
 const formatNumber = (n) => Number(n || 0).toLocaleString('en-IN')
 
-const EMPTY_FORM = { type: 'sale', userId: '', quantity: '', rate: '', date: '', note: '' }
+const EMPTY_FORM = { type: 'sale', userId: '', quantity: '', rate: '', paidAmount: '', date: '', note: '' }
+
+// Money received on a sale; sales saved before this was tracked were fully paid
+const paidOf = (txn) => txn.paidAmount ?? txn.amount
 
 const Tile = ({ label, value, sub, accent = 'text-gray-900', className = '' }) => (
   <div className={`bg-white rounded-xl border border-gray-100 p-2.5 sm:p-4 shadow-sm ${className}`}>
@@ -95,9 +98,10 @@ const ApiCredits = () => {
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
-  // Entry whose rate is being changed (only the price can be edited)
+  // Entry whose rate / money received is being changed (API calls can't be edited)
   const [editTxn, setEditTxn] = useState(null)
   const [editRate, setEditRate] = useState('')
+  const [editPaid, setEditPaid] = useState('')
   const [editError, setEditError] = useState('')
   const [editSaving, setEditSaving] = useState(false)
   // Bumped after a sale/delete so the provider quota card and user limits re-read
@@ -208,6 +212,10 @@ const ApiCredits = () => {
     formData.quantity !== '' && formData.rate !== '' && !Number.isNaN(quantity) && !Number.isNaN(rate)
       ? Math.round(quantity * rate * 100) / 100
       : null
+  // Blank "Paid" means the full amount was received
+  const paidNow = formData.paidAmount === '' ? total : Number(formData.paidAmount)
+  const pendingNow =
+    total !== null && paidNow !== null && !Number.isNaN(paidNow) ? Math.round((total - paidNow) * 100) / 100 : null
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -221,6 +229,10 @@ const ApiCredits = () => {
       return setFormError('Please enter the price per API call')
     }
     if (!formData.date) return setFormError('Please choose a date')
+    if (isSale && formData.paidAmount !== '' && (Number.isNaN(paidNow) || paidNow < 0)) {
+      return setFormError('Paid amount must be 0 or more')
+    }
+    if (isSale && pendingNow !== null && pendingNow < 0) return setFormError('Paid amount cannot be more than the total')
 
     try {
       setSaving(true)
@@ -234,6 +246,7 @@ const ApiCredits = () => {
           userId: isSale ? formData.userId : undefined,
           quantity,
           rate,
+          paidAmount: isSale ? formData.paidAmount : undefined,
           date: formData.date,
           note: formData.note
         })
@@ -289,6 +302,7 @@ const ApiCredits = () => {
   const openEditRate = (txn) => {
     setEditTxn(txn)
     setEditRate(String(txn.rate))
+    setEditPaid(txn.type === 'sale' ? String(paidOf(txn)) : '')
     setEditError('')
   }
 
@@ -304,18 +318,28 @@ const ApiCredits = () => {
       setEditError('Enter a valid rate')
       return
     }
+    const isSale = editTxn.type === 'sale'
+    const paid = Number(editPaid)
+    if (isSale && (editPaid === '' || Number.isNaN(paid) || paid < 0)) {
+      setEditError('Enter the amount paid (0 or more)')
+      return
+    }
+    if (isSale && paid > Math.round(editTxn.quantity * price * 100) / 100) {
+      setEditError('Paid cannot be more than the amount')
+      return
+    }
     try {
       setEditSaving(true)
       setEditError('')
-      const res = await fetch(`${BACKEND_URL}/api/admin/api-credits/${editTxn._id}/rate`, {
+      const res = await fetch(`${BACKEND_URL}/api/admin/api-credits/${editTxn._id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ rate: price })
+        body: JSON.stringify(isSale ? { rate: price, paidAmount: paid } : { rate: price })
       })
       const json = await res.json()
       if (!json.success) {
-        setEditError(json.message || 'Failed to update rate')
+        setEditError(json.message || 'Failed to save')
         return
       }
       setEditTxn(null)
@@ -323,7 +347,7 @@ const ApiCredits = () => {
       setSuccess(json.message)
       await loadAll()
     } catch {
-      setEditError('Failed to update rate')
+      setEditError('Failed to save')
     } finally {
       setEditSaving(false)
     }
@@ -377,8 +401,8 @@ const ApiCredits = () => {
 
       {loading ? (
         <div className='space-y-4'>
-          <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3'>
-            {[0, 1, 2, 3, 4, 5].map((i) => (
+          <div className='grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3'>
+            {[0, 1, 2, 3, 4, 5, 6].map((i) => (
               <div key={i} className='h-24 bg-white rounded-xl border border-gray-100 animate-pulse' />
             ))}
           </div>
@@ -387,7 +411,7 @@ const ApiCredits = () => {
       ) : (
         <>
           {/* Totals */}
-          <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3 mb-3 sm:mb-5'>
+          <div className='grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 sm:gap-3 mb-3 sm:mb-5'>
             <Tile
               label="Today's Sales"
               value={formatRupees(summary?.today?.amount)}
@@ -417,6 +441,14 @@ const ApiCredits = () => {
                   ? `Received from users${totals.keySoldAmount ? ` · ${formatRupees(totals.keySoldAmount)} via API keys` : ''} · avg ${formatRupees(totals.avgSellRate)} per search`
                   : 'No sale recorded yet'
               }
+            />
+            <Tile
+              label='To Receive'
+              value={formatRupees(totals?.pendingAmount)}
+              accent={totals?.pendingAmount > 0 ? 'text-amber-600' : 'text-emerald-700'}
+              sub={`${formatRupees(totals?.receivedAmount)} received${
+                totals?.keyPendingAmount > 0 ? ` · ${formatRupees(totals.keyPendingAmount)} pending on API keys` : ''
+              }`}
             />
             <Tile
               label='RC Searches Sold'
@@ -513,11 +545,16 @@ const ApiCredits = () => {
                         {txn.note && <span className='text-gray-400'> · {txn.note}</span>}
                       </div>
                     </div>
-                    <div className='shrink-0 text-xs font-bold text-gray-900 tabular-nums'>{formatRupees(txn.amount)}</div>
+                    <div className='shrink-0 text-right tabular-nums'>
+                      <div className='text-xs font-bold text-gray-900'>{formatRupees(txn.amount)}</div>
+                      {txn.type === 'sale' && txn.amount - paidOf(txn) > 0 && (
+                        <div className='text-[10px] font-semibold text-amber-600'>{formatRupees(txn.amount - paidOf(txn))} pending</div>
+                      )}
+                    </div>
                     <button
                       onClick={() => openEditRate(txn)}
                       className='shrink-0 p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
-                      title='Edit rate'
+                      title={txn.type === 'sale' ? 'Edit rate / paid' : 'Edit rate'}
                     >
                       <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
@@ -546,6 +583,8 @@ const ApiCredits = () => {
                       <th className={`${th} text-right`}>API Calls</th>
                       <th className={`${th} text-right`}>Rate</th>
                       <th className={`${th} text-right`}>Amount</th>
+                      <th className={`${th} text-right`}>Paid</th>
+                      <th className={`${th} text-right`}>Pending</th>
                       <th className={`${th} text-left`}>Note</th>
                       <th className={`${th} text-right`}></th>
                     </tr>
@@ -578,6 +617,18 @@ const ApiCredits = () => {
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-gray-900 text-right tabular-nums whitespace-nowrap'>
                           {formatRupees(txn.amount)}
                         </td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
+                          {txn.type === 'sale' ? formatRupees(paidOf(txn)) : <span className='text-gray-300'>-</span>}
+                        </td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums whitespace-nowrap'>
+                          {txn.type !== 'sale' ? (
+                            <span className='text-gray-300'>-</span>
+                          ) : txn.amount - paidOf(txn) > 0 ? (
+                            <span className='font-semibold text-amber-600'>{formatRupees(txn.amount - paidOf(txn))}</span>
+                          ) : (
+                            <span className='font-semibold text-emerald-700'>Paid</span>
+                          )}
+                        </td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-500 max-w-[220px] truncate' title={txn.note || ''}>
                           {txn.note || '-'}
                         </td>
@@ -585,7 +636,7 @@ const ApiCredits = () => {
                           <button
                             onClick={() => openEditRate(txn)}
                             className='p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
-                            title='Edit rate'
+                            title={txn.type === 'sale' ? 'Edit rate / paid' : 'Edit rate'}
                           >
                             <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
@@ -784,7 +835,9 @@ const ApiCredits = () => {
                       <tr className='border-b border-gray-100 bg-gray-50/60'>
                         <th className={`${th} text-left`}>User</th>
                         <th className={`${th} text-right`}>Bought</th>
+                        <th className={`${th} text-right`}>Amount</th>
                         <th className={`${th} text-right`}>Paid</th>
+                        <th className={`${th} text-right`}>Pending</th>
                         <th className={`${th} text-right`}>Used / Limit</th>
                         <th className={`${th} text-right`}>Left</th>
                         <th className={`${th} text-left`}>Last Bought</th>
@@ -810,6 +863,16 @@ const ApiCredits = () => {
                           </td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-gray-900 text-right tabular-nums whitespace-nowrap'>
                             {formatRupees(u.amount)}
+                          </td>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
+                            {formatRupees(u.paid)}
+                          </td>
+                          <td
+                            className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-semibold text-right tabular-nums whitespace-nowrap ${
+                              u.pending > 0 ? 'text-amber-600' : 'text-emerald-700'
+                            }`}
+                          >
+                            {u.pending > 0 ? formatRupees(u.pending) : 'Paid'}
                           </td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
                             {formatNumber(u.rcSearchCount)} / {formatNumber(u.rcSearchLimit)}
@@ -885,7 +948,7 @@ const ApiCredits = () => {
             >
               <div className='flex justify-between items-start mb-3'>
                 <div>
-                  <h2 className='text-base sm:text-lg font-bold text-gray-800'>Edit Rate</h2>
+                  <h2 className='text-base sm:text-lg font-bold text-gray-800'>{editTxn.type === 'sale' ? 'Edit Rate & Payment' : 'Edit Rate'}</h2>
                   <p className='text-xs text-gray-500 mt-0.5'>
                     {editTxn.type === 'sale'
                       ? `Sale to ${editTxn.userId?.name || 'deleted user'}`
@@ -918,6 +981,22 @@ const ApiCredits = () => {
                 required
               />
 
+              {editTxn.type === 'sale' && (
+                <>
+                  <label className={`${labelClass} mt-3`}>Amount paid so far (₹)</label>
+                  <input
+                    type='number'
+                    min='0'
+                    step='any'
+                    inputMode='decimal'
+                    value={editPaid}
+                    onChange={(e) => setEditPaid(e.target.value)}
+                    className={inputClass}
+                    required
+                  />
+                </>
+              )}
+
               <div className='mt-3 rounded-lg bg-gray-50 border border-gray-100 p-2.5 text-xs text-gray-600 space-y-1'>
                 <div className='flex justify-between'>
                   <span>Current amount</span>
@@ -929,6 +1008,14 @@ const ApiCredits = () => {
                     {editAmountValid ? formatRupees(Math.round(editTxn.quantity * editAmount * 100) / 100) : '-'}
                   </span>
                 </div>
+                {editTxn.type === 'sale' && editAmountValid && editPaid !== '' && !Number.isNaN(Number(editPaid)) && (
+                  <div className='flex justify-between font-semibold text-amber-600'>
+                    <span>Pending</span>
+                    <span className='tabular-nums'>
+                      {formatRupees(Math.round((editTxn.quantity * editAmount - Number(editPaid)) * 100) / 100)}
+                    </span>
+                  </div>
+                )}
                 <p className='text-[11px] text-gray-400 pt-0.5'>
                   Only the price changes. API calls{editTxn.type === 'sale' ? " and the user's limit" : ''} stay the same.
                 </p>
@@ -949,7 +1036,7 @@ const ApiCredits = () => {
                   disabled={editSaving}
                   className='px-3 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 cursor-pointer'
                 >
-                  {editSaving ? 'Saving...' : 'Save Rate'}
+                  {editSaving ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </form>
@@ -1002,7 +1089,7 @@ const ApiCredits = () => {
                     {selectedUser && (
                       <p className='text-[11px] text-gray-500 mt-0.5'>
                         {selectedUserSales
-                          ? `Bought so far: ${formatNumber(selectedUserSales.quantity)} searches for ${formatRupees(selectedUserSales.amount)}`
+                          ? `Bought so far: ${formatNumber(selectedUserSales.quantity)} searches for ${formatRupees(selectedUserSales.amount)}${selectedUserSales.pending > 0 ? ` · ${formatRupees(selectedUserSales.pending)} still pending` : ''}`
                           : 'Has not bought any searches yet'}
                       </p>
                     )}
@@ -1039,9 +1126,28 @@ const ApiCredits = () => {
                   </div>
                 </div>
 
-                <div>
-                  <label className={labelClass}>Date</label>
-                  <input type='date' name='date' value={formData.date} onChange={handleChange} className={inputClass} />
+                <div className={isSaleForm ? 'grid grid-cols-2 gap-3' : ''}>
+                  {isSaleForm && (
+                    <div>
+                      <label className={labelClass}>
+                        Paid Now (₹) <span className='text-gray-400'>(Opt)</span>
+                      </label>
+                      <input
+                        type='number'
+                        name='paidAmount'
+                        value={formData.paidAmount}
+                        onChange={handleChange}
+                        placeholder={total === null ? 'Full amount' : String(total)}
+                        min='0'
+                        step='0.01'
+                        className={inputClass}
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <label className={labelClass}>Date</label>
+                    <input type='date' name='date' value={formData.date} onChange={handleChange} className={inputClass} />
+                  </div>
                 </div>
 
                 <div>
@@ -1065,6 +1171,20 @@ const ApiCredits = () => {
                       {total === null ? '-' : formatRupees(total)}
                     </span>
                   </div>
+                  {isSaleForm && total !== null && (
+                    <div className='flex items-center justify-between text-xs mt-1'>
+                      <span className='text-gray-500'>
+                        Paid {paidNow !== null && !Number.isNaN(paidNow) ? formatRupees(paidNow) : '-'}
+                      </span>
+                      <span
+                        className={`font-semibold ${
+                          pendingNow > 0 ? 'text-amber-600' : pendingNow < 0 ? 'text-red-600' : 'text-emerald-700'
+                        }`}
+                      >
+                        {pendingNow > 0 ? `${formatRupees(pendingNow)} pending` : pendingNow < 0 ? 'More than total' : 'Fully paid'}
+                      </span>
+                    </div>
+                  )}
                   {isSaleForm && selectedUser && Number.isInteger(quantity) && quantity > 0 && (
                     <p className='text-[11px] text-gray-500 mt-1'>
                       Limit goes from {formatNumber(selectedUser.rcSearchLimit)} to{' '}

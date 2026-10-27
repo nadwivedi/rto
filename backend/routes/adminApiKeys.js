@@ -30,5 +30,7 @@ router.get('/:id/calls/:callId', adminApiKeyController.getApiKeyCall)
 // Sell API calls on the key (raises its limit) / delete a sale (lowers it)
 router.post('/:id/sales', adminApiKeyController.createSale)
 router.delete('/:id/sales/:saleId', adminApiKeyController.deleteSale)
+// Record how much of a sale has been paid
+router.patch('/:id/sales/:saleId/paid', adminApiKeyController.updateSalePaid)
 
 module.exports = router

@@ -107,6 +107,16 @@ const userSchema = new mongoose.Schema({
     type: Number,
     min: 0
   },
+  // What the user has to pay in all, and how much of it has come in so far.
+  // Pending = totalFee - paidAmount
+  totalFee: {
+    type: Number,
+    min: 0
+  },
+  paidAmount: {
+    type: Number,
+    min: 0
+  },
   features: {
     greenTax: { type: Boolean, default: false },
     professionalTax: { type: Boolean, default: false },

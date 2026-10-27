@@ -215,7 +215,7 @@ const ApiKeys = () => {
         <>
           <div className='grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-5'>
             <Tile label='API Keys' value={formatNumber(totals?.keys)} sub={`${formatNumber(totals?.active)} active`} />
-            <Tile label='Calls Sold' value={formatNumber(totals?.soldQty)} sub={`for ${formatRupees(totals?.soldAmount)}`} />
+            <Tile label='Calls Sold' value={formatNumber(totals?.soldQty)} sub={`for ${formatRupees(totals?.soldAmount)}${totals?.pendingAmount > 0 ? ` · ${formatRupees(totals.pendingAmount)} pending` : ''}`} />
             <Tile label='Calls Used' value={formatNumber(totals?.used)} sub='vehicle details returned' />
             <Tile label='Calls Today' value={formatNumber(totals?.callsToday)} sub='all calls, incl. failed' />
           </div>
@@ -278,7 +278,10 @@ const ApiKeys = () => {
                         <td className={`${td} text-right tabular-nums ${k.callsToday ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                           {formatNumber(k.callsToday)}
                         </td>
-                        <td className={`${td} text-right tabular-nums text-gray-700 whitespace-nowrap`}>{formatRupees(k.soldAmount)}</td>
+                        <td className={`${td} text-right tabular-nums text-gray-700 whitespace-nowrap`}>
+                          {formatRupees(k.soldAmount)}
+                          {k.pendingAmount > 0 && <div className='text-[11px] font-semibold text-amber-600'>{formatRupees(k.pendingAmount)} pending</div>}
+                        </td>
                         <td className={`${td} text-gray-500 whitespace-nowrap`}>{formatDateTime(k.lastUsedAt)}</td>
                         <td className={`${td} text-right whitespace-nowrap`}>
                           <div className='flex items-center justify-end gap-1.5'>

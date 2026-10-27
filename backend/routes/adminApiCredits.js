@@ -17,8 +17,9 @@ router.get('/', adminApiCreditController.getTransactions)
 // Record a purchase from the provider or a sale to a user
 router.post('/', adminApiCreditController.createTransaction)
 
-// Change only the rate (price) of an entry; quantity and the user's limit stay the same
-router.patch('/:id/rate', adminApiCreditController.updateTransactionRate)
+// Change the rate (price) and/or money received on an entry; quantity and the user's limit stay the same
+router.patch('/:id', adminApiCreditController.updateTransaction)
+router.patch('/:id/rate', adminApiCreditController.updateTransaction)
 
 // Delete an entry (a deleted sale is taken back off the user's limit)
 router.delete('/:id', adminApiCreditController.deleteTransaction)

@@ -12,7 +12,7 @@ const labelClass = 'block text-xs sm:text-sm font-semibold text-gray-700 mb-1'
 
 // Sell API calls on one API key. Raises the key's own limit (not the user's RC search limit).
 const ApiKeySaleModal = ({ apiKey, defaultRate = '', onClose, onSaved }) => {
-  const [form, setForm] = useState({ quantity: '', rate: defaultRate, date: todayIST(), note: '' })
+  const [form, setForm] = useState({ quantity: '', rate: defaultRate, paidAmount: '', date: todayIST(), note: '' })
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
@@ -22,6 +22,9 @@ const ApiKeySaleModal = ({ apiKey, defaultRate = '', onClose, onSaved }) => {
     form.quantity !== '' && form.rate !== '' && !Number.isNaN(quantity) && !Number.isNaN(rate)
       ? Math.round(quantity * rate * 100) / 100
       : null
+  // Blank "Paid" means the full amount was received
+  const paid = form.paidAmount === '' ? total : Number(form.paidAmount)
+  const pending = total !== null && paid !== null && !Number.isNaN(paid) ? Math.round((total - paid) * 100) / 100 : null
 
   const handleChange = (e) => {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }))
@@ -33,6 +36,8 @@ const ApiKeySaleModal = ({ apiKey, defaultRate = '', onClose, onSaved }) => {
     if (!Number.isInteger(quantity) || quantity < 1) return setError('Number of API calls must be a whole number of at least 1')
     if (form.rate === '' || Number.isNaN(rate) || rate < 0) return setError('Please enter the price per API call')
     if (!form.date) return setError('Please choose a date')
+    if (form.paidAmount !== '' && (Number.isNaN(paid) || paid < 0)) return setError('Paid amount must be 0 or more')
+    if (pending !== null && pending < 0) return setError('Paid amount cannot be more than the total')
 
     try {
       setSaving(true)
@@ -40,7 +45,7 @@ const ApiKeySaleModal = ({ apiKey, defaultRate = '', onClose, onSaved }) => {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ quantity, rate, date: form.date, note: form.note })
+        body: JSON.stringify({ quantity, rate, paidAmount: form.paidAmount, date: form.date, note: form.note })
       })
       const json = await res.json()
       if (!json.success) return setError(json.message || 'Failed to save')
@@ -87,9 +92,17 @@ const ApiKeySaleModal = ({ apiKey, defaultRate = '', onClose, onSaved }) => {
                 <input type='number' name='rate' value={form.rate} onChange={handleChange} placeholder='2' min='0' step='0.01' className={inputClass} />
               </div>
             </div>
-            <div>
-              <label className={labelClass}>Date</label>
-              <input type='date' name='date' value={form.date} onChange={handleChange} className={inputClass} />
+            <div className='grid grid-cols-2 gap-3'>
+              <div>
+                <label className={labelClass}>
+                  Paid Now (₹) <span className='text-gray-400'>(Opt)</span>
+                </label>
+                <input type='number' name='paidAmount' value={form.paidAmount} onChange={handleChange} placeholder={total === null ? 'Full amount' : String(total)} min='0' step='0.01' className={inputClass} />
+              </div>
+              <div>
+                <label className={labelClass}>Date</label>
+                <input type='date' name='date' value={form.date} onChange={handleChange} className={inputClass} />
+              </div>
             </div>
             <div>
               <label className={labelClass}>
@@ -103,6 +116,14 @@ const ApiKeySaleModal = ({ apiKey, defaultRate = '', onClose, onSaved }) => {
                 <span className='text-gray-600'>Customer pays you</span>
                 <span className='text-lg font-bold text-gray-900 tabular-nums'>{total === null ? '-' : formatRupees(total)}</span>
               </div>
+              {total !== null && (
+                <div className='flex items-center justify-between text-xs mt-1'>
+                  <span className='text-gray-500'>Paid {paid !== null && !Number.isNaN(paid) ? formatRupees(paid) : '-'}</span>
+                  <span className={`font-semibold ${pending > 0 ? 'text-amber-600' : pending < 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                    {pending > 0 ? `${formatRupees(pending)} pending` : pending < 0 ? 'More than total' : 'Fully paid'}
+                  </span>
+                </div>
+              )}
               {Number.isInteger(quantity) && quantity > 0 && (
                 <p className='text-[11px] text-gray-500 mt-1'>
                   Limit goes from {formatNumber(apiKey.callLimit)} to <strong>{formatNumber((apiKey.callLimit || 0) + quantity)}</strong>

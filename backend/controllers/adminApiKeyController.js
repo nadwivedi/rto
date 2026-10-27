@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 const ApiKey = require('../models/ApiKey')
 const ApiKeySale = require('../models/ApiKeySale')
+const { PAID_EXPR, salePaid, parsePaid } = require('../utils/salePayment')
 const ApiKeyCall = require('../models/ApiKeyCall')
 const User = require('../models/User')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
@@ -81,7 +82,7 @@ exports.getApiKeys = async (req, res) => {
     const [keys, sales, calls] = await Promise.all([
       ApiKey.find({}).populate('userId', 'name mobile1').sort({ createdAt: -1 }).lean(),
       ApiKeySale.aggregate([
-        { $group: { _id: '$apiKeyId', quantity: { $sum: '$quantity' }, amount: { $sum: '$amount' } } }
+        { $group: { _id: '$apiKeyId', quantity: { $sum: '$quantity' }, amount: { $sum: '$amount' }, paid: { $sum: PAID_EXPR } } }
       ]),
       ApiKeyCall.aggregate([
         {
@@ -105,6 +106,8 @@ exports.getApiKeys = async (req, res) => {
         ...withRemaining(key),
         soldQty: sale?.quantity || 0,
         soldAmount: roundMoney(sale?.amount || 0),
+        paidAmount: roundMoney(sale?.paid || 0),
+        pendingAmount: roundMoney((sale?.amount || 0) - (sale?.paid || 0)),
         callsTotal: call?.total || 0,
         callsToday: call?.today || 0,
         callsTodaySuccess: call?.todaySuccess || 0
@@ -117,10 +120,11 @@ exports.getApiKeys = async (req, res) => {
         active: t.active + (k.active ? 1 : 0),
         soldQty: t.soldQty + k.soldQty,
         soldAmount: roundMoney(t.soldAmount + k.soldAmount),
+        pendingAmount: roundMoney(t.pendingAmount + k.pendingAmount),
         used: t.used + (k.callCount || 0),
         callsToday: t.callsToday + k.callsToday
       }),
-      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, used: 0, callsToday: 0 }
+      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0 }
     )
 
     res.json({ success: true, data, totals })
@@ -356,6 +360,7 @@ exports.getApiKey = async (req, res) => {
     const stats = overall[0] || { total: 0, success: 0, today: 0, last7: 0, last30: 0 }
     const soldQty = sales.reduce((s, x) => s + x.quantity, 0)
     const soldAmount = roundMoney(sales.reduce((s, x) => s + x.amount, 0))
+    const paidAmount = roundMoney(sales.reduce((s, x) => s + salePaid(x), 0))
 
     res.json({
       success: true,
@@ -370,7 +375,9 @@ exports.getApiKey = async (req, res) => {
           last30: stats.last30,
           firstCallAt: firstCall?.createdAt || null,
           soldQty,
-          soldAmount
+          soldAmount,
+          paidAmount,
+          pendingAmount: roundMoney(soldAmount - paidAmount)
         },
         range: { from, to, today },
         days,
@@ -449,7 +456,7 @@ exports.getApiKeyCall = async (req, res) => {
 exports.createSale = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return badRequest(res, 'Invalid API key')
-    const { quantity, rate, date, note } = req.body || {}
+    const { quantity, rate, date, note, paidAmount } = req.body || {}
 
     const qty = Number(quantity)
     if (!Number.isInteger(qty) || qty < 1) return badRequest(res, 'Quantity must be a whole number of at least 1')
@@ -462,6 +469,10 @@ exports.createSale = async (req, res) => {
     const saleDate = date ? new Date(date) : new Date()
     if (Number.isNaN(saleDate.getTime())) return badRequest(res, 'Please enter a valid date')
 
+    const amount = roundMoney(qty * price)
+    const paid = parsePaid(paidAmount, amount)
+    if (paid.error) return badRequest(res, paid.error)
+
     const apiKey = await ApiKey.findById(req.params.id).select('name callLimit')
     if (!apiKey) return notFound(res)
 
@@ -469,7 +480,8 @@ exports.createSale = async (req, res) => {
       apiKeyId: apiKey._id,
       quantity: qty,
       rate: price,
-      amount: roundMoney(qty * price),
+      amount,
+      paidAmount: paid.value,
       date: saleDate,
       note: note && String(note).trim() ? String(note).trim() : undefined
     })
@@ -494,6 +506,7 @@ exports.createSale = async (req, res) => {
         { field: 'Quantity', from: null, to: qty },
         { field: 'Rate', from: null, to: price },
         { field: 'Amount', from: null, to: sale.amount },
+        { field: 'Paid', from: null, to: sale.paidAmount },
         { field: 'API Key Limit', from: updated.callLimit - qty, to: updated.callLimit }
       ]
     })
@@ -502,6 +515,47 @@ exports.createSale = async (req, res) => {
       success: true,
       message: `Sold ${qty} API calls. Limit increased by ${qty}.`,
       data: { sale, apiKey: updated }
+    })
+  } catch (error) {
+    sendError(res, req, error, error.name === 'ValidationError' ? 400 : 500)
+  }
+}
+
+// Record how much of a sale's amount has been received
+exports.updateSalePaid = async (req, res) => {
+  try {
+    const { id, saleId } = req.params
+    if (!mongoose.isValidObjectId(id) || !mongoose.isValidObjectId(saleId)) return badRequest(res, 'Invalid sale')
+
+    const { paidAmount } = req.body || {}
+    if (paidAmount === undefined || paidAmount === null || paidAmount === '') return badRequest(res, 'Please enter the amount paid')
+
+    const sale = await ApiKeySale.findOne({ _id: saleId, apiKeyId: id })
+    if (!sale) return notFound(res, 'Sale not found')
+
+    const paid = parsePaid(paidAmount, sale.amount)
+    if (paid.error) return badRequest(res, paid.error)
+
+    const oldPaid = salePaid(sale)
+    sale.paidAmount = paid.value
+    await sale.save()
+
+    if (oldPaid !== sale.paidAmount) {
+      const apiKey = await ApiKey.findById(id).select('name').lean()
+      recordActivity(req, {
+        action: 'update',
+        entity: 'api_key',
+        entityId: sale._id,
+        entityName: apiKey?.name || 'Deleted API key',
+        summary: `Payment on sale of ${sale.quantity} API calls on key "${apiKey?.name || 'deleted'}": paid ₹${oldPaid} → ₹${sale.paidAmount} of ₹${sale.amount}`,
+        changes: [{ field: 'Paid', from: oldPaid, to: sale.paidAmount }]
+      })
+    }
+
+    res.json({
+      success: true,
+      message: `Saved. Paid ₹${sale.paidAmount} of ₹${sale.amount}, pending ₹${roundMoney(sale.amount - sale.paidAmount)}.`,
+      data: sale
     })
   } catch (error) {
     sendError(res, req, error, error.name === 'ValidationError' ? 400 : 500)

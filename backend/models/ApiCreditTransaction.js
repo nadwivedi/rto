@@ -39,6 +39,11 @@ const apiCreditTransactionSchema = new mongoose.Schema(
       required: true,
       min: 0
     },
+    // Money received so far against amount (rows saved before this existed count as fully paid)
+    paidAmount: {
+      type: Number,
+      min: 0
+    },
     // Business date of the deal (chosen by the admin), not when the row was typed in
     date: {
       type: Date,

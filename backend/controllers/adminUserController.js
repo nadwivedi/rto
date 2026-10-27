@@ -6,6 +6,19 @@ const jwt = require('jsonwebtoken')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
 
+// '' / null clears a money field, a number >= 0 sets it, anything else is ignored (returns false)
+const parseMoney = (value) => {
+  if (value === '' || value === null) return undefined
+  const n = Number(value)
+  return Number.isNaN(n) || n < 0 ? false : Math.round(n * 100) / 100
+}
+
+const feeFields = (user) => ({
+  totalFee: user.totalFee,
+  paidAmount: user.paidAmount,
+  pendingAmount: Math.max(0, (user.totalFee || 0) - (user.paidAmount || 0))
+})
+
 // User fields tracked in the activity log, with the label shown there
 const USER_FIELDS = [
   { key: 'name', label: 'Name' },
@@ -22,6 +35,8 @@ const USER_FIELDS = [
   { key: 'monthlyPrice', label: 'Monthly Price' },
   { key: 'yearlyPrice', label: 'Yearly Price' },
   { key: 'lifetimeFee', label: 'Lifetime Fee' },
+  { key: 'totalFee', label: 'Total Fee' },
+  { key: 'paidAmount', label: 'Fee Paid' },
   { key: 'features.greenTax', label: 'Feature: Green Tax' },
   { key: 'features.professionalTax', label: 'Feature: Professional Tax' },
   { key: 'features.autoCreateRC', label: 'Feature: Auto Create RC' },
@@ -131,7 +146,7 @@ exports.getUserById = async (req, res) => {
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, lifetimeFee, planType } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, lifetimeFee, totalFee, paidAmount, planType } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -245,6 +260,18 @@ exports.createUser = async (req, res) => {
       }
     }
 
+    const fee = totalFee === undefined ? undefined : parseMoney(totalFee)
+    const paid = paidAmount === undefined ? undefined : parseMoney(paidAmount)
+    if (fee === false || paid === false) {
+      return res.status(400).json({
+        success: false,
+        message: 'Total fee and paid amount must be 0 or more',
+        errors: ['Total fee and paid amount must be 0 or more'],
+        errorCount: 1,
+        timestamp: getSimplifiedTimestamp()
+      })
+    }
+
     // Hash password
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
@@ -269,6 +296,8 @@ exports.createUser = async (req, res) => {
       monthlyPrice: !isLifetimePlan && monthlyPrice !== undefined && !Number.isNaN(Number(monthlyPrice)) ? Number(monthlyPrice) : undefined,
       yearlyPrice: !isLifetimePlan && yearlyPrice !== undefined && !Number.isNaN(Number(yearlyPrice)) ? Number(yearlyPrice) : undefined,
       lifetimeFee: isLifetimePlan && lifetimeFee !== undefined && !Number.isNaN(Number(lifetimeFee)) ? Number(lifetimeFee) : undefined,
+      totalFee: fee,
+      paidAmount: paid,
       features: features ? {
         greenTax: features.greenTax === true,
         professionalTax: features.professionalTax === true,
@@ -315,6 +344,7 @@ exports.createUser = async (req, res) => {
       monthlyPrice: newUser.monthlyPrice,
       yearlyPrice: newUser.yearlyPrice,
       lifetimeFee: newUser.lifetimeFee,
+      ...feeFields(newUser),
       createdAt: newUser.createdAt
     }
 
@@ -340,7 +370,7 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     // rcSearchLimit is deliberately not accepted here: it changes only through Vehicle API Sales
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, monthlyPrice, yearlyPrice, lifetimeFee, features } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, monthlyPrice, yearlyPrice, lifetimeFee, totalFee, paidAmount, features } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -475,6 +505,17 @@ exports.updateUser = async (req, res) => {
       }
       user.lifetimeFee = undefined
     }
+    for (const [key, value] of [['totalFee', totalFee], ['paidAmount', paidAmount]]) {
+      if (value === undefined) continue
+      const amount = parseMoney(value)
+      if (amount === false) {
+        return res.status(400).json({
+          success: false,
+          message: 'Total fee and paid amount must be 0 or more'
+        })
+      }
+      user[key] = amount
+    }
     if (password !== undefined && password.trim()) {
       if (password.length < 4) {
         return res.status(400).json({
@@ -541,7 +582,8 @@ exports.updateUser = async (req, res) => {
         subscriptionExpiresAt: user.subscriptionExpiresAt,
         monthlyPrice: user.monthlyPrice,
         yearlyPrice: user.yearlyPrice,
-        lifetimeFee: user.lifetimeFee
+        lifetimeFee: user.lifetimeFee,
+        ...feeFields(user)
       }
     })
   } catch (error) {
@@ -601,13 +643,34 @@ exports.getUserStatistics = async (req, res) => {
     const totalUsers = await User.countDocuments()
     const activeUsers = await User.countDocuments({ isActive: true })
     const inactiveUsers = await User.countDocuments({ isActive: false })
+    const [fees] = await User.aggregate([
+      {
+        $group: {
+          _id: null,
+          totalFee: { $sum: { $ifNull: ['$totalFee', 0] } },
+          paidAmount: { $sum: { $ifNull: ['$paidAmount', 0] } },
+          pendingAmount: {
+            $sum: { $max: [0, { $subtract: [{ $ifNull: ['$totalFee', 0] }, { $ifNull: ['$paidAmount', 0] }] }] }
+          },
+          pendingUsers: {
+            $sum: { $cond: [{ $gt: [{ $ifNull: ['$totalFee', 0] }, { $ifNull: ['$paidAmount', 0] }] }, 1, 0] }
+          }
+        }
+      }
+    ])
 
     res.json({
       success: true,
       data: {
         total: totalUsers,
         active: activeUsers,
-        inactive: inactiveUsers
+        inactive: inactiveUsers,
+        fees: {
+          totalFee: fees?.totalFee || 0,
+          paidAmount: fees?.paidAmount || 0,
+          pendingAmount: fees?.pendingAmount || 0,
+          pendingUsers: fees?.pendingUsers || 0
+        }
       }
     })
   } catch (error) {

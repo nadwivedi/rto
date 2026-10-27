@@ -64,6 +64,9 @@ const formatDate = (value) => {
   return date.toLocaleDateString('en-IN', { timeZone: IST, day: '2-digit', month: 'short', year: 'numeric' })
 }
 
+// 12500 -> '12,500'
+const formatMoney = (n) => Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })
+
 const formatTime = (value) => {
   if (!value) return ''
   const date = new Date(value)
@@ -167,6 +170,8 @@ const Users = () => {
     monthlyPrice: '',
     yearlyPrice: '',
     lifetimeFee: '',
+    totalFee: '',
+    paidAmount: '',
     password: '',
     features_greenTax: false,
     features_professionalTax: false,
@@ -333,6 +338,11 @@ const Users = () => {
       return
     }
 
+    if ((formData.totalFee !== '' && Number(formData.totalFee) < 0) || (formData.paidAmount !== '' && Number(formData.paidAmount) < 0)) {
+      setError('Total fee and paid amount must be 0 or more')
+      return
+    }
+
     try {
       const url = isEditMode
         ? `${BACKEND_URL}/api/admin/users/${editingUserId}`
@@ -396,7 +406,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', totalFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -425,6 +435,8 @@ const Users = () => {
       monthlyPrice: user.monthlyPrice ?? '',
       yearlyPrice: user.yearlyPrice ?? '',
       lifetimeFee: user.lifetimeFee ?? '',
+      totalFee: user.totalFee ?? '',
+      paidAmount: user.paidAmount ?? '',
       password: '',
       features_greenTax: user.features?.greenTax ?? false,
       features_professionalTax: user.features?.professionalTax ?? false,
@@ -449,7 +461,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', totalFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
   }
 
   const openDeleteModal = (user) => {
@@ -651,6 +663,22 @@ const Users = () => {
     ) : null
   }
 
+  // Total fee, how much has been paid and what is still to come in
+  const renderFeeStatus = (user, className = '') => {
+    if (user.totalFee == null && user.paidAmount == null) return null
+    const pending = Math.max(0, (user.totalFee || 0) - (user.paidAmount || 0))
+    return (
+      <div className={className} title={`Total fee ₹${user.totalFee || 0} · Paid ₹${user.paidAmount || 0}`}>
+        <span className='text-gray-500'>Paid ₹{formatMoney(user.paidAmount)} of ₹{formatMoney(user.totalFee)}</span>
+        {pending > 0 ? (
+          <span className='ml-1 font-semibold text-amber-600'>· ₹{formatMoney(pending)} pending</span>
+        ) : (
+          <span className='ml-1 font-semibold text-emerald-600'>· Paid</span>
+        )}
+      </div>
+    )
+  }
+
   const renderRcBadge = (user) => {
     if (!user.features?.rcDetails) return null
     const left = Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0))
@@ -686,7 +714,7 @@ const Users = () => {
       </div>
 
       {/* Stats Bar */}
-      <div className='grid grid-cols-3 gap-2 sm:gap-3 mb-3 sm:mb-5'>
+      <div className='grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-3 sm:mb-5'>
         <div className='bg-white rounded-xl p-2.5 sm:p-4 shadow-sm border border-gray-100'>
           <p className='text-[10px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wide'>Total</p>
           <p className='text-lg sm:text-2xl font-bold text-gray-800 sm:mt-1'>{stats.total}</p>
@@ -698,6 +726,14 @@ const Users = () => {
         <div className='bg-white rounded-xl p-2.5 sm:p-4 shadow-sm border border-red-100'>
           <p className='text-[10px] sm:text-xs text-red-500 font-semibold uppercase tracking-wide'>Inactive</p>
           <p className='text-lg sm:text-2xl font-bold text-red-500 sm:mt-1'>{stats.inactive}</p>
+        </div>
+        <div className='bg-white rounded-xl p-2.5 sm:p-4 shadow-sm border border-amber-100'>
+          <p className='text-[10px] sm:text-xs text-amber-600 font-semibold uppercase tracking-wide'>Fee Pending</p>
+          <p className='text-lg sm:text-2xl font-bold text-amber-600 sm:mt-1'>₹{formatMoney(stats.fees?.pendingAmount)}</p>
+          <p className='text-[11px] text-gray-400 mt-0.5'>
+            ₹{formatMoney(stats.fees?.paidAmount)} received of ₹{formatMoney(stats.fees?.totalFee)}
+            {stats.fees?.pendingUsers ? ` · ${stats.fees.pendingUsers} user(s)` : ''}
+          </p>
         </div>
       </div>
 
@@ -1014,6 +1050,7 @@ const Users = () => {
                             </>
                           )}
                           {renderPlanPrice(user, 'text-[11px] text-gray-400')}
+                          {renderFeeStatus(user, 'text-[11px]')}
                         </td>
                         <td className='px-4 py-3 whitespace-nowrap'>
                           <div className='text-xs text-gray-700'>{formatDate(user.createdAt)}</div>
@@ -1085,6 +1122,7 @@ const Users = () => {
                         </span>
                       )}
                       {renderPlanPrice(user, 'text-gray-400')}
+                      {renderFeeStatus(user)}
                       {renderRcBadge(user)}
                     </div>
 
@@ -1469,6 +1507,60 @@ const Users = () => {
                 </div>
               </div>
               )}
+
+              <div className='grid grid-cols-3 gap-2 sm:gap-3'>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Total Fee (₹)
+                  </label>
+                  <input
+                    type='number'
+                    name='totalFee'
+                    value={formData.totalFee}
+                    onChange={handleChange}
+                    placeholder='0'
+                    min='0'
+                    step='0.01'
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                  />
+                </div>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Paid (₹)
+                  </label>
+                  <input
+                    type='number'
+                    name='paidAmount'
+                    value={formData.paidAmount}
+                    onChange={handleChange}
+                    placeholder='0'
+                    min='0'
+                    step='0.01'
+                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+                  />
+                </div>
+                <div>
+                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
+                    Pending (₹)
+                  </label>
+                  {(() => {
+                    const pending = Math.round(((Number(formData.totalFee) || 0) - (Number(formData.paidAmount) || 0)) * 100) / 100
+                    return (
+                      <div
+                        className={`w-full px-3 py-2 text-sm rounded-lg border font-semibold tabular-nums ${
+                          pending > 0
+                            ? 'bg-amber-50 border-amber-200 text-amber-700'
+                            : pending < 0
+                              ? 'bg-sky-50 border-sky-200 text-sky-700'
+                              : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                        }`}
+                      >
+                        {pending < 0 ? `₹${formatMoney(-pending)} extra` : `₹${formatMoney(pending)}`}
+                      </div>
+                    )
+                  })()}
+                </div>
+              </div>
 
               <div className='border-t border-gray-200 pt-3'>
                 <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-2'>
