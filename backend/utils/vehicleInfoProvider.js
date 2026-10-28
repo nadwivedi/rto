@@ -208,8 +208,9 @@ const fetchFromApi2 = async (vehicleNumber) => {
   const apiUrl = process.env.VEHICLE_INFO_API2_URL
   if (!apiUrl) throw new Error('API 2 is not set up (VEHICLE_INFO_API2_URL)')
 
+  // API 2 sometimes takes 20s+ to answer, so it gets a longer wait than API 1
   const response = await axios.get(`${apiUrl}${encodeURIComponent(vehicleNumber)}`, {
-    timeout: 20000,
+    timeout: 45000,
     validateStatus: (status) => status < 500,
     headers: { Accept: 'application/json, text/plain, */*' }
   })
