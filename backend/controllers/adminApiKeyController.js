@@ -122,9 +122,10 @@ exports.getApiKeys = async (req, res) => {
         soldAmount: roundMoney(t.soldAmount + k.soldAmount),
         pendingAmount: roundMoney(t.pendingAmount + k.pendingAmount),
         used: t.used + (k.callCount || 0),
-        callsToday: t.callsToday + k.callsToday
+        callsToday: t.callsToday + k.callsToday,
+        api2: t.api2 + (k.provider === 'api2' ? 1 : 0)
       }),
-      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0 }
+      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0 }
     )
 
     res.json({ success: true, data, totals })
@@ -168,6 +169,39 @@ exports.createApiKey = async (req, res) => {
     res.status(201).json({ success: true, message: `API key "${apiKey.name}" created`, data: apiKey })
   } catch (error) {
     sendError(res, req, error, error.name === 'ValidationError' ? 400 : 500)
+  }
+}
+
+// Point every API key at one vehicle info source, e.g. all to API 2 while API 1 is down
+exports.setAllProvider = async (req, res) => {
+  try {
+    const { provider } = req.body || {}
+    if (!PROVIDERS[provider]) return badRequest(res, 'Please choose API 1 or API 2')
+
+    // Keys saved before the provider field existed use API 1
+    const filter = provider === 'api1' ? { provider: 'api2' } : { provider: { $ne: 'api2' } }
+    const result = await ApiKey.updateMany(filter, { $set: { provider } })
+    const changed = result.modifiedCount || 0
+
+    if (changed) {
+      recordActivity(req, {
+        action: 'update',
+        entity: 'api_key',
+        entityName: 'All API keys',
+        summary: `Switched ${changed} vehicle API key${changed === 1 ? '' : 's'} to ${PROVIDERS[provider]}`,
+        changes: [{ field: 'Vehicle data source', from: null, to: PROVIDERS[provider] }]
+      })
+    }
+
+    res.json({
+      success: true,
+      message: changed
+        ? `${changed} API key${changed === 1 ? '' : 's'} switched to ${PROVIDERS[provider]}`
+        : `All API keys already use ${PROVIDERS[provider]}`,
+      changed
+    })
+  } catch (error) {
+    sendError(res, req, error)
   }
 }
 

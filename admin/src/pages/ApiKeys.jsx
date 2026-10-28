@@ -5,7 +5,7 @@ import { Pencil, Power, Trash2 } from 'lucide-react'
 import ApiKeyDeleteModal from '../components/ApiKeyDeleteModal'
 import RowMenu from '../components/RowMenu'
 import ShareApiDocButton from '../components/ShareApiDocButton'
-import { PROVIDER_OPTIONS } from '../components/apiProviders'
+import { PROVIDER_OPTIONS, providerLabel } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -49,6 +49,7 @@ const ApiKeys = () => {
   const [sellKey, setSellKey] = useState(null)
   const [deleteKey, setDeleteKey] = useState(null)
   const [togglingId, setTogglingId] = useState(null)
+  const [switchingAll, setSwitchingAll] = useState(false)
   const [editing, setEditing] = useState(null)
   const [editError, setEditError] = useState('')
   const [saving, setSaving] = useState(false)
@@ -107,6 +108,30 @@ const ApiKeys = () => {
       setError('Failed to update')
     } finally {
       setTogglingId(null)
+    }
+  }
+
+  // Point every key at one API, e.g. all to API 2 while API 1 is down
+  const switchAllProvider = async (provider) => {
+    if (!confirm(`Switch ALL API keys to ${providerLabel(provider)}? Every customer's calls will go to ${providerLabel(provider)} until you change it.`)) return
+    try {
+      setSwitchingAll(true)
+      setError('')
+      setSuccess('')
+      const res = await fetch(`${BACKEND_URL}/api/admin/api-keys/provider-all`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider })
+      })
+      const json = await res.json()
+      if (!json.success) return setError(json.message || 'Failed to switch API keys')
+      setSuccess(json.message)
+      await loadKeys()
+    } catch {
+      setError('Failed to switch API keys')
+    } finally {
+      setSwitchingAll(false)
     }
   }
 
@@ -205,6 +230,36 @@ const ApiKeys = () => {
           </button>
         </div>
       </div>
+
+      {!loading && totals?.keys > 0 && (
+        <div className='mb-3 sm:mb-5 p-3 sm:p-4 bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5'>
+          <div>
+            <p className='text-sm font-semibold text-gray-800'>Vehicle data source for all keys</p>
+            <p className='text-xs text-gray-500 mt-0.5'>
+              {formatNumber(totals.keys - (totals.api2 || 0))} on API 1 · {formatNumber(totals.api2 || 0)} on API 2. Switch every key at once when one API is down.
+            </p>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            {PROVIDER_OPTIONS.map((p) => {
+              const already = p.value === 'api2' ? totals.api2 === totals.keys : !totals.api2
+              return (
+                <button
+                  key={p.value}
+                  onClick={() => switchAllProvider(p.value)}
+                  disabled={switchingAll || already}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                    p.value === 'api2'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                      : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                  }`}
+                >
+                  {already ? `All on ${p.value === 'api2' ? 'API 2' : 'API 1'}` : `Switch all to ${p.value === 'api2' ? 'API 2' : 'API 1'}`}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {success && <div className='mb-5 p-4 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm font-medium'>{success}</div>}
       {error && <div className='mb-5 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm font-medium'>{error}</div>}

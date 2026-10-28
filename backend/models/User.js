@@ -135,6 +135,13 @@ const userSchema = new mongoose.Schema({
     type: Number,
     default: 0,
     min: 0
+  },
+  // Which vehicle info source this user's RC searches go to (see utils/vehicleInfoProvider PROVIDERS).
+  // API 2 for everyone unless the admin gives a user API 1
+  rcProvider: {
+    type: String,
+    enum: ['api1', 'api2'],
+    default: 'api2'
   }
 }, {
   timestamps: true

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { SlidersHorizontal, X } from 'lucide-react'
 import RcApiUsageCard from '../components/RcApiUsageCard'
 import SearchSelect from '../components/SearchSelect'
+import { PROVIDER_OPTIONS } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://app.rtosarthi.com'
@@ -183,6 +184,7 @@ const Users = () => {
     features_tempRc: false,
     features_nlParticular: false,
     features_saveVehicleRecords: false,
+    rcProvider: 'api2',
     rcSearchLimit: 0,
     rcSearchCount: 0
   })
@@ -409,7 +411,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0 })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -451,6 +453,7 @@ const Users = () => {
       features_tempRc: user.features?.tempRc ?? false,
       features_nlParticular: user.features?.nlParticular ?? false,
       features_saveVehicleRecords: user.features?.saveVehicleRecords ?? false,
+      rcProvider: user.rcProvider === 'api1' ? 'api1' : 'api2',
       rcSearchLimit: user.rcSearchLimit ?? 0,
       rcSearchCount: user.rcSearchCount ?? 0
     })
@@ -463,7 +466,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcSearchLimit: 0, rcSearchCount: 0 })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0 })
   }
 
   const openDeleteModal = (user) => {
@@ -755,7 +758,7 @@ const Users = () => {
         }`}
         title={`${user.rcSearchCount || 0} searches done`}
       >
-        RC {left}/{user.rcSearchLimit || 0} left
+        RC {left}/{user.rcSearchLimit || 0} left{user.rcProvider === 'api1' && ' · API 1'}
       </span>
     )
   }
@@ -1814,6 +1817,23 @@ const Users = () => {
                 {/* The search limit is never typed in here: it only grows when a sale is recorded in Vehicle API Sales */}
                 {formData.features_rcDetails && (
                   <div className='mt-3 p-3.5 bg-indigo-50/80 rounded-xl border border-indigo-100 space-y-3'>
+                    <div className='flex flex-wrap items-center justify-between gap-2'>
+                      <label htmlFor='rcProvider' className='text-xs font-semibold text-indigo-900'>
+                        RC Details API
+                        <span className='block text-[11px] font-normal text-indigo-700'>Where this user's RC searches are fetched from</span>
+                      </label>
+                      <select
+                        id='rcProvider'
+                        name='rcProvider'
+                        value={formData.rcProvider}
+                        onChange={handleChange}
+                        className='px-3 py-1.5 text-sm border border-indigo-200 bg-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+                      >
+                        {PROVIDER_OPTIONS.map((p) => (
+                          <option key={p.value} value={p.value}>{p.label}</option>
+                        ))}
+                      </select>
+                    </div>
                     {isEditMode ? (
                       <>
                         <div className='grid grid-cols-3 gap-2 text-center'>

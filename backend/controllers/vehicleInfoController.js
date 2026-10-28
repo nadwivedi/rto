@@ -50,7 +50,7 @@ const lookupVehicle = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Unauthorized' })
     }
 
-    const userDoc = await User.findById(targetUserId).select('features rcSearchLimit rcSearchCount')
+    const userDoc = await User.findById(targetUserId).select('features rcSearchLimit rcSearchCount rcProvider')
     if (!userDoc) {
       return res.status(404).json({ success: false, message: 'User account not found' })
     }
@@ -77,7 +77,7 @@ const lookupVehicle = async (req, res) => {
       })
     }
 
-    const result = await fetchVehicleInfo(cleanVno, { userId: targetUserId })
+    const result = await fetchVehicleInfo(cleanVno, { userId: targetUserId, provider: userDoc.rcProvider === 'api1' ? 'api1' : 'api2' })
     if (!result.found) {
       return res.status(404).json({ success: false, message: result.message })
     }

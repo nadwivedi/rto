@@ -6,6 +6,7 @@ const jwt = require('jsonwebtoken')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
 const { backupAndCleanUserData } = require('../utils/userDataClean')
+const { PROVIDERS } = require('../utils/vehicleInfoProvider')
 
 // '' / null clears a money field, a number >= 0 sets it, anything else is ignored (returns false)
 const parseMoney = (value) => {
@@ -42,6 +43,7 @@ const USER_FIELDS = [
   { key: 'yearlyPrice', label: 'Yearly Price' },
   { key: 'lifetimeFee', label: 'Lifetime Fee' },
   { key: 'paidAmount', label: 'Fee Paid' },
+  { key: 'rcProvider', label: 'RC Details API' },
   { key: 'features.greenTax', label: 'Feature: Green Tax' },
   { key: 'features.professionalTax', label: 'Feature: Professional Tax' },
   { key: 'features.autoCreateRC', label: 'Feature: Auto Create RC' },
@@ -151,7 +153,7 @@ exports.getUserById = async (req, res) => {
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, lifetimeFee, paidAmount, planType } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, lifetimeFee, paidAmount, planType, rcProvider } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -314,6 +316,7 @@ exports.createUser = async (req, res) => {
         nlParticular: features.nlParticular === true,
         saveVehicleRecords: features.saveVehicleRecords === true
       } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false, form23: false, tempRc: false, nlParticular: false, saveVehicleRecords: false },
+      rcProvider: PROVIDERS[rcProvider] ? rcProvider : undefined,
       // Starts at 0; the limit only grows when a sale is recorded in Vehicle API Sales
       rcSearchLimit: 0,
       rcSearchCount: 0
@@ -373,7 +376,7 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     // rcSearchLimit is deliberately not accepted here: it changes only through Vehicle API Sales
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, monthlyPrice, yearlyPrice, lifetimeFee, paidAmount, features } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, monthlyPrice, yearlyPrice, lifetimeFee, paidAmount, features, rcProvider } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -470,6 +473,15 @@ exports.updateUser = async (req, res) => {
         nlParticular: features.nlParticular === true,
         saveVehicleRecords: features.saveVehicleRecords === true
       }
+    }
+    if (rcProvider !== undefined) {
+      if (!PROVIDERS[rcProvider]) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please choose API 1 or API 2'
+        })
+      }
+      user.rcProvider = rcProvider
     }
     if (planType !== undefined) {
       user.planType = planType === 'lifetime' ? 'lifetime' : 'yearly'
@@ -580,6 +592,7 @@ exports.updateUser = async (req, res) => {
         rcSearchLimit: user.rcSearchLimit || 0,
         rcSearchCount: user.rcSearchCount || 0,
         rcSearchRemaining: Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0)),
+        rcProvider: user.rcProvider,
         planType: user.planType,
         subscriptionExpiresAt: user.subscriptionExpiresAt,
         monthlyPrice: user.monthlyPrice,
