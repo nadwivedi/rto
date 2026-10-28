@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { SlidersHorizontal, X } from 'lucide-react'
 import RcApiUsageCard from '../components/RcApiUsageCard'
 import SearchSelect from '../components/SearchSelect'
-import { PROVIDER_OPTIONS } from '../components/apiProviders'
+import { PROVIDER_OPTIONS, providerLabel } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://app.rtosarthi.com'
@@ -190,6 +190,7 @@ const Users = () => {
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [switchingAllRc, setSwitchingAllRc] = useState(false)
   const [copiedId, setCopiedId] = useState(null)
   const [accessingId, setAccessingId] = useState(null)
   const navigate = useNavigate()
@@ -242,6 +243,31 @@ const Users = () => {
       console.error('Error fetching stats:', error)
     }
   }, [])
+
+  // Point every user's RC searches at one API, e.g. all to API 1 while API 2 is down
+  const switchAllRcProvider = async (provider) => {
+    if (!confirm(`Switch RC Details of ALL users to ${providerLabel(provider)}? Every app user's searches will go to ${providerLabel(provider)} until you change it.`)) return
+    try {
+      setSwitchingAllRc(true)
+      setError('')
+      setSuccess('')
+      const response = await fetch(`${BACKEND_URL}/api/admin/users/rc-provider-all`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider })
+      })
+      const data = await response.json()
+      if (!data.success) return setError(data.message || 'Failed to switch users')
+      setSuccess(data.message)
+      fetchStats()
+      fetchUsers()
+    } catch {
+      setError('Failed to switch users')
+    } finally {
+      setSwitchingAllRc(false)
+    }
+  }
 
   const fetchStateCounts = useCallback(async () => {
     try {
@@ -808,6 +834,38 @@ const Users = () => {
 
       {/* Vehicle (RC details) API quota left with the provider */}
       <RcApiUsageCard className='mb-3 sm:mb-5' />
+
+      {/* Which API app users' RC searches go to; one user can be changed in Edit */}
+      {stats.total > 0 && (
+        <div className='mb-3 sm:mb-5 p-3 sm:p-4 bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5'>
+          <div>
+            <p className='text-sm font-semibold text-gray-800'>RC Details API for app users</p>
+            <p className='text-xs text-gray-500 mt-0.5'>
+              {stats.rcApi1 || 0} on API 1 · {stats.rcApi2 ?? stats.total} on API 2. Switch every user at once when one API is down, or change one user in Edit.
+            </p>
+          </div>
+          <div className='flex flex-wrap gap-2'>
+            {PROVIDER_OPTIONS.map((p) => {
+              const name = p.value === 'api2' ? 'API 2' : 'API 1'
+              const already = p.value === 'api2' ? !stats.rcApi1 : stats.rcApi1 === stats.total
+              return (
+                <button
+                  key={p.value}
+                  onClick={() => switchAllRcProvider(p.value)}
+                  disabled={switchingAllRc || already}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                    p.value === 'api2'
+                      ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+                      : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+                  }`}
+                >
+                  {already ? `All on ${name}` : `Switch all to ${name}`}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Search & Filter Bar */}
       <div className='bg-white rounded-xl shadow-sm border border-gray-100 p-2 sm:p-3 mb-3 sm:mb-5'>

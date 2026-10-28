@@ -57,6 +57,49 @@ const USER_FIELDS = [
   { key: 'features.saveVehicleRecords', label: 'Feature: Save Records in RC Details' }
 ]
 
+// Point every user's RC searches at one API, e.g. all to API 1 while API 2 is down
+exports.setAllRcProvider = async (req, res) => {
+  try {
+    const { provider } = req.body || {}
+    if (!PROVIDERS[provider]) {
+      return res.status(400).json({ success: false, message: 'Please choose API 1 or API 2' })
+    }
+
+    // Users saved before the rcProvider field existed use API 2
+    const filter = provider === 'api2' ? { rcProvider: 'api1' } : { rcProvider: { $ne: 'api1' } }
+    const result = await User.updateMany(filter, { $set: { rcProvider: provider } })
+    const changed = result.modifiedCount || 0
+
+    if (changed) {
+      recordActivity(req, {
+        action: 'update',
+        entity: 'user',
+        entityName: 'All users',
+        summary: `Switched RC Details of ${changed} user${changed === 1 ? '' : 's'} to ${PROVIDERS[provider]}`,
+        changes: [{ field: 'RC Details API', from: null, to: PROVIDERS[provider] }]
+      })
+    }
+
+    res.json({
+      success: true,
+      message: changed
+        ? `${changed} user${changed === 1 ? '' : 's'} switched to ${PROVIDERS[provider]}`
+        : `All users already use ${PROVIDERS[provider]}`,
+      changed
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      errors: userError.details,
+      errorCount: userError.errorCount,
+      timestamp: getSimplifiedTimestamp()
+    })
+  }
+}
+
 // Get all users
 exports.getAllUsers = async (req, res) => {
   try {
@@ -713,6 +756,8 @@ exports.getUserStatistics = async (req, res) => {
     const totalUsers = await User.countDocuments()
     const activeUsers = await User.countDocuments({ isActive: true })
     const inactiveUsers = await User.countDocuments({ isActive: false })
+    // Users without rcProvider use API 2
+    const rcApi1Users = await User.countDocuments({ rcProvider: 'api1' })
     // Plan fee (lifetime fee or yearly price) against the money received
     const [fees] = await User.aggregate([
       {
@@ -741,6 +786,8 @@ exports.getUserStatistics = async (req, res) => {
         total: totalUsers,
         active: activeUsers,
         inactive: inactiveUsers,
+        rcApi1: rcApi1Users,
+        rcApi2: totalUsers - rcApi1Users,
         fees: {
           totalFee: fees?.totalFee || 0,
           paidAmount: fees?.paidAmount || 0,

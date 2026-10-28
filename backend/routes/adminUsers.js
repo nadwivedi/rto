@@ -17,6 +17,9 @@ router.get('/revenue-dashboard', adminUserController.getRevenueDashboard)
 // Vehicle (RC details) API quota left with the provider
 router.get('/rc-api-usage', adminUserController.getRcApiUsage)
 
+// Point every user's RC searches at API 1 or API 2 (body: { provider })
+router.post('/rc-provider-all', adminUserController.setAllRcProvider)
+
 // Get all users
 router.get('/', adminUserController.getAllUsers)
 
