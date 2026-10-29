@@ -355,11 +355,22 @@ const Users = () => {
 
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target
-
-    setFormData({
+    const next = {
       ...formData,
       [name]: type === 'checkbox' ? checked : value
-    })
+    }
+
+    // New user: Paid defaults to the full fee and follows it while the fee is edited,
+    // unless the admin has typed a different paid amount
+    if (!isEditMode && ['yearlyPrice', 'lifetimeFee', 'planType'].includes(name)) {
+      const oldFee = planFeeOf(formData)
+      if (formData.paidAmount === '' || Number(formData.paidAmount) === oldFee) {
+        const newFee = planFeeOf(next)
+        next.paidAmount = newFee ? String(newFee) : ''
+      }
+    }
+
+    setFormData(next)
     setError('')
   }
 
