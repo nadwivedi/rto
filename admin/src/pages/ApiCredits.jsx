@@ -43,7 +43,12 @@ const formatRupees = (n) =>
 
 const formatNumber = (n) => Number(n || 0).toLocaleString('en-IN')
 
-const EMPTY_FORM = { type: 'sale', userId: '', quantity: '', rate: '', paidAmount: '', date: '', note: '' }
+const EMPTY_FORM = { type: 'sale', userId: '', quantity: '', rate: '', totalAmount: '', paidAmount: '', date: '', note: '' }
+
+// Price per API call a sale to a user starts at
+const DEFAULT_SALE_RATE = 2
+
+const round2 = (n) => Math.round(n * 100) / 100
 
 // Money received on a sale; sales saved before this was tracked were fully paid
 const paidOf = (txn) => txn.paidAmount ?? txn.amount
@@ -169,8 +174,8 @@ const ApiCredits = () => {
         type,
         userId,
         date: todayIST(),
-        // Start from the price used last time, so it only needs typing when it changes
-        rate: summary?.lastRates?.[type] ?? ''
+        // Sales start at the usual ₹2 per call; purchases at the price paid last time
+        rate: type === 'sale' ? String(DEFAULT_SALE_RATE) : String(summary?.lastRates?.[type] ?? '')
       })
       setFormError('')
       setShowModal(true)
@@ -202,17 +207,35 @@ const ApiCredits = () => {
     else setSearchParams({}, { replace: true })
   }
 
+  // API calls × price per call = total. Typing the total instead works the price per call out from it.
   const handleChange = (e) => {
     const { name, value } = e.target
-    setFormData((prev) => ({ ...prev, [name]: value }))
+    setFormData((prev) => {
+      const next = { ...prev, [name]: value }
+      const qty = Number(next.quantity)
+      const hasQty = next.quantity !== '' && !Number.isNaN(qty) && qty > 0
+      if (name === 'quantity' || name === 'rate') {
+        next.exactRate = null
+        const price = Number(next.rate)
+        next.totalAmount = hasQty && next.rate !== '' && !Number.isNaN(price) ? String(round2(qty * price)) : ''
+      } else if (name === 'totalAmount' && hasQty) {
+        const amount = Number(value)
+        if (value !== '' && !Number.isNaN(amount)) {
+          // Shown to 4 decimals; the unrounded price is what gets saved, so the total stays exact (₹1000 for 600 calls)
+          next.exactRate = amount / qty
+          next.rate = String(Math.round(next.exactRate * 10000) / 10000)
+        }
+      }
+      return next
+    })
     setFormError('')
   }
 
   const quantity = Number(formData.quantity)
-  const rate = Number(formData.rate)
+  const rate = formData.exactRate ?? Number(formData.rate)
   const total =
     formData.quantity !== '' && formData.rate !== '' && !Number.isNaN(quantity) && !Number.isNaN(rate)
-      ? Math.round(quantity * rate * 100) / 100
+      ? round2(quantity * rate)
       : null
   // Blank "Paid" means the full amount was received
   const paidNow = formData.paidAmount === '' ? total : Number(formData.paidAmount)
@@ -1281,10 +1304,30 @@ const ApiCredits = () => {
                       onChange={handleChange}
                       placeholder={isSaleForm ? '2' : '1.4'}
                       min='0'
-                      step='0.01'
+                      step='any'
+                      inputMode='decimal'
                       className={inputClass}
                     />
                   </div>
+                </div>
+
+                <div>
+                  <label className={labelClass}>Total Amount (₹)</label>
+                  <input
+                    type='number'
+                    name='totalAmount'
+                    value={formData.totalAmount}
+                    onChange={handleChange}
+                    placeholder={formData.quantity ? 'API calls × price per call' : 'Enter API calls first'}
+                    disabled={!formData.quantity}
+                    min='0'
+                    step='any'
+                    inputMode='decimal'
+                    className={`${inputClass} font-semibold disabled:bg-gray-50 disabled:cursor-not-allowed`}
+                  />
+                  <p className='text-[11px] text-gray-500 mt-1'>
+                    Fills in from API calls × price per call. Type a total instead and the price per call is worked out.
+                  </p>
                 </div>
 
                 <div className={isSaleForm ? 'grid grid-cols-2 gap-3' : ''}>
