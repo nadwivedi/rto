@@ -159,8 +159,9 @@ const FEATURE_OPTIONS = [
 const INPUT_CLASS = 'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
 const LABEL_CLASS = 'block text-xs md:text-sm font-semibold text-gray-700 mb-1'
 
-// Numbered, tinted card used for each section of the user popup
-const FormSection = ({ step, title, color, children }) => {
+// Numbered, tinted card used for each section of the user popup.
+// Pass onToggle to make it collapsible (heading becomes a button, body shows only when open).
+const FormSection = ({ step, title, color, children, open = true, onToggle, summary }) => {
   const tones = {
     indigo: 'from-blue-50 to-indigo-50 border-indigo-200',
     emerald: 'from-green-50 to-emerald-50 border-emerald-200',
@@ -171,11 +172,30 @@ const FormSection = ({ step, title, color, children }) => {
   const dots = { indigo: 'bg-indigo-600', emerald: 'bg-emerald-600', amber: 'bg-amber-500', purple: 'bg-purple-600', sky: 'bg-sky-600' }
   return (
     <div className={`bg-gradient-to-r border-2 rounded-xl p-3 md:p-5 ${tones[color]}`}>
-      <h3 className='text-sm md:text-base font-bold text-gray-800 mb-3 flex items-center gap-2'>
-        <span className={`${dots[color]} text-white w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-xs`}>{step}</span>
-        {title}
-      </h3>
-      {children}
+      {onToggle ? (
+        <button
+          type='button'
+          onClick={onToggle}
+          aria-expanded={open}
+          className={`w-full text-left text-sm md:text-base font-bold text-gray-800 flex items-center gap-2 cursor-pointer ${open ? 'mb-3' : ''}`}
+        >
+          <span className={`${dots[color]} text-white w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-xs shrink-0`}>{step}</span>
+          <span className='flex-1 min-w-0'>
+            {title}
+            {!open && summary && <span className='block text-[11px] md:text-xs font-normal text-gray-500 truncate'>{summary}</span>}
+          </span>
+          <span className='text-xs font-semibold text-gray-500 shrink-0'>{open ? 'Hide' : 'Show'}</span>
+          <svg className={`w-5 h-5 text-gray-500 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 9l-7 7-7-7' />
+          </svg>
+        </button>
+      ) : (
+        <h3 className='text-sm md:text-base font-bold text-gray-800 mb-3 flex items-center gap-2'>
+          <span className={`${dots[color]} text-white w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-xs`}>{step}</span>
+          {title}
+        </h3>
+      )}
+      {open && children}
     </div>
   )
 }
@@ -197,6 +217,8 @@ const Users = () => {
   const [editingUserId, setEditingUserId] = useState(null)
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
   const [draggingScreenshot, setDraggingScreenshot] = useState(false)
+  // Feature Access is rarely changed, so it starts collapsed each time the popup opens
+  const [showFeatures, setShowFeatures] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     mobile1: '',
@@ -515,6 +537,7 @@ const Users = () => {
       if (data.success) {
         setSuccess(isEditMode ? 'User updated successfully!' : 'User created successfully!')
         setShowModal(false)
+        setShowFeatures(false)
         setIsEditMode(false)
         setEditingUserId(null)
         setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [] })
@@ -570,6 +593,7 @@ const Users = () => {
 
   const handleCloseModal = () => {
     setShowModal(false)
+    setShowFeatures(false)
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
@@ -1936,7 +1960,17 @@ const Users = () => {
                 </FormSection>
 
                 {/* Section 5: Feature access */}
-                <FormSection step={5} title='Feature Access' color='purple'>
+                <FormSection
+                  step={5}
+                  title='Feature Access'
+                  color='purple'
+                  open={showFeatures}
+                  onToggle={() => setShowFeatures((v) => !v)}
+                  summary={(() => {
+                    const on = FEATURE_OPTIONS.filter((f) => formData[f.name]).map((f) => f.label)
+                    return on.length ? `${on.length} on: ${on.join(', ')}` : 'No features turned on'
+                  })()}
+                >
                   <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
                     {FEATURE_OPTIONS.map((f) => (
                       <label
