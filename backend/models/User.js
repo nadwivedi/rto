@@ -113,6 +113,11 @@ const userSchema = new mongoose.Schema({
     type: Number,
     min: 0
   },
+  // Proof of the fee payment (UPI / bank screenshots), as /uploads/payment-screenshots/... paths
+  paymentScreenshots: {
+    type: [String],
+    default: undefined
+  },
   features: {
     greenTax: { type: Boolean, default: false },
     professionalTax: { type: Boolean, default: false },

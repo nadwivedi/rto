@@ -3,6 +3,9 @@ const ApiUsage = require('../models/ApiUsage')
 const VehicleSearchHistory = require('../models/VehicleSearchHistory')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
+const fs = require('fs')
+const path = require('path')
+const crypto = require('crypto')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
 const { backupAndCleanUserData } = require('../utils/userDataClean')
@@ -13,6 +16,29 @@ const parseMoney = (value) => {
   if (value === '' || value === null) return undefined
   const n = Number(value)
   return Number.isNaN(n) || n < 0 ? false : Math.round(n * 100) / 100
+}
+
+// Payment screenshots attached to a user's fee payment
+const paymentScreenshotsDir = path.join(__dirname, '..', 'uploads', 'payment-screenshots')
+const PAYMENT_SCREENSHOT_PREFIX = '/uploads/payment-screenshots/'
+
+// Keep only paths that point into the payment screenshots folder (no other files can be linked)
+const cleanScreenshotPaths = (list) => {
+  if (!Array.isArray(list)) return []
+  return [...new Set(list.filter((p) =>
+    typeof p === 'string' && p.startsWith(PAYMENT_SCREENSHOT_PREFIX) && path.basename(p) === p.slice(PAYMENT_SCREENSHOT_PREFIX.length)
+  ))]
+}
+
+const deleteScreenshotFiles = (list) => {
+  for (const p of list || []) {
+    try {
+      const filePath = path.join(paymentScreenshotsDir, path.basename(p))
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+    } catch (err) {
+      console.error('Error deleting payment screenshot:', err)
+    }
+  }
 }
 
 // The fee a user owes is their plan fee: the lifetime fee, or the yearly price
@@ -193,10 +219,51 @@ exports.getUserById = async (req, res) => {
   }
 }
 
+// Upload a payment screenshot (base64 image or PDF). Returns the path to save on the user.
+exports.uploadPaymentScreenshot = async (req, res) => {
+  try {
+    const { imageData } = req.body || {}
+    const match = typeof imageData === 'string' && imageData.match(/^data:(image\/(jpeg|jpg|png|webp)|application\/pdf);base64,/)
+    if (!match) {
+      return res.status(400).json({
+        success: false,
+        message: 'Only JPG, PNG, WebP and PDF files are accepted'
+      })
+    }
+
+    const extension = match[2] ? (match[2] === 'jpeg' ? 'jpg' : match[2]) : 'pdf'
+    const buffer = Buffer.from(imageData.slice(match[0].length), 'base64')
+    if (buffer.length > 8 * 1024 * 1024) {
+      return res.status(400).json({
+        success: false,
+        message: 'File must be smaller than 8MB'
+      })
+    }
+
+    fs.mkdirSync(paymentScreenshotsDir, { recursive: true })
+    // Random name so the file URL cannot be guessed
+    const filename = `payment-${Date.now()}-${crypto.randomBytes(8).toString('hex')}.${extension}`
+    fs.writeFileSync(path.join(paymentScreenshotsDir, filename), buffer)
+
+    res.json({
+      success: true,
+      data: { path: PAYMENT_SCREENSHOT_PREFIX + filename }
+    })
+  } catch (error) {
+    logError(error, req)
+    const userError = getUserFriendlyError(error)
+    res.status(500).json({
+      success: false,
+      message: userError.message,
+      timestamp: getSimplifiedTimestamp()
+    })
+  }
+}
+
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, yearlyPrice, lifetimeFee, paidAmount, planType, rcProvider } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, yearlyPrice, lifetimeFee, paidAmount, paymentScreenshots, planType, rcProvider } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -346,6 +413,7 @@ exports.createUser = async (req, res) => {
       yearlyPrice: !isLifetimePlan && yearlyPrice !== undefined && !Number.isNaN(Number(yearlyPrice)) ? Number(yearlyPrice) : undefined,
       lifetimeFee: isLifetimePlan && lifetimeFee !== undefined && !Number.isNaN(Number(lifetimeFee)) ? Number(lifetimeFee) : undefined,
       paidAmount: paid,
+      paymentScreenshots: cleanScreenshotPaths(paymentScreenshots),
       features: features ? {
         greenTax: features.greenTax === true,
         professionalTax: features.professionalTax === true,
@@ -393,6 +461,7 @@ exports.createUser = async (req, res) => {
       monthlyPrice: newUser.monthlyPrice,
       yearlyPrice: newUser.yearlyPrice,
       lifetimeFee: newUser.lifetimeFee,
+      paymentScreenshots: newUser.paymentScreenshots || [],
       ...feeFields(newUser),
       createdAt: newUser.createdAt
     }
@@ -419,7 +488,7 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     // rcSearchLimit is deliberately not accepted here: it changes only through Vehicle API Sales
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, yearlyPrice, lifetimeFee, paidAmount, features, rcProvider } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, yearlyPrice, lifetimeFee, paidAmount, paymentScreenshots, features, rcProvider } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -569,6 +638,12 @@ exports.updateUser = async (req, res) => {
       }
       user.paidAmount = amount
     }
+    if (paymentScreenshots !== undefined) {
+      const next = cleanScreenshotPaths(paymentScreenshots)
+      // Files the admin removed are deleted from disk
+      deleteScreenshotFiles((user.paymentScreenshots || []).filter((p) => !next.includes(p)))
+      user.paymentScreenshots = next
+    }
     if (password !== undefined && password.trim()) {
       if (password.length < 4) {
         return res.status(400).json({
@@ -637,6 +712,7 @@ exports.updateUser = async (req, res) => {
         monthlyPrice: user.monthlyPrice,
         yearlyPrice: user.yearlyPrice,
         lifetimeFee: user.lifetimeFee,
+        paymentScreenshots: user.paymentScreenshots || [],
         ...feeFields(user)
       }
     })
@@ -664,6 +740,8 @@ exports.deleteUser = async (req, res) => {
         message: 'User not found'
       })
     }
+
+    deleteScreenshotFiles(user.paymentScreenshots)
 
     recordActivity(req, {
       action: 'delete',

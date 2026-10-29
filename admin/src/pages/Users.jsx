@@ -194,6 +194,7 @@ const Users = () => {
   const [showModal, setShowModal] = useState(false)
   const [isEditMode, setIsEditMode] = useState(false)
   const [editingUserId, setEditingUserId] = useState(null)
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
     mobile1: '',
@@ -209,6 +210,7 @@ const Users = () => {
     yearlyPrice: '',
     lifetimeFee: '',
     paidAmount: '',
+    paymentScreenshots: [],
     password: '',
     features_greenTax: false,
     features_professionalTax: false,
@@ -353,6 +355,53 @@ const Users = () => {
     setTimeout(() => setCopiedId(null), 2000)
   }
 
+  // Upload each picked file, then keep its path on the form (saved with the user)
+  const handleScreenshotUpload = async (e) => {
+    const files = Array.from(e.target.files || [])
+    e.target.value = ''
+    if (!files.length) return
+    setUploadingScreenshot(true)
+    setError('')
+    try {
+      for (const file of files) {
+        if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+          setError(`${file.name}: only images or PDF can be attached`)
+          continue
+        }
+        if (file.size > 8 * 1024 * 1024) {
+          setError(`${file.name}: file must be smaller than 8MB`)
+          continue
+        }
+        const imageData = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onload = () => resolve(reader.result)
+          reader.onerror = reject
+          reader.readAsDataURL(file)
+        })
+        const response = await fetch(`${BACKEND_URL}/api/admin/users/payment-screenshot`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ imageData })
+        })
+        const data = await response.json()
+        if (data.success) {
+          setFormData((prev) => ({ ...prev, paymentScreenshots: [...(prev.paymentScreenshots || []), data.data.path] }))
+        } else {
+          setError(data.message || `Failed to upload ${file.name}`)
+        }
+      }
+    } catch (err) {
+      setError('Failed to upload payment screenshot')
+    } finally {
+      setUploadingScreenshot(false)
+    }
+  }
+
+  const removeScreenshot = (path) => {
+    setFormData((prev) => ({ ...prev, paymentScreenshots: (prev.paymentScreenshots || []).filter((p) => p !== path) }))
+  }
+
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target
     const next = {
@@ -462,7 +511,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0 })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [] })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -492,6 +541,7 @@ const Users = () => {
       yearlyPrice: user.yearlyPrice ?? (user.monthlyPrice != null ? Number((user.monthlyPrice * 12).toFixed(2)) : ''),
       lifetimeFee: user.lifetimeFee ?? '',
       paidAmount: user.paidAmount ?? '',
+      paymentScreenshots: user.paymentScreenshots || [],
       password: '',
       features_greenTax: user.features?.greenTax ?? false,
       features_professionalTax: user.features?.professionalTax ?? false,
@@ -517,7 +567,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0 })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [] })
   }
 
   const openDeleteModal = (user) => {
@@ -794,6 +844,17 @@ const Users = () => {
           <span className='ml-1 font-semibold text-amber-600'>· ₹{formatMoney(pending)} pending</span>
         ) : (
           <span className='ml-1 font-semibold text-emerald-600'>· Paid</span>
+        )}
+        {user.paymentScreenshots?.length > 0 && (
+          <a
+            href={`${BACKEND_URL}${user.paymentScreenshots[0]}`}
+            target='_blank'
+            rel='noreferrer'
+            className='ml-1 font-semibold text-indigo-600 hover:underline'
+            title={`${user.paymentScreenshots.length} payment screenshot(s) — open the first; edit the user to see all`}
+          >
+            · 📎 {user.paymentScreenshots.length}
+          </a>
         )}
       </div>
     )
@@ -1778,6 +1839,68 @@ const Users = () => {
                         )
                       })()}
                     </div>
+
+                    {/* Payment proof: UPI / bank screenshots, several allowed for part payments */}
+                    <div className='sm:col-span-2'>
+                      <label className={LABEL_CLASS}>
+                        Payment Screenshots <span className='text-gray-400 font-normal'>(optional)</span>
+                      </label>
+                      <div className='flex flex-wrap gap-2'>
+                        {(formData.paymentScreenshots || []).map((p) => (
+                          <div key={p} className='relative w-20 h-20 rounded-lg border border-amber-200 bg-white overflow-hidden group'>
+                            <a href={`${BACKEND_URL}${p}`} target='_blank' rel='noreferrer' title='Open full size' className='block w-full h-full'>
+                              {p.toLowerCase().endsWith('.pdf') ? (
+                                <div className='w-full h-full flex flex-col items-center justify-center text-rose-600'>
+                                  <svg className='w-7 h-7' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                                  </svg>
+                                  <span className='text-[10px] font-bold'>PDF</span>
+                                </div>
+                              ) : (
+                                <img src={`${BACKEND_URL}${p}`} alt='Payment screenshot' className='w-full h-full object-cover' />
+                              )}
+                            </a>
+                            <button
+                              type='button'
+                              onClick={() => removeScreenshot(p)}
+                              className='absolute top-1 right-1 bg-black/60 hover:bg-rose-600 text-white rounded-full p-0.5 cursor-pointer'
+                              aria-label='Remove screenshot'
+                              title='Remove'
+                            >
+                              <X className='w-3 h-3' />
+                            </button>
+                          </div>
+                        ))}
+                        <label
+                          className={`w-20 h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition ${
+                            uploadingScreenshot
+                              ? 'border-gray-300 text-gray-400 cursor-wait'
+                              : 'border-amber-300 text-amber-700 bg-white/60 hover:bg-white hover:border-amber-400 cursor-pointer'
+                          }`}
+                        >
+                          {uploadingScreenshot ? (
+                            <svg className='w-5 h-5 animate-spin' fill='none' viewBox='0 0 24 24'>
+                              <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' />
+                              <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z' />
+                            </svg>
+                          ) : (
+                            <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+                            </svg>
+                          )}
+                          {uploadingScreenshot ? 'Uploading' : 'Attach'}
+                          <input
+                            type='file'
+                            accept='image/*,application/pdf'
+                            multiple
+                            disabled={uploadingScreenshot}
+                            onChange={handleScreenshotUpload}
+                            className='hidden'
+                          />
+                        </label>
+                      </div>
+                      <p className='text-[11px] text-gray-500 mt-1'>UPI or bank payment proof, images or PDF up to 8MB. Saved when you click {isEditMode ? 'Update' : 'Create'} User.</p>
+                    </div>
                   </div>
                 </FormSection>
 
@@ -1880,7 +2003,8 @@ const Users = () => {
                 </button>
                 <button
                   type='submit'
-                  className='flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 cursor-pointer'
+                  disabled={uploadingScreenshot}
+                  className='flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
                 >
                   <svg className='w-4 h-4 md:w-5 md:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
