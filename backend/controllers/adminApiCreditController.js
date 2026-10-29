@@ -35,6 +35,19 @@ const badRequest = (res, message) =>
 // Rupee amounts are kept to 2 decimals (rates like 1.4 x 2000 would otherwise drift)
 const roundMoney = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100
 
+// Days shown in the day-wise income table
+const INCOME_DAYS = 30
+
+// The last n India-time days as YYYY-MM-DD, newest first
+const lastDaysIST = (n) => {
+  const out = []
+  const now = Date.now()
+  for (let i = 0; i < n; i++) {
+    out.push(new Date(now - i * 86400000).toLocaleDateString('en-CA', { timeZone: IST }))
+  }
+  return out
+}
+
 // List transactions (newest first), optionally filtered by type and user
 exports.getTransactions = async (req, res) => {
   try {
@@ -476,7 +489,12 @@ exports.getSummary = async (req, res) => {
     const todayMatch = { $expr: { $eq: [{ $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: IST } }, today] } }
     const todayTotal = { $group: { _id: null, quantity: { $sum: '$quantity' }, amount: { $sum: '$amount' }, entries: { $sum: 1 } } }
 
-    const [byType, byMonth, byUser, lastPurchase, lastSale, keySales, keySalesByMonth, userSalesToday, keySalesToday] = await Promise.all([
+    // Day-wise income window (a day extra so the oldest India day is complete)
+    const incomeDays = lastDaysIST(INCOME_DAYS)
+    const incomeSince = new Date(Date.now() - (INCOME_DAYS + 1) * 86400000)
+    const dayKey = { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: IST } }
+
+    const [byType, byMonth, byUser, lastPurchase, lastSale, keySales, keySalesByMonth, userSalesToday, keySalesToday, byDay, keySalesByDay] = await Promise.all([
       ApiCreditTransaction.aggregate([
         {
           $group: {
@@ -546,7 +564,31 @@ exports.getSummary = async (req, res) => {
         }
       ]),
       ApiCreditTransaction.aggregate([{ $match: { type: 'sale', ...todayMatch } }, todayTotal]),
-      ApiKeySale.aggregate([{ $match: todayMatch }, todayTotal])
+      ApiKeySale.aggregate([{ $match: todayMatch }, todayTotal]),
+      ApiCreditTransaction.aggregate([
+        { $match: { date: { $gte: incomeSince } } },
+        {
+          $group: {
+            _id: { day: dayKey, type: '$type' },
+            quantity: { $sum: '$quantity' },
+            amount: { $sum: '$amount' },
+            paid: { $sum: PAID_EXPR },
+            entries: { $sum: 1 }
+          }
+        }
+      ]),
+      ApiKeySale.aggregate([
+        { $match: { date: { $gte: incomeSince } } },
+        {
+          $group: {
+            _id: dayKey,
+            quantity: { $sum: '$quantity' },
+            amount: { $sum: '$amount' },
+            paid: { $sum: PAID_EXPR },
+            entries: { $sum: 1 }
+          }
+        }
+      ])
     ])
 
     const pick = (type) => byType.find((t) => t._id === type) || { quantity: 0, amount: 0, paid: 0, entries: 0 }
@@ -581,6 +623,56 @@ exports.getSummary = async (req, res) => {
     const months = Array.from(monthMap.values())
       .sort((a, b) => (a.month < b.month ? 1 : -1))
       .map((m) => ({ ...m, net: roundMoney(m.soldAmount - m.boughtAmount) }))
+
+    // One row per day (days with nothing stay in, as zeros), newest first
+    const dayMap = new Map(incomeDays.map((d) => [d, {
+      date: d, soldQty: 0, soldAmount: 0, receivedAmount: 0, keyAmount: 0, sales: 0, boughtQty: 0, boughtAmount: 0
+    }]))
+    for (const row of byDay) {
+      const d = dayMap.get(row._id.day)
+      if (!d) continue
+      if (row._id.type === 'purchase') {
+        d.boughtQty += row.quantity
+        d.boughtAmount += row.amount
+      } else {
+        d.soldQty += row.quantity
+        d.soldAmount += row.amount
+        d.receivedAmount += row.paid
+        d.sales += row.entries
+      }
+    }
+    for (const row of keySalesByDay) {
+      const d = dayMap.get(row._id)
+      if (!d) continue
+      d.soldQty += row.quantity
+      d.soldAmount += row.amount
+      d.receivedAmount += row.paid
+      d.keyAmount += row.amount
+      d.sales += row.entries
+    }
+    const days = incomeDays.map((key) => {
+      const d = dayMap.get(key)
+      return {
+        ...d,
+        soldAmount: roundMoney(d.soldAmount),
+        receivedAmount: roundMoney(d.receivedAmount),
+        keyAmount: roundMoney(d.keyAmount),
+        boughtAmount: roundMoney(d.boughtAmount),
+        net: roundMoney(d.soldAmount - d.boughtAmount),
+        // Earned on that day's sales at the average buying price
+        profit: avgBuyRate === null ? null : roundMoney(d.soldAmount - d.soldQty * avgBuyRate)
+      }
+    })
+    const sumDays = (list, field) => roundMoney(list.reduce((t, d) => t + (d[field] || 0), 0))
+    const incomeTotals = (n) => {
+      const list = days.slice(0, n)
+      return {
+        soldAmount: sumDays(list, 'soldAmount'),
+        receivedAmount: sumDays(list, 'receivedAmount'),
+        soldQty: list.reduce((t, d) => t + d.soldQty, 0),
+        profit: avgBuyRate === null ? null : sumDays(list, 'profit')
+      }
+    }
 
     res.json({
       success: true,
@@ -618,6 +710,8 @@ exports.getSummary = async (req, res) => {
           sale: lastSale?.rate ?? null
         },
         months,
+        days,
+        income: { last7: incomeTotals(7), last30: incomeTotals(INCOME_DAYS) },
         users: byUser.map((u) => ({
           ...u,
           amount: roundMoney(u.amount),

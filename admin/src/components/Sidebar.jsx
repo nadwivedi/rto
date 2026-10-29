@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext';
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/', label: 'Manage Users', icon: Users2 },
-  { to: '/api-credits', label: 'Vehicle API Sales', icon: Wallet },
+  { to: '/api-credits', label: 'User API Sales', icon: Wallet },
   { to: '/api-keys', label: 'Vehicle API Keys', icon: KeyRound, matchPrefix: true },
   { to: '/fitness-work', label: 'Fitness Work', icon: ClipboardCheck },
 ];

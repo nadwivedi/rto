@@ -67,7 +67,7 @@ const rangeFor = (key) => {
 
 const ENTITIES = {
   user: 'Users',
-  api_credit: 'Vehicle API Sales',
+  api_credit: 'User API Sales',
   fitness_work: 'Fitness Work',
   api_key: 'API Keys',
   blog: 'Blogs',

@@ -558,7 +558,7 @@ const Users = () => {
       delete bodyData.features_tempRc
       delete bodyData.features_nlParticular
       delete bodyData.features_saveVehicleRecords
-      // Shown in the form for reference only; the limit changes through Vehicle API Sales
+      // Shown in the form for reference only; the limit changes through User API Sales
       delete bodyData.rcSearchLimit
       delete bodyData.rcSearchCount
       if (formData.planType === 'lifetime') {
@@ -2134,7 +2134,7 @@ const Users = () => {
                     ))}
                   </div>
 
-                  {/* The search limit is never typed in here: it only grows when a sale is recorded in Vehicle API Sales */}
+                  {/* The search limit is never typed in here: it only grows when a sale is recorded in User API Sales */}
                   {formData.features_rcDetails && (
                     <div className='mt-3 p-3.5 bg-white rounded-xl border border-indigo-100 space-y-3'>
                       <div className='flex flex-wrap items-center justify-between gap-2'>
@@ -2189,7 +2189,7 @@ const Users = () => {
                         </>
                       ) : (
                         <p className='text-[11px] text-indigo-700'>
-                          The user starts with a search limit of 0. After creating the user, record a sale in Vehicle API Sales to give them searches.
+                          The user starts with a search limit of 0. After creating the user, record a sale in User API Sales to give them searches.
                         </p>
                       )}
                     </div>

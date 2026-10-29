@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import RcApiUsageCard from '../components/RcApiUsageCard'
+import SearchSelect from '../components/SearchSelect'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -155,6 +156,7 @@ const ApiCredits = () => {
   }, [loadAll])
 
   const usersById = useMemo(() => new Map(users.map((u) => [u._id, u])), [users])
+  const userOptions = useMemo(() => users.map((u) => ({ value: u._id, label: `${u.name} · ${u.mobile1}` })), [users])
   const selectedUser = usersById.get(formData.userId)
   // What the user picked in the sell form has bought so far
   const selectedUserSales = summary?.users?.find((u) => String(u.userId) === formData.userId)
@@ -367,9 +369,9 @@ const ApiCredits = () => {
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5 sm:gap-4 mb-3 sm:mb-6'>
         <div>
-          <h1 className='text-xl sm:text-3xl font-bold text-gray-800'>Vehicle API Sales</h1>
+          <h1 className='text-xl sm:text-3xl font-bold text-gray-800'>User API Sales</h1>
           <p className='text-xs sm:text-base text-gray-600 mt-0.5 sm:mt-1'>
-            What you buy from the provider, what each user buys from you, and the cashflow
+            Vehicle API calls sold to users, day-wise income, and what you buy from the provider
           </p>
         </div>
         <div className='grid grid-cols-2 sm:flex gap-2'>
@@ -381,7 +383,7 @@ const ApiCredits = () => {
           </button>
           <button
             onClick={() => openModal('sale', userFilter)}
-            className='px-2 py-2 sm:px-5 sm:py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 font-semibold text-sm shadow-lg shadow-indigo-200 hover:shadow-indigo-300 transition-all cursor-pointer'
+            className='px-2 py-2 sm:px-5 sm:py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl hover:shadow-lg font-semibold text-sm shadow-md shadow-indigo-200 transition-all cursor-pointer'
           >
             + Sell to User
           </button>
@@ -477,6 +479,137 @@ const ApiCredits = () => {
             />
           </div>
 
+          {/* Income: money from API sales, day by day and month by month */}
+          <div className='mb-3 sm:mb-5'>
+            <div className='flex flex-wrap items-baseline justify-between gap-x-2 mb-2'>
+              <h2 className='text-sm font-bold text-gray-800'>Income</h2>
+              <p className='text-[11px] text-gray-400'>Sales to users and API keys · profit at your average buying price</p>
+            </div>
+            <div className='grid grid-cols-3 gap-2 sm:gap-3 mb-3'>
+              <Tile
+                label='Today'
+                value={formatRupees(summary?.days?.[0]?.soldAmount)}
+                accent='text-emerald-700'
+                sub={summary?.days?.[0]?.soldAmount ? `${formatRupees(summary.days[0].receivedAmount)} received` : 'No sale yet today'}
+              />
+              <Tile
+                label='Last 7 Days'
+                value={formatRupees(summary?.income?.last7?.soldAmount)}
+                accent='text-emerald-700'
+                sub={`${formatRupees(summary?.income?.last7?.receivedAmount)} received${
+                  summary?.income?.last7?.profit != null ? ` · ${formatRupees(summary.income.last7.profit)} profit` : ''
+                }`}
+              />
+              <Tile
+                label='Last 30 Days'
+                value={formatRupees(summary?.income?.last30?.soldAmount)}
+                accent='text-emerald-700'
+                sub={`${formatRupees(summary?.income?.last30?.receivedAmount)} received${
+                  summary?.income?.last30?.profit != null ? ` · ${formatRupees(summary.income.last30.profit)} profit` : ''
+                }`}
+              />
+            </div>
+
+            <div className='grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-5'>
+              {/* Day-wise income */}
+              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
+                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Day-wise income · last 30 days</h3>
+                <div className='max-h-[380px] overflow-auto'>
+                  <table className='w-full'>
+                    <thead className='sticky top-0 z-10 bg-gray-50'>
+                      <tr className='border-b border-gray-100'>
+                        <th className={`${th} text-left`}>Day</th>
+                        <th className={`${th} text-right`}>Calls Sold</th>
+                        <th className={`${th} text-right`}>Income</th>
+                        <th className={`${th} text-right`}>Received</th>
+                        <th className={`${th} text-right`} title='Sale amount minus the cost of those calls at your average buying price'>Profit</th>
+                        <th className={`${th} text-right`} title='Paid to the provider that day'>Bought</th>
+                      </tr>
+                    </thead>
+                    <tbody className='divide-y divide-gray-100'>
+                      {(summary?.days || []).map((day) => {
+                        const idle = !day.soldAmount && !day.boughtAmount
+                        return (
+                          <tr key={day.date} className={`hover:bg-gray-50/80 transition-colors ${idle ? 'text-gray-300' : ''}`}>
+                            <td className='px-2.5 sm:px-4 py-2 text-xs whitespace-nowrap'>
+                              <span className={idle ? 'text-gray-400' : 'text-gray-700'}>{formatDay(day.date)}</span>
+                              {day.date === summary.today?.date && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
+                            </td>
+                            <td className={`px-2.5 sm:px-4 py-2 text-xs text-right tabular-nums ${idle ? '' : 'text-gray-700'}`}>
+                              {day.soldQty ? formatNumber(day.soldQty) : '-'}
+                            </td>
+                            <td className={`px-2.5 sm:px-4 py-2 text-xs text-right tabular-nums whitespace-nowrap ${day.soldAmount ? 'font-bold text-gray-900' : ''}`}>
+                              {day.soldAmount ? formatRupees(day.soldAmount) : '-'}
+                              {day.keyAmount > 0 && <div className='text-[10px] font-normal text-gray-400'>{formatRupees(day.keyAmount)} API keys</div>}
+                            </td>
+                            <td className='px-2.5 sm:px-4 py-2 text-xs text-right tabular-nums whitespace-nowrap'>
+                              {day.soldAmount ? (
+                                <span className={day.receivedAmount < day.soldAmount ? 'text-amber-600 font-semibold' : 'text-gray-700'}>
+                                  {formatRupees(day.receivedAmount)}
+                                </span>
+                              ) : '-'}
+                            </td>
+                            <td className={`px-2.5 sm:px-4 py-2 text-xs text-right tabular-nums whitespace-nowrap font-semibold ${
+                              !day.soldAmount || day.profit == null ? '' : day.profit < 0 ? 'text-red-600' : 'text-emerald-700'
+                            }`}>
+                              {day.soldAmount && day.profit != null ? formatRupees(day.profit) : '-'}
+                            </td>
+                            <td className={`px-2.5 sm:px-4 py-2 text-xs text-right tabular-nums whitespace-nowrap ${day.boughtAmount ? 'text-gray-700' : ''}`}>
+                              {day.boughtAmount ? formatRupees(day.boughtAmount) : '-'}
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              {/* Month-wise cashflow */}
+              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
+                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Month-wise cashflow</h3>
+                {summary?.months?.length ? (
+                  <div className='max-h-[380px] overflow-auto'>
+                    <table className='w-full'>
+                      <thead className='sticky top-0 z-10 bg-gray-50'>
+                        <tr className='border-b border-gray-100'>
+                          <th className={`${th} text-left`}>Month</th>
+                          <th className={`${th} text-right`}>Paid to Provider</th>
+                          <th className={`${th} text-right`}>Received from Users</th>
+                          <th className={`${th} text-right`}>Net</th>
+                        </tr>
+                      </thead>
+                      <tbody className='divide-y divide-gray-100'>
+                        {summary.months.map((m) => (
+                          <tr key={m.month} className='hover:bg-gray-50/80 transition-colors'>
+                            <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatMonth(m.month)}</td>
+                            <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums whitespace-nowrap'>
+                              <div className='text-gray-700'>{m.boughtAmount ? formatRupees(m.boughtAmount) : '-'}</div>
+                              {m.boughtQty > 0 && <div className='text-gray-400'>{formatNumber(m.boughtQty)} calls</div>}
+                            </td>
+                            <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums whitespace-nowrap'>
+                              <div className='text-gray-700'>{m.soldAmount ? formatRupees(m.soldAmount) : '-'}</div>
+                              {m.soldQty > 0 && <div className='text-gray-400'>{formatNumber(m.soldQty)} calls</div>}
+                            </td>
+                            <td
+                              className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-right tabular-nums whitespace-nowrap ${
+                                m.net < 0 ? 'text-red-600' : 'text-emerald-700'
+                              }`}
+                            >
+                              {formatRupees(m.net)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className='p-6 text-center text-sm text-gray-500'>No entries yet.</p>
+                )}
+              </div>
+            </div>
+          </div>
+
           {/* Provider quota actually left */}
           <RcApiUsageCard key={refreshKey} className='mb-3 sm:mb-5' />
 
@@ -508,18 +641,17 @@ const ApiCredits = () => {
                   </button>
                 ))}
               </div>
-              <select
+              <SearchSelect
                 value={userFilter}
-                onChange={(e) => changeUserFilter(e.target.value)}
-                className='px-3 py-1.5 text-xs border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer lg:max-w-[260px]'
-              >
-                <option value=''>All users</option>
-                {users.map((u) => (
-                  <option key={u._id} value={u._id}>
-                    {u.name} · {u.mobile1}
-                  </option>
-                ))}
-              </select>
+                onChange={(value) => changeUserFilter(value || '')}
+                options={userOptions}
+                placeholder='All users'
+                searchPlaceholder='Search name or mobile…'
+                emptyText='No user found'
+                clearable
+                ariaLabel='Filter history by user'
+                className='lg:w-[260px]'
+              />
             </div>
 
             {transactions.length === 0 ? (
@@ -530,7 +662,7 @@ const ApiCredits = () => {
               </p>
             ) : (
               <>
-              <ul className='md:hidden divide-y divide-gray-100'>
+              <ul className='md:hidden divide-y divide-gray-100 max-h-[420px] overflow-y-auto'>
                 {transactions.map((txn) => (
                   <li key={txn._id} className='flex items-center gap-2 px-2.5 py-2'>
                     <div className='min-w-0 flex-1'>
@@ -573,10 +705,11 @@ const ApiCredits = () => {
                   </li>
                 ))}
               </ul>
-              <div className='hidden md:block overflow-x-auto'>
+              {/* Kept to a fixed height so a long history scrolls inside the card */}
+              <div className='hidden md:block max-h-[440px] overflow-auto'>
                 <table className='w-full'>
-                  <thead>
-                    <tr className='border-b border-gray-100 bg-gray-50/60'>
+                  <thead className='sticky top-0 z-10 bg-gray-50'>
+                    <tr className='border-b border-gray-100'>
                       <th className={`${th} text-left`}>Date</th>
                       <th className={`${th} text-left`}>Type</th>
                       <th className={`${th} text-left`}>User</th>
@@ -824,15 +957,18 @@ const ApiCredits = () => {
             </div>
           </div>
 
-          <div className='grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-5'>
+          <div>
             {/* Per-user totals */}
             <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
-              <h2 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Bought by each user</h2>
+              <h2 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>
+                Bought by each user
+                {summary?.users?.length > 0 && <span className='font-normal text-gray-400'> ({summary.users.length})</span>}
+              </h2>
               {summary?.users?.length ? (
-                <div className='overflow-x-auto'>
+                <div className='max-h-[420px] overflow-auto'>
                   <table className='w-full'>
-                    <thead>
-                      <tr className='border-b border-gray-100 bg-gray-50/60'>
+                    <thead className='sticky top-0 z-10 bg-gray-50'>
+                      <tr className='border-b border-gray-100'>
                         <th className={`${th} text-left`}>User</th>
                         <th className={`${th} text-right`}>Bought</th>
                         <th className={`${th} text-right`}>Amount</th>
@@ -891,48 +1027,6 @@ const ApiCredits = () => {
               )}
             </div>
 
-            {/* Month-wise cashflow */}
-            <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
-              <h2 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Month-wise cashflow</h2>
-              {summary?.months?.length ? (
-                <div className='overflow-x-auto'>
-                  <table className='w-full'>
-                    <thead>
-                      <tr className='border-b border-gray-100 bg-gray-50/60'>
-                        <th className={`${th} text-left`}>Month</th>
-                        <th className={`${th} text-right`}>Paid to Provider</th>
-                        <th className={`${th} text-right`}>Received from Users</th>
-                        <th className={`${th} text-right`}>Net</th>
-                      </tr>
-                    </thead>
-                    <tbody className='divide-y divide-gray-100'>
-                      {summary.months.map((m) => (
-                        <tr key={m.month} className='hover:bg-gray-50/80 transition-colors'>
-                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatMonth(m.month)}</td>
-                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums whitespace-nowrap'>
-                            <div className='text-gray-700'>{m.boughtAmount ? formatRupees(m.boughtAmount) : '-'}</div>
-                            {m.boughtQty > 0 && <div className='text-gray-400'>{formatNumber(m.boughtQty)} calls</div>}
-                          </td>
-                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums whitespace-nowrap'>
-                            <div className='text-gray-700'>{m.soldAmount ? formatRupees(m.soldAmount) : '-'}</div>
-                            {m.soldQty > 0 && <div className='text-gray-400'>{formatNumber(m.soldQty)} calls</div>}
-                          </td>
-                          <td
-                            className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-right tabular-nums whitespace-nowrap ${
-                              m.net < 0 ? 'text-red-600' : 'text-emerald-700'
-                            }`}
-                          >
-                            {formatRupees(m.net)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              ) : (
-                <p className='p-6 text-center text-sm text-gray-500'>No entries yet.</p>
-              )}
-            </div>
           </div>
         </>
       )}
@@ -1048,37 +1142,43 @@ const ApiCredits = () => {
       {showModal && (
         <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto'>
           <div className='flex items-start justify-center min-h-full px-3 py-8 sm:py-16'>
-            <div className='bg-white rounded-lg shadow-xl max-w-md w-full p-5'>
-              <div className='flex justify-between items-start mb-4'>
+            <div className='bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full overflow-hidden'>
+              <div className={`flex justify-between items-start gap-2 px-5 py-3 text-white bg-gradient-to-r ${
+                isSaleForm ? 'from-blue-600 to-indigo-600' : 'from-slate-600 to-gray-700'
+              }`}>
                 <div>
-                  <h2 className='text-lg font-bold text-gray-800'>
+                  <h2 className='text-lg font-bold'>
                     {isSaleForm ? 'Sell API Calls to User' : 'API Calls Bought from Provider'}
                   </h2>
-                  <p className='text-xs text-gray-500 mt-0.5'>
+                  <p className='text-xs text-white/80 mt-0.5'>
                     {isSaleForm
                       ? "Adds to the user's vehicle API limit and records the money received."
                       : 'Records what you paid the provider. Does not change any user.'}
                   </p>
                 </div>
-                <button onClick={closeModal} className='text-gray-500 hover:text-gray-700 p-1 cursor-pointer'>
+                <button onClick={closeModal} className='text-white hover:bg-white/20 rounded-lg p-1.5 transition cursor-pointer' aria-label='Close'>
                   <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
                   </svg>
                 </button>
               </div>
 
-              <form onSubmit={handleSubmit} className='space-y-3'>
+              <form onSubmit={handleSubmit} className='space-y-3 p-5'>
                 {isSaleForm && (
                   <div>
                     <label className={labelClass}>User</label>
-                    <select name='userId' value={formData.userId} onChange={handleChange} className={`${inputClass} cursor-pointer`}>
-                      <option value=''>Select user</option>
-                      {users.map((u) => (
-                        <option key={u._id} value={u._id}>
-                          {u.name} · {u.mobile1}
-                        </option>
-                      ))}
-                    </select>
+                    <SearchSelect
+                      value={formData.userId}
+                      onChange={(userId) => {
+                        setFormData((prev) => ({ ...prev, userId: userId || '' }))
+                        setFormError('')
+                      }}
+                      options={userOptions}
+                      placeholder='Select user'
+                      searchPlaceholder='Search name or mobile…'
+                      emptyText='No user found'
+                      ariaLabel='User'
+                    />
                     {selectedUser && (
                       <p className='text-[11px] text-gray-500 mt-1'>
                         Now: {formatNumber(selectedUser.rcSearchCount)} used of {formatNumber(selectedUser.rcSearchLimit)} ·{' '}
