@@ -167,9 +167,10 @@ const FormSection = ({ step, title, color, children, open = true, onToggle, summ
     emerald: 'from-green-50 to-emerald-50 border-emerald-200',
     amber: 'from-amber-50 to-yellow-50 border-amber-200',
     purple: 'from-purple-50 to-pink-50 border-purple-200',
-    sky: 'from-sky-50 to-cyan-50 border-sky-200'
+    sky: 'from-sky-50 to-cyan-50 border-sky-200',
+    rose: 'from-rose-50 to-orange-50 border-rose-200'
   }
-  const dots = { indigo: 'bg-indigo-600', emerald: 'bg-emerald-600', amber: 'bg-amber-500', purple: 'bg-purple-600', sky: 'bg-sky-600' }
+  const dots = { indigo: 'bg-indigo-600', emerald: 'bg-emerald-600', amber: 'bg-amber-500', purple: 'bg-purple-600', sky: 'bg-sky-600', rose: 'bg-rose-500' }
   return (
     <div className={`bg-gradient-to-r border-2 rounded-xl p-3 md:p-5 ${tones[color]}`}>
       {onToggle ? (
@@ -219,6 +220,24 @@ const Users = () => {
   const [draggingScreenshot, setDraggingScreenshot] = useState(false)
   // Feature Access is rarely changed, so it starts collapsed each time the popup opens
   const [showFeatures, setShowFeatures] = useState(false)
+  // Every user (not just the current page), for the "Referred by" dropdown
+  const [referrerUsers, setReferrerUsers] = useState([])
+
+  useEffect(() => {
+    if (!showModal) return
+    fetch(`${BACKEND_URL}/api/admin/users?limit=1000`, { credentials: 'include' })
+      .then((res) => res.json())
+      .then((data) => { if (data.success) setReferrerUsers([...data.data].sort((a, b) => a.name.localeCompare(b.name))) })
+      .catch(() => {})
+  }, [showModal])
+
+  // A user cannot refer themselves
+  const referrerOptions = useMemo(
+    () => referrerUsers
+      .filter((u) => u._id !== editingUserId)
+      .map((u) => ({ value: u._id, label: `${u.name}${u.mobile1 ? ` · ${u.mobile1}` : ''}` })),
+    [referrerUsers, editingUserId]
+  )
   const [formData, setFormData] = useState({
     name: '',
     mobile1: '',
@@ -235,6 +254,8 @@ const Users = () => {
     lifetimeFee: '',
     paidAmount: '',
     paymentScreenshots: [],
+    referredBy: '',
+    referralCommission: '',
     password: '',
     features_greenTax: false,
     features_professionalTax: false,
@@ -419,7 +440,7 @@ const Users = () => {
           setError(data.message || `Failed to upload ${file.name}`)
         }
       }
-    } catch (err) {
+    } catch {
       setError('Failed to upload payment screenshot')
     } finally {
       setUploadingScreenshot(false)
@@ -540,7 +561,7 @@ const Users = () => {
         setShowFeatures(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [] })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -571,6 +592,9 @@ const Users = () => {
       lifetimeFee: user.lifetimeFee ?? '',
       paidAmount: user.paidAmount ?? '',
       paymentScreenshots: user.paymentScreenshots || [],
+      // The list sends the referrer populated ({ _id, name }); a deleted referrer comes back as null
+      referredBy: user.referredBy?._id || (typeof user.referredBy === 'string' ? user.referredBy : ''),
+      referralCommission: user.referralCommission ?? '',
       password: '',
       features_greenTax: user.features?.greenTax ?? false,
       features_professionalTax: user.features?.professionalTax ?? false,
@@ -597,7 +621,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [] })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
   }
 
   const openDeleteModal = (user) => {
@@ -885,6 +909,12 @@ const Users = () => {
           >
             · 📎 {user.paymentScreenshots.length}
           </a>
+        )}
+        {user.referredBy?.name && (
+          <div className='text-[11px] text-rose-600' title={`Referred by ${user.referredBy.name}${user.referredBy.mobile1 ? ` (${user.referredBy.mobile1})` : ''}`}>
+            Ref: {user.referredBy.name}
+            {user.referralCommission > 0 && <> · ₹{formatMoney(user.referralCommission)} commission · ₹{formatMoney(fee - user.referralCommission)} profit</>}
+          </div>
         )}
       </div>
     )
@@ -1959,9 +1989,71 @@ const Users = () => {
                   <p className='text-[11px] text-gray-500 mt-2'>Saved when you click {isEditMode ? 'Update' : 'Create'} User.</p>
                 </FormSection>
 
-                {/* Section 5: Feature access */}
+                {/* Section 5: Referral - who brought this user in, what we pay them, what we keep */}
+                <FormSection step={5} title='Referral' color='rose'>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                    <div className='sm:col-span-2'>
+                      <label className={LABEL_CLASS}>
+                        Referred By <span className='text-gray-400 font-normal'>(optional)</span>
+                      </label>
+                      <SearchSelect
+                        value={formData.referredBy}
+                        onChange={(id) => setFormData((prev) => ({
+                          ...prev,
+                          referredBy: id || '',
+                          // No referrer means no commission
+                          referralCommission: id ? prev.referralCommission : ''
+                        }))}
+                        options={referrerOptions}
+                        placeholder='No referral (direct user)'
+                        searchPlaceholder='Search name or mobile…'
+                        emptyText='No user found'
+                        clearable
+                        ariaLabel='Referred by'
+                      />
+                    </div>
+                    {formData.referredBy && (() => {
+                      const fee = planFeeOf(formData)
+                      const commission = Number(formData.referralCommission) || 0
+                      const profit = Math.round((fee - commission) * 100) / 100
+                      return (
+                        <>
+                          <div>
+                            <label className={LABEL_CLASS}>Referral Commission (₹)</label>
+                            <input
+                              type='number'
+                              name='referralCommission'
+                              value={formData.referralCommission}
+                              onChange={handleChange}
+                              placeholder='0'
+                              min='0'
+                              step='0.01'
+                              className={INPUT_CLASS}
+                            />
+                            <p className='text-[11px] text-gray-500 mt-1'>
+                              Paid to the referrer{fee > 0 && commission > 0 ? ` · ${Math.round((commission / fee) * 1000) / 10}% of the fee` : ''}
+                            </p>
+                          </div>
+                          <div>
+                            <label className={LABEL_CLASS}>Our Profit (₹)</label>
+                            <div
+                              className={`w-full px-3 py-2 text-sm rounded-lg border font-semibold tabular-nums ${
+                                profit < 0 ? 'bg-rose-50 border-rose-200 text-rose-700' : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                              }`}
+                            >
+                              {profit < 0 ? `−₹${formatMoney(-profit)} (loss)` : `₹${formatMoney(profit)}`}
+                            </div>
+                            <p className='text-[11px] text-gray-500 mt-1'>Plan fee ₹{formatMoney(fee)} − commission ₹{formatMoney(commission)}</p>
+                          </div>
+                        </>
+                      )
+                    })()}
+                  </div>
+                </FormSection>
+
+                {/* Section 6: Feature access */}
                 <FormSection
-                  step={5}
+                  step={6}
                   title='Feature Access'
                   color='purple'
                   open={showFeatures}

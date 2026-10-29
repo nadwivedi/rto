@@ -113,6 +113,15 @@ const userSchema = new mongoose.Schema({
     type: Number,
     min: 0
   },
+  // Referral: the existing user who brought this user in, and the commission we pay them for it
+  referredBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  referralCommission: {
+    type: Number,
+    min: 0
+  },
   // Proof of the fee payment (UPI / bank screenshots), as /uploads/payment-screenshots/... paths
   paymentScreenshots: {
     type: [String],

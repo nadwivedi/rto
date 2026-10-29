@@ -1,3 +1,4 @@
+const mongoose = require('mongoose')
 const User = require('../models/User')
 const ApiUsage = require('../models/ApiUsage')
 const VehicleSearchHistory = require('../models/VehicleSearchHistory')
@@ -41,6 +42,16 @@ const deleteScreenshotFiles = (list) => {
   }
 }
 
+// Check the "referred by" user: empty clears it, otherwise it must be another existing user.
+// Returns { id } (id undefined = none) or { error }.
+const resolveReferrer = async (referredBy, selfId) => {
+  if (!referredBy) return { id: undefined }
+  if (!mongoose.isValidObjectId(referredBy)) return { error: 'Referred by user not found' }
+  if (selfId && String(referredBy) === String(selfId)) return { error: 'A user cannot refer themselves' }
+  const exists = await User.exists({ _id: referredBy })
+  return exists ? { id: referredBy } : { error: 'Referred by user not found' }
+}
+
 // The fee a user owes is their plan fee: the lifetime fee, or the yearly price
 const planFee = (user) => (user.planType === 'lifetime' ? user.lifetimeFee : user.yearlyPrice) || 0
 
@@ -69,6 +80,8 @@ const USER_FIELDS = [
   { key: 'yearlyPrice', label: 'Yearly Price' },
   { key: 'lifetimeFee', label: 'Lifetime Fee' },
   { key: 'paidAmount', label: 'Fee Paid' },
+  { key: 'referredBy', label: 'Referred By' },
+  { key: 'referralCommission', label: 'Referral Commission' },
   { key: 'rcProvider', label: 'RC Details API' },
   { key: 'features.greenTax', label: 'Feature: Green Tax' },
   { key: 'features.professionalTax', label: 'Feature: Professional Tax' },
@@ -162,6 +175,7 @@ exports.getAllUsers = async (req, res) => {
     // Get users
     const users = await User.find(query)
       .select('-password')
+      .populate('referredBy', 'name mobile1')
       .sort({ isActive: -1, createdAt: -1 })
       .skip(skip)
       .limit(limitNum)
@@ -263,7 +277,7 @@ exports.uploadPaymentScreenshot = async (req, res) => {
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, yearlyPrice, lifetimeFee, paidAmount, paymentScreenshots, planType, rcProvider } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, yearlyPrice, lifetimeFee, paidAmount, paymentScreenshots, referredBy, referralCommission, planType, rcProvider } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -388,6 +402,15 @@ exports.createUser = async (req, res) => {
       })
     }
 
+    const referrer = await resolveReferrer(referredBy)
+    if (referrer.error) {
+      return res.status(400).json({ success: false, message: referrer.error })
+    }
+    const commission = referralCommission === undefined ? undefined : parseMoney(referralCommission)
+    if (commission === false) {
+      return res.status(400).json({ success: false, message: 'Referral commission must be 0 or more' })
+    }
+
     // Hash password
     const salt = await bcrypt.genSalt(10)
     const hashedPassword = await bcrypt.hash(password, salt)
@@ -414,6 +437,8 @@ exports.createUser = async (req, res) => {
       lifetimeFee: isLifetimePlan && lifetimeFee !== undefined && !Number.isNaN(Number(lifetimeFee)) ? Number(lifetimeFee) : undefined,
       paidAmount: paid,
       paymentScreenshots: cleanScreenshotPaths(paymentScreenshots),
+      referredBy: referrer.id,
+      referralCommission: referrer.id ? commission : undefined,
       features: features ? {
         greenTax: features.greenTax === true,
         professionalTax: features.professionalTax === true,
@@ -462,6 +487,8 @@ exports.createUser = async (req, res) => {
       yearlyPrice: newUser.yearlyPrice,
       lifetimeFee: newUser.lifetimeFee,
       paymentScreenshots: newUser.paymentScreenshots || [],
+      referredBy: newUser.referredBy,
+      referralCommission: newUser.referralCommission,
       ...feeFields(newUser),
       createdAt: newUser.createdAt
     }
@@ -488,7 +515,7 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     // rcSearchLimit is deliberately not accepted here: it changes only through Vehicle API Sales
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, yearlyPrice, lifetimeFee, paidAmount, paymentScreenshots, features, rcProvider } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, yearlyPrice, lifetimeFee, paidAmount, paymentScreenshots, referredBy, referralCommission, features, rcProvider } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -638,6 +665,21 @@ exports.updateUser = async (req, res) => {
       }
       user.paidAmount = amount
     }
+    if (referredBy !== undefined) {
+      const referrer = await resolveReferrer(referredBy, user._id)
+      if (referrer.error) {
+        return res.status(400).json({ success: false, message: referrer.error })
+      }
+      user.referredBy = referrer.id
+      if (!referrer.id) user.referralCommission = undefined
+    }
+    if (referralCommission !== undefined && user.referredBy) {
+      const commission = parseMoney(referralCommission)
+      if (commission === false) {
+        return res.status(400).json({ success: false, message: 'Referral commission must be 0 or more' })
+      }
+      user.referralCommission = commission
+    }
     if (paymentScreenshots !== undefined) {
       const next = cleanScreenshotPaths(paymentScreenshots)
       // Files the admin removed are deleted from disk
@@ -713,6 +755,8 @@ exports.updateUser = async (req, res) => {
         yearlyPrice: user.yearlyPrice,
         lifetimeFee: user.lifetimeFee,
         paymentScreenshots: user.paymentScreenshots || [],
+        referredBy: user.referredBy,
+        referralCommission: user.referralCommission,
         ...feeFields(user)
       }
     })
