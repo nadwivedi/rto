@@ -141,6 +141,44 @@ const INDIAN_STATES = [
   'West Bengal'
 ]
 
+// Feature checkboxes in the Add / Edit User popup (name = formData key)
+const FEATURE_OPTIONS = [
+  { name: 'features_greenTax', label: 'Green Tax' },
+  { name: 'features_professionalTax', label: 'Professional Tax' },
+  { name: 'features_autoCreateRC', label: 'Auto Create RC' },
+  { name: 'features_expandAdditionalDetails', label: 'Expand Details' },
+  { name: 'features_moneyReceived', label: 'Money Received' },
+  { name: 'features_rcDetails', label: 'RC Details' },
+  { name: 'features_forms', label: 'Forms' },
+  { name: 'features_form23', label: 'Form 23 (RC)', title: 'Show Form 23 (Certificate of Registration) in RC Details' },
+  { name: 'features_tempRc', label: 'Temporary RC', title: 'Show Temporary Authorization of Registration Certificate in RC Details' },
+  { name: 'features_nlParticular', label: 'NL Particulars', title: 'Show NL Vehicle Particulars (For Internal Use) in RC Details' },
+  { name: 'features_saveVehicleRecords', label: 'Save Records (RC)', title: 'Show a Save button in RC Details that adds the vehicle to Vehicle Registration, Fitness, Insurance and PUC with 0 fee' }
+]
+
+const INPUT_CLASS = 'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
+const LABEL_CLASS = 'block text-xs md:text-sm font-semibold text-gray-700 mb-1'
+
+// Numbered, tinted card used for each section of the user popup
+const FormSection = ({ step, title, color, children }) => {
+  const tones = {
+    indigo: 'from-blue-50 to-indigo-50 border-indigo-200',
+    emerald: 'from-green-50 to-emerald-50 border-emerald-200',
+    amber: 'from-amber-50 to-yellow-50 border-amber-200',
+    purple: 'from-purple-50 to-pink-50 border-purple-200'
+  }
+  const dots = { indigo: 'bg-indigo-600', emerald: 'bg-emerald-600', amber: 'bg-amber-500', purple: 'bg-purple-600' }
+  return (
+    <div className={`bg-gradient-to-r border-2 rounded-xl p-3 md:p-5 ${tones[color]}`}>
+      <h3 className='text-sm md:text-base font-bold text-gray-800 mb-3 flex items-center gap-2'>
+        <span className={`${dots[color]} text-white w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-xs`}>{step}</span>
+        {title}
+      </h3>
+      {children}
+    </div>
+  )
+}
+
 const Users = () => {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -1434,523 +1472,444 @@ const Users = () => {
         </div>
       )}
 
-      {/* Create User Modal */}
+      {/* Create / Edit User Modal */}
       {showModal && (
-        <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto'>
-          <div className='flex items-start justify-center min-h-full px-2 sm:px-4 py-4 sm:py-8'>
-          <div className='bg-white rounded-lg shadow-xl max-w-xl sm:max-w-2xl w-full p-4 sm:p-6'>
-            <div className='flex justify-between items-center mb-3 sm:mb-4'>
-              <h2 className='text-lg sm:text-xl font-bold text-gray-800'>
-                {isEditMode ? 'Edit User' : 'Create New User'}
-              </h2>
-              <button
-                onClick={handleCloseModal}
-                className='text-gray-500 hover:text-gray-700 p-1 cursor-pointer'
-              >
-                <svg className='w-5 h-5 sm:w-6 sm:h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
-                </svg>
-              </button>
-            </div>
-
-            {error && (
-              <div className='mb-3 sm:mb-4 p-2.5 sm:p-3 bg-red-50 border border-red-200 rounded text-xs sm:text-sm text-red-800'>
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit} className='space-y-3'>
-              <div>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                  Name <span className='text-red-500'>*</span>
-                </label>
-                <input
-                  type='text'
-                  name='name'
-                  value={formData.name}
-                  onChange={handleChange}
-                  placeholder='Enter full name'
-                  className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  required
-                />
-              </div>
-
-              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Mobile <span className='text-red-500'>*</span>
-                  </label>
-                  <input
-                    type='text'
-                    name='mobile1'
-                    value={formData.mobile1}
-                    onChange={handleChange}
-                    placeholder='10-digit mobile number'
-                    maxLength={10}
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                    required
-                  />
+        <div className='fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-2 md:p-4'>
+          <div className='bg-white rounded-xl md:rounded-2xl shadow-2xl max-w-3xl w-full max-h-[95vh] overflow-hidden flex flex-col'>
+            {/* Header */}
+            <div className='bg-gradient-to-r from-blue-600 to-indigo-600 px-4 py-3 text-white flex-shrink-0'>
+              <div className='flex justify-between items-center gap-2'>
+                <div className='min-w-0'>
+                  <h2 className='text-lg md:text-xl font-bold truncate'>
+                    {isEditMode ? 'Edit User' : 'Add New User'}
+                  </h2>
+                  <p className='text-blue-100 text-xs md:text-sm mt-0.5 truncate'>
+                    {isEditMode ? `Update account details for ${formData.name || 'this user'}` : 'Create an app account with plan and feature access'}
+                  </p>
                 </div>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Mobile 2 <span className='text-gray-400'>(Opt)</span>
-                  </label>
-                  <input
-                    type='text'
-                    name='mobile2'
-                    value={formData.mobile2}
-                    onChange={handleChange}
-                    placeholder='10-digit mobile number'
-                    maxLength={10}
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Email <span className='text-gray-400'>(Opt)</span>
-                  </label>
-                  <input
-                    type='email'
-                    name='email'
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder='email@example.com'
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  />
-                </div>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    State <span className='text-red-500'>*</span>
-                  </label>
-                  <select
-                    name='state'
-                    value={formData.state}
-                    onChange={handleChange}
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase'
-                    required
-                  >
-                    <option value=''>Select State</option>
-                    {INDIAN_STATES.map((state) => (
-                      <option key={state} value={state.toUpperCase()}>
-                        {state.toUpperCase()}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
-                <div className='col-span-2'>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Address <span className='text-gray-400'>(Opt)</span>
-                  </label>
-                  <textarea
-                    name='address'
-                    value={formData.address}
-                    onChange={handleChange}
-                    placeholder='Enter full address'
-                    rows={2}
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none'
-                  />
-                </div>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    RTO <span className='text-red-500'>*</span>
-                  </label>
-                  <input
-                    type='text'
-                    name='rto'
-                    value={formData.rto}
-                    onChange={handleChange}
-                    placeholder='RTO code'
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent uppercase'
-                    required
-                  />
-                </div>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Password {isEditMode ? <span className='text-gray-400'>(Opt)</span> : <span className='text-red-500'>*</span>}
-                  </label>
-                  <input
-                    type='password'
-                    name='password'
-                    value={formData.password}
-                    onChange={handleChange}
-                    placeholder={isEditMode ? 'Leave blank to keep' : 'Min 4 chars'}
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                    required={!isEditMode}
-                    minLength={4}
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Bill Name <span className='text-gray-400'>(Opt)</span>
-                  </label>
-                  <input
-                    type='text'
-                    name='billName'
-                    value={formData.billName}
-                    onChange={handleChange}
-                    placeholder='Name on bills'
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  />
-                </div>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Bill Description <span className='text-gray-400'>(Opt)</span>
-                  </label>
-                  <input
-                    type='text'
-                    name='billDescription'
-                    value={formData.billDescription}
-                    onChange={handleChange}
-                    placeholder='e.g. Transport Consultant'
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  />
-                </div>
-              </div>
-
-              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Plan Type
-                  </label>
-                  <select
-                    name='planType'
-                    value={formData.planType}
-                    onChange={handleChange}
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
-                  >
-                    <option value='yearly'>Yearly</option>
-                    <option value='lifetime'>Lifetime</option>
-                  </select>
-                </div>
-                <div>
-                  {formData.planType === 'lifetime' ? (
-                    <>
-                      <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                        Subscription Expires
-                      </label>
-                      <div className='w-full px-2 sm:px-3 py-2 text-xs sm:text-sm rounded-lg bg-violet-50 border border-violet-200 text-violet-700 font-semibold'>
-                        ♾️ Lifetime plan — never expires
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                        Subscription Expires <span className='text-gray-400'>(Opt)</span>
-                      </label>
-                      <input
-                        type='date'
-                        name='subscriptionExpiresAt'
-                        value={formData.subscriptionExpiresAt}
-                        onChange={handleChange}
-                        className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                      />
-                    </>
-                  )}
-                </div>
-              </div>
-
-              {formData.planType === 'lifetime' ? (
-                <div className='grid grid-cols-2 gap-2 sm:gap-3'>
-                  <div>
-                    <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                      Lifetime Fee (₹)
-                    </label>
-                    <input
-                      type='number'
-                      name='lifetimeFee'
-                      value={formData.lifetimeFee}
-                      onChange={handleChange}
-                      placeholder='0'
-                      min='0'
-                      step='0.01'
-                      className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                    />
-                    <p className='text-[11px] text-gray-400 mt-1'>
-                      One-time charge. Monthly and yearly price are not used for lifetime plans.
-                    </p>
-                  </div>
-                </div>
-              ) : (
-              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Monthly Price (₹) <span className='text-gray-400'>(Opt)</span>
-                  </label>
-                  <input
-                    type='number'
-                    name='monthlyPrice'
-                    value={formData.monthlyPrice}
-                    onChange={handleChange}
-                    placeholder='0'
-                    min='0'
-                    step='0.01'
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  />
-                </div>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Yearly Price (₹) <span className='text-gray-400'>(Opt)</span>
-                  </label>
-                  <input
-                    type='number'
-                    name='yearlyPrice'
-                    value={formData.yearlyPrice}
-                    onChange={handleChange}
-                    placeholder='0'
-                    min='0'
-                    step='0.01'
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  />
-                  <p className='text-[11px] text-gray-400 mt-1'>Auto-calculated from monthly price (× 12) — editable, updates monthly price too.</p>
-                </div>
-              </div>
-              )}
-
-              <div className='grid grid-cols-2 gap-2 sm:gap-3'>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Paid (₹) <span className='text-gray-400'>of ₹{formatMoney(planFeeOf(formData))}</span>
-                  </label>
-                  <input
-                    type='number'
-                    name='paidAmount'
-                    value={formData.paidAmount}
-                    onChange={handleChange}
-                    placeholder={`${formatMoney(planFeeOf(formData))} (full)`}
-                    min='0'
-                    step='0.01'
-                    className='w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
-                  />
-                </div>
-                <div>
-                  <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-1'>
-                    Pending (₹)
-                  </label>
-                  {(() => {
-                    // Left blank = full fee paid
-                    const pending = formData.paidAmount === '' ? 0 : Math.round((planFeeOf(formData) - (Number(formData.paidAmount) || 0)) * 100) / 100
-                    return (
-                      <div
-                        className={`w-full px-3 py-2 text-sm rounded-lg border font-semibold tabular-nums ${
-                          pending > 0
-                            ? 'bg-amber-50 border-amber-200 text-amber-700'
-                            : pending < 0
-                              ? 'bg-sky-50 border-sky-200 text-sky-700'
-                              : 'bg-emerald-50 border-emerald-200 text-emerald-700'
-                        }`}
-                      >
-                        {pending < 0 ? `₹${formatMoney(-pending)} extra` : `₹${formatMoney(pending)}`}
-                      </div>
-                    )
-                  })()}
-                </div>
-              </div>
-
-              <div className='border-t border-gray-200 pt-3'>
-                <label className='block text-xs sm:text-sm font-semibold text-gray-700 mb-2'>
-                  Feature Access
-                </label>
-                <div className='grid grid-cols-2 gap-x-3 gap-y-2 sm:flex sm:flex-wrap sm:gap-6'>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      name='features_greenTax'
-                      checked={formData.features_greenTax}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    Green Tax
-                  </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      name='features_professionalTax'
-                      checked={formData.features_professionalTax}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    Professional Tax
-                  </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      name='features_autoCreateRC'
-                      checked={formData.features_autoCreateRC}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    Auto Create RC
-                  </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      name='features_expandAdditionalDetails'
-                      checked={formData.features_expandAdditionalDetails}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    Expand Details
-                  </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      name='features_moneyReceived'
-                      checked={formData.features_moneyReceived}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    Money Received
-                  </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      name='features_rcDetails'
-                      checked={formData.features_rcDetails}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    RC Details
-                  </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer'>
-                    <input
-                      type='checkbox'
-                      name='features_forms'
-                      checked={formData.features_forms}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    Forms
-                  </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer' title='Show Form 23 (Certificate of Registration) in RC Details'>
-                    <input
-                      type='checkbox'
-                      name='features_form23'
-                      checked={formData.features_form23}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    Form 23 (RC)
-                  </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer' title='Show Temporary Authorization of Registration Certificate in RC Details'>
-                    <input
-                      type='checkbox'
-                      name='features_tempRc'
-                      checked={formData.features_tempRc}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    Temporary RC
-                  </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer' title='Show NL Vehicle Particulars (For Internal Use) in RC Details'>
-                    <input
-                      type='checkbox'
-                      name='features_nlParticular'
-                      checked={formData.features_nlParticular}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    NL Particulars
-                  </label>
-                  <label className='flex items-center gap-2 text-sm text-gray-700 cursor-pointer' title='Show a Save button in RC Details that adds the vehicle to Vehicle Registration, Fitness, Insurance and PUC with 0 fee'>
-                    <input
-                      type='checkbox'
-                      name='features_saveVehicleRecords'
-                      checked={formData.features_saveVehicleRecords}
-                      onChange={handleChange}
-                      className='w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500'
-                    />
-                    Save Records (RC)
-                  </label>
-                </div>
-
-                {/* The search limit is never typed in here: it only grows when a sale is recorded in Vehicle API Sales */}
-                {formData.features_rcDetails && (
-                  <div className='mt-3 p-3.5 bg-indigo-50/80 rounded-xl border border-indigo-100 space-y-3'>
-                    <div className='flex flex-wrap items-center justify-between gap-2'>
-                      <label htmlFor='rcProvider' className='text-xs font-semibold text-indigo-900'>
-                        RC Details API
-                        <span className='block text-[11px] font-normal text-indigo-700'>Where this user's RC searches are fetched from</span>
-                      </label>
-                      <select
-                        id='rcProvider'
-                        name='rcProvider'
-                        value={formData.rcProvider}
-                        onChange={handleChange}
-                        className='px-3 py-1.5 text-sm border border-indigo-200 bg-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
-                      >
-                        {PROVIDER_OPTIONS.map((p) => (
-                          <option key={p.value} value={p.value}>{p.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    {isEditMode ? (
-                      <>
-                        <div className='grid grid-cols-3 gap-2 text-center'>
-                          <div className='p-2 bg-white rounded-lg border border-indigo-100'>
-                            <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>RC Search Limit</p>
-                            <p className='text-base font-bold text-indigo-900 font-mono'>{formData.rcSearchLimit || 0}</p>
-                          </div>
-                          <div className='p-2 bg-white rounded-lg border border-indigo-100'>
-                            <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Used</p>
-                            <p className='text-base font-bold text-indigo-900 font-mono'>{formData.rcSearchCount || 0}</p>
-                          </div>
-                          <div className='p-2 bg-white rounded-lg border border-indigo-100'>
-                            <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Left</p>
-                            <p className={`text-base font-bold font-mono ${
-                              (formData.rcSearchLimit || 0) - (formData.rcSearchCount || 0) <= 0 ? 'text-rose-700' : 'text-emerald-700'
-                            }`}>
-                              {Math.max(0, (formData.rcSearchLimit || 0) - (formData.rcSearchCount || 0))}
-                            </p>
-                          </div>
-                        </div>
-                        <div className='flex flex-wrap items-center justify-between gap-2'>
-                          <p className='text-[11px] text-indigo-700'>
-                            To increase the limit, record a sale (API calls, money and date).
-                          </p>
-                          <button
-                            type='button'
-                            onClick={() => navigate(`/api-credits?user=${editingUserId}`)}
-                            className='px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer'
-                          >
-                            Record API Sale
-                          </button>
-                        </div>
-                      </>
-                    ) : (
-                      <p className='text-[11px] text-indigo-700'>
-                        The user starts with a search limit of 0. After creating the user, record a sale in Vehicle API Sales to give them searches.
-                      </p>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className='flex gap-2 sm:gap-3 pt-2'>
                 <button
                   type='button'
                   onClick={handleCloseModal}
-                  className='flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 cursor-pointer'
+                  className='text-white hover:bg-white/20 rounded-lg p-1.5 md:p-2 transition cursor-pointer shrink-0'
+                  aria-label='Close'
+                >
+                  <X className='w-5 h-5 md:w-6 md:h-6' />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className='flex flex-col flex-1 overflow-hidden'>
+              <div className='flex-1 overflow-y-auto p-3 md:p-5 space-y-4'>
+                {error && (
+                  <div className='p-3 bg-red-50 border border-red-200 rounded-lg text-xs sm:text-sm text-red-800'>
+                    {error}
+                  </div>
+                )}
+
+                {/* Section 1: Account details */}
+                <FormSection step={1} title='Account Details' color='indigo'>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                    <div className='sm:col-span-2'>
+                      <label className={LABEL_CLASS}>
+                        Name <span className='text-red-500'>*</span>
+                      </label>
+                      <input
+                        type='text'
+                        name='name'
+                        value={formData.name}
+                        onChange={handleChange}
+                        placeholder='Enter full name'
+                        className={INPUT_CLASS}
+                        required
+                        autoFocus
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL_CLASS}>
+                        Mobile <span className='text-red-500'>*</span>
+                      </label>
+                      <input
+                        type='text'
+                        name='mobile1'
+                        value={formData.mobile1}
+                        onChange={handleChange}
+                        placeholder='10-digit mobile number'
+                        maxLength={10}
+                        inputMode='numeric'
+                        className={`${INPUT_CLASS} font-mono`}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL_CLASS}>
+                        Mobile 2 <span className='text-gray-400 font-normal'>(optional)</span>
+                      </label>
+                      <input
+                        type='text'
+                        name='mobile2'
+                        value={formData.mobile2}
+                        onChange={handleChange}
+                        placeholder='10-digit mobile number'
+                        maxLength={10}
+                        inputMode='numeric'
+                        className={`${INPUT_CLASS} font-mono`}
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL_CLASS}>
+                        Email <span className='text-gray-400 font-normal'>(optional)</span>
+                      </label>
+                      <input
+                        type='email'
+                        name='email'
+                        value={formData.email}
+                        onChange={handleChange}
+                        placeholder='email@example.com'
+                        className={INPUT_CLASS}
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL_CLASS}>
+                        Password {isEditMode ? <span className='text-gray-400 font-normal'>(optional)</span> : <span className='text-red-500'>*</span>}
+                      </label>
+                      <input
+                        type='password'
+                        name='password'
+                        value={formData.password}
+                        onChange={handleChange}
+                        placeholder={isEditMode ? 'Leave blank to keep current' : 'Min 4 characters'}
+                        className={INPUT_CLASS}
+                        required={!isEditMode}
+                        minLength={4}
+                        autoComplete='new-password'
+                      />
+                    </div>
+                  </div>
+                </FormSection>
+
+                {/* Section 2: Location & billing */}
+                <FormSection step={2} title='Location & Billing' color='emerald'>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                    <div>
+                      <label className={LABEL_CLASS}>
+                        State <span className='text-red-500'>*</span>
+                      </label>
+                      <select
+                        name='state'
+                        value={formData.state}
+                        onChange={handleChange}
+                        className={`${INPUT_CLASS} uppercase cursor-pointer`}
+                        required
+                      >
+                        <option value=''>Select State</option>
+                        {INDIAN_STATES.map((state) => (
+                          <option key={state} value={state.toUpperCase()}>
+                            {state.toUpperCase()}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className={LABEL_CLASS}>
+                        RTO <span className='text-red-500'>*</span>
+                      </label>
+                      <input
+                        type='text'
+                        name='rto'
+                        value={formData.rto}
+                        onChange={handleChange}
+                        placeholder='RTO code'
+                        className={`${INPUT_CLASS} uppercase`}
+                        required
+                      />
+                    </div>
+                    <div className='sm:col-span-2'>
+                      <label className={LABEL_CLASS}>
+                        Address <span className='text-gray-400 font-normal'>(optional)</span>
+                      </label>
+                      <textarea
+                        name='address'
+                        value={formData.address}
+                        onChange={handleChange}
+                        placeholder='Enter full address'
+                        rows={2}
+                        className={`${INPUT_CLASS} resize-none`}
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL_CLASS}>
+                        Bill Name <span className='text-gray-400 font-normal'>(optional)</span>
+                      </label>
+                      <input
+                        type='text'
+                        name='billName'
+                        value={formData.billName}
+                        onChange={handleChange}
+                        placeholder='Name on bills'
+                        className={INPUT_CLASS}
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL_CLASS}>
+                        Bill Description <span className='text-gray-400 font-normal'>(optional)</span>
+                      </label>
+                      <input
+                        type='text'
+                        name='billDescription'
+                        value={formData.billDescription}
+                        onChange={handleChange}
+                        placeholder='e.g. Transport Consultant'
+                        className={INPUT_CLASS}
+                      />
+                    </div>
+                  </div>
+                </FormSection>
+
+                {/* Section 3: Plan & payment */}
+                <FormSection step={3} title='Plan & Payment' color='amber'>
+                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-3'>
+                    <div>
+                      <label className={LABEL_CLASS}>Plan Type</label>
+                      <div className='grid grid-cols-2 gap-1 p-1 bg-white border border-gray-300 rounded-lg'>
+                        {[{ value: 'yearly', label: 'Yearly' }, { value: 'lifetime', label: 'Lifetime' }].map((p) => (
+                          <button
+                            key={p.value}
+                            type='button'
+                            onClick={() => handleChange({ target: { name: 'planType', value: p.value, type: 'select-one' } })}
+                            className={`py-1.5 text-sm font-semibold rounded-md transition cursor-pointer ${
+                              formData.planType === p.value
+                                ? 'bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm'
+                                : 'text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            {p.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      {formData.planType === 'lifetime' ? (
+                        <>
+                          <label className={LABEL_CLASS}>Subscription Expires</label>
+                          <div className='w-full px-3 py-2 text-sm rounded-lg bg-violet-50 border border-violet-200 text-violet-700 font-semibold'>
+                            ♾️ Lifetime plan — never expires
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <label className={LABEL_CLASS}>
+                            Subscription Expires <span className='text-gray-400 font-normal'>(optional)</span>
+                          </label>
+                          <input
+                            type='date'
+                            name='subscriptionExpiresAt'
+                            value={formData.subscriptionExpiresAt}
+                            onChange={handleChange}
+                            className={INPUT_CLASS}
+                          />
+                        </>
+                      )}
+                    </div>
+
+                    {formData.planType === 'lifetime' ? (
+                      <div className='sm:col-span-2'>
+                        <label className={LABEL_CLASS}>Lifetime Fee (₹)</label>
+                        <input
+                          type='number'
+                          name='lifetimeFee'
+                          value={formData.lifetimeFee}
+                          onChange={handleChange}
+                          placeholder='0'
+                          min='0'
+                          step='0.01'
+                          className={INPUT_CLASS}
+                        />
+                        <p className='text-[11px] text-gray-500 mt-1'>
+                          One-time charge. Monthly and yearly price are not used for lifetime plans.
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div>
+                          <label className={LABEL_CLASS}>
+                            Monthly Price (₹) <span className='text-gray-400 font-normal'>(optional)</span>
+                          </label>
+                          <input
+                            type='number'
+                            name='monthlyPrice'
+                            value={formData.monthlyPrice}
+                            onChange={handleChange}
+                            placeholder='0'
+                            min='0'
+                            step='0.01'
+                            className={INPUT_CLASS}
+                          />
+                        </div>
+                        <div>
+                          <label className={LABEL_CLASS}>
+                            Yearly Price (₹) <span className='text-gray-400 font-normal'>(optional)</span>
+                          </label>
+                          <input
+                            type='number'
+                            name='yearlyPrice'
+                            value={formData.yearlyPrice}
+                            onChange={handleChange}
+                            placeholder='0'
+                            min='0'
+                            step='0.01'
+                            className={INPUT_CLASS}
+                          />
+                          <p className='text-[11px] text-gray-500 mt-1'>Auto-calculated from monthly price (× 12) — editable, updates monthly price too.</p>
+                        </div>
+                      </>
+                    )}
+
+                    <div>
+                      <label className={LABEL_CLASS}>
+                        Paid (₹) <span className='text-gray-400 font-normal'>of ₹{formatMoney(planFeeOf(formData))}</span>
+                      </label>
+                      <input
+                        type='number'
+                        name='paidAmount'
+                        value={formData.paidAmount}
+                        onChange={handleChange}
+                        placeholder={`${formatMoney(planFeeOf(formData))} (full)`}
+                        min='0'
+                        step='0.01'
+                        className={INPUT_CLASS}
+                      />
+                    </div>
+                    <div>
+                      <label className={LABEL_CLASS}>Pending (₹)</label>
+                      {(() => {
+                        // Left blank = full fee paid
+                        const pending = formData.paidAmount === '' ? 0 : Math.round((planFeeOf(formData) - (Number(formData.paidAmount) || 0)) * 100) / 100
+                        return (
+                          <div
+                            className={`w-full px-3 py-2 text-sm rounded-lg border font-semibold tabular-nums ${
+                              pending > 0
+                                ? 'bg-amber-50 border-amber-200 text-amber-700'
+                                : pending < 0
+                                  ? 'bg-sky-50 border-sky-200 text-sky-700'
+                                  : 'bg-emerald-50 border-emerald-200 text-emerald-700'
+                            }`}
+                          >
+                            {pending < 0 ? `₹${formatMoney(-pending)} extra` : `₹${formatMoney(pending)}`}
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  </div>
+                </FormSection>
+
+                {/* Section 4: Feature access */}
+                <FormSection step={4} title='Feature Access' color='purple'>
+                  <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
+                    {FEATURE_OPTIONS.map((f) => (
+                      <label
+                        key={f.name}
+                        title={f.title}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition ${
+                          formData[f.name]
+                            ? 'bg-white border-purple-400 text-purple-900 font-semibold shadow-sm'
+                            : 'bg-white/60 border-gray-200 text-gray-700 hover:border-purple-300'
+                        }`}
+                      >
+                        <input
+                          type='checkbox'
+                          name={f.name}
+                          checked={formData[f.name]}
+                          onChange={handleChange}
+                          className='w-4 h-4 rounded border-gray-300 text-purple-600 focus:ring-purple-500 cursor-pointer'
+                        />
+                        <span className='truncate'>{f.label}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* The search limit is never typed in here: it only grows when a sale is recorded in Vehicle API Sales */}
+                  {formData.features_rcDetails && (
+                    <div className='mt-3 p-3.5 bg-white rounded-xl border border-indigo-100 space-y-3'>
+                      <div className='flex flex-wrap items-center justify-between gap-2'>
+                        <label htmlFor='rcProvider' className='text-xs font-semibold text-indigo-900'>
+                          RC Details API
+                          <span className='block text-[11px] font-normal text-indigo-700'>Where this user's RC searches are fetched from</span>
+                        </label>
+                        <select
+                          id='rcProvider'
+                          name='rcProvider'
+                          value={formData.rcProvider}
+                          onChange={handleChange}
+                          className='px-3 py-1.5 text-sm border border-indigo-200 bg-white rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent cursor-pointer'
+                        >
+                          {PROVIDER_OPTIONS.map((p) => (
+                            <option key={p.value} value={p.value}>{p.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      {isEditMode ? (
+                        <>
+                          <div className='grid grid-cols-3 gap-2 text-center'>
+                            <div className='p-2 bg-indigo-50/60 rounded-lg border border-indigo-100'>
+                              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>RC Search Limit</p>
+                              <p className='text-base font-bold text-indigo-900 font-mono'>{formData.rcSearchLimit || 0}</p>
+                            </div>
+                            <div className='p-2 bg-indigo-50/60 rounded-lg border border-indigo-100'>
+                              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Used</p>
+                              <p className='text-base font-bold text-indigo-900 font-mono'>{formData.rcSearchCount || 0}</p>
+                            </div>
+                            <div className='p-2 bg-indigo-50/60 rounded-lg border border-indigo-100'>
+                              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Left</p>
+                              <p className={`text-base font-bold font-mono ${
+                                (formData.rcSearchLimit || 0) - (formData.rcSearchCount || 0) <= 0 ? 'text-rose-700' : 'text-emerald-700'
+                              }`}>
+                                {Math.max(0, (formData.rcSearchLimit || 0) - (formData.rcSearchCount || 0))}
+                              </p>
+                            </div>
+                          </div>
+                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                            <p className='text-[11px] text-indigo-700'>
+                              To increase the limit, record a sale (API calls, money and date).
+                            </p>
+                            <button
+                              type='button'
+                              onClick={() => navigate(`/api-credits?user=${editingUserId}`)}
+                              className='px-3 py-1.5 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 cursor-pointer'
+                            >
+                              Record API Sale
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <p className='text-[11px] text-indigo-700'>
+                          The user starts with a search limit of 0. After creating the user, record a sale in Vehicle API Sales to give them searches.
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </FormSection>
+              </div>
+
+              {/* Footer Actions */}
+              <div className='border-t border-gray-200 px-3 py-3 md:px-5 bg-gray-50 flex gap-2 md:gap-3 md:justify-end flex-shrink-0'>
+                <button
+                  type='button'
+                  onClick={handleCloseModal}
+                  className='flex-1 md:flex-none px-4 md:px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 font-semibold transition cursor-pointer'
                 >
                   Cancel
                 </button>
                 <button
                   type='submit'
-                  className='flex-1 px-3 sm:px-4 py-2 text-sm sm:text-base bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 font-semibold cursor-pointer'
+                  className='flex-1 md:flex-none px-6 md:px-8 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:shadow-lg font-semibold transition flex items-center justify-center gap-2 cursor-pointer'
                 >
+                  <svg className='w-4 h-4 md:w-5 md:h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M5 13l4 4L19 7' />
+                  </svg>
                   {isEditMode ? 'Update User' : 'Create User'}
                 </button>
               </div>
             </form>
-          </div>
           </div>
         </div>
       )}
