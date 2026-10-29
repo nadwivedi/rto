@@ -274,7 +274,7 @@ const Users = () => {
     rto: '',
     billName: '',
     billDescription: '',
-    planType: 'yearly',
+    planType: 'lifetime',
     subscriptionExpiresAt: '',
     yearlyPrice: '',
     lifetimeFee: '',
@@ -587,7 +587,7 @@ const Users = () => {
         setShowFeatures(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'lifetime', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -647,7 +647,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'lifetime', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
   }
 
   const openDeleteModal = (user) => {
@@ -1827,7 +1827,7 @@ const Users = () => {
                     <div>
                       <label className={LABEL_CLASS}>Plan Type</label>
                       <div className='grid grid-cols-2 gap-1 p-1 bg-white border border-gray-300 rounded-lg'>
-                        {[{ value: 'yearly', label: 'Yearly' }, { value: 'lifetime', label: 'Lifetime' }].map((p) => (
+                        {[{ value: 'lifetime', label: 'Lifetime' }, { value: 'yearly', label: 'Yearly' }].map((p) => (
                           <button
                             key={p.value}
                             type='button'
