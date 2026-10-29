@@ -165,9 +165,10 @@ const FormSection = ({ step, title, color, children }) => {
     indigo: 'from-blue-50 to-indigo-50 border-indigo-200',
     emerald: 'from-green-50 to-emerald-50 border-emerald-200',
     amber: 'from-amber-50 to-yellow-50 border-amber-200',
-    purple: 'from-purple-50 to-pink-50 border-purple-200'
+    purple: 'from-purple-50 to-pink-50 border-purple-200',
+    sky: 'from-sky-50 to-cyan-50 border-sky-200'
   }
-  const dots = { indigo: 'bg-indigo-600', emerald: 'bg-emerald-600', amber: 'bg-amber-500', purple: 'bg-purple-600' }
+  const dots = { indigo: 'bg-indigo-600', emerald: 'bg-emerald-600', amber: 'bg-amber-500', purple: 'bg-purple-600', sky: 'bg-sky-600' }
   return (
     <div className={`bg-gradient-to-r border-2 rounded-xl p-3 md:p-5 ${tones[color]}`}>
       <h3 className='text-sm md:text-base font-bold text-gray-800 mb-3 flex items-center gap-2'>
@@ -1840,72 +1841,71 @@ const Users = () => {
                       })()}
                     </div>
 
-                    {/* Payment proof: UPI / bank screenshots, several allowed for part payments */}
-                    <div className='sm:col-span-2'>
-                      <label className={LABEL_CLASS}>
-                        Payment Screenshots <span className='text-gray-400 font-normal'>(optional)</span>
-                      </label>
-                      <div className='flex flex-wrap gap-2'>
-                        {(formData.paymentScreenshots || []).map((p) => (
-                          <div key={p} className='relative w-20 h-20 rounded-lg border border-amber-200 bg-white overflow-hidden group'>
-                            <a href={`${BACKEND_URL}${p}`} target='_blank' rel='noreferrer' title='Open full size' className='block w-full h-full'>
-                              {p.toLowerCase().endsWith('.pdf') ? (
-                                <div className='w-full h-full flex flex-col items-center justify-center text-rose-600'>
-                                  <svg className='w-7 h-7' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
-                                  </svg>
-                                  <span className='text-[10px] font-bold'>PDF</span>
-                                </div>
-                              ) : (
-                                <img src={`${BACKEND_URL}${p}`} alt='Payment screenshot' className='w-full h-full object-cover' />
-                              )}
-                            </a>
-                            <button
-                              type='button'
-                              onClick={() => removeScreenshot(p)}
-                              className='absolute top-1 right-1 bg-black/60 hover:bg-rose-600 text-white rounded-full p-0.5 cursor-pointer'
-                              aria-label='Remove screenshot'
-                              title='Remove'
-                            >
-                              <X className='w-3 h-3' />
-                            </button>
-                          </div>
-                        ))}
-                        <label
-                          className={`w-20 h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition ${
-                            uploadingScreenshot
-                              ? 'border-gray-300 text-gray-400 cursor-wait'
-                              : 'border-amber-300 text-amber-700 bg-white/60 hover:bg-white hover:border-amber-400 cursor-pointer'
-                          }`}
-                        >
-                          {uploadingScreenshot ? (
-                            <svg className='w-5 h-5 animate-spin' fill='none' viewBox='0 0 24 24'>
-                              <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' />
-                              <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z' />
-                            </svg>
-                          ) : (
-                            <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
-                            </svg>
-                          )}
-                          {uploadingScreenshot ? 'Uploading' : 'Attach'}
-                          <input
-                            type='file'
-                            accept='image/*,application/pdf'
-                            multiple
-                            disabled={uploadingScreenshot}
-                            onChange={handleScreenshotUpload}
-                            className='hidden'
-                          />
-                        </label>
-                      </div>
-                      <p className='text-[11px] text-gray-500 mt-1'>UPI or bank payment proof, images or PDF up to 8MB. Saved when you click {isEditMode ? 'Update' : 'Create'} User.</p>
-                    </div>
                   </div>
                 </FormSection>
 
-                {/* Section 4: Feature access */}
-                <FormSection step={4} title='Feature Access' color='purple'>
+                {/* Section 4: Payment proof - UPI / bank screenshots, several allowed for part payments */}
+                <FormSection step={4} title='Payment Screenshots' color='sky'>
+                  <p className='text-xs text-gray-600 mb-2'>Attach the UPI or bank payment proof for this fee (optional).</p>
+                  <div className='flex flex-wrap gap-2'>
+                    {(formData.paymentScreenshots || []).map((p) => (
+                      <div key={p} className='relative w-20 h-20 rounded-lg border border-sky-200 bg-white overflow-hidden group'>
+                        <a href={`${BACKEND_URL}${p}`} target='_blank' rel='noreferrer' title='Open full size' className='block w-full h-full'>
+                          {p.toLowerCase().endsWith('.pdf') ? (
+                            <div className='w-full h-full flex flex-col items-center justify-center text-rose-600'>
+                              <svg className='w-7 h-7' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' />
+                              </svg>
+                              <span className='text-[10px] font-bold'>PDF</span>
+                            </div>
+                          ) : (
+                            <img src={`${BACKEND_URL}${p}`} alt='Payment screenshot' className='w-full h-full object-cover' />
+                          )}
+                        </a>
+                        <button
+                          type='button'
+                          onClick={() => removeScreenshot(p)}
+                          className='absolute top-1 right-1 bg-black/60 hover:bg-rose-600 text-white rounded-full p-0.5 cursor-pointer'
+                          aria-label='Remove screenshot'
+                          title='Remove'
+                        >
+                          <X className='w-3 h-3' />
+                        </button>
+                      </div>
+                    ))}
+                    <label
+                      className={`w-20 h-20 rounded-lg border-2 border-dashed flex flex-col items-center justify-center gap-1 text-[11px] font-semibold transition ${
+                        uploadingScreenshot
+                          ? 'border-gray-300 text-gray-400 cursor-wait'
+                          : 'border-sky-300 text-sky-700 bg-white/60 hover:bg-white hover:border-sky-400 cursor-pointer'
+                      }`}
+                    >
+                      {uploadingScreenshot ? (
+                        <svg className='w-5 h-5 animate-spin' fill='none' viewBox='0 0 24 24'>
+                          <circle className='opacity-25' cx='12' cy='12' r='10' stroke='currentColor' strokeWidth='4' />
+                          <path className='opacity-75' fill='currentColor' d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z' />
+                        </svg>
+                      ) : (
+                        <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M12 4v16m8-8H4' />
+                        </svg>
+                      )}
+                      {uploadingScreenshot ? 'Uploading' : 'Attach'}
+                      <input
+                        type='file'
+                        accept='image/*,application/pdf'
+                        multiple
+                        disabled={uploadingScreenshot}
+                        onChange={handleScreenshotUpload}
+                        className='hidden'
+                      />
+                    </label>
+                  </div>
+                  <p className='text-[11px] text-gray-500 mt-1'>Images or PDF up to 8MB, several allowed for part payments. Saved when you click {isEditMode ? 'Update' : 'Create'} User.</p>
+                </FormSection>
+
+                {/* Section 5: Feature access */}
+                <FormSection step={5} title='Feature Access' color='purple'>
                   <div className='grid grid-cols-2 sm:grid-cols-3 gap-2'>
                     {FEATURE_OPTIONS.map((f) => (
                       <label
