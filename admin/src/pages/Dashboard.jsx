@@ -226,7 +226,7 @@ const Dashboard = () => {
               <span>
                 <strong>{totals.unpricedUsers}</strong> user
                 {totals.unpricedUsers > 1 ? 's have' : ' has'} no price set, so they count as ₹0
-                here — set a Lifetime Fee (lifetime plans) or Yearly/Monthly Price (yearly plans) on
+                here — set a Lifetime Fee (lifetime plans) or Yearly Price (yearly plans) on
                 them in Manage Users for accurate revenue.
               </span>
             </div>

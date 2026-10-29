@@ -196,7 +196,7 @@ exports.getUserById = async (req, res) => {
 // Create new user
 exports.createUser = async (req, res) => {
   try {
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, monthlyPrice, yearlyPrice, lifetimeFee, paidAmount, planType, rcProvider } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, password, features, yearlyPrice, lifetimeFee, paidAmount, planType, rcProvider } = req.body
 
     // Validate required fields
     if (!name || !name.trim()) {
@@ -341,8 +341,8 @@ exports.createUser = async (req, res) => {
       password: hashedPassword,
       isActive: true,
       planType: isLifetimePlan ? 'lifetime' : 'yearly',
-      // A lifetime plan has no recurring price, and a yearly plan has no lifetime fee
-      monthlyPrice: !isLifetimePlan && monthlyPrice !== undefined && !Number.isNaN(Number(monthlyPrice)) ? Number(monthlyPrice) : undefined,
+      // A lifetime plan has no recurring price, and a yearly plan has no lifetime fee.
+      // Plans are only sold yearly, so no monthly price is stored.
       yearlyPrice: !isLifetimePlan && yearlyPrice !== undefined && !Number.isNaN(Number(yearlyPrice)) ? Number(yearlyPrice) : undefined,
       lifetimeFee: isLifetimePlan && lifetimeFee !== undefined && !Number.isNaN(Number(lifetimeFee)) ? Number(lifetimeFee) : undefined,
       paidAmount: paid,
@@ -419,7 +419,7 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     // rcSearchLimit is deliberately not accepted here: it changes only through Vehicle API Sales
-    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, monthlyPrice, yearlyPrice, lifetimeFee, paidAmount, features, rcProvider } = req.body
+    const { name, mobile1, mobile2, email, address, state, rto, billName, billDescription, isActive, password, planType, subscriptionExpiresAt, yearlyPrice, lifetimeFee, paidAmount, features, rcProvider } = req.body
 
     const user = await User.findById(req.params.id)
 
@@ -549,12 +549,8 @@ exports.updateUser = async (req, res) => {
       user.monthlyPrice = undefined
       user.yearlyPrice = undefined
     } else {
-      if (monthlyPrice !== undefined) {
-        const price = Number(monthlyPrice)
-        if (!Number.isNaN(price) && price >= 0) {
-          user.monthlyPrice = price
-        }
-      }
+      // Only sold yearly - drop any monthly price saved by older versions
+      user.monthlyPrice = undefined
       if (yearlyPrice !== undefined) {
         const price = Number(yearlyPrice)
         if (!Number.isNaN(price) && price >= 0) {

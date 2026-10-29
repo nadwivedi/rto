@@ -206,7 +206,6 @@ const Users = () => {
     billDescription: '',
     planType: 'yearly',
     subscriptionExpiresAt: '',
-    monthlyPrice: '',
     yearlyPrice: '',
     lifetimeFee: '',
     paidAmount: '',
@@ -357,28 +356,6 @@ const Users = () => {
   const handleChange = (e) => {
     const { name, type, value, checked } = e.target
 
-    if (name === 'monthlyPrice') {
-      const monthly = value === '' ? '' : Number(value)
-      setFormData({
-        ...formData,
-        monthlyPrice: value,
-        yearlyPrice: monthly === '' || Number.isNaN(monthly) ? '' : Number((monthly * 12).toFixed(2))
-      })
-      setError('')
-      return
-    }
-
-    if (name === 'yearlyPrice') {
-      const yearly = value === '' ? '' : Number(value)
-      setFormData({
-        ...formData,
-        yearlyPrice: value,
-        monthlyPrice: yearly === '' || Number.isNaN(yearly) ? '' : Number((yearly / 12).toFixed(2))
-      })
-      setError('')
-      return
-    }
-
     setFormData({
       ...formData,
       [name]: type === 'checkbox' ? checked : value
@@ -452,7 +429,6 @@ const Users = () => {
       if (formData.planType === 'lifetime') {
         // Lifetime: one-time fee only, no expiry and no recurring price
         delete bodyData.subscriptionExpiresAt
-        delete bodyData.monthlyPrice
         delete bodyData.yearlyPrice
       } else {
         delete bodyData.lifetimeFee
@@ -475,7 +451,7 @@ const Users = () => {
         setShowModal(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0 })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0 })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -501,8 +477,8 @@ const Users = () => {
       billDescription: user.billDescription || '',
       planType: user.planType === 'lifetime' ? 'lifetime' : 'yearly',
       subscriptionExpiresAt: toDateInputValue(user.subscriptionExpiresAt),
-      monthlyPrice: user.monthlyPrice ?? '',
-      yearlyPrice: user.yearlyPrice ?? '',
+      // Older users may only have a monthly price saved; turn it into the yearly price
+      yearlyPrice: user.yearlyPrice ?? (user.monthlyPrice != null ? Number((user.monthlyPrice * 12).toFixed(2)) : ''),
       lifetimeFee: user.lifetimeFee ?? '',
       paidAmount: user.paidAmount ?? '',
       password: '',
@@ -530,7 +506,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', monthlyPrice: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0 })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'yearly', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0 })
   }
 
   const openDeleteModal = (user) => {
@@ -775,7 +751,7 @@ const Users = () => {
     )
   )
 
-  // Lifetime plans show their one-time fee; recurring plans show yearly/monthly
+  // Lifetime plans show their one-time fee; yearly plans show the yearly price and its monthly average
   const renderPlanPrice = (user, className) => {
     if (isLifetime(user)) {
       return user.lifetimeFee != null ? (
@@ -785,7 +761,7 @@ const Users = () => {
     return user.yearlyPrice != null ? (
       <div className={className}>
         ₹{user.yearlyPrice}/yr
-        {user.monthlyPrice != null && <span> · ₹{user.monthlyPrice}/mo</span>}
+        <span> · ≈ ₹{formatMoney(user.yearlyPrice / 12)}/mo</span>
       </div>
     ) : null
   }
@@ -1725,26 +1701,11 @@ const Users = () => {
                           className={INPUT_CLASS}
                         />
                         <p className='text-[11px] text-gray-500 mt-1'>
-                          One-time charge. Monthly and yearly price are not used for lifetime plans.
+                          One-time charge. The yearly price is not used for lifetime plans.
                         </p>
                       </div>
                     ) : (
                       <>
-                        <div>
-                          <label className={LABEL_CLASS}>
-                            Monthly Price (₹) <span className='text-gray-400 font-normal'>(optional)</span>
-                          </label>
-                          <input
-                            type='number'
-                            name='monthlyPrice'
-                            value={formData.monthlyPrice}
-                            onChange={handleChange}
-                            placeholder='0'
-                            min='0'
-                            step='0.01'
-                            className={INPUT_CLASS}
-                          />
-                        </div>
                         <div>
                           <label className={LABEL_CLASS}>
                             Yearly Price (₹) <span className='text-gray-400 font-normal'>(optional)</span>
@@ -1759,7 +1720,14 @@ const Users = () => {
                             step='0.01'
                             className={INPUT_CLASS}
                           />
-                          <p className='text-[11px] text-gray-500 mt-1'>Auto-calculated from monthly price (× 12) — editable, updates monthly price too.</p>
+                        </div>
+                        {/* Only sold yearly: the monthly figure is yearly ÷ 12, shown for reference and never saved */}
+                        <div>
+                          <label className={LABEL_CLASS}>Avg. Monthly (₹)</label>
+                          <div className='w-full px-3 py-2 text-sm rounded-lg bg-white/70 border border-gray-200 text-gray-700 font-semibold tabular-nums'>
+                            ₹{formatMoney((Number(formData.yearlyPrice) || 0) / 12)} <span className='font-normal text-gray-500'>/ month</span>
+                          </div>
+                          <p className='text-[11px] text-gray-500 mt-1'>Yearly price ÷ 12, for reference only.</p>
                         </div>
                       </>
                     )}
