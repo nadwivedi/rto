@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SlidersHorizontal, X } from 'lucide-react'
+import { SlidersHorizontal, X, MoreVertical, Pencil, ExternalLink, CreditCard, Ban, CheckCircle, Eraser, Trash2 } from 'lucide-react'
 import RcApiUsageCard from '../components/RcApiUsageCard'
 import SearchSelect from '../components/SearchSelect'
 import { PROVIDER_OPTIONS, providerLabel } from '../components/apiProviders'
@@ -220,6 +220,32 @@ const Users = () => {
   const [draggingScreenshot, setDraggingScreenshot] = useState(false)
   // Feature Access is rarely changed, so it starts collapsed each time the popup opens
   const [showFeatures, setShowFeatures] = useState(false)
+  // Row actions menu: { user, left, top | bottom } while open
+  const [actionMenu, setActionMenu] = useState(null)
+  const actionMenuRef = useRef(null)
+
+  // Close the actions menu on outside click, Escape, scroll or resize
+  useEffect(() => {
+    if (!actionMenu) return undefined
+    const close = () => setActionMenu(null)
+    const onPointerDown = (e) => {
+      if (actionMenuRef.current?.contains(e.target)) return
+      // The ⋮ button toggles the menu itself
+      if (e.target.closest?.('[aria-haspopup="menu"]')) return
+      close()
+    }
+    const onKey = (e) => { if (e.key === 'Escape') close() }
+    document.addEventListener('mousedown', onPointerDown)
+    document.addEventListener('keydown', onKey)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown)
+      document.removeEventListener('keydown', onKey)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [actionMenu])
   // Every user (not just the current page), for the "Referred by" dropdown
   const [referrerUsers, setReferrerUsers] = useState([])
 
@@ -787,70 +813,90 @@ const Users = () => {
     }
   }
 
+  // One ⋮ button per row; the menu itself is drawn once, fixed on screen, so the table cannot clip it
   const renderActions = (user) => (
-    <div className='flex items-center justify-end gap-0.5'>
+    <div className='flex items-center justify-end'>
       <button
-        onClick={() => handleToggleActive(user)}
-        disabled={togglingId === user._id}
-        className={`p-1.5 rounded-md transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer ${
-          user.isActive ? 'text-gray-400 hover:text-red-500 hover:bg-red-50' : 'text-gray-400 hover:text-emerald-600 hover:bg-emerald-50'
+        type='button'
+        onClick={(e) => {
+          if (actionMenu?.user._id === user._id) {
+            setActionMenu(null)
+            return
+          }
+          const rect = e.currentTarget.getBoundingClientRect()
+          const width = 224
+          const left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8))
+          // Open upwards when there is no room below
+          const openUp = rect.bottom + 300 > window.innerHeight && rect.top > 300
+          setActionMenu({
+            user,
+            left,
+            ...(openUp ? { bottom: window.innerHeight - rect.top + 4 } : { top: rect.bottom + 4 })
+          })
+        }}
+        className={`p-1.5 rounded-md transition-colors cursor-pointer ${
+          actionMenu?.user._id === user._id ? 'bg-indigo-50 text-indigo-600' : 'text-gray-500 hover:text-gray-800 hover:bg-gray-100'
         }`}
-        title={user.isActive ? 'Deactivate user' : 'Activate user'}
+        title='Actions'
+        aria-label={`Actions for ${user.name}`}
+        aria-haspopup='menu'
+        aria-expanded={actionMenu?.user._id === user._id}
       >
-        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636' />
-        </svg>
-      </button>
-      <button
-        onClick={() => handleAccess(user)}
-        disabled={accessingId === user._id}
-        className='p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer'
-        title='Access as user'
-      >
-        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14' />
-        </svg>
-      </button>
-      <button
-        onClick={() => navigate(`/api-credits?user=${user._id}`)}
-        className='p-1.5 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded-md transition-colors cursor-pointer'
-        title='Sell vehicle API calls / view API purchases'
-      >
-        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z' />
-        </svg>
-      </button>
-      <button
-        onClick={() => handleEdit(user)}
-        className='p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
-        title='Edit user'
-      >
-        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
-        </svg>
-      </button>
-      <button
-        onClick={() => openCleanModal(user)}
-        disabled={cleaningId === user._id}
-        className='p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-md transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer'
-        title='Clean data (email backup, then delete all user data)'
-      >
-        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m-11 7l6-6m0 6l-6-6' />
-        </svg>
-      </button>
-      <button
-        onClick={() => openDeleteModal(user)}
-        disabled={deletingId === user._id}
-        className='p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors disabled:opacity-40 disabled:cursor-wait cursor-pointer'
-        title='Delete user'
-      >
-        <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-          <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
-        </svg>
+        <MoreVertical className='w-5 h-5' />
       </button>
     </div>
   )
+
+  const renderActionMenu = () => {
+    if (!actionMenu) return null
+    const { user } = actionMenu
+    const run = (fn) => () => {
+      setActionMenu(null)
+      fn()
+    }
+    const items = [
+      { label: 'Edit user', icon: Pencil, tone: 'hover:bg-indigo-50 hover:text-indigo-700', onClick: run(() => handleEdit(user)) },
+      { label: 'Access as user', icon: ExternalLink, tone: 'hover:bg-emerald-50 hover:text-emerald-700', onClick: run(() => handleAccess(user)), disabled: accessingId === user._id },
+      { label: 'Sell API calls / purchases', icon: CreditCard, tone: 'hover:bg-amber-50 hover:text-amber-700', onClick: run(() => navigate(`/api-credits?user=${user._id}`)) },
+      user.isActive
+        ? { label: 'Deactivate user', icon: Ban, tone: 'hover:bg-red-50 hover:text-red-700', onClick: run(() => handleToggleActive(user)), disabled: togglingId === user._id }
+        : { label: 'Activate user', icon: CheckCircle, tone: 'hover:bg-emerald-50 hover:text-emerald-700', onClick: run(() => handleToggleActive(user)), disabled: togglingId === user._id },
+      { divider: true },
+      { label: 'Clean data', hint: 'Email backup, then delete data', icon: Eraser, tone: 'text-orange-700 hover:bg-orange-50', onClick: run(() => openCleanModal(user)), disabled: cleaningId === user._id },
+      { label: 'Delete user', icon: Trash2, tone: 'text-red-600 hover:bg-red-50', onClick: run(() => openDeleteModal(user)), disabled: deletingId === user._id }
+    ]
+    return (
+      <div
+        ref={actionMenuRef}
+        role='menu'
+        style={{ left: actionMenu.left, top: actionMenu.top, bottom: actionMenu.bottom }}
+        className='fixed z-40 w-56 bg-white rounded-xl shadow-xl ring-1 ring-black/5 border border-gray-100 py-1.5'
+      >
+        <div className='px-3 pt-1 pb-2 mb-1 border-b border-gray-100'>
+          <p className='text-xs font-semibold text-gray-900 truncate'>{user.name}</p>
+          <p className='text-[11px] text-gray-500 truncate'>{user.mobile1}</p>
+        </div>
+        {items.map((item, i) => item.divider ? (
+          <div key={i} className='my-1 border-t border-gray-100' />
+        ) : (
+          <button
+            key={item.label}
+            type='button'
+            role='menuitem'
+            onClick={item.onClick}
+            disabled={item.disabled}
+            className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left text-gray-700 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-wait ${item.tone}`}
+          >
+            <item.icon className='w-4 h-4 shrink-0' />
+            <span className='min-w-0'>
+              <span className='block'>{item.label}</span>
+              {item.hint && <span className='block text-[10.5px] text-gray-400'>{item.hint}</span>}
+            </span>
+          </button>
+        ))}
+      </div>
+    )
+  }
 
   const isLifetime = (user) => user?.planType === 'lifetime'
 
@@ -1579,6 +1625,8 @@ const Users = () => {
           </div>
         </div>
       )}
+
+      {renderActionMenu()}
 
       {/* Create / Edit User Modal */}
       {showModal && (
