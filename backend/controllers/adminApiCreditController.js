@@ -201,20 +201,31 @@ exports.createTransaction = async (req, res) => {
   }
 }
 
-// Change the rate and/or the money received on an entry.
-// The quantity (and so the user's limit) never moves here.
+// Edit an entry: API calls, rate, money received, date and note.
+// Changing a sale's API calls moves the user's limit by the difference; the user itself can't change.
 exports.updateTransaction = async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) return badRequest(res, 'Invalid entry')
 
-    const { rate, paidAmount } = req.body || {}
+    const { rate, paidAmount, quantity, date, note } = req.body || {}
     const hasRate = rate !== undefined
     const hasPaid = paidAmount !== undefined
-    if (!hasRate && !hasPaid) return badRequest(res, 'Nothing to update')
+    const hasQty = quantity !== undefined
+    const hasDate = date !== undefined
+    const hasNote = note !== undefined
+    if (!hasRate && !hasPaid && !hasQty && !hasDate && !hasNote) return badRequest(res, 'Nothing to update')
 
     const price = Number(rate)
     if (hasRate && (rate === '' || rate === null || Number.isNaN(price) || price < 0)) {
       return badRequest(res, 'Rate per API call is required')
+    }
+    const qty = Number(quantity)
+    if (hasQty && (!Number.isInteger(qty) || qty < 1)) {
+      return badRequest(res, 'Number of API calls must be a whole number of at least 1')
+    }
+    const dealDate = hasDate ? new Date(date) : null
+    if (hasDate && (!date || Number.isNaN(dealDate.getTime()))) {
+      return badRequest(res, 'Please enter a valid date')
     }
 
     const transaction = await ApiCreditTransaction.findById(req.params.id).populate('userId', 'name')
@@ -223,32 +234,58 @@ exports.updateTransaction = async (req, res) => {
     }
 
     const isSale = transaction.type === 'sale'
-    const oldRate = transaction.rate
-    const oldAmount = transaction.amount
-    const oldPaid = isSale ? salePaid(transaction) : undefined
-    if (hasRate) {
-      transaction.rate = price
-      transaction.amount = roundMoney(transaction.quantity * price)
+    const before = {
+      quantity: transaction.quantity,
+      rate: transaction.rate,
+      amount: transaction.amount,
+      paid: isSale ? salePaid(transaction) : undefined,
+      date: transaction.date ? transaction.date.toISOString().slice(0, 10) : null,
+      note: transaction.note || null
     }
+
+    // A sale's calls are on the user's limit: move the limit by the difference
+    let limitChange = 0
+    if (hasQty && qty !== transaction.quantity && isSale && transaction.userId) {
+      const user = await User.findById(transaction.userId._id).select('rcSearchLimit')
+      if (user) {
+        const diff = qty - transaction.quantity
+        // Never push the limit below zero if it was lowered by hand in the meantime
+        limitChange = Math.max(diff, -(user.rcSearchLimit || 0))
+        user.rcSearchLimit = (user.rcSearchLimit || 0) + limitChange
+        await user.save()
+      }
+    }
+
+    if (hasQty) transaction.quantity = qty
+    if (hasRate) transaction.rate = price
+    if (hasQty || hasRate) transaction.amount = roundMoney(transaction.quantity * transaction.rate)
+    if (hasDate) transaction.date = dealDate
+    if (hasNote) transaction.note = note && String(note).trim() ? String(note).trim() : undefined
     if (isSale) {
       if (hasPaid) {
         const paid = parsePaid(paidAmount, transaction.amount)
         if (paid.error) return badRequest(res, paid.error)
         transaction.paidAmount = paid.value
       } else if (transaction.paidAmount != null && transaction.paidAmount > transaction.amount) {
-        // A lower rate can't leave more money received than the sale is worth
+        // A lower amount can't leave more money received than the sale is worth
         transaction.paidAmount = transaction.amount
       }
     }
     await transaction.save()
 
-    const changes = []
-    if (oldRate !== transaction.rate) {
-      changes.push({ field: 'Rate', from: oldRate, to: transaction.rate }, { field: 'Amount', from: oldAmount, to: transaction.amount })
+    const after = {
+      quantity: transaction.quantity,
+      rate: transaction.rate,
+      amount: transaction.amount,
+      paid: isSale ? salePaid(transaction) : undefined,
+      date: transaction.date ? transaction.date.toISOString().slice(0, 10) : null,
+      note: transaction.note || null
     }
-    if (isSale && oldPaid !== salePaid(transaction)) {
-      changes.push({ field: 'Paid', from: oldPaid, to: salePaid(transaction) })
-    }
+    const labels = { quantity: 'API Calls', rate: 'Rate', amount: 'Amount', paid: 'Paid', date: 'Date', note: 'Note' }
+    const changes = Object.keys(labels)
+      .filter((k) => before[k] !== after[k])
+      .map((k) => ({ field: labels[k], from: before[k], to: after[k] }))
+
     if (changes.length) {
       const userName = transaction.userId?.name
       recordActivity(req, {
@@ -256,18 +293,19 @@ exports.updateTransaction = async (req, res) => {
         entity: 'api_credit',
         entityId: transaction._id,
         entityName: isSale ? userName || 'Deleted user' : 'Provider purchase',
-        summary: isSale
-          ? `Edited sale of ${transaction.quantity} vehicle API calls to ${userName || 'a deleted user'}: ${changes.map((ch) => `${ch.field} ₹${ch.from} → ₹${ch.to}`).join(', ')}`
-          : `Changed rate of purchase of ${transaction.quantity} vehicle API calls: ₹${oldRate} → ₹${transaction.rate}`,
+        summary: `Edited ${isSale ? `sale to ${userName || 'a deleted user'}` : 'purchase from provider'}: ${changes
+          .map((ch) => `${ch.field} ${ch.from ?? '-'} → ${ch.to ?? '-'}`)
+          .join(', ')}`,
         changes
       })
     }
 
+    const limitNote = limitChange ? ` User limit ${limitChange > 0 ? '+' : ''}${limitChange}.` : ''
     res.json({
       success: true,
       message: isSale
-        ? `Saved. Amount ₹${transaction.amount}, paid ₹${salePaid(transaction)}, pending ₹${roundMoney(transaction.amount - salePaid(transaction))}.`
-        : `Rate updated to ₹${transaction.rate}. Amount is now ₹${transaction.amount}.`,
+        ? `Saved. ${transaction.quantity} calls, amount ₹${transaction.amount}, paid ₹${salePaid(transaction)}, pending ₹${roundMoney(transaction.amount - salePaid(transaction))}.${limitNote}`
+        : `Saved. ${transaction.quantity} calls, amount ₹${transaction.amount}.`,
       data: transaction
     })
   } catch (error) {

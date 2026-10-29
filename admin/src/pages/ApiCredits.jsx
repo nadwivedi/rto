@@ -101,8 +101,8 @@ const ApiCredits = () => {
   const [deletingId, setDeletingId] = useState(null)
   // Entry whose rate / money received is being changed (API calls can't be edited)
   const [editTxn, setEditTxn] = useState(null)
-  const [editRate, setEditRate] = useState('')
-  const [editPaid, setEditPaid] = useState('')
+  // { quantity, rate, paidAmount, date, note } for the entry being edited
+  const [editForm, setEditForm] = useState(null)
   const [editError, setEditError] = useState('')
   const [editSaving, setEditSaving] = useState(false)
   // Bumped after a sale/delete so the provider quota card and user limits re-read
@@ -303,8 +303,13 @@ const ApiCredits = () => {
 
   const openEditRate = (txn) => {
     setEditTxn(txn)
-    setEditRate(String(txn.rate))
-    setEditPaid(txn.type === 'sale' ? String(paidOf(txn)) : '')
+    setEditForm({
+      quantity: String(txn.quantity),
+      rate: String(txn.rate),
+      paidAmount: txn.type === 'sale' ? String(paidOf(txn)) : '',
+      date: txn.date ? new Date(txn.date).toLocaleDateString('en-CA', { timeZone: IST }) : todayIST(),
+      note: txn.note || ''
+    })
     setEditError('')
   }
 
@@ -313,23 +318,34 @@ const ApiCredits = () => {
     setEditTxn(null)
   }
 
+  const changeEdit = (e) => {
+    const { name, value } = e.target
+    setEditForm((prev) => ({ ...prev, [name]: value }))
+    setEditError('')
+  }
+
+  // Live figures for the edit popup
+  const editQty = Number(editForm?.quantity)
+  const editPrice = Number(editForm?.rate)
+  const editTotal =
+    editForm && editForm.quantity !== '' && editForm.rate !== '' && !Number.isNaN(editQty) && !Number.isNaN(editPrice)
+      ? Math.round(editQty * editPrice * 100) / 100
+      : null
+  const editPaidNum = editForm?.paidAmount === '' ? null : Number(editForm?.paidAmount)
+  const editPending =
+    editTotal !== null && editPaidNum !== null && !Number.isNaN(editPaidNum) ? Math.round((editTotal - editPaidNum) * 100) / 100 : null
+  const editQtyDiff = editTxn && Number.isInteger(editQty) ? editQty - editTxn.quantity : 0
+
   const handleEditRate = async (e) => {
     e.preventDefault()
-    const price = Number(editRate)
-    if (editRate === '' || Number.isNaN(price) || price < 0) {
-      setEditError('Enter a valid rate')
-      return
-    }
     const isSale = editTxn.type === 'sale'
-    const paid = Number(editPaid)
-    if (isSale && (editPaid === '' || Number.isNaN(paid) || paid < 0)) {
-      setEditError('Enter the amount paid (0 or more)')
-      return
+    if (!Number.isInteger(editQty) || editQty < 1) return setEditError('API calls must be a whole number of at least 1')
+    if (editForm.rate === '' || Number.isNaN(editPrice) || editPrice < 0) return setEditError('Enter a valid rate')
+    if (!editForm.date) return setEditError('Please choose a date')
+    if (isSale && (editPaidNum === null || Number.isNaN(editPaidNum) || editPaidNum < 0)) {
+      return setEditError('Enter the amount paid (0 or more)')
     }
-    if (isSale && paid > Math.round(editTxn.quantity * price * 100) / 100) {
-      setEditError('Paid cannot be more than the amount')
-      return
-    }
+    if (isSale && editPaidNum > editTotal) return setEditError('Paid cannot be more than the total amount')
     try {
       setEditSaving(true)
       setEditError('')
@@ -337,7 +353,13 @@ const ApiCredits = () => {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify(isSale ? { rate: price, paidAmount: paid } : { rate: price })
+        body: JSON.stringify({
+          quantity: editQty,
+          rate: editPrice,
+          date: editForm.date,
+          note: editForm.note,
+          ...(isSale ? { paidAmount: editPaidNum } : {})
+        })
       })
       const json = await res.json()
       if (!json.success) {
@@ -347,6 +369,7 @@ const ApiCredits = () => {
       setEditTxn(null)
       setError('')
       setSuccess(json.message)
+      setRefreshKey((k) => k + 1)
       await loadAll()
     } catch {
       setEditError('Failed to save')
@@ -354,9 +377,6 @@ const ApiCredits = () => {
       setEditSaving(false)
     }
   }
-
-  const editAmount = Number(editRate)
-  const editAmountValid = editTxn && editRate !== '' && !Number.isNaN(editAmount) && editAmount >= 0
 
   const totals = summary?.totals
   const isSaleForm = formData.type === 'sale'
@@ -686,7 +706,7 @@ const ApiCredits = () => {
                     <button
                       onClick={() => openEditRate(txn)}
                       className='shrink-0 p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
-                      title={txn.type === 'sale' ? 'Edit rate / paid' : 'Edit rate'}
+                      title='Edit entry'
                     >
                       <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
@@ -769,7 +789,7 @@ const ApiCredits = () => {
                           <button
                             onClick={() => openEditRate(txn)}
                             className='p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
-                            title={txn.type === 'sale' ? 'Edit rate / paid' : 'Edit rate'}
+                            title='Edit entry'
                           >
                             <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
@@ -1031,109 +1051,150 @@ const ApiCredits = () => {
         </>
       )}
 
-      {/* Edit the rate of one entry */}
-      {editTxn && (
+      {/* Edit one entry: same details as the add popup (the user of a sale stays fixed) */}
+      {editTxn && editForm && (
         <div className='fixed inset-0 bg-black/50 z-50 overflow-y-auto' onMouseDown={closeEditRate}>
           <div className='flex items-start justify-center min-h-full px-3 py-8 sm:py-16'>
-            <form
-              onSubmit={handleEditRate}
-              onMouseDown={(e) => e.stopPropagation()}
-              className='bg-white rounded-lg shadow-xl max-w-sm w-full p-4 sm:p-5'
-            >
-              <div className='flex justify-between items-start mb-3'>
+            <div onMouseDown={(e) => e.stopPropagation()} className='bg-white rounded-xl sm:rounded-2xl shadow-2xl max-w-md w-full overflow-hidden'>
+              <div className={`flex justify-between items-start gap-2 px-5 py-3 text-white bg-gradient-to-r ${
+                editTxn.type === 'sale' ? 'from-blue-600 to-indigo-600' : 'from-slate-600 to-gray-700'
+              }`}>
                 <div>
-                  <h2 className='text-base sm:text-lg font-bold text-gray-800'>{editTxn.type === 'sale' ? 'Edit Rate & Payment' : 'Edit Rate'}</h2>
-                  <p className='text-xs text-gray-500 mt-0.5'>
-                    {editTxn.type === 'sale'
-                      ? `Sale to ${editTxn.userId?.name || 'deleted user'}`
-                      : 'Purchase from provider'}{' '}
-                    · {formatDate(editTxn.date)} · {formatNumber(editTxn.quantity)} API calls
+                  <h2 className='text-lg font-bold'>{editTxn.type === 'sale' ? 'Edit API Sale' : 'Edit Provider Purchase'}</h2>
+                  <p className='text-xs text-white/80 mt-0.5'>
+                    {editTxn.type === 'sale' ? 'Change calls, rate, payment, date or note.' : 'Change calls, rate, date or note.'}
                   </p>
                 </div>
-                <button
-                  type='button'
-                  onClick={closeEditRate}
-                  className='text-gray-500 hover:text-gray-700 p-1 -mr-1 cursor-pointer'
-                  aria-label='Close'
-                >
+                <button type='button' onClick={closeEditRate} className='text-white hover:bg-white/20 rounded-lg p-1.5 transition cursor-pointer' aria-label='Close'>
                   <svg className='w-5 h-5' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M6 18L18 6M6 6l12 12' />
                   </svg>
                 </button>
               </div>
 
-              <label className={labelClass}>Rate per API call (₹)</label>
-              <input
-                type='number'
-                min='0'
-                step='any'
-                inputMode='decimal'
-                value={editRate}
-                onChange={(e) => setEditRate(e.target.value)}
-                className={inputClass}
-                autoFocus
-                required
-              />
-
-              {editTxn.type === 'sale' && (
-                <>
-                  <label className={`${labelClass} mt-3`}>Amount paid so far (₹)</label>
-                  <input
-                    type='number'
-                    min='0'
-                    step='any'
-                    inputMode='decimal'
-                    value={editPaid}
-                    onChange={(e) => setEditPaid(e.target.value)}
-                    className={inputClass}
-                    required
-                  />
-                </>
-              )}
-
-              <div className='mt-3 rounded-lg bg-gray-50 border border-gray-100 p-2.5 text-xs text-gray-600 space-y-1'>
-                <div className='flex justify-between'>
-                  <span>Current amount</span>
-                  <span className='tabular-nums'>{formatRupees(editTxn.amount)}</span>
-                </div>
-                <div className='flex justify-between font-semibold text-gray-900'>
-                  <span>New amount</span>
-                  <span className='tabular-nums'>
-                    {editAmountValid ? formatRupees(Math.round(editTxn.quantity * editAmount * 100) / 100) : '-'}
-                  </span>
-                </div>
-                {editTxn.type === 'sale' && editAmountValid && editPaid !== '' && !Number.isNaN(Number(editPaid)) && (
-                  <div className='flex justify-between font-semibold text-amber-600'>
-                    <span>Pending</span>
-                    <span className='tabular-nums'>
-                      {formatRupees(Math.round((editTxn.quantity * editAmount - Number(editPaid)) * 100) / 100)}
-                    </span>
+              <form onSubmit={handleEditRate} className='space-y-3 p-5'>
+                {editTxn.type === 'sale' && (
+                  <div>
+                    <label className={labelClass}>User</label>
+                    <div className='w-full px-3 py-2 text-sm rounded-lg bg-gray-50 border border-gray-200 text-gray-800'>
+                      <span className='font-semibold'>{editTxn.userId?.name || 'Deleted user'}</span>
+                      {editTxn.userId?.mobile1 && <span className='text-gray-500'> · {editTxn.userId.mobile1}</span>}
+                    </div>
+                    <p className='text-[11px] text-gray-400 mt-1'>To sell to someone else, delete this entry and add a new sale.</p>
                   </div>
                 )}
-                <p className='text-[11px] text-gray-400 pt-0.5'>
-                  Only the price changes. API calls{editTxn.type === 'sale' ? " and the user's limit" : ''} stay the same.
-                </p>
-              </div>
 
-              {editError && <p className='mt-2 text-xs font-medium text-red-600'>{editError}</p>}
+                <div className='grid grid-cols-2 gap-3'>
+                  <div>
+                    <label className={labelClass}>API Calls</label>
+                    <input
+                      type='number'
+                      name='quantity'
+                      value={editForm.quantity}
+                      onChange={changeEdit}
+                      min='1'
+                      step='1'
+                      autoFocus
+                      className={inputClass}
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>Price per Call (₹)</label>
+                    <input
+                      type='number'
+                      name='rate'
+                      value={editForm.rate}
+                      onChange={changeEdit}
+                      min='0'
+                      step='any'
+                      inputMode='decimal'
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
 
-              <div className='mt-4 grid grid-cols-2 gap-2'>
-                <button
-                  type='button'
-                  onClick={closeEditRate}
-                  className='px-3 py-2 text-sm font-semibold border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 cursor-pointer'
-                >
-                  Cancel
-                </button>
-                <button
-                  type='submit'
-                  disabled={editSaving}
-                  className='px-3 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 cursor-pointer'
-                >
-                  {editSaving ? 'Saving...' : 'Save'}
-                </button>
-              </div>
-            </form>
+                <div className={editTxn.type === 'sale' ? 'grid grid-cols-2 gap-3' : ''}>
+                  {editTxn.type === 'sale' && (
+                    <div>
+                      <label className={labelClass}>Total Paid (₹)</label>
+                      <input
+                        type='number'
+                        name='paidAmount'
+                        value={editForm.paidAmount}
+                        onChange={changeEdit}
+                        min='0'
+                        step='any'
+                        inputMode='decimal'
+                        className={inputClass}
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <label className={labelClass}>Date</label>
+                    <input type='date' name='date' value={editForm.date} onChange={changeEdit} className={inputClass} />
+                  </div>
+                </div>
+
+                <div>
+                  <label className={labelClass}>
+                    Note <span className='text-gray-400'>(Opt)</span>
+                  </label>
+                  <input
+                    type='text'
+                    name='note'
+                    value={editForm.note}
+                    onChange={changeEdit}
+                    placeholder='e.g. Paid by UPI'
+                    className={inputClass}
+                  />
+                </div>
+
+                <div className='p-3 rounded-lg bg-gray-50 border border-gray-200 text-sm space-y-1'>
+                  <div className='flex items-center justify-between'>
+                    <span className='text-gray-600'>{editTxn.type === 'sale' ? 'Total amount' : 'You pay provider'}</span>
+                    <span className='text-lg font-bold text-gray-900 tabular-nums'>{editTotal === null ? '-' : formatRupees(editTotal)}</span>
+                  </div>
+                  {editTotal !== null && editTotal !== editTxn.amount && (
+                    <div className='flex items-center justify-between text-xs text-gray-500'>
+                      <span>Was</span>
+                      <span className='tabular-nums line-through'>{formatRupees(editTxn.amount)}</span>
+                    </div>
+                  )}
+                  {editTxn.type === 'sale' && editTotal !== null && (
+                    <div className='flex items-center justify-between text-xs'>
+                      <span className='text-gray-500'>Paid {editPaidNum !== null && !Number.isNaN(editPaidNum) ? formatRupees(editPaidNum) : '-'}</span>
+                      <span className={`font-semibold ${editPending > 0 ? 'text-amber-600' : editPending < 0 ? 'text-red-600' : 'text-emerald-700'}`}>
+                        {editPending === null ? '' : editPending > 0 ? `${formatRupees(editPending)} pending` : editPending < 0 ? 'More than total' : 'Fully paid'}
+                      </span>
+                    </div>
+                  )}
+                  {editTxn.type === 'sale' && editQtyDiff !== 0 && (
+                    <p className='text-[11px] text-indigo-700 pt-0.5'>
+                      User&apos;s search limit will go {editQtyDiff > 0 ? 'up' : 'down'} by <strong>{formatNumber(Math.abs(editQtyDiff))}</strong>
+                    </p>
+                  )}
+                </div>
+
+                {editError && <div className='p-2.5 rounded-lg bg-red-50 border border-red-200 text-xs text-red-700'>{editError}</div>}
+
+                <div className='flex gap-2 pt-1'>
+                  <button
+                    type='button'
+                    onClick={closeEditRate}
+                    className='flex-1 px-4 py-2 text-sm font-semibold rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer'
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type='submit'
+                    disabled={editSaving}
+                    className='flex-1 px-4 py-2 text-sm font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-wait cursor-pointer'
+                  >
+                    {editSaving ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       )}
