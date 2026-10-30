@@ -23,7 +23,15 @@ export const homeFaqs = [
   },
   {
     q: 'Does RTO Sarthi work on Android, iPhone and Windows?',
-    a: 'Yes. RTO Sarthi works on Android, iPhone (iOS), Windows and Mac computers and in any web browser. Install it as an app from the browser or simply log in, and you and your staff can use it at the desk or outside the RTO office.',
+    a: 'Yes. RTO Sarthi has dedicated Windows software, a dedicated Android app (APK) and an iPhone (iOS) app, and also works in any web browser on Windows or Mac. Our team installs the apps for you when your account is set up.',
+  },
+  {
+    q: 'Is RTO Sarthi only web based?',
+    a: 'No. RTO Sarthi is cloud-based software with dedicated apps: Windows desktop software, an Android app (APK) and an iPhone app, plus a web version. Your data is stored in the cloud, so the same clients, vehicles and payments open on every computer and phone you use.',
+  },
+  {
+    q: 'Can my employees use RTO Sarthi with limited access?',
+    a: 'Yes. RTO Sarthi supports multiple users. Each employee gets their own login to a dedicated staff panel, and you choose what they can see and do, for example allow adding records but not editing or deleting them. The owner keeps full access, and everyone works on the same records from their own computer or phone at the same time.',
   },
   {
     q: 'Is there a free trial?',

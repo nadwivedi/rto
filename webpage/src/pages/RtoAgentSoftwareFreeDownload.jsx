@@ -29,7 +29,7 @@ const steps = [
     step: '02',
     title: 'Download & install',
     description:
-      'Open app.rtosarthi.com and click Install App on computer or Android. On iPhone use Add to Home Screen.',
+      'Our team installs the RTO Sarthi Windows software on your computer and the Android app (APK) or iPhone app on your phone.',
   },
   {
     step: '03',
@@ -39,15 +39,15 @@ const steps = [
 ]
 
 const devices = [
-  { title: 'Windows / Mac PC', text: 'Chrome or Edge → Install App. Opens from desktop and taskbar.' },
-  { title: 'Android mobile', text: 'Chrome → Install App. Opens from your home screen like any app.' },
-  { title: 'iPhone / iPad', text: 'Safari → Share → Add to Home Screen.' },
+  { title: 'Windows PC', text: 'Dedicated Windows software with its own desktop and taskbar icon. Mac works in the browser.' },
+  { title: 'Android mobile', text: 'Dedicated Android app (APK), installed by our team. Opens from your home screen.' },
+  { title: 'iPhone / iPad', text: 'Dedicated iPhone app, set up by our team. Opens from your home screen.' },
 ]
 
 const trialPoints = [
   'Free trial, use the software free of cost',
   'Works on computer and mobile',
-  'No .exe or APK file needed',
+  'Windows software, Android APK & iPhone app',
   'Automatic updates',
   'Data stored safely online',
   'Setup help from our team',
@@ -86,8 +86,8 @@ export default function RtoAgentSoftwareFreeDownload() {
               <p className={bodyMuted}>
                 During the trial you add your own vehicles and clients, track tax, fitness, PUC,
                 insurance and permit expiry, and see the dashboard in action. You don&apos;t need
-                to buy anything or install a risky file from an unknown website. RTO Sarthi installs
-                straight from the browser on your PC or mobile.
+                to buy anything or install a risky file from an unknown website. Our team installs the
+                RTO Sarthi apps on your PC and mobile for you.
               </p>
             </div>
             <ul className={cn(glassCard, 'space-y-2 p-6')}>
@@ -191,7 +191,7 @@ export default function RtoAgentSoftwareFreeDownload() {
             {[
               { icon: <IconUsers />, title: 'Made for RTO agents', text: 'Built around Indian RTO work: vehicle numbers, tax, fitness, permit, PUC, insurance, DL and transfer.' },
               { icon: <IconUpload />, title: 'Move your data in a day', text: 'Upload your existing Excel records in bulk. Our team helps you import everything.' },
-              { icon: <IconShield />, title: 'Safe and always updated', text: 'Data stored securely online, automatic updates, and no installation files to worry about.' },
+              { icon: <IconShield />, title: 'Safe and always updated', text: 'Data stored securely online, automatic updates, and apps installed by our own team.' },
             ].map((item) => (
               <div key={item.title} className={cn(glassCard, 'p-6')}>
                 <FeatureIcon icon={item.icon} variant="brand" />

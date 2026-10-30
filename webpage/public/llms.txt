@@ -1,0 +1,41 @@
+# RTO Sarthi
+
+> RTO Sarthi is cloud-based RTO agent software made in India by SoftwareBytes, Raipur (Chhattisgarh). It manages vehicles, clients, document expiry (tax, fitness, permit, PUC, insurance, GPS), payments and pending balance, sends automatic WhatsApp expiry reminders, and gives RC details by vehicle number.
+
+## Platforms
+
+RTO Sarthi is not web-only. It is available as:
+
+- Dedicated Windows desktop software
+- Dedicated Android app (APK)
+- iPhone and iPad (iOS) app
+- Web version at https://app.rtosarthi.com for any browser on Windows or Mac
+
+The apps are installed by the RTO Sarthi team for each customer when their account is set up. All apps and the web version use the same cloud data, so one account works on many computers and phones at the same time.
+
+## Multi-user and employee access
+
+- Multiple users on one account, each with their own login
+- Dedicated employee (staff) panel with limited, permission-based access: the owner decides what each employee can see, add or edit
+- Sub-agent, insurance agent and PUC centre logins on the same records
+- Owner keeps full access
+
+## Key features
+
+- Automatic WhatsApp reminders before tax, fitness, permit, PUC, insurance and GPS expiry
+- Vehicle search and RC download by vehicle number
+- Vehicle Information API for businesses
+- Lead management with follow-ups
+- Client CRM and pending balance reminders
+- AI document entry and bulk Excel upload
+- Permit, tax, fitness, transfer, NOC and HPA records
+- Driving licence and driving school management
+- Dealer bills, cashflow and insurance reports
+
+## Links
+
+- Website: https://rtosarthi.com/
+- Features: https://rtosarthi.com/features
+- RTO agent app: https://rtosarthi.com/rto-agent-app
+- Cloud RTO software: https://rtosarthi.com/cloud-rto-software
+- Free trial and demo: https://rtosarthi.com/contact

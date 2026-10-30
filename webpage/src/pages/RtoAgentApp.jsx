@@ -48,8 +48,8 @@ export default function RtoAgentApp() {
           <>
             The app also brings work back to you. Vehicle owners get{' '}
             {s('automatic WhatsApp reminders before tax, fitness, permit, PUC and insurance expiry')}, and learner
-            licence applicants get a WhatsApp message 30 days after the LL for DL eligibility. Install it free
-            from the browser, see{' '}
+            licence applicants get a WhatsApp message 30 days after the LL for DL eligibility. Our team
+            installs the Android app (APK), iPhone app and Windows software for you, see{' '}
             <Link to="/rto-agent-software-free-download" className={linkClass}>how to download RTO Sarthi</Link>, or
             read about the full{' '}
             <Link to="/rto-management-software" className={linkClass}>RTO management software</Link>.
@@ -58,10 +58,10 @@ export default function RtoAgentApp() {
       }}
       steps={{
         title: 'Get the RTO agent app in 3 steps',
-        description: 'No APK file, no setup on your side. Start the same day.',
+        description: 'Our team installs the app for you. Start the same day.',
         items: [
           { title: 'Get your free account', description: 'Message us on WhatsApp or call. We create your RTO Sarthi trial account the same day.' },
-          { title: 'Install on your phone', description: 'Android: open app.rtosarthi.com in Chrome and tap Install App. iPhone: Safari → Share → Add to Home Screen.' },
+          { title: 'Get the app installed', description: 'We install the RTO Sarthi Android app (APK) or iPhone app on your phone and the Windows software on your computer.' },
           { title: 'Add vehicles & go', description: 'Upload RC or insurance copies or import Excel, and WhatsApp reminders start going out automatically.' },
         ],
       }}
@@ -85,7 +85,7 @@ export default function RtoAgentApp() {
         description: 'Built for Indian RTO work, not a generic business app.',
         listTitle: 'With the RTO Sarthi app you get',
         items: [
-          'Works on Android & iPhone', 'Works on Windows & Mac', 'No APK or .exe file needed', 'Automatic updates',
+          'Dedicated Android app (APK)', 'iPhone app', 'Windows software', 'Automatic updates',
           'WhatsApp expiry reminders', `RC details at ${LOOKUP_PRICE}`, 'Client balance & ledger', 'LL & DL applicants',
           'Bulk Excel import', 'Staff & sub-agent logins', 'Data stored safely online', 'Setup help from our team',
         ],

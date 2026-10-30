@@ -61,10 +61,10 @@ export default function RtoOfflineSoftware() {
       }}
       steps={{
         title: 'Install RTO Sarthi on your PC like desktop software',
-        description: 'No .exe file, no setup CD, no manual updates.',
+        description: 'Dedicated Windows software, installed by our team, with automatic updates.',
         items: [
           { title: 'Get your free account', description: 'Message us on WhatsApp or call. We create your RTO Sarthi trial account the same day.' },
-          { title: 'Install on Windows or Mac', description: 'Open app.rtosarthi.com in Chrome or Edge and click Install App. It gets a desktop and taskbar icon.' },
+          { title: 'We install it on your PC', description: 'Our team installs the RTO Sarthi Windows software with a desktop and taskbar icon. Mac works in the browser.' },
           { title: 'Bring your records', description: 'Import Excel or upload RC and insurance copies. Our team helps move data from your old software.' },
         ],
       }}

@@ -72,8 +72,8 @@ export const vehicleInfoFaqs = [
     a: 'Yes. Vehicle dealers, used car and bike dealers, financers and fleet owners use vehicle number search to check ownership, HP (hypothecation), tax, fitness, insurance and challan status before buying, selling or financing a vehicle.',
   },
   {
-    q: 'Do I need to install any software?',
-    a: 'No installation is needed. RTO Sarthi runs in the browser on computer and mobile, so you can search vehicle details from your office or while meeting a client.',
+    q: 'Is there an app or software to install?',
+    a: 'Yes. RTO Sarthi has dedicated Windows software, an Android app (APK) and an iPhone app, which our team installs for you, and it also works in any web browser. Search vehicle details from your office or while meeting a client.',
   },
   {
     q: 'How do I start using RTO Sarthi vehicle information software?',

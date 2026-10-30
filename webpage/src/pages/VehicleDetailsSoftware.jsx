@@ -44,7 +44,7 @@ export default function VehicleDetailsSoftware() {
       }}
       steps={{
         title: 'How the vehicle details software works',
-        description: 'No code, no installation. Works on PC and mobile.',
+        description: 'No code needed. Works on Windows software, Android and iPhone apps, and web.',
         items: [
           { title: 'Search the vehicle number', description: 'Type any Indian vehicle number and see its details on screen in seconds.' },
           { title: 'Download or print', description: 'Get the RC PDF and Particulars PDF, or print RC forms filled with the vehicle details.' },

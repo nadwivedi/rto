@@ -13,7 +13,7 @@ export const rtoOfflineFaqs = [
   },
   {
     q: 'Can I install RTO Sarthi on my computer like offline software?',
-    a: 'Yes. Open app.rtosarthi.com in Chrome or Edge on Windows or Mac and click Install App. RTO Sarthi gets its own desktop and taskbar icon and opens in its own window, just like installed desktop software, with no .exe file to download.',
+    a: 'Yes. RTO Sarthi has dedicated Windows software that our team installs on your office computers. It has its own desktop and taskbar icon and opens in its own window like any desktop software, while your data is safely backed up in the cloud. It also works on Mac and in the web browser.',
   },
   {
     q: 'What is the risk of keeping RTO data in offline software?',

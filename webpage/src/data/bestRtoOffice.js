@@ -41,7 +41,7 @@ export const bestRtoOfficeFaqs = [
   },
   {
     q: 'Does it work on computer and mobile?',
-    a: 'Yes. RTO Sarthi installs on Windows and Mac computers and on Android and iPhone from the browser. The same data opens on every device, so you can check a client from the desk or from the RTO.',
+    a: 'Yes. RTO Sarthi has dedicated Windows software, a dedicated Android app (APK) and an iPhone app, and also works in the web browser on Mac or any computer. It is cloud based, so the same data opens on every device and you can check a client from the desk or from the RTO.',
   },
   {
     q: 'Is our office data safe?',

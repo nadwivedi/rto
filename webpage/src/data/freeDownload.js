@@ -13,19 +13,19 @@ export const freeDownloadFaqs = [
   },
   {
     q: 'How do I download RTO Sarthi RTO agent software?',
-    a: 'First get your free trial login from our team. Then open app.rtosarthi.com in Chrome or Edge and click Install App. On iPhone, open it in Safari, tap Share and then Add to Home Screen. RTO Sarthi then opens like a normal app from your desktop or home screen.',
+    a: 'Message us on WhatsApp or call to get your free trial login. Our team then installs the RTO Sarthi Windows software on your computer and the Android app (APK) or iPhone app on your phone. You can also log in from any browser at app.rtosarthi.com.',
   },
   {
     q: 'Can I download RTO agent software for PC / Windows?',
-    a: 'Yes. On a Windows or Mac computer, open RTO Sarthi in Chrome or Edge and click Install App. It gets its own icon on the desktop and taskbar and opens in its own window, just like installed software.',
+    a: 'Yes. RTO Sarthi has dedicated Windows software with its own desktop and taskbar icon, and our team installs it on your office computers. On a Mac, it works in the web browser.',
   },
   {
     q: 'Is there an RTO agent software app for Android and iPhone?',
-    a: 'Yes. RTO Sarthi works on Android and iPhone. Install it from the browser (Install App on Android, Add to Home Screen on iPhone) and use it on your phone while meeting clients.',
+    a: 'Yes. RTO Sarthi has a dedicated Android app (APK) and an iPhone app. Our team installs them for you and your staff, so you can use RTO Sarthi on your phone while meeting clients.',
   },
   {
     q: 'Is it safe to download RTO Sarthi?',
-    a: 'Yes. RTO Sarthi installs directly from the browser, so there is no .exe or APK file from an unknown website. Updates are automatic, and you always use the latest version.',
+    a: 'Yes. The Windows software, Android app (APK) and iPhone app come directly from the RTO Sarthi team, never from an unknown website. Your data is stored securely in the cloud and updates are automatic, so you always use the latest version.',
   },
   {
     q: 'Will I lose my data if my computer breaks?',

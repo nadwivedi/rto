@@ -35,7 +35,7 @@ export const documentExpiryFaqs = [
   },
   {
     q: 'Does it work on mobile?',
-    a: 'Yes. RTO Sarthi runs in the browser on computer and mobile and can be installed like an app.',
+    a: 'Yes. RTO Sarthi has dedicated Windows software, an Android app (APK) and an iPhone app, and also works in the web browser. It is cloud based, so your records are the same on every device.',
   },
   {
     q: 'How do I start?',

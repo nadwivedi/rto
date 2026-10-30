@@ -86,7 +86,7 @@ export default function CloudRtoSoftware() {
         listTitle: 'With cloud RTO software from RTO Sarthi',
         items: [
           'Data backed up online', 'Safe from PC crash or theft', 'Works on PC and mobile', 'Multiple staff at once',
-          'Reminders while PC is off', 'No installation file', 'Automatic updates', 'No server or IT cost',
+          'Reminders while PC is off', 'Windows, Android & iPhone apps', 'Automatic updates', 'No server or IT cost',
           `RC search at ${LOOKUP_PRICE}`, 'Works on mobile data & hotspot', 'Excel import of old records', 'Setup help from our team',
         ],
         note: 'Cloud software needs an internet connection. RTO Sarthi is light enough for 4G or a phone hotspot.',

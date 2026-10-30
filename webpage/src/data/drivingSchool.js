@@ -43,7 +43,7 @@ export const drivingSchoolFaqs = [
   },
   {
     q: 'Can I use it on mobile?',
-    a: 'Yes. RTO Sarthi runs in the browser on computer and mobile, and you can install it like an app. Take admissions at the counter or on your phone.',
+    a: 'Yes. RTO Sarthi has dedicated Windows software, an Android app (APK) and an iPhone app, and also works in the web browser. Take admissions at the counter on the computer or on your phone, on the same data.',
   },
   {
     q: 'How do I start using RTO Sarthi for my driving school?',

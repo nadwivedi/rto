@@ -49,7 +49,7 @@ export const rcDownloadFaqs = [
   },
   {
     q: 'Does RC download work on mobile?',
-    a: 'Yes. RTO Sarthi runs in the browser on mobile and computer, so you can search a vehicle and download the RC from your office or while meeting a client. No installation is needed.',
+    a: 'Yes. Use the RTO Sarthi Android app (APK), iPhone app, Windows software or web version to search a vehicle and download the RC from your office or while meeting a client.',
   },
   {
     q: 'What if I lost my RC? Can I get the RC details?',

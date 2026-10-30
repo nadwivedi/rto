@@ -359,7 +359,7 @@ const PRODUCT_PAGES = {
     faqs: rtoAgentAppFaqs,
     alternateName: ['RTO Sarthi App', 'RTO Agent Mobile App', 'App for RTO Agents'],
     features: [
-      'Works on Android, iPhone, Windows, Mac and web with one account',
+      'Dedicated Android app (APK), iPhone app and Windows software, plus web, on one account',
       'Automatic WhatsApp reminders for tax, fitness, permit, PUC, insurance and GPS expiry',
       'RC details by vehicle number at ₹1.5 per search',
       'Client and vehicle records with search by vehicle number, owner or mobile',
@@ -379,7 +379,7 @@ const PRODUCT_PAGES = {
       'Same account on Windows, Mac, Android, iPhone and web',
       'Automatic WhatsApp reminders for tax, fitness, permit, PUC, insurance and GPS expiry, sent from the cloud',
       'Staff, sub-agent, insurance agent and PUC center logins on the same records',
-      'Automatic updates with no installation file',
+      'Dedicated Windows software, Android app (APK) and iPhone app with automatic updates',
       'RC details by vehicle number at ₹1.5 per search',
       'Client payments and pending balance in real time',
       'Excel import from existing records',
@@ -398,7 +398,7 @@ const PRODUCT_PAGES = {
       'Automatic document entry and bulk Excel import',
       'Lead and enquiry follow-ups',
       'Owner dashboard',
-      'Works on Windows, Mac, Android and iPhone with online backup',
+      'Dedicated Windows software, Android app (APK) and iPhone app with online backup',
     ],
   },
   [RTO_OFFLINE_PATH]: {
@@ -406,7 +406,7 @@ const PRODUCT_PAGES = {
     faqs: rtoOfflineFaqs,
     alternateName: ['RTO Desktop Software', 'RTO Software for PC'],
     features: [
-      'Installs on Windows and Mac with a desktop and taskbar icon',
+      'Dedicated Windows software with a desktop and taskbar icon (also works on Mac)',
       'Data stored online with automatic backup',
       'Same data on Android and iPhone',
       'Automatic WhatsApp reminders for tax, fitness, permit, PUC and insurance expiry',
@@ -546,6 +546,8 @@ function getSoftwareJsonLd(name, description, url, { alternateName, features, ca
     ...(features && { featureList: features }),
     applicationCategory: category || 'BusinessApplication',
     operatingSystem: 'Android, iOS, Windows, macOS, Web',
+    // Dedicated apps on every device, not web only
+    availableOnDevice: ['Desktop', 'Laptop', 'Mobile', 'Tablet'],
     description,
     url,
     offers: {

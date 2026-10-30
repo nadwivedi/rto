@@ -20,8 +20,8 @@ export const cloudRtoFaqs = [
     a: 'Yes. RTO Sarthi stores data securely on the server with regular backups. Every staff member has their own login, and a broken, stolen or replaced computer does not lose any records.',
   },
   {
-    q: 'Do I need to install anything?',
-    a: 'No installation file is needed. Open app.rtosarthi.com and log in. If you want a desktop or home screen icon, click Install App in Chrome or Edge on your computer or Android phone, or use Add to Home Screen on iPhone.',
+    q: 'Is there an app for Windows, Android and iPhone?',
+    a: 'Yes. RTO Sarthi has dedicated Windows software, a dedicated Android app (APK) and an iPhone app, which our team installs for you when your account is set up. You can also log in from any web browser at app.rtosarthi.com. Because it is cloud based, every app and the web version show the same data.',
   },
   {
     q: 'Does cloud RTO software need internet?',

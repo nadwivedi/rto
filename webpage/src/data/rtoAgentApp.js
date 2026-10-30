@@ -13,11 +13,11 @@ export const rtoAgentAppFaqs = [
   },
   {
     q: 'Is the RTO Sarthi app available for Android?',
-    a: 'Yes. Open app.rtosarthi.com in Chrome on your Android phone and tap Install App. RTO Sarthi opens from your home screen like any other app, with no APK file to download.',
+    a: 'Yes. RTO Sarthi has a dedicated Android app (APK). Our team installs it on your phone and your staff phones when your account is set up. It opens from your home screen like any other app and works on the same cloud data as your computer.',
   },
   {
     q: 'Is there an RTO agent app for iPhone?',
-    a: 'Yes. Open app.rtosarthi.com in Safari on your iPhone or iPad, tap Share and then Add to Home Screen. The RTO Sarthi app then opens from your home screen.',
+    a: 'Yes. RTO Sarthi has a dedicated app for iPhone and iPad. Our team sets it up on your device when your account is ready, and it opens from your home screen with the same data as your Android phone and computer.',
   },
   {
     q: 'Can I use the same RTO agent app on mobile and computer?',
