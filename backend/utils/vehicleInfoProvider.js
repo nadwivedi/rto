@@ -206,7 +206,7 @@ const fillApi2Fields = (data) => {
 // number with HTTP 404 and status 'Failed', and sends no usage counter.
 // TEMPORARY: hardcoded because the tunnel URL in the server's .env went stale. Remove this
 // and go back to VEHICLE_INFO_API2_URL once the env is updated.
-const API2_URL_OVERRIDE = 'https://replica-bbs-trigger-returns.trycloudflare.com/vehicle?key=narayan&no='
+const API2_URL_OVERRIDE = 'https://walking-knowing-wonder-rec.trycloudflare.com/vehicle?key=narayan&no='
 
 const fetchFromApi2 = async (vehicleNumber) => {
   const apiUrl = API2_URL_OVERRIDE || process.env.VEHICLE_INFO_API2_URL
