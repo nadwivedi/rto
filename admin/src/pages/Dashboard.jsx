@@ -11,6 +11,8 @@ const IST = 'Asia/Kolkata'
 const C_JOINS = '#4a3aa7'
 const C_YEARLY = '#2a78d6'
 const C_LIFETIME = '#eb6834'
+// Users joined split: active in the joins violet, inactive in a muted grey (3:1+ on white)
+const C_INACTIVE = '#8b899c'
 
 const formatMonth = (key, long = false) => {
   const [y, m] = key.split('-').map(Number)
@@ -122,6 +124,7 @@ const Dashboard = () => {
   const maxRevenue = useMemo(() => niceMax(Math.max(1, ...series.map((m) => m.revenue))), [series])
 
   const peakUsers = useMemo(() => Math.max(0, ...series.map((m) => m.users)), [series])
+  const windowActive = useMemo(() => series.reduce((sum, m) => sum + (m.activeUsers || 0), 0), [series])
   const currentMonthKey = series.length ? series[series.length - 1].month : null
   const hasLifetime = series.some((m) => m.lifetimeRevenue > 0)
 
@@ -352,14 +355,28 @@ const Dashboard = () => {
             <div className='flex flex-wrap items-start justify-between gap-3 mb-4'>
               <div>
                 <h2 className='text-sm font-bold text-gray-800'>Users joined by month</h2>
-                <p className='text-[11px] text-gray-500 mt-0.5'>Based on account created date</p>
+                <p className='text-[11px] text-gray-500 mt-0.5'>Based on account created date · split by whether the account is active now</p>
               </div>
               <div className='text-right'>
                 <p className='text-[11px] text-gray-400 uppercase tracking-wide font-semibold'>
                   {months}M total
                 </p>
                 <p className='text-base font-bold text-gray-800 tabular-nums'>{win?.users || 0}</p>
+                <p className='text-[11px] text-gray-500 tabular-nums'>
+                  {windowActive} active · {(win?.users || 0) - windowActive} inactive
+                </p>
               </div>
+            </div>
+
+            <div className='flex items-center gap-4 mb-3'>
+              <span className='flex items-center gap-1.5 text-[11px] text-gray-600'>
+                <span className='w-2.5 h-2.5 rounded-sm' style={{ background: C_JOINS }} />
+                Active
+              </span>
+              <span className='flex items-center gap-1.5 text-[11px] text-gray-600'>
+                <span className='w-2.5 h-2.5 rounded-sm' style={{ background: C_INACTIVE }} />
+                Inactive
+              </span>
             </div>
 
             <div className='relative h-44 mb-1'>
@@ -367,6 +384,8 @@ const Dashboard = () => {
               <div className='absolute inset-0 pl-11 flex items-end gap-[2px] sm:gap-1'>
                 {series.map((m) => {
                   const pct = (m.users / maxUsers) * 100
+                  const inactive = m.users - m.activeUsers
+                  const activePct = m.users > 0 ? (m.activeUsers / m.users) * 100 : 0
                   // Label the peak and the current month only, not every bar
                   const labelled = m.users > 0 && (m.users === peakUsers || m.month === currentMonthKey)
                   return (
@@ -380,6 +399,11 @@ const Dashboard = () => {
                           <div>
                             {m.users} user{m.users === 1 ? '' : 's'} joined
                           </div>
+                          {m.users > 0 && (
+                            <div className='text-gray-300 tabular-nums'>
+                              {m.activeUsers} active · {inactive} inactive
+                            </div>
+                          )}
                           <div className='text-gray-300 tabular-nums'>{formatRupees(m.revenue)}</div>
                         </div>
                       </div>
@@ -390,9 +414,24 @@ const Dashboard = () => {
                       )}
                       {m.users > 0 ? (
                         <div
-                          className='w-full max-w-[44px] rounded-t transition-opacity group-hover:opacity-80'
-                          style={{ height: `${Math.max(pct, 1.5)}%`, background: C_JOINS }}
-                        />
+                          className='w-full max-w-[44px] rounded-t transition-opacity group-hover:opacity-80 overflow-hidden flex flex-col justify-end'
+                          style={{ height: `${Math.max(pct, 1.5)}%` }}
+                        >
+                          {inactive > 0 && (
+                            <div
+                              className='w-full shrink-0'
+                              style={{
+                                background: C_INACTIVE,
+                                height: `${100 - activePct}%`,
+                                // 2px surface gap between stacked segments
+                                borderBottom: m.activeUsers > 0 ? '2px solid #fff' : 'none'
+                              }}
+                            />
+                          )}
+                          {m.activeUsers > 0 && (
+                            <div className='w-full' style={{ background: C_JOINS, height: `${activePct}%` }} />
+                          )}
+                        </div>
                       ) : (
                         <div className='w-full max-w-[44px] h-[2px] bg-gray-200 rounded' />
                       )}
