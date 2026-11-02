@@ -1415,3 +1415,144 @@ exports.incrementWhatsAppCount = async (req, res) => {
   }
 }
 
+
+// Bulk import insurance records from Excel
+// Columns used: Date, Customer Name, Mobile Number, Vehicle No, Service Type, Expiry Date,
+// Referral Name, Premium Amt, Discount Amount, Paid Amount, Remaining Amount.
+// Columns with no matching field (Registration Date, Vehicle Type, Fuel Type, Days,
+// Expiry Status, Notification) are ignored.
+exports.bulkImportInsurance = async (req, res) => {
+  try {
+    const { records } = req.body
+
+    if (!records || !Array.isArray(records) || records.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No records provided for import'
+      })
+    }
+
+    const toNum = (v) => {
+      const n = Number(String(v ?? '').replace(/[^0-9.-]/g, ''))
+      return Number.isFinite(n) ? n : 0
+    }
+
+    // dd-mm-yyyy -> one year back + 1 day (standard 1-year policy start)
+    const deriveValidFrom = (validTo) => {
+      const parts = String(validTo).split(/[-/]/)
+      if (parts.length !== 3) return ''
+      const d = new Date(Number(parts[2]) - 1, Number(parts[1]) - 1, Number(parts[0]) + 1)
+      if (isNaN(d.getTime())) return ''
+      return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`
+    }
+
+    // Cache agents for referral-name lookup
+    const agents = await Agent.find({ userId: req.user.id }).select('name contact').lean()
+    const agentByName = new Map(agents.map(a => [a.name.trim().toLowerCase(), a]))
+
+    let successCount = 0
+    let failedCount = 0
+    const errors = []
+
+    for (const [index, record] of records.entries()) {
+      try {
+        const {
+          date, customerName, mobileNumber, vehicleNumber, serviceType,
+          validTo, referralName, premiumAmount, discountAmount, paidAmount, remainingAmount
+        } = record
+
+        const vehicleNo = String(vehicleNumber || '').toUpperCase().replace(/\s+/g, '')
+        if (!vehicleNo || !validTo) {
+          throw new Error('Vehicle No and Expiry Date are required')
+        }
+
+        const validFrom = record.validFrom || deriveValidFrom(validTo)
+        if (!validFrom) {
+          throw new Error('Invalid Expiry Date')
+        }
+
+        const premium = toNum(premiumAmount)
+        const discount = toNum(discountAmount)
+        const paid = toNum(paidAmount)
+        const hasRemaining = remainingAmount !== undefined && remainingAmount !== null && String(remainingAmount).trim() !== ''
+        let totalFee = Math.max(premium - discount, 0)
+        let balance = hasRemaining ? toNum(remainingAmount) : Math.max(totalFee - paid, 0)
+        if (balance < 0) balance = 0
+        // Keep the totals consistent: total = paid + remaining
+        if (paid + balance > totalFee) totalFee = paid + balance
+
+        const status = getInsuranceStatus(validTo)
+
+        let partyId = null
+        let vehicleOwnerName = ''
+        let vehicleMobile = ''
+        const vehicle = await VehicleRegistration.findOne({
+          registrationNumber: vehicleNo,
+          userId: req.user.id
+        }).select('partyId ownerName mobileNumber')
+        if (vehicle) {
+          if (vehicle.partyId) partyId = vehicle.partyId
+          if (vehicle.ownerName) vehicleOwnerName = vehicle.ownerName
+          if (vehicle.mobileNumber) vehicleMobile = vehicle.mobileNumber
+        }
+
+        // Referral name -> existing broker/agent if the name matches
+        let agentId = null
+        let agentName = String(referralName || '').trim()
+        let agentContact = ''
+        const matchedAgent = agentName ? agentByName.get(agentName.toLowerCase()) : null
+        if (matchedAgent) {
+          agentId = matchedAgent._id
+          agentName = matchedAgent.name
+          agentContact = matchedAgent.contact || ''
+        }
+
+        // Mark older non-renewed insurance for this vehicle as renewed
+        await Insurance.updateMany(
+          { vehicleNumber: vehicleNo, userId: req.user.id, isRenewed: false },
+          { $set: { status: 'expired', isRenewed: true } }
+        )
+
+        const insurance = new Insurance({
+          vehicleNumber: vehicleNo,
+          policyHolderName: customerName || vehicleOwnerName || '',
+          mobileNumber: mobileNumber || vehicleMobile || '',
+          productType: serviceType || '',
+          date: date || '',
+          validFrom,
+          validTo,
+          agentId,
+          agentName,
+          agentContact,
+          premium,
+          totalFee,
+          paid,
+          balance,
+          remarks: discount > 0 ? `Discount: ${discount}` : '',
+          status,
+          userId: req.user.id,
+          partyId
+        })
+
+        await insurance.save()
+        successCount++
+      } catch (err) {
+        failedCount++
+        errors.push({ index, vehicleNumber: record.vehicleNumber, error: err.message })
+      }
+    }
+
+    res.status(200).json({
+      success: true,
+      message: `Bulk import completed. Successfully imported ${successCount} records${failedCount ? `, ${failedCount} failed` : ''}.`,
+      data: { success: successCount, failed: failedCount, errors }
+    })
+  } catch (error) {
+    console.error('Error during insurance bulk import:', error)
+    res.status(500).json({
+      success: false,
+      message: 'Server error during bulk import',
+      error: error.message
+    })
+  }
+}

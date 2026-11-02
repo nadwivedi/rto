@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../../context/AuthContext";
@@ -7,6 +7,7 @@ import * as XLSX from "xlsx";
 import Pagination from "../../components/Pagination";
 import AddInsuranceModal from "./components/AddInsuranceModal";
 import InsuranceDetailModal from "./components/InsuranceDetailModal";
+import PreviewInsuranceImportModal from "./components/PreviewInsuranceImportModal";
 import AddButton from "../../components/AddButton";
 import SearchBar from "../../components/SearchBar";
 import StatisticsCard from "../../components/StatisticsCard";
@@ -45,6 +46,10 @@ const Insurance = () => {
   const [draftProductFilter, setDraftProductFilter] = useState("");
   const [draftValidityFilter, setDraftValidityFilter] = useState("");
   const [draftAgentFilter, setDraftAgentFilter] = useState("");
+  const fileInputRef = useRef(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewData, setPreviewData] = useState([]);
+  const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -183,6 +188,169 @@ const Insurance = () => {
     } catch (error) {
       console.error("Error exporting insurance:", error);
       toast.error("Failed to export insurance data", { position: "top-right", autoClose: 3000 });
+    }
+  };
+
+  // ---------- Excel import ----------
+  const parseExcelDate = (excelDate) => {
+    if (!excelDate && excelDate !== 0) return "";
+    if (typeof excelDate === "number") {
+      try {
+        const d = XLSX.SSF.parse_date_code(excelDate);
+        if (d && d.y && d.m && d.d) {
+          return `${String(d.d).padStart(2, "0")}-${String(d.m).padStart(2, "0")}-${d.y}`;
+        }
+      } catch (err) {
+        console.warn("SSF date parse error:", err);
+      }
+    }
+    const str = String(excelDate).trim();
+    if (!str) return "";
+    const parts = str.split(/[-/.]/);
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        return `${parts[2].padStart(2, "0")}-${parts[1].padStart(2, "0")}-${parts[0]}`;
+      }
+      if (parts[2].length === 4) {
+        return `${parts[0].padStart(2, "0")}-${parts[1].padStart(2, "0")}-${parts[2]}`;
+      }
+    }
+    return str;
+  };
+
+  // Normalized header -> record field. Columns not listed here
+  // (Registration Date, Vehicle Type, Fuel Type, Days, Expiry Status, Notification) are skipped.
+  const INSURANCE_IMPORT_COLUMNS = {
+    date: ["date", "workdate", "entrydate"],
+    customerName: ["customername", "customer", "name", "ownername", "policyholdername", "insuredname"],
+    mobileNumber: ["mobilenumber", "mobileno", "mobile", "phone", "phoneno", "contactno"],
+    vehicleNumber: ["vehicleno", "vehiclenumber", "registrationno", "registrationnumber", "regno"],
+    serviceType: ["servicetype", "service", "producttype", "policytype"],
+    validTo: ["expirydate", "expiry", "expdate", "validupto", "validto"],
+    referralName: ["referralname", "referral", "referredby", "agentname", "brokername"],
+    premiumAmount: ["premiumamt", "premiumamount", "premium"],
+    discountAmount: ["discountamount", "discountamt", "discount"],
+    paidAmount: ["paidamount", "paidamt", "paid"],
+    remainingAmount: ["remainingamount", "remainingamt", "remaining", "balance", "balanceamount"],
+  };
+
+  const handleExcelUpload = (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+    const resetInput = () => {
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    };
+
+    setIsUploading(true);
+    const reader = new FileReader();
+    reader.onerror = () => {
+      toast.error("Could not read the file.");
+      setIsUploading(false);
+      resetInput();
+    };
+    reader.onload = (e) => {
+      try {
+        const workbook = XLSX.read(new Uint8Array(e.target.result), { type: "array" });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: "" });
+        if (!rawRows || rawRows.length === 0) {
+          toast.error("Excel file is empty");
+          return;
+        }
+
+        const norm = (h) => String(h || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+
+        // Header row = first row (within first 15) that has a vehicle column and an expiry column
+        let headerRowIndex = 0;
+        for (let i = 0; i < Math.min(15, rawRows.length); i++) {
+          const cells = (rawRows[i] || []).map(norm);
+          if (
+            cells.some((c) => INSURANCE_IMPORT_COLUMNS.vehicleNumber.includes(c)) &&
+            cells.some((c) => INSURANCE_IMPORT_COLUMNS.validTo.includes(c))
+          ) {
+            headerRowIndex = i;
+            break;
+          }
+        }
+
+        const headers = (rawRows[headerRowIndex] || []).map(norm);
+        const idx = {};
+        Object.entries(INSURANCE_IMPORT_COLUMNS).forEach(([field, aliases]) => {
+          idx[field] = headers.findIndex((h) => aliases.includes(h));
+        });
+
+        if (idx.vehicleNumber === -1 || idx.validTo === -1) {
+          toast.error("Could not find 'Vehicle No' and 'Expiry Date' columns in the Excel file.");
+          return;
+        }
+
+        const cell = (row, field) =>
+          idx[field] !== -1 && row[idx[field]] !== undefined ? String(row[idx[field]]).trim() : "";
+
+        const records = [];
+        for (let i = headerRowIndex + 1; i < rawRows.length; i++) {
+          const row = rawRows[i];
+          if (!row || row.length === 0) continue;
+
+          const vehicleNumber = cell(row, "vehicleNumber").replace(/\s+/g, "").toUpperCase();
+          const validTo = idx.validTo !== -1 ? parseExcelDate(row[idx.validTo]) : "";
+          if (!vehicleNumber || !validTo) continue;
+
+          records.push({
+            date: idx.date !== -1 ? parseExcelDate(row[idx.date]) : "",
+            customerName: cell(row, "customerName"),
+            mobileNumber: cell(row, "mobileNumber"),
+            vehicleNumber,
+            serviceType: cell(row, "serviceType"),
+            validTo,
+            referralName: cell(row, "referralName"),
+            premiumAmount: cell(row, "premiumAmount"),
+            discountAmount: cell(row, "discountAmount"),
+            paidAmount: cell(row, "paidAmount"),
+            remainingAmount: cell(row, "remainingAmount"),
+          });
+        }
+
+        if (records.length === 0) {
+          toast.error("No valid records found. Each row needs a Vehicle No and an Expiry Date.");
+          return;
+        }
+
+        setPreviewData(records);
+        setIsPreviewModalOpen(true);
+      } catch (err) {
+        console.error("Error parsing excel:", err);
+        toast.error("Error parsing Excel file. Please ensure it is correctly formatted.");
+      } finally {
+        setIsUploading(false);
+        resetInput();
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  };
+
+  const handleConfirmImport = async () => {
+    setIsUploading(true);
+    try {
+      const response = await axios.post(
+        `${API_URL}/api/insurance/import/bulk`,
+        { records: previewData },
+        { withCredentials: true }
+      );
+      if (response.data.success) {
+        toast.success(response.data.message);
+        fetchInsurances(1);
+        fetchStatistics();
+        setIsPreviewModalOpen(false);
+        setPreviewData([]);
+      } else {
+        toast.error(response.data.message || "Import failed");
+      }
+    } catch (error) {
+      console.error("Error importing bulk data:", error);
+      toast.error(error.response?.data?.message || "Error saving data.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -830,6 +998,34 @@ const Insurance = () => {
                       )}
                     </div>
 
+                    {/* Import Excel Button */}
+                    <input
+                      type="file"
+                      accept=".xlsx, .xls"
+                      className="hidden"
+                      ref={fileInputRef}
+                      onChange={handleExcelUpload}
+                    />
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={isUploading}
+                      className='flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:shadow-lg font-bold text-xs transition-all hover:scale-105 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed'
+                    >
+                      {isUploading ? (
+                        <>
+                          <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent'></div>
+                          Uploading...
+                        </>
+                      ) : (
+                        <>
+                          <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12' />
+                          </svg>
+                          Import Excel
+                        </>
+                      )}
+                    </button>
+
                     {/* Export Excel Button */}
                     <button
                       onClick={handleExportExcel}
@@ -1402,6 +1598,15 @@ const Insurance = () => {
               insurance={selectedInsurance}
             />
           )}
+
+          {/* Excel Import Preview Modal */}
+          <PreviewInsuranceImportModal
+            isOpen={isPreviewModalOpen}
+            onClose={() => setIsPreviewModalOpen(false)}
+            data={previewData}
+            onSave={handleConfirmImport}
+            isSaving={isUploading}
+          />
         </div>
       </div>
     </>

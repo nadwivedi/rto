@@ -37,6 +37,9 @@ router.get('/check-vehicle/:vehicleNumber', insuranceController.checkVehicleActi
 // Get insurance by policy number (must be before general /:id)
 router.get('/policy/:policyNumber', insuranceController.getInsuranceByPolicyNumber)
 
+// POST bulk import from Excel
+router.post('/import/bulk', insuranceController.bulkImportInsurance)
+
 // Get all insurance records with pagination and filters
 router.get('/', insuranceController.getAllInsurance)
 
