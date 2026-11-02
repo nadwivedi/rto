@@ -34,6 +34,7 @@ const Validity = ({ icon, label, value, doc }) => {
 }
 
 const actionBtn = 'inline-flex items-center justify-center gap-1 px-2.5 py-1.5 font-semibold rounded-lg text-xs transition cursor-pointer disabled:opacity-50'
+const plainBtn = 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
 
 /**
  * Card for one saved vehicle search: insurance / fitness / tax / PUC validity and search time,
@@ -63,7 +64,7 @@ export const HistoryCard = ({
   const pucUpto = item.pucUpto || item.rawResponse?.PUCC_UPTO || item.rawResponse?.PUC_UPTO
 
   return (
-    <div className={`flex flex-col bg-white rounded-2xl border shadow-sm p-4 transition ${selected ? 'border-indigo-400 ring-2 ring-indigo-100' : 'border-slate-200 hover:border-indigo-200 hover:shadow'}`}>
+    <div className={`flex flex-col bg-white rounded-2xl p-4 shadow-xs transition ${selected ? 'ring-2 ring-blue-500' : 'ring-1 ring-slate-200 hover:ring-blue-300 hover:shadow-[0_12px_28px_-14px_rgba(15,23,42,0.25)]'}`}>
       {/* Vehicle no + owner */}
       <div className="flex items-start gap-2">
         {selectable && (
@@ -78,10 +79,10 @@ export const HistoryCard = ({
           />
         )}
         <button type="button" onClick={onView} className="min-w-0 flex-1 text-left cursor-pointer group" title="View full details">
-          <span className="font-mono font-bold text-base text-slate-900 tracking-wide group-hover:text-indigo-700">
+          <span className="inline-block rounded-md border border-slate-300 bg-slate-50 px-2 py-0.5 font-mono font-bold text-[15px] text-slate-900 tracking-wider group-hover:border-blue-400 group-hover:text-blue-700">
             {item.vehicleNumber}
           </span>
-          <span className="block text-xs text-slate-500 truncate">{item.ownerName || 'NA'}</span>
+          <span className="mt-1 block text-xs font-medium text-slate-600 truncate">{item.ownerName || 'NA'}</span>
         </button>
         {inLeads && (
           <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-50 text-emerald-700 shrink-0">
@@ -111,7 +112,7 @@ export const HistoryCard = ({
       </div>
 
       {/* Validity */}
-      <div className="mt-3 space-y-1.5 rounded-xl bg-slate-50 px-3 py-2.5">
+      <div className="mt-3 space-y-1.5 rounded-xl bg-slate-50 px-3 py-2.5 ring-1 ring-inset ring-slate-100">
         <Validity icon={Shield} label="Insurance" value={item.insuranceUpto} doc={docOf('Insurance')} />
         <Validity icon={FileCheck} label="Fitness" value={item.fitnessUpto} doc={docOf('Fitness')} />
         <Validity icon={Receipt} label="Tax" value={item.taxUpto} doc={docOf('Tax')} />
@@ -125,7 +126,7 @@ export const HistoryCard = ({
 
       {/* Actions */}
       <div className="mt-3 pt-3 border-t border-slate-100 flex flex-wrap items-center gap-1.5">
-        <button onClick={onView} className={`${actionBtn} bg-indigo-600 hover:bg-indigo-700 text-white`} title="View full details (No API call)">
+        <button onClick={onView} className={`${actionBtn} bg-gradient-to-r from-blue-700 to-blue-600 hover:from-blue-800 hover:to-blue-700 text-white shadow-md shadow-blue-700/20`} title="View full details (No API call)">
           <Eye className="w-3.5 h-3.5" />
           View
         </button>
@@ -133,19 +134,19 @@ export const HistoryCard = ({
           <button
             onClick={onSave}
             disabled={saving}
-            className={`${actionBtn} bg-violet-50 hover:bg-violet-100 text-violet-700`}
+            className={`${actionBtn} ${plainBtn}`}
             title="Save to Vehicle Registration, Fitness, Insurance and PUC (fee 0)"
           >
-            {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+            {saving ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5 text-violet-600" />}
             Save
           </button>
         )}
-        <button onClick={onRcPdf} disabled={pdfLoading} className={`${actionBtn} bg-rose-50 hover:bg-rose-100 text-rose-700`} title="Download RC PDF">
-          {pdfLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+        <button onClick={onRcPdf} disabled={pdfLoading} className={`${actionBtn} ${plainBtn}`} title="Download RC PDF">
+          {pdfLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5 text-rose-600" />}
           RC
         </button>
-        <button onClick={onParticular} disabled={particularLoading} className={`${actionBtn} bg-amber-50 hover:bg-amber-100 text-amber-700`} title="Download Particular PDF">
-          {particularLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+        <button onClick={onParticular} disabled={particularLoading} className={`${actionBtn} ${plainBtn}`} title="Download Particular PDF">
+          {particularLoading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5 text-amber-600" />}
           Particular
         </button>
         {rcFormTypes.length > 0 && <RcFormsMenu historyId={item._id} types={rcFormTypes} />}

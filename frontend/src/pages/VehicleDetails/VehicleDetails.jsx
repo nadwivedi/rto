@@ -4,15 +4,10 @@ import axios from 'axios'
 import { toast } from 'react-toastify'
 import {
   Search,
-  ArrowLeft,
-  Home,
   History,
-  Truck,
   Shield,
   FileText,
   User,
-  MapPin,
-  Phone,
   CheckCircle2,
   AlertTriangle,
   Copy,
@@ -22,19 +17,19 @@ import {
   Share2,
   Sparkles,
   RefreshCw,
-  Info,
   Car,
   FileCheck,
   Building2,
   Fuel,
   Activity,
   Award,
-  Layers,
   X,
   Database,
   ChevronLeft,
   ChevronRight,
-  Save
+  Save,
+  Receipt,
+  Leaf
 } from 'lucide-react'
 
 import { useAuth } from '../../context/AuthContext'
@@ -43,6 +38,90 @@ import { HistoryCard } from './historyUi'
 import { saveVehicleRecords } from '../../utils/saveVehicleRecords'
 
 const API_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000'
+
+// ---------- Small building blocks for the details page ----------
+
+// Copy icon next to a value; turns into a green tick for 2s after copying
+const CopyBtn = ({ value, field, copiedField, onCopy }) => {
+  if (!value || value === 'NA') return null
+  return (
+    <button
+      type="button"
+      onClick={() => onCopy(value, field)}
+      className="shrink-0 cursor-pointer rounded-md p-1 text-slate-300 transition hover:bg-slate-100 hover:text-blue-600 print:hidden"
+      title={`Copy ${field}`}
+    >
+      {copiedField === field ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+    </button>
+  )
+}
+
+// White panel with an icon title and label / value rows
+const Panel = ({ icon, title, tone, badge, badgeTone = 'bg-slate-50 text-slate-600 ring-slate-200', children }) => {
+  const Icon = icon
+  return (
+    <section className="rounded-2xl bg-white shadow-xs ring-1 ring-slate-200">
+      <div className="flex items-center justify-between gap-2 border-b border-slate-100 px-4 py-3">
+        <h3 className="flex items-center gap-2.5 text-sm font-semibold text-slate-900">
+          <span className={`flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br text-white shadow-sm ${tone}`}>
+            <Icon className="h-4 w-4" />
+          </span>
+          {title}
+        </h3>
+        {badge && (
+          <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ring-1 ring-inset ${badgeTone}`}>{badge}</span>
+        )}
+      </div>
+      <dl className="divide-y divide-slate-100 px-4">{children}</dl>
+    </section>
+  )
+}
+
+// One label / value line. stacked = label above value (for addresses and long text)
+const Row = ({ label, value, mono, copy, stacked, valueClass = 'text-slate-800' }) => (
+  <div className={`py-2.5 ${stacked ? '' : 'flex items-center justify-between gap-4'}`}>
+    <dt className="shrink-0 text-xs text-slate-500">{label}</dt>
+    <dd className={`flex min-w-0 items-center gap-1 text-[13px] font-semibold ${stacked ? 'mt-0.5 justify-between' : 'justify-end text-right'} ${mono ? 'font-mono tracking-wide' : ''} ${valueClass}`}>
+      <span className={`min-w-0 break-words ${stacked ? 'font-medium leading-relaxed' : ''}`}>{value || 'NA'}</span>
+      {copy}
+    </dd>
+  </div>
+)
+
+const VALIDITY_TONES = {
+  ok: { card: 'from-emerald-50 to-teal-50 ring-emerald-200', icon: 'bg-emerald-600', value: 'text-emerald-800', chip: 'bg-emerald-600 text-white' },
+  bad: { card: 'from-rose-50 to-pink-50 ring-rose-200', icon: 'bg-rose-600', value: 'text-rose-800', chip: 'bg-rose-600 text-white' },
+  none: { card: 'from-slate-50 to-gray-50 ring-slate-200', icon: 'bg-slate-400', value: 'text-slate-500', chip: 'bg-slate-200 text-slate-600' }
+}
+
+// Tinted tile for one validity date (insurance / fitness / tax / PUC)
+const ValidityTile = ({ icon, label, date, expired, okText = 'Valid', badText = 'Expired', hint }) => {
+  const Icon = icon
+  const known = date && date !== 'NA'
+  const t = VALIDITY_TONES[!known ? 'none' : expired ? 'bad' : 'ok']
+  return (
+    <div className={`rounded-2xl bg-gradient-to-br p-3 ring-1 sm:p-3.5 ${t.card}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className={`flex h-8 w-8 items-center justify-center rounded-full text-white ${t.icon}`}>
+          <Icon className="h-4 w-4" />
+        </span>
+        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${t.chip}`}>
+          {!known ? 'No data' : expired ? badText : okText}
+        </span>
+      </div>
+      <p className="mt-2.5 text-xs font-medium text-slate-600">{label}</p>
+      <p className={`text-base font-bold leading-tight sm:text-lg ${t.value}`}>{known ? date : '—'}</p>
+      {hint && <p className="mt-0.5 truncate text-[11px] text-slate-500" title={hint}>{hint}</p>}
+    </div>
+  )
+}
+
+// Toolbar button styles
+const toolBtn = 'inline-flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60'
+const toolSecondary = `${toolBtn} border border-slate-300 bg-white text-slate-700 hover:bg-slate-100`
+const toolPrimary = `${toolBtn} bg-gradient-to-r from-blue-700 to-blue-600 text-white shadow-md shadow-blue-700/20 hover:from-blue-800 hover:to-blue-700`
+
+const chip = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset'
 
 const VehicleDetails = () => {
   const navigate = useNavigate()
@@ -472,114 +551,250 @@ const VehicleDetails = () => {
     }
   }
 
-  return (
-    <div className="min-h-screen bg-slate-50 text-slate-800">
-      {/* Main Container */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-6 space-y-6">
-        {/* Page Top Header */}
-        <div ref={resultsTopRef} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate('/')}
-              className="p-2.5 bg-white hover:bg-slate-100 rounded-xl border border-slate-200 shadow-sm text-slate-600 transition cursor-pointer"
-              title="Back to Home"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-            <div className="ml-1">
+  const v = vehicleData || {}
+  const pucUpto = v.PUCC_UPTO || v.PUC_UPTO
+  const policyNo = v.INS_POLICY_NO || v.POLICY_NO
+  const isActive = (v.STATUS || 'ACTIVE') === 'ACTIVE'
+  const quotaTone =
+    quota.rcSearchRemaining <= 0
+      ? 'bg-rose-500/15 text-rose-200 ring-rose-400/40'
+      : quota.rcSearchRemaining <= 3
+      ? 'bg-amber-500/15 text-amber-200 ring-amber-400/40'
+      : 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/40'
+  const quotaDot =
+    quota.rcSearchRemaining <= 0 ? 'bg-rose-400' : quota.rcSearchRemaining <= 3 ? 'bg-amber-400' : 'bg-emerald-400'
+  const copyProps = { copiedField, onCopy: handleCopy }
 
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-2">
-                  <Truck className="w-6 h-6 text-indigo-600" />
-                  Vehicle RC Details
-                </h1>
-                <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-indigo-100 text-indigo-700 border border-indigo-200">
-                  RTO System
-                </span>
+  return (
+    <div className="min-h-screen bg-slate-50 text-slate-800" style={{ fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
+      <div className="mx-auto max-w-6xl space-y-4 px-3 pt-3 pb-10 sm:px-4 lg:pt-5">
+        {/* ───── Dark header: title, quota and the number-plate search ───── */}
+        <div
+          ref={resultsTopRef}
+          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] p-4 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:p-5 print:hidden"
+        >
+          <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-blue-500/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 left-1/4 h-48 w-48 rounded-full bg-cyan-400/10 blur-3xl" />
+
+          <div className="relative">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/')}
+                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-white/10 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/20 hover:text-white"
+                  title="Back to Home"
+                >
+                  <ChevronLeft className="h-[18px] w-[18px]" />
+                </button>
+                <div>
+                  <h1 className="text-lg font-bold leading-tight text-white sm:text-xl">Vehicle RC Details</h1>
+                  <p className="mt-0.5 text-xs text-slate-400">Owner, registration, insurance, fitness, tax and PUC from RTO</p>
+                </div>
               </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Manual live search & saved database records for vehicle specifications, owner, insurance & tax
-              </p>
-              <div className="flex flex-wrap items-center gap-2 mt-2">
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${
-                  quota.rcSearchRemaining <= 0
-                    ? 'bg-rose-100 text-rose-800 border-rose-300'
-                    : quota.rcSearchRemaining <= 3
-                    ? 'bg-amber-100 text-amber-800 border-amber-300'
-                    : 'bg-emerald-100 text-emerald-800 border-emerald-300'
-                }`}>
-                  <span className={`w-2 h-2 rounded-full ${
-                    quota.rcSearchRemaining <= 0 ? 'bg-rose-500 animate-ping' : quota.rcSearchRemaining <= 3 ? 'bg-amber-500' : 'bg-emerald-500'
-                  }`}></span>
-                  {quota.rcSearchRemaining} Limits Left
+
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${quotaTone}`}>
+                  <span className={`h-1.5 w-1.5 rounded-full ${quotaDot} ${quota.rcSearchRemaining <= 0 ? 'animate-pulse' : ''}`} />
+                  {quota.rcSearchRemaining} searches left
                 </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
-                  Lifetime Searches: <b>{quota.rcSearchCount}</b>
+                <span className="text-[11px] text-slate-400">
+                  Used <b className="text-slate-200">{quota.rcSearchCount}</b> of <b className="text-slate-200">{quota.rcSearchLimit}</b>
                 </span>
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-600 border border-slate-200">
-                  Total Limit: <b>{quota.rcSearchLimit}</b>
-                </span>
+                {!vehicleData && rcFormTypes.length > 0 && (
+                  <button
+                    onClick={() => setRcForm({ type: rcFormTypes[0], blank: true })}
+                    className="inline-flex h-8 cursor-pointer items-center gap-1.5 rounded-lg bg-white/10 px-3 text-xs font-semibold text-slate-100 ring-1 ring-white/10 transition hover:bg-white/20"
+                  >
+                    <FileCheck className="h-3.5 w-3.5" />
+                    {rcFormTypes.length > 1 ? 'Blank RC Forms' : BLANK_LABELS[rcFormTypes[0]]}
+                  </button>
+                )}
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto print:hidden">
-            {vehicleData && (
-              <>
-                <button
-                  onClick={handleCopyAllSummary}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-slate-50 text-slate-700 rounded-xl border border-slate-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+            {/* Search */}
+            <form
+              onSubmit={(e) => {
+                e.preventDefault()
+                handleLiveSearch()
+              }}
+              className="mt-4 flex flex-col gap-2 sm:flex-row"
+            >
+              <div className="flex h-12 flex-1 items-center overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-white/20 transition focus-within:ring-4 focus-within:ring-blue-500/40">
+                <span className="flex h-full select-none flex-col items-center justify-center bg-blue-800 px-2.5 text-[10px] font-black leading-tight text-white">
+                  <span>🇮🇳</span>
+                  <span>IND</span>
+                </span>
+                <input
+                  type="text"
+                  value={vehicleNo}
+                  onChange={(e) => setVehicleNo(e.target.value.toUpperCase())}
+                  placeholder="Enter vehicle number, e.g. CG04AB1234"
+                  className="h-full min-w-0 flex-1 bg-transparent px-3.5 font-mono text-base font-bold uppercase tracking-widest text-slate-900 outline-none placeholder:font-sans placeholder:text-sm placeholder:font-normal placeholder:normal-case placeholder:tracking-normal placeholder:text-slate-400 sm:text-lg"
+                  autoFocus
+                />
+                {vehicleNo && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setVehicleNo('')
+                      setVehicleData(null)
+                      setDataSourceMeta(null)
+                    }}
+                    className="mr-2 cursor-pointer rounded-md p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                    title="Clear"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={loading || quota.rcSearchRemaining <= 0 || !vehicleNo.trim()}
+                className="inline-flex h-12 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-blue-500 px-6 text-sm font-semibold text-white shadow-lg shadow-blue-900/40 transition hover:from-blue-700 hover:to-blue-600 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                {loading ? 'Searching RTO...' : 'Get Details'}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Limit exhausted */}
+        {quota.rcSearchRemaining <= 0 && (
+          <div className="flex items-start gap-3 rounded-2xl bg-rose-50 p-3.5 ring-1 ring-rose-200 print:hidden">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-rose-600 text-white">
+              <AlertTriangle className="h-4 w-4" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-rose-900">Search limit used up</p>
+              <p className="mt-0.5 text-xs text-rose-700">
+                All <b>{quota.rcSearchLimit}</b> live searches are used. Saved vehicles below still open for free — ask your administrator to raise the limit.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {/* Loading */}
+        {loading && (
+          <div className="flex items-center gap-4 rounded-2xl bg-white p-5 shadow-xs ring-1 ring-slate-200">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">
+              <RefreshCw className="h-5 w-5 animate-spin" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Fetching details from RTO…</p>
+              <p className="text-xs text-slate-500">Registration, owner, fitness, insurance and tax records</p>
+            </div>
+          </div>
+        )}
+
+        {/* ───── Results ───── */}
+        {vehicleData && !loading && (
+          <div ref={printRef} className="space-y-4">
+            {/* Summary card */}
+            <div className="overflow-hidden rounded-2xl bg-white shadow-xs ring-1 ring-slate-200">
+              {dataSourceMeta && (
+                <div
+                  className={`flex flex-col gap-2 px-4 py-2 text-xs sm:flex-row sm:items-center sm:justify-between print:hidden ${
+                    dataSourceMeta.isSavedData ? 'bg-amber-50 text-amber-900' : 'bg-emerald-50 text-emerald-900'
+                  }`}
                 >
-                  <Copy className="w-4 h-4 text-slate-500" />
-                  Copy Summary
-                </button>
-                <button
-                  onClick={handleShareWhatsApp}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 rounded-xl border border-emerald-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-                >
-                  <Share2 className="w-4 h-4 text-emerald-600" />
-                  WhatsApp
-                </button>
-                <button
-                  onClick={handleDownloadPdf}
-                  disabled={pdfLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-rose-50 hover:bg-rose-100 disabled:opacity-60 text-rose-700 rounded-xl border border-rose-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-                >
-                  <Download className="w-4 h-4" />
-                  {pdfLoading ? 'Generating...' : 'Download RC PDF'}
-                </button>
-                <button
-                  onClick={handleDownloadParticular}
-                  disabled={particularLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 bg-amber-50 hover:bg-amber-100 disabled:opacity-60 text-amber-700 rounded-xl border border-amber-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-                >
-                  <FileText className="w-4 h-4" />
-                  {particularLoading ? 'Generating...' : 'Download Particular'}
+                  <span className="flex items-center gap-1.5">
+                    {dataSourceMeta.isSavedData ? <Database className="h-3.5 w-3.5" /> : <Sparkles className="h-3.5 w-3.5" />}
+                    <b className="font-semibold">{dataSourceMeta.isSavedData ? 'Saved record' : 'Live from RTO'}</b>
+                    <span className="opacity-80">
+                      · {formatDateTime(dataSourceMeta.lastSearchedAt)} · {dataSourceMeta.isSavedData ? 'no search used' : 'saved to history'}
+                    </span>
+                  </span>
+                  {dataSourceMeta.isSavedData && (
+                    <button
+                      onClick={() => handleLiveSearch(vehicleData.REGN_NO || vehicleNo)}
+                      disabled={loading}
+                      className="inline-flex shrink-0 cursor-pointer items-center gap-1.5 self-start rounded-md bg-amber-600 px-2.5 py-1 font-semibold text-white transition hover:bg-amber-700 sm:self-auto"
+                    >
+                      <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
+                      Refresh from RTO
+                    </button>
+                  )}
+                </div>
+              )}
+
+              <div className="flex flex-col gap-4 p-4 sm:p-5 md:flex-row md:items-center md:justify-between">
+                <div className="min-w-0 space-y-2.5">
+                  {/* Number plate */}
+                  <div className="inline-flex items-stretch overflow-hidden rounded-lg border-2 border-slate-900 bg-white shadow-sm">
+                    <span className="flex select-none flex-col items-center justify-center bg-blue-800 px-2 text-[10px] font-black leading-tight text-white">
+                      <span>🇮🇳</span>
+                      <span>IND</span>
+                    </span>
+                    <span className="px-3.5 py-1 font-mono text-xl font-black tracking-widest text-slate-900 sm:text-2xl">
+                      {v.REGN_NO || 'UNKNOWN'}
+                    </span>
+                    <span className="flex items-center border-l border-slate-200 px-1">
+                      <CopyBtn value={v.REGN_NO} field="Reg No" {...copyProps} />
+                    </span>
+                  </div>
+
+                  <div>
+                    <h2 className="truncate text-lg font-bold text-slate-900 sm:text-xl">
+                      {[v.MAKER_DESC, v.MAKER_MODEL].filter(Boolean).join(' ') || 'Vehicle'}
+                    </h2>
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      Owner <span className="font-semibold text-slate-800">{v.OWNER_NAME || 'NA'}</span>
+                      {v.OWNER_SERIAL_NO && <span className="ml-2 text-xs text-slate-400">Owner #{v.OWNER_SERIAL_NO}</span>}
+                    </p>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className={isActive ? chip + ' bg-emerald-50 text-emerald-700 ring-emerald-200' : chip + ' bg-rose-50 text-rose-700 ring-rose-200'}>
+                      <CheckCircle2 className="h-3 w-3" />
+                      {v.STATUS || 'ACTIVE'}
+                    </span>
+                    <span className={`${chip} bg-blue-50 text-blue-700 ring-blue-200`}>{v.VEHICLE_CLASS || v.BODY_TYPE_DESC || 'Vehicle'}</span>
+                    {v.FUEL_DESC && (
+                      <span className={`${chip} bg-amber-50 text-amber-700 ring-amber-200`}>
+                        <Fuel className="h-3 w-3" />
+                        {v.FUEL_DESC}
+                      </span>
+                    )}
+                    {v.COLOR && <span className={`${chip} bg-slate-100 text-slate-600 ring-slate-200`}>{v.COLOR}</span>}
+                    <span className={`${chip} bg-slate-100 text-slate-600 ring-slate-200`}>{v.IS_COMMERCIAL === 'TRUE' ? 'Commercial' : 'Private'}</span>
+                  </div>
+                </div>
+
+                <div className="flex shrink-0 flex-row gap-2 md:flex-col md:items-end print:hidden">
+                  <button onClick={handlePrint} className={toolPrimary}>
+                    <Printer className="h-4 w-4" />
+                    Print RC
+                  </button>
+                  <button onClick={handleDownloadPdf} disabled={pdfLoading} className={toolSecondary}>
+                    {pdfLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4 text-rose-600" />}
+                    {pdfLoading ? 'Generating…' : 'RC PDF'}
+                  </button>
+                </div>
+              </div>
+
+              {/* Toolbar */}
+              <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 bg-slate-50/60 px-4 py-3 sm:px-5 print:hidden">
+                <button onClick={handleDownloadParticular} disabled={particularLoading} className={toolSecondary}>
+                  {particularLoading ? <RefreshCw className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4 text-amber-600" />}
+                  {particularLoading ? 'Generating…' : 'Particular PDF'}
                 </button>
                 {canForm23 && (
-                  <button
-                    onClick={() => setRcForm({ type: 'form23' })}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-                  >
-                    <FileCheck className="w-4 h-4" />
+                  <button onClick={() => setRcForm({ type: 'form23' })} className={toolSecondary}>
+                    <FileCheck className="h-4 w-4 text-sky-600" />
                     Form 23
                   </button>
                 )}
                 {canTempRc && (
-                  <button
-                    onClick={() => setRcForm({ type: 'tempRc' })}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-                  >
-                    <FileCheck className="w-4 h-4" />
+                  <button onClick={() => setRcForm({ type: 'tempRc' })} className={toolSecondary}>
+                    <FileCheck className="h-4 w-4 text-sky-600" />
                     Temp RC
                   </button>
                 )}
                 {canNlParticular && (
-                  <button
-                    onClick={() => setRcForm({ type: 'nlParticular' })}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-                  >
-                    <FileCheck className="w-4 h-4" />
+                  <button onClick={() => setRcForm({ type: 'nlParticular' })} className={toolSecondary}>
+                    <FileCheck className="h-4 w-4 text-sky-600" />
                     NL Particulars
                   </button>
                 )}
@@ -588,733 +803,118 @@ const VehicleDetails = () => {
                     onClick={handleSaveRecords}
                     disabled={savingRecords}
                     title="Save to Vehicle Registration, Fitness, Insurance and PUC (fee 0)"
-                    className="inline-flex items-center gap-1.5 px-3 py-2 bg-violet-50 hover:bg-violet-100 disabled:opacity-60 text-violet-700 rounded-xl border border-violet-200 shadow-sm text-xs font-semibold transition cursor-pointer"
+                    className={toolSecondary}
                   >
-                    <Save className="w-4 h-4" />
-                    {savingRecords ? 'Saving...' : 'Save'}
+                    {savingRecords ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4 text-violet-600" />}
+                    {savingRecords ? 'Saving…' : 'Save Records'}
                   </button>
                 )}
-                <button
-                  onClick={handlePrint}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-sm text-xs font-semibold transition cursor-pointer"
-                >
-                  <Printer className="w-4 h-4" />
-                  Print RC
+                <span className="mx-1 hidden h-5 w-px bg-slate-200 sm:block" />
+                <button onClick={handleShareWhatsApp} className={toolSecondary}>
+                  <Share2 className="h-4 w-4 text-emerald-600" />
+                  WhatsApp
                 </button>
-              </>
-            )}
-            {!vehicleData && rcFormTypes.length > 0 && (
-              <button
-                onClick={() => setRcForm({ type: rcFormTypes[0], blank: true })}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-sky-50 hover:bg-sky-100 text-sky-700 rounded-xl border border-sky-200 shadow-sm text-xs font-semibold transition cursor-pointer"
-              >
-                <FileCheck className="w-4 h-4" />
-                {rcFormTypes.length > 1 ? 'Blank RC Forms' : BLANK_LABELS[rcFormTypes[0]]}
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* MANUAL SEARCH HERO CARD (Clean - No clutter near search) */}
-        {quota.rcSearchRemaining <= 0 && (
-          <div className="bg-rose-50 border-2 border-rose-300 text-rose-800 p-4 sm:p-5 rounded-2xl flex items-start gap-3 shadow-sm">
-            <AlertTriangle className="w-6 h-6 text-rose-600 shrink-0 mt-0.5 animate-bounce" />
-            <div>
-              <h3 className="font-bold text-sm sm:text-base text-rose-900">
-                RC Search Limit Exhausted (0 Limits Left)
-              </h3>
-              <p className="text-xs sm:text-sm text-rose-700 mt-1">
-                You have reached your limit of <b>{quota.rcSearchLimit}</b> vehicle searches (Lifetime searches performed: <b>{quota.rcSearchCount}</b>). You cannot perform any more live searches until your limit is increased. Please contact your administrator.
-              </p>
-            </div>
-          </div>
-        )}
-
-        <div className="bg-white rounded-2xl p-4 sm:p-6 border border-slate-200 shadow-sm print:hidden">
-          <form
-            onSubmit={(e) => {
-              e.preventDefault()
-              handleLiveSearch()
-            }}
-            className="flex flex-col md:flex-row gap-3 items-stretch md:items-center"
-          >
-            {/* Indian Plate Styled Input Wrapper */}
-            <div className="relative flex-1 flex items-center bg-slate-50 border-2 border-slate-300 focus-within:border-indigo-500 focus-within:bg-white rounded-xl transition shadow-inner">
-              <div className="flex items-center gap-1 px-3 py-2.5 bg-slate-200/80 border-r border-slate-300 rounded-l-[10px] text-slate-700 select-none">
-                <span className="text-[11px] font-black tracking-tighter text-blue-900 flex flex-col items-center leading-none">
-                  <span>🇮🇳</span>
-                  <span>IND</span>
-                </span>
+                <button onClick={handleCopyAllSummary} className={toolSecondary}>
+                  <Copy className="h-4 w-4 text-slate-500" />
+                  Copy Summary
+                </button>
               </div>
-              <input
-                type="text"
-                value={vehicleNo}
-                onChange={(e) => setVehicleNo(e.target.value.toUpperCase())}
-                placeholder="ENTER VEHICLE NUMBER (e.g. CG04AB1234, MH02AB1234)"
-                className="w-full px-3.5 py-3 text-slate-900 font-mono font-bold tracking-wider text-base sm:text-lg uppercase bg-transparent outline-none placeholder:normal-case placeholder:font-sans placeholder:text-slate-400 placeholder:text-sm placeholder:tracking-normal"
-                autoFocus
-              />
-              {vehicleNo && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setVehicleNo('')
-                    setVehicleData(null)
-                    setDataSourceMeta(null)
-                  }}
-                  className="p-2 text-slate-400 hover:text-slate-600 mr-2 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              )}
             </div>
 
-            <button
-              type="submit"
-              disabled={loading || quota.rcSearchRemaining <= 0 || !vehicleNo.trim()}
-              className="px-6 py-3.5 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 disabled:opacity-50 text-white font-bold text-sm sm:text-base rounded-xl shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer shrink-0"
-            >
-              {loading ? (
-                <>
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  <span>Searching Live RTO...</span>
-                </>
-              ) : (
-                <>
-                  <Search className="w-5 h-5" />
-                  <span>Get Vehicle Details</span>
-                </>
-              )}
-            </button>
-          </form>
-        </div>
+            {/* Validity tiles */}
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+              <ValidityTile icon={Shield} label="Insurance" date={v.INSURANCE_UPTO} expired={isExpired(v.INSURANCE_UPTO)} okText="Covered" hint={v.INSURANCE_COMP} />
+              <ValidityTile icon={FileCheck} label="Fitness" date={v.FIT_UPTO} expired={isExpired(v.FIT_UPTO)} />
+              <ValidityTile icon={Receipt} label="Road Tax" date={v.TAX_UPTO} expired={isExpired(v.TAX_UPTO)} okText="Paid" badText="Due" />
+              <ValidityTile icon={Leaf} label="PUC" date={pucUpto} expired={isExpired(pucUpto)} hint={v.PUCC_NO ? `PUCC ${v.PUCC_NO}` : undefined} />
+            </div>
 
-        {/* Data Origin & Cache Notice Banner */}
-        {vehicleData && dataSourceMeta && (
-          <div
-            className={`p-3.5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs ${
-              dataSourceMeta.isSavedData
-                ? 'bg-amber-50 border-amber-200 text-amber-900'
-                : 'bg-emerald-50 border-emerald-200 text-emerald-900'
-            } print:hidden`}
-          >
-            <div className="flex items-center gap-2">
-              {dataSourceMeta.isSavedData ? (
-                <Database className="w-4 h-4 text-amber-700 shrink-0" />
-              ) : (
-                <Sparkles className="w-4 h-4 text-emerald-700 shrink-0" />
-              )}
-              <span>
-                {dataSourceMeta.isSavedData ? (
-                  <>
-                    <strong>Showing Saved Database Record</strong> (Searched on:{' '}
-                    {formatDateTime(dataSourceMeta.lastSearchedAt)}) • Zero API credits used
-                  </>
-                ) : (
-                  <>
-                    <strong>Live RTO Verified Data</strong> (Fetched:{' '}
-                    {formatDateTime(dataSourceMeta.lastSearchedAt)}) • Saved to database
-                  </>
+            {/* Detail panels */}
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              <Panel icon={User} title="Owner & Contact" tone="from-blue-600 to-indigo-500">
+                <Row label="Owner name" value={v.OWNER_NAME} copy={<CopyBtn value={v.OWNER_NAME} field="Owner Name" {...copyProps} />} />
+                <Row label="Father / Husband" value={v.F_NAME} />
+                <Row
+                  label="Mobile"
+                  value={v.MOBILE_NO}
+                  copy={<CopyBtn value={v.MOBILE_NO} field="Mobile" {...copyProps} />}
+                />
+                <Row
+                  stacked
+                  label="Present address"
+                  value={v.PRESENT_ADDRESS}
+                  copy={<CopyBtn value={v.PRESENT_ADDRESS} field="Address" {...copyProps} />}
+                />
+                {v.PERMANENT_ADDRESS && v.PERMANENT_ADDRESS !== v.PRESENT_ADDRESS && (
+                  <Row stacked label="Permanent address" value={v.PERMANENT_ADDRESS} />
                 )}
-              </span>
-            </div>
+              </Panel>
 
-            {dataSourceMeta.isSavedData && (
-              <button
-                onClick={() => handleLiveSearch(vehicleData.REGN_NO || vehicleNo)}
-                disabled={loading}
-                className="inline-flex items-center gap-1.5 px-3 py-1 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-lg shadow-sm transition cursor-pointer shrink-0"
+              <Panel icon={Building2} title="Registration" tone="from-emerald-600 to-teal-500" badge="RTO Record" badgeTone="bg-emerald-50 text-emerald-700 ring-emerald-200">
+                <Row label="Registered at" value={v.REGISTERED_AT} />
+                <Row label="Registration date" value={v.REGN_DT} />
+                <Row label="Valid upto" value={v.REGN_UPTO} />
+                <Row label="State / RTO code" value={`${v.STATE_CD || 'NA'} - ${v.RTO_CD || 'NA'}`} />
+                <Row label="Category" value={`${v.VEHICLE_CATEGORY || 'NA'} (${v.VEHICLE_CLASS || 'NA'})`} />
+                <Row label="Record as on" value={v.STATUS_AS_ON || 'Current'} valueClass="text-slate-500" />
+              </Panel>
+
+              <Panel icon={Activity} title="Engine & Specs" tone="from-violet-600 to-fuchsia-500">
+                <Row label="Chassis no" value={v.CHASI_NO} mono copy={<CopyBtn value={v.CHASI_NO} field="Chassis No" {...copyProps} />} />
+                <Row label="Engine no" value={v.ENG_NO} mono copy={<CopyBtn value={v.ENG_NO} field="Engine No" {...copyProps} />} />
+                <Row label="Cubic capacity" value={v.CUBIC_CAPACITY ? `${v.CUBIC_CAPACITY} cc` : 'NA'} />
+                <Row label="Fuel norms" value={v.FUEL_NORMS} />
+                <Row label="Mfg month / year" value={v.MANU_MONTH_YR} />
+                <Row label="Seats / unladen wt" value={`${v.SEATING_CAPACITY || '2'} seats · ${v.UNLADEN_WEIGHT || 'NA'} kg`} />
+              </Panel>
+
+              <Panel
+                icon={Shield}
+                title="Insurance"
+                tone="from-sky-600 to-cyan-500"
+                badge={isExpired(v.INSURANCE_UPTO) ? 'Expired' : 'Active'}
+                badgeTone={isExpired(v.INSURANCE_UPTO) ? 'bg-rose-50 text-rose-700 ring-rose-200' : 'bg-sky-50 text-sky-700 ring-sky-200'}
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
-                <span>Re-fetch Live from RTO</span>
-              </button>
-            )}
-          </div>
-        )}
+                <Row stacked label="Company" value={v.INSURANCE_COMP} />
+                <Row label="Policy no" value={policyNo} mono copy={<CopyBtn value={policyNo} field="Policy No" {...copyProps} />} />
+                <Row
+                  label="Valid upto"
+                  value={v.INSURANCE_UPTO}
+                  valueClass={isExpired(v.INSURANCE_UPTO) ? 'text-rose-600' : 'text-emerald-700'}
+                />
+              </Panel>
 
-        {/* Loading State */}
-        {loading && (
-          <div className="bg-white rounded-2xl p-12 border border-slate-200 shadow-sm text-center">
-            <div className="inline-flex p-4 bg-indigo-50 text-indigo-600 rounded-2xl mb-4 animate-bounce">
-              <Truck className="w-10 h-10" />
-            </div>
-            <h3 className="text-lg font-bold text-slate-800 mb-1">
-              Fetching Official RTO Vehicle Details
-            </h3>
-            <p className="text-sm text-slate-500 max-w-md mx-auto">
-              Connecting to RTO database for registration specs, owner details, fitness, insurance, and tax records...
-            </p>
-          </div>
-        )}
+              <Panel icon={FileText} title="Financer & Permit" tone="from-orange-500 to-amber-500" badge="Hypothecation" badgeTone="bg-orange-50 text-orange-700 ring-orange-200">
+                <Row stacked label="Financer / bank" value={v.FINANCER_DETAILS || 'No hypothecation (cash)'} />
+                <Row label="Permit no" value={v.PERMIT_NO} />
+                <Row label="Permit issue date" value={v.PERMIT_ISSUE_DATE} />
+                <Row label="National permit" value={v.RC_NP_NO} />
+              </Panel>
 
-        {/* RESULTS CONTAINER */}
-        {vehicleData && !loading && (
-          <div ref={printRef} className="space-y-6">
-            {/* HERO BADGE CARD */}
-            <div className="bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950 text-white rounded-2xl p-5 sm:p-7 shadow-xl border border-slate-700 relative overflow-hidden">
-              <div className="absolute right-0 top-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-              <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                <div className="space-y-3">
-                  {/* Plate Look */}
-                  <div className="inline-flex items-center bg-white text-slate-900 border-2 border-slate-950 rounded-lg shadow-md overflow-hidden">
-                    <div className="bg-blue-800 text-white px-2 py-1.5 flex flex-col items-center justify-center font-black text-[10px] leading-tight select-none">
-                      <span>🇮🇳</span>
-                      <span>IND</span>
-                    </div>
-                    <span className="px-4 py-1.5 text-xl sm:text-2xl font-black font-mono tracking-widest">
-                      {vehicleData.REGN_NO || 'UNKNOWN'}
-                    </span>
-                    <button
-                      onClick={() => handleCopy(vehicleData.REGN_NO, 'Reg No')}
-                      className="px-2.5 py-2 hover:bg-slate-100 text-slate-500 border-l border-slate-200 cursor-pointer print:hidden"
-                      title="Copy Reg No"
-                    >
-                      {copiedField === 'Reg No' ? (
-                        <Check className="w-4 h-4 text-emerald-600" />
-                      ) : (
-                        <Copy className="w-4 h-4" />
-                      )}
-                    </button>
-                  </div>
-
-                  <div>
-                    <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                      {vehicleData.MAKER_DESC || ''} {vehicleData.MAKER_MODEL || ''}
-                    </h2>
-                    <p className="text-slate-300 text-xs sm:text-sm mt-1 flex flex-wrap items-center gap-3">
-                      <span>
-                        Owner:{' '}
-                        <strong className="text-white font-semibold">
-                          {vehicleData.OWNER_NAME || 'NA'}
-                        </strong>
-                      </span>
-                      {vehicleData.OWNER_SERIAL_NO && (
-                        <span className="px-2 py-0.5 rounded bg-white/10 text-slate-200 text-xs">
-                          Owner #{vehicleData.OWNER_SERIAL_NO}
-                        </span>
-                      )}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Right Status Tags */}
-                <div className="flex flex-wrap md:flex-col md:items-end gap-2">
-                  <button
-                    onClick={handleDownloadPdf}
-                    disabled={pdfLoading}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 disabled:opacity-60 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
-                  >
-                    <Download className="w-4 h-4 text-rose-600" />
-                    {pdfLoading ? 'Generating...' : 'Export RC PDF'}
-                  </button>
-                  <button
-                    onClick={handleDownloadParticular}
-                    disabled={particularLoading}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 disabled:opacity-60 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
-                  >
-                    <FileText className="w-4 h-4 text-amber-600" />
-                    {particularLoading ? 'Generating...' : 'Export Particular'}
-                  </button>
-                  {canForm23 && (
-                    <button
-                      onClick={() => setRcForm({ type: 'form23' })}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
-                    >
-                      <FileCheck className="w-4 h-4 text-sky-600" />
-                      Form 23
-                    </button>
-                  )}
-                  {canTempRc && (
-                    <button
-                      onClick={() => setRcForm({ type: 'tempRc' })}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
-                    >
-                      <FileCheck className="w-4 h-4 text-sky-600" />
-                      Temporary RC
-                    </button>
-                  )}
-                  {canNlParticular && (
-                    <button
-                      onClick={() => setRcForm({ type: 'nlParticular' })}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold shadow-sm transition cursor-pointer print:hidden"
-                    >
-                      <FileCheck className="w-4 h-4 text-sky-600" />
-                      NL Particulars
-                    </button>
-                  )}
-                  <div className="flex items-center gap-2">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 ${
-                        vehicleData.STATUS === 'ACTIVE'
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-                          : 'bg-red-500/20 text-red-300 border border-red-500/30'
-                      }`}
-                    >
-                      <CheckCircle2 className="w-3.5 h-3.5" />
-                      Status: {vehicleData.STATUS || 'ACTIVE'}
-                    </span>
-                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                      {vehicleData.VEHICLE_CLASS || vehicleData.BODY_TYPE_DESC || 'Vehicle'}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs text-slate-300">
-                    <span className="flex items-center gap-1">
-                      <Fuel className="w-3.5 h-3.5 text-amber-400" />
-                      {vehicleData.FUEL_DESC || 'PETROL'}
-                    </span>
-                    <span>•</span>
-                    <span>{vehicleData.COLOR || 'STANDARD'}</span>
-                    <span>•</span>
-                    <span className="capitalize">
-                      {vehicleData.IS_COMMERCIAL === 'TRUE' ? 'Commercial' : 'Private'}
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <Panel icon={Award} title="Legal Status" tone="from-slate-600 to-slate-500">
+                <Row
+                  label="Blacklist"
+                  value={v.BLACKLIST_STATUS || 'Clean'}
+                  valueClass={v.BLACKLIST_STATUS && v.BLACKLIST_STATUS !== 'NA' ? 'text-rose-600' : 'text-emerald-700'}
+                />
+                <Row label="NOC details" value={v.NOC_DETAILS} />
+                <Row label="Status" value={v.STATUS || 'ACTIVE'} valueClass={isActive ? 'text-emerald-700' : 'text-rose-600'} />
+              </Panel>
             </div>
 
-            {/* GRID OF DETAILS CARDS */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* CARD 1: OWNER & CONTACT */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm sm:text-base">
-                    <User className="w-4 h-4 text-indigo-600" />
-                    Owner & Contact Info
-                  </h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-50 text-indigo-700">
-                    Identity
-                  </span>
-                </div>
-
-                <div className="space-y-3.5 text-xs sm:text-sm">
-                  <div>
-                    <span className="text-slate-400 text-[11px] font-medium block">Owner Full Name</span>
-                    <div className="flex items-center justify-between mt-0.5 font-bold text-slate-900">
-                      <span>{vehicleData.OWNER_NAME || 'NA'}</span>
-                      <button
-                        onClick={() => handleCopy(vehicleData.OWNER_NAME, 'Owner Name')}
-                        className="text-slate-400 hover:text-indigo-600 cursor-pointer print:hidden"
-                      >
-                        {copiedField === 'Owner Name' ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 text-[11px] font-medium block">Father's / Husband's Name</span>
-                    <span className="font-semibold text-slate-800 block mt-0.5">
-                      {vehicleData.F_NAME || 'NA'}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 text-[11px] font-medium block">Mobile Number</span>
-                    <div className="flex items-center justify-between mt-0.5 font-semibold text-slate-800">
-                      <span className="flex items-center gap-1">
-                        <Phone className="w-3.5 h-3.5 text-slate-400" />
-                        {vehicleData.MOBILE_NO || 'NA'}
-                      </span>
-                      {vehicleData.MOBILE_NO && vehicleData.MOBILE_NO !== 'NA' && (
-                        <button
-                          onClick={() => handleCopy(vehicleData.MOBILE_NO, 'Mobile')}
-                          className="text-slate-400 hover:text-indigo-600 cursor-pointer print:hidden"
-                        >
-                          {copiedField === 'Mobile' ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 text-[11px] font-medium block">Present Address</span>
-                    <div className="flex items-start justify-between gap-2 mt-0.5 text-slate-700">
-                      <span className="text-xs leading-relaxed">{vehicleData.PRESENT_ADDRESS || 'NA'}</span>
-                      <button
-                        onClick={() => handleCopy(vehicleData.PRESENT_ADDRESS, 'Address')}
-                        className="text-slate-400 hover:text-indigo-600 cursor-pointer shrink-0 print:hidden"
-                      >
-                        {copiedField === 'Address' ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {vehicleData.PERMANENT_ADDRESS &&
-                    vehicleData.PERMANENT_ADDRESS !== vehicleData.PRESENT_ADDRESS && (
-                      <div>
-                        <span className="text-slate-400 text-[11px] font-medium block">Permanent Address</span>
-                        <span className="text-xs leading-relaxed text-slate-700 block mt-0.5">
-                          {vehicleData.PERMANENT_ADDRESS}
-                        </span>
-                      </div>
-                    )}
-                </div>
-              </div>
-
-              {/* CARD 2: REGISTRATION & RTO */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm sm:text-base">
-                    <Building2 className="w-4 h-4 text-emerald-600" />
-                    Registration & Authority
-                  </h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">
-                    RTO Record
-                  </span>
-                </div>
-
-                <div className="space-y-3 text-xs sm:text-sm">
-                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                    <span className="text-slate-500 font-medium">Registered At</span>
-                    <span className="font-bold text-slate-900 text-right">
-                      {vehicleData.REGISTERED_AT || 'NA'}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                    <span className="text-slate-500 font-medium">Registration Date</span>
-                    <span className="font-semibold text-slate-800">{vehicleData.REGN_DT || 'NA'}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                    <span className="text-slate-500 font-medium">Registration Valid Upto</span>
-                    <span className="font-semibold text-slate-800">{vehicleData.REGN_UPTO || 'NA'}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                    <span className="text-slate-500 font-medium">State & RTO Code</span>
-                    <span className="font-semibold text-slate-800">
-                      {vehicleData.STATE_CD || 'NA'} - {vehicleData.RTO_CD || 'NA'}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                    <span className="text-slate-500 font-medium">Vehicle Category</span>
-                    <span className="font-semibold text-slate-800">
-                      {vehicleData.VEHICLE_CATEGORY || 'NA'} ({vehicleData.VEHICLE_CLASS || 'NA'})
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-slate-500 font-medium">Record As On</span>
-                    <span className="font-medium text-slate-600">{vehicleData.STATUS_AS_ON || 'Current'}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* CARD 3: TECHNICAL & ENGINE SPECS */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm sm:text-base">
-                    <Activity className="w-4 h-4 text-violet-600" />
-                    Engine & Vehicle Specs
-                  </h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-violet-50 text-violet-700">
-                    Specs
-                  </span>
-                </div>
-
-                <div className="space-y-3 text-xs sm:text-sm">
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500 text-[11px] font-medium">Chassis Number</span>
-                      <button
-                        onClick={() => handleCopy(vehicleData.CHASI_NO, 'Chassis No')}
-                        className="text-slate-400 hover:text-indigo-600 cursor-pointer print:hidden"
-                      >
-                        {copiedField === 'Chassis No' ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
-                    <div className="font-mono font-bold text-slate-900 tracking-wider text-xs sm:text-sm break-all">
-                      {vehicleData.CHASI_NO || 'NA'}
-                    </div>
-                  </div>
-
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 space-y-2">
-                    <div className="flex justify-between items-center">
-                      <span className="text-slate-500 text-[11px] font-medium">Engine Number</span>
-                      <button
-                        onClick={() => handleCopy(vehicleData.ENG_NO, 'Engine No')}
-                        className="text-slate-400 hover:text-indigo-600 cursor-pointer print:hidden"
-                      >
-                        {copiedField === 'Engine No' ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
-                    </div>
-                    <div className="font-mono font-bold text-slate-900 tracking-wider text-xs sm:text-sm break-all">
-                      {vehicleData.ENG_NO || 'NA'}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-2 text-xs">
-                    <div className="p-2 bg-slate-50 rounded-lg">
-                      <span className="text-slate-400 block text-[10px]">Cubic Capacity</span>
-                      <span className="font-bold text-slate-800">
-                        {vehicleData.CUBIC_CAPACITY ? `${vehicleData.CUBIC_CAPACITY} cc` : 'NA'}
-                      </span>
-                    </div>
-                    <div className="p-2 bg-slate-50 rounded-lg">
-                      <span className="text-slate-400 block text-[10px]">Fuel Norms</span>
-                      <span className="font-bold text-slate-800">{vehicleData.FUEL_NORMS || 'NA'}</span>
-                    </div>
-                    <div className="p-2 bg-slate-50 rounded-lg">
-                      <span className="text-slate-400 block text-[10px]">Mfg Month/Year</span>
-                      <span className="font-bold text-slate-800">{vehicleData.MANU_MONTH_YR || 'NA'}</span>
-                    </div>
-                    <div className="p-2 bg-slate-50 rounded-lg">
-                      <span className="text-slate-400 block text-[10px]">Seating / Weight</span>
-                      <span className="font-bold text-slate-800">
-                        {vehicleData.SEATING_CAPACITY || '2'} Seats / {vehicleData.UNLADEN_WEIGHT || 'NA'} kg
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* CARD 4: INSURANCE & POLICY */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm sm:text-base">
-                    <Shield className="w-4 h-4 text-blue-600" />
-                    Insurance Policy Details
-                  </h3>
-                  <span
-                    className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                      isExpired(vehicleData.INSURANCE_UPTO)
-                        ? 'bg-red-50 text-red-700'
-                        : 'bg-blue-50 text-blue-700'
-                    }`}
-                  >
-                    {isExpired(vehicleData.INSURANCE_UPTO) ? 'Expired' : 'Active'}
-                  </span>
-                </div>
-
-                <div className="space-y-3 text-xs sm:text-sm">
-                  <div>
-                    <span className="text-slate-400 text-[11px] font-medium block">Insurance Company</span>
-                    <span className="font-bold text-slate-900 block mt-0.5">
-                      {vehicleData.INSURANCE_COMP || 'NA'}
-                    </span>
-                  </div>
-
-                  <div>
-                    <span className="text-slate-400 text-[11px] font-medium block">Policy Number</span>
-                    <div className="flex items-center justify-between mt-0.5 font-mono font-semibold text-slate-800">
-                      <span>{vehicleData.INS_POLICY_NO || vehicleData.POLICY_NO || 'NA'}</span>
-                      {(vehicleData.INS_POLICY_NO || vehicleData.POLICY_NO) && (
-                        <button
-                          onClick={() =>
-                            handleCopy(
-                              vehicleData.INS_POLICY_NO || vehicleData.POLICY_NO,
-                              'Policy No'
-                            )
-                          }
-                          className="text-slate-400 hover:text-indigo-600 cursor-pointer print:hidden"
-                        >
-                          {copiedField === 'Policy No' ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between items-center py-2 px-3 bg-blue-50/60 rounded-xl border border-blue-100">
-                    <div>
-                      <span className="text-blue-900/70 text-[10px] font-bold uppercase tracking-wider block">
-                        Insurance Valid Upto
-                      </span>
-                      <span className="font-bold text-blue-900 text-sm">
-                        {vehicleData.INSURANCE_UPTO || 'NA'}
-                      </span>
-                    </div>
-                    {isExpired(vehicleData.INSURANCE_UPTO) ? (
-                      <span className="px-2 py-1 bg-red-100 text-red-700 rounded-lg text-xs font-bold flex items-center gap-1">
-                        <AlertTriangle className="w-3.5 h-3.5" /> Expired
-                      </span>
-                    ) : (
-                      <span className="px-2 py-1 bg-emerald-100 text-emerald-700 rounded-lg text-xs font-bold flex items-center gap-1">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Covered
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* CARD 5: FITNESS, ROAD TAX & PUC */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm sm:text-base">
-                    <FileCheck className="w-4 h-4 text-emerald-600" />
-                    Fitness, Tax & PUC
-                  </h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700">
-                    Compliance
-                  </span>
-                </div>
-
-                <div className="space-y-3 text-xs sm:text-sm">
-                  {/* Fitness */}
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex justify-between items-center">
-                    <div>
-                      <span className="text-slate-400 text-[10px] font-semibold uppercase block">
-                        Fitness Valid Upto
-                      </span>
-                      <span className="font-bold text-slate-900">{vehicleData.FIT_UPTO || 'NA'}</span>
-                    </div>
-                    {isExpired(vehicleData.FIT_UPTO) ? (
-                      <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-[11px] font-bold">
-                        Expired
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[11px] font-bold">
-                        Valid
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Road Tax */}
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex justify-between items-center">
-                    <div>
-                      <span className="text-slate-400 text-[10px] font-semibold uppercase block">
-                        Road Tax Paid Upto
-                      </span>
-                      <span className="font-bold text-slate-900">{vehicleData.TAX_UPTO || 'NA'}</span>
-                    </div>
-                    {isExpired(vehicleData.TAX_UPTO) ? (
-                      <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-[11px] font-bold">
-                        Due
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[11px] font-bold">
-                        Paid
-                      </span>
-                    )}
-                  </div>
-
-                  {/* PUC */}
-                  <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200/80 flex justify-between items-center">
-                    <div>
-                      <span className="text-slate-400 text-[10px] font-semibold uppercase block">
-                        PUCC No & Valid Upto
-                      </span>
-                      <span className="font-bold text-slate-900">
-                        {vehicleData.PUCC_NO ? `${vehicleData.PUCC_NO} - ` : ''}
-                        {vehicleData.PUCC_UPTO || vehicleData.PUC_UPTO || 'NA'}
-                      </span>
-                    </div>
-                    {isExpired(vehicleData.PUCC_UPTO || vehicleData.PUC_UPTO) ? (
-                      <span className="px-2 py-0.5 bg-red-100 text-red-700 rounded text-[11px] font-bold">
-                        Expired
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded text-[11px] font-bold">
-                        Valid
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* CARD 6: FINANCER, PERMIT & LEGAL */}
-              <div className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition">
-                <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                  <h3 className="font-bold text-slate-900 flex items-center gap-2 text-sm sm:text-base">
-                    <FileText className="w-4 h-4 text-amber-600" />
-                    Financer, Permit & Legal
-                  </h3>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-50 text-amber-700">
-                    Hypothecation
-                  </span>
-                </div>
-
-                <div className="space-y-3 text-xs sm:text-sm">
-                  <div>
-                    <span className="text-slate-400 text-[11px] font-medium block">Financer / Bank Details</span>
-                    <span className="font-bold text-slate-900 block mt-0.5">
-                      {vehicleData.FINANCER_DETAILS || 'No Hypothecation (Cash)'}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                    <span className="text-slate-500 font-medium">Permit Number</span>
-                    <span className="font-semibold text-slate-800">{vehicleData.PERMIT_NO || 'NA'}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                    <span className="text-slate-500 font-medium">Permit Issue Date</span>
-                    <span className="font-semibold text-slate-800">{vehicleData.PERMIT_ISSUE_DATE || 'NA'}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                    <span className="text-slate-500 font-medium">National Permit (RC NP)</span>
-                    <span className="font-semibold text-slate-800">{vehicleData.RC_NP_NO || 'NA'}</span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1 border-b border-slate-50">
-                    <span className="text-slate-500 font-medium">Blacklist Status</span>
-                    <span
-                      className={`font-bold ${
-                        vehicleData.BLACKLIST_STATUS && vehicleData.BLACKLIST_STATUS !== 'NA'
-                          ? 'text-red-600'
-                          : 'text-emerald-600'
-                      }`}
-                    >
-                      {vehicleData.BLACKLIST_STATUS || 'Clean (NA)'}
-                    </span>
-                  </div>
-
-                  <div className="flex justify-between items-center py-1">
-                    <span className="text-slate-500 font-medium">NOC Details</span>
-                    <span className="font-semibold text-slate-800">{vehicleData.NOC_DETAILS || 'NA'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* QUICK ACTIONS BANNER */}
-            <div className="bg-gradient-to-r from-indigo-50 via-white to-sky-50 rounded-2xl p-5 border border-indigo-100 flex flex-col sm:flex-row items-center justify-between gap-4 print:hidden">
+            {/* Next steps */}
+            <div className="flex flex-col items-start justify-between gap-3 rounded-2xl bg-gradient-to-r from-blue-50 to-sky-50 p-4 ring-1 ring-blue-100 sm:flex-row sm:items-center print:hidden">
               <div>
-                <h4 className="font-bold text-indigo-950 text-sm sm:text-base">
-                  Ready to manage or create entries for this vehicle?
-                </h4>
-                <p className="text-xs text-indigo-700/80 mt-0.5">
-                  Save time by adding this vehicle directly to Vahan registration records or party ledger.
-                </p>
+                <p className="text-sm font-semibold text-slate-900">Add this vehicle to your records</p>
+                <p className="text-xs text-slate-500">Open it in Vehicle Registration or make an insurance entry.</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => navigate(`/vehicle-registration`)}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl shadow-sm transition cursor-pointer"
-                >
-                  Manage in Vehicle Registration
+                <button onClick={() => navigate('/vehicle-registration')} className={toolPrimary}>
+                  Vehicle Registration
+                  <ChevronRight className="h-4 w-4" />
                 </button>
-                <button
-                  onClick={() => navigate(`/insurance`)}
-                  className="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold rounded-xl transition cursor-pointer"
-                >
+                <button onClick={() => navigate('/insurance')} className={toolSecondary}>
+                  <Shield className="h-4 w-4 text-sky-600" />
                   Insurance Entry
                 </button>
               </div>
@@ -1322,114 +922,110 @@ const VehicleDetails = () => {
           </div>
         )}
 
-        {/* Empty state / instructions if no vehicle loaded */}
+        {/* Empty state */}
         {!vehicleData && !loading && (
-          <div className="bg-white rounded-2xl p-8 sm:p-10 border border-slate-200 shadow-sm text-center">
-            <div className="inline-flex p-4 bg-indigo-50 text-indigo-600 rounded-2xl mb-4">
-              <Car className="w-10 h-10" />
+          <div className="flex items-center gap-4 rounded-2xl bg-white p-4 shadow-xs ring-1 ring-slate-200 sm:p-5">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-600 to-indigo-500 text-white shadow-sm">
+              <Car className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-sm font-semibold text-slate-900">Search a vehicle or open a saved one</p>
+              <p className="text-xs text-slate-500">
+                Type a registration number above for live RTO details, or open any vehicle from Recent Searches — saved ones don't use a search.
+              </p>
             </div>
-            <h3 className="text-lg font-bold text-slate-800 mb-1">
-              Search Vehicle or View Saved History
-            </h3>
-            <p className="text-xs sm:text-sm text-slate-500 max-w-lg mx-auto">
-              Enter any Indian vehicle registration number above to fetch live verified RTO details, or click on any
-              saved vehicle from your search history below to view details without making external API calls.
-            </p>
           </div>
         )}
 
-        {/* Recent searches (top 10) - full details open in the results above, no API call */}
-        <div className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200 shadow-sm print:hidden">
-          <div className="flex items-center justify-between gap-3 mb-3">
-            <h3 className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-2">
-              <History className="w-4 h-4 text-indigo-600" />
+        {/* ───── Recent searches ───── */}
+        <section className="rounded-2xl bg-white shadow-xs ring-1 ring-slate-200 print:hidden">
+          <div className="flex flex-col gap-3 border-b border-slate-100 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <h3 className="flex items-center gap-2.5 text-sm font-semibold text-slate-900">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-slate-700 to-slate-500 text-white shadow-sm">
+                <History className="h-4 w-4" />
+              </span>
               Recent Searches
-              <span className="text-xs font-medium text-slate-400">({historyPagination.total})</span>
+              <span className="rounded-full bg-slate-100 px-2 py-px text-[11px] font-semibold text-slate-600">{historyPagination.total}</span>
             </h3>
             <div className="flex items-center gap-2">
+              <div className="relative flex-1 sm:w-64 sm:flex-none">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <input
+                  type="text"
+                  value={historySearch}
+                  onChange={(e) => {
+                    setHistorySearch(e.target.value)
+                    fetchHistory(1, e.target.value)
+                  }}
+                  placeholder="Filter by vehicle no, owner..."
+                  className="h-9 w-full rounded-lg border border-slate-300 bg-white pl-9 pr-8 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-4 focus:ring-blue-600/10"
+                />
+                {historySearch && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setHistorySearch('')
+                      fetchHistory(1, '')
+                    }}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer p-1 text-slate-400 hover:text-slate-700"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
               <button
                 onClick={() => fetchHistory(1, historySearch)}
-                className="p-1.5 text-slate-500 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-lg border border-slate-300 text-slate-500 transition hover:bg-slate-100"
                 title="Refresh"
               >
-                <RefreshCw className={`w-4 h-4 ${historyLoading ? 'animate-spin' : ''}`} />
+                <RefreshCw className={`h-4 w-4 ${historyLoading ? 'animate-spin' : ''}`} />
               </button>
               <button
                 onClick={() => navigate('/vehicle-search-history')}
-                className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
+                className="inline-flex h-9 cursor-pointer items-center gap-1 whitespace-nowrap rounded-lg px-2 text-xs font-semibold text-blue-700 hover:bg-blue-50"
               >
-                View all →
+                View all
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          {/* History Search/Filter Bar */}
-          <div className="mb-3">
-            <div className="relative">
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-              <input
-                type="text"
-                value={historySearch}
-                onChange={(e) => {
-                  setHistorySearch(e.target.value)
-                  fetchHistory(1, e.target.value)
-                }}
-                placeholder="Filter by vehicle no, owner..."
-                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm focus:bg-white focus:border-indigo-500 outline-none transition"
-              />
-              {historySearch && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setHistorySearch('')
-                    fetchHistory(1, '')
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 cursor-pointer"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+          <div className="p-4">
+            {historyLoading ? (
+              <div className="flex items-center justify-center gap-2 py-8 text-sm text-slate-500">
+                <RefreshCw className="h-4 w-4 animate-spin text-blue-600" />
+                Loading saved searches…
+              </div>
+            ) : historyList.length === 0 ? (
+              <div className="rounded-xl bg-slate-50 py-8 text-center">
+                <p className="text-sm font-semibold text-slate-700">No saved searches yet</p>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {historySearch ? 'Nothing matches your filter.' : 'Vehicles you search are saved here automatically.'}
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {historyList.map((item) => (
+                  <HistoryCard
+                    key={item._id}
+                    item={item}
+                    onView={() => handleViewSavedRecord(item)}
+                    onSave={() => handleSaveHistoryRecords(item)}
+                    onRcPdf={() => handleDownloadHistoryPdf(item)}
+                    onParticular={() => handleDownloadHistoryParticular(item)}
+                    onDelete={() => handleDeleteHistoryItem(item._id, item.vehicleNumber)}
+                    canSave={canSaveRecords}
+                    rcFormTypes={rcFormTypes}
+                    saving={savingHistoryId === item._id}
+                    pdfLoading={historyPdfId === item._id}
+                    particularLoading={historyParticularId === item._id}
+                    deleting={deletingId === item._id}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-
-          {/* History Records Table / Cards */}
-          {historyLoading ? (
-            <div className="p-8 text-center text-slate-500 text-sm">
-              <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-indigo-600" />
-              Loading saved search records...
-            </div>
-          ) : historyList.length === 0 ? (
-            <div className="p-8 text-center text-slate-500 bg-slate-50 rounded-xl border border-slate-100">
-              <p className="text-sm font-semibold text-slate-700">No search records saved yet</p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {historySearch
-                  ? 'No search history matches your filter keyword.'
-                  : 'Vehicles you search using the box above will automatically be saved here in database.'}
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-              {historyList.map((item) => (
-                <HistoryCard
-                  key={item._id}
-                  item={item}
-                  onView={() => handleViewSavedRecord(item)}
-                  onSave={() => handleSaveHistoryRecords(item)}
-                  onRcPdf={() => handleDownloadHistoryPdf(item)}
-                  onParticular={() => handleDownloadHistoryParticular(item)}
-                  onDelete={() => handleDeleteHistoryItem(item._id, item.vehicleNumber)}
-                  canSave={canSaveRecords}
-                  rcFormTypes={rcFormTypes}
-                  saving={savingHistoryId === item._id}
-                  pdfLoading={historyPdfId === item._id}
-                  particularLoading={historyParticularId === item._id}
-                  deleting={deletingId === item._id}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-
+        </section>
       </div>
 
       {rcForm && rcFormTypes.includes(rcForm.type) && (

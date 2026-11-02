@@ -82,12 +82,12 @@ const RcFormsMenu = ({ historyId, types = ['form23', 'tempRc', 'nlParticular'] }
         ref={btnRef}
         onClick={toggleMenu}
         disabled={loading}
-        className='inline-flex items-center gap-1 px-2.5 py-1.5 bg-sky-50 hover:bg-sky-100 text-sky-700 border border-sky-200 font-bold rounded-lg text-xs transition cursor-pointer disabled:opacity-50 whitespace-nowrap'
+        className='inline-flex items-center gap-1 px-2.5 py-1.5 bg-white hover:bg-slate-100 text-slate-700 border border-slate-300 font-semibold rounded-lg text-xs transition cursor-pointer disabled:opacity-50 whitespace-nowrap'
         title='Form 23, Temporary RC and NL Particulars'
         aria-haspopup='menu'
         aria-expanded={Boolean(menuPos)}
       >
-        {loading ? <RefreshCw className='w-3.5 h-3.5 animate-spin' /> : <FileCheck className='w-3.5 h-3.5' />}
+        {loading ? <RefreshCw className='w-3.5 h-3.5 animate-spin' /> : <FileCheck className='w-3.5 h-3.5 text-sky-600' />}
         RC Forms
         <ChevronDown className='w-3 h-3' />
       </button>
