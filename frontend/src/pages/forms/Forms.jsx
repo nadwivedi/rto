@@ -655,155 +655,213 @@ const Forms = () => {
     return matchesSearch && matchesCategory
   })
 
+  const categoryMeta = {
+    Transfer: { label: 'Ownership Transfer', desc: 'Sell or buy a vehicle — notices, applications and the complete transfer set.', tile: 'bg-orange-50 text-orange-600 ring-orange-100', chip: 'bg-orange-50 text-orange-700' },
+    Affidavit: { label: 'Affidavits', desc: 'Buyer, seller and RTO affidavits for notary or executive magistrate.', tile: 'bg-violet-50 text-violet-600 ring-violet-100', chip: 'bg-violet-50 text-violet-700' },
+    Registration: { label: 'Registration', desc: 'Apply for registration of a new motor vehicle.', tile: 'bg-sky-50 text-sky-600 ring-sky-100', chip: 'bg-sky-50 text-sky-700' },
+    Permit: { label: 'Permits', desc: 'Goods carriage, temporary, tourist and national permit applications.', tile: 'bg-emerald-50 text-emerald-600 ring-emerald-100', chip: 'bg-emerald-50 text-emerald-700' },
+    Office: { label: 'Office Forms', desc: 'Regional Transport Authority office letters and certificates.', tile: 'bg-slate-100 text-slate-600 ring-slate-200', chip: 'bg-slate-100 text-slate-700' }
+  }
+
+  const countFor = (cat) => (cat === 'All' ? forms.length : forms.filter(f => f.category === cat).length)
+
+  // "Buyer Affidavit (क्रेता शपथ-पत्र)" -> ['Buyer Affidavit', 'क्रेता शपथ-पत्र']
+  const splitName = (name) => {
+    const match = name.match(/^(.*?)\s*\((.*)\)\s*$/)
+    return match ? [match[1], match[2]] : [name, null]
+  }
+
+  // With "All" selected and no search, show the forms grouped into sections
+  const sections = selectedCategory === 'All' && !searchQuery
+    ? categories
+        .filter(c => c !== 'All')
+        .map(cat => ({ cat, items: filteredForms.filter(f => f.category === cat) }))
+        .filter(s => s.items.length)
+    : [{ cat: null, items: filteredForms }]
+
+  const heading = { fontFamily: "'Poppins', sans-serif" }
+
+  const renderCard = (form) => {
+    const [title, hindi] = splitName(form.name)
+    const meta = categoryMeta[form.category] || categoryMeta.Office
+    return (
+      <div
+        key={form.id}
+        onClick={() => handleFormClick(form)}
+        className="group flex cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-3.5 transition-all duration-200 hover:border-blue-300 hover:shadow-[0_8px_24px_-12px_rgba(31,42,60,0.25)]"
+      >
+        <div className="flex items-start gap-3">
+          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg ring-1 ${meta.tile}`}>
+            {form.icon}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-start justify-between gap-2">
+              <h3 style={heading} className="truncate text-sm font-semibold text-[#1f2a3c] group-hover:text-blue-600">
+                {title}
+              </h3>
+              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.chip}`}>
+                {form.category}
+              </span>
+            </div>
+            {hindi && <p className="text-xs font-medium text-slate-400">{hindi}</p>}
+          </div>
+        </div>
+
+        <p className="mt-2 line-clamp-2 flex-1 text-xs leading-relaxed text-slate-600">
+          {form.description}
+        </p>
+
+        <div className="mt-3 flex items-center gap-2">
+          <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-blue-700">
+            Fill Form
+            <svg className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 7l5 5-5 5M6 12h12" />
+            </svg>
+          </span>
+          <button
+            onClick={(e) => handleDirectPrint(form.id, e)}
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
+            title="Print Blank / Quick Form"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            Blank
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   return (
-    <div className="min-h-screen pt-4 lg:pt-6 px-4 pb-12 bg-gradient-to-br from-slate-50 via-gray-50 to-indigo-50/30">
-      <div className="max-w-7xl mx-auto">
-        {/* Top Header & Navigation */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 bg-white/80 backdrop-blur-md p-4 rounded-2xl border border-slate-200/80 shadow-sm">
-          <div className="flex items-center gap-3">
-            <button
-              onClick={() => navigate('/')}
-              className="flex items-center justify-center h-10 w-10 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors shadow-xs cursor-pointer"
-              title="Back to Dashboard"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-            </button>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-2xl">📋</span>
-                <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-                  RTO Forms Hub <span className="text-indigo-600 text-sm sm:text-base font-bold">(आरटीओ फॉर्म्स)</span>
-                </h1>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-500 font-medium">
-                Official RTO forms, Transfer Notice (Form 29/30), Affidavits, Registration & Permits
-              </p>
-            </div>
-          </div>
+    <div className="min-h-screen bg-[#f4f6fa] px-3 pt-3 pb-10 sm:px-4 lg:pt-5">
+      <div className="mx-auto max-w-6xl">
+        {/* Dark header band: title, search and category tabs in one compact block */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1f2a3c] to-[#2b3a52] px-4 py-4 sm:px-6 sm:py-5">
+          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl" />
 
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => navigate('/vehicle-transfer')}
-              className="px-3.5 py-2 bg-orange-50 text-orange-700 border border-orange-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-orange-100 transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <span>🔄</span> Vehicle Transfer
-            </button>
-            <button
-              onClick={() => navigate('/vehicle-registration')}
-              className="px-3.5 py-2 bg-sky-50 text-sky-700 border border-sky-200 rounded-xl text-xs sm:text-sm font-bold hover:bg-sky-100 transition-all flex items-center gap-1.5 cursor-pointer"
-            >
-              <span>🚚</span> Vehicles
-            </button>
-          </div>
-        </div>
-
-        {/* Search Bar & Category Filters */}
-        <div className="mb-8 space-y-4">
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-            </div>
-            <input
-              type="text"
-              placeholder="Search forms by name, rule, description or category (e.g. Form 29, Form 30, Affidavit, Form 20)..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-10 py-3.5 bg-white rounded-2xl shadow-sm border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-800 placeholder-gray-400 font-medium transition-all"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 cursor-pointer"
-              >
-                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            )}
-          </div>
-
-          {/* Category Filter Pills */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-1">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap cursor-pointer ${
-                  selectedCategory === cat
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-200'
-                    : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'
-                }`}
-              >
-                {cat === 'All' ? 'All Forms' : cat}
-              </button>
-            ))}
-          </div>
-
-          {/* Results count */}
-          <div className="text-xs sm:text-sm text-slate-500 font-semibold px-1">
-            Showing <span className="text-indigo-600 font-bold">{filteredForms.length}</span> form{filteredForms.length !== 1 ? 's' : ''}
-          </div>
-        </div>
-
-        {/* Forms Grid */}
-        {filteredForms.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredForms.map((form) => (
-              <div
-                key={form.id}
-                onClick={() => handleFormClick(form)}
-                className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 p-5 border border-slate-200/90 cursor-pointer hover:scale-[1.02] hover:-translate-y-1 flex flex-col justify-between"
-              >
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={() => navigate('/')}
+                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-white/10 text-slate-200 hover:bg-white/20 hover:text-white"
+                  title="Back to Dashboard"
+                >
+                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
                 <div>
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="text-3xl sm:text-4xl p-2.5 rounded-2xl bg-indigo-50/70 border border-indigo-100 group-hover:scale-110 transition-transform duration-300">
-                      {form.icon}
-                    </div>
-                    <span className={`px-3 py-1 text-xs font-bold rounded-full ${
-                      form.category === 'Transfer' ? 'bg-orange-100 text-orange-700' :
-                      form.category === 'Affidavit' ? 'bg-purple-100 text-purple-700' :
-                      form.category === 'Registration' ? 'bg-sky-100 text-sky-700' :
-                      form.category === 'Permit' ? 'bg-emerald-100 text-emerald-700' :
-                      'bg-slate-100 text-slate-700'
-                    }`}>
-                      {form.category}
-                    </span>
-                  </div>
-                  <h3 className="text-base sm:text-lg font-bold text-gray-900 mb-1.5 group-hover:text-indigo-600 transition-colors">
-                    {form.name}
-                  </h3>
-                  <p className="text-gray-500 text-xs sm:text-sm leading-relaxed mb-4 line-clamp-2">
-                    {form.description}
+                  <h1 style={heading} className="text-lg font-semibold leading-tight text-white sm:text-xl">
+                    RTO Forms <span className="text-amber-300">·</span> <span className="text-slate-300 font-medium text-base">आरटीओ फॉर्म्स</span>
+                  </h1>
+                  <p className="text-xs text-slate-400 sm:text-[13px]">
+                    {forms.length} official forms — fill online, print on A4
                   </p>
                 </div>
-
-                <div className="mt-2 pt-3 border-t border-slate-100 flex items-center justify-between">
-                  <span className="text-indigo-600 text-xs font-bold group-hover:underline flex items-center gap-1">
-                    Open Form <span className="transition-transform group-hover:translate-x-1">→</span>
-                  </span>
-                  <button
-                    onClick={(e) => handleDirectPrint(form.id, e)}
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white rounded-xl shadow-xs hover:shadow-md font-bold text-xs transition-all cursor-pointer"
-                    title="Print Blank / Quick Form"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-                    </svg>
-                    Print Blank
-                  </button>
-                </div>
               </div>
+
+              <div className="flex items-center gap-2">
+                {/* Search */}
+                <div className="flex h-9 min-w-0 flex-1 items-center rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-400 lg:w-80 lg:flex-none">
+                  <svg className="ml-3 h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                  <input
+                    type="text"
+                    placeholder="Search Form 29, Affidavit, Permit..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="h-full min-w-0 flex-1 bg-transparent px-2.5 text-sm text-slate-800 placeholder-slate-400 focus:outline-none"
+                  />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="mr-1.5 cursor-pointer rounded p-1 text-slate-400 hover:text-slate-700"
+                      title="Clear"
+                    >
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => navigate('/vehicle-transfer')}
+                  className="hidden h-9 cursor-pointer whitespace-nowrap rounded-lg bg-white/10 px-3 text-xs font-semibold text-slate-100 hover:bg-white/20 sm:block"
+                >
+                  Vehicle Transfer
+                </button>
+                <button
+                  onClick={() => navigate('/vehicle-registration')}
+                  className="hidden h-9 cursor-pointer whitespace-nowrap rounded-lg bg-white/10 px-3 text-xs font-semibold text-slate-100 hover:bg-white/20 sm:block"
+                >
+                  Vehicles
+                </button>
+              </div>
+            </div>
+
+            {/* Category tabs */}
+            <div className="mt-4 flex items-center gap-1.5 overflow-x-auto border-t border-white/10 pt-3">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+                    selectedCategory === cat
+                      ? 'bg-white text-[#1f2a3c]'
+                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                  }`}
+                >
+                  {cat === 'All' ? 'All Forms' : cat}
+                  <span className={`rounded px-1 text-[10px] ${selectedCategory === cat ? 'bg-[#1f2a3c]/10 text-[#1f2a3c]' : 'bg-white/10 text-slate-300'}`}>
+                    {countFor(cat)}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Forms */}
+        {filteredForms.length > 0 ? (
+          <div className="mt-5 space-y-6">
+            {sections.map(({ cat, items }) => (
+              <section key={cat || 'results'}>
+                {cat ? (
+                  <div className="mb-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-slate-200 pb-2">
+                    <h2 style={heading} className="text-[15px] font-semibold text-[#1f2a3c]">
+                      {categoryMeta[cat].label}
+                      <span className="ml-1.5 text-xs font-medium text-slate-400">{items.length}</span>
+                    </h2>
+                    <p className="text-xs text-slate-500">{categoryMeta[cat].desc}</p>
+                  </div>
+                ) : (
+                  <p className="mb-2.5 text-[13px] text-slate-500">
+                    <span className="font-semibold text-[#1f2a3c]">{items.length}</span> form{items.length !== 1 ? 's' : ''}
+                    {selectedCategory !== 'All' && <> in <span className="font-semibold text-[#1f2a3c]">{selectedCategory}</span></>}
+                    {searchQuery && <> matching &ldquo;<span className="font-semibold text-[#1f2a3c]">{searchQuery}</span>&rdquo;</>}
+                  </p>
+                )}
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {items.map(renderCard)}
+                </div>
+              </section>
             ))}
           </div>
         ) : (
-          <div className="text-center py-16 bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
-            <div className="text-5xl mb-3">🔍</div>
-            <h3 className="text-lg font-bold text-gray-800 mb-1">No forms found matching "{searchQuery}"</h3>
-            <p className="text-sm text-gray-500">Try searching with a different keyword or select another category</p>
+          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white py-14 text-center">
+            <p style={heading} className="text-base font-semibold text-[#1f2a3c]">
+              No forms found{searchQuery ? ` for "${searchQuery}"` : ''}
+            </p>
+            <p className="mt-1 text-[13px] text-slate-500">Try another keyword or pick a different category.</p>
+            <button
+              onClick={() => { setSearchQuery(''); setSelectedCategory('All') }}
+              className="mt-4 cursor-pointer rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+            >
+              Show all forms
+            </button>
           </div>
         )}
       </div>
