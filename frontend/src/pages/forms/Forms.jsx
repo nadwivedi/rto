@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { ArrowLeftRight, ArrowRight, Building2, BusFront, Car, ChevronLeft, FileSignature, FileText, Files, Handshake, Landmark, LayoutGrid, Printer, Route, ScrollText, Search, Stamp, Ticket, Truck, UserCheck, X } from 'lucide-react'
 import NewFormModal from './components/NewFormModal'
 import Form46Modal from './components/Form46Modal'
 import Form20Modal from './components/Form20Modal'
@@ -655,12 +656,30 @@ const Forms = () => {
     return matchesSearch && matchesCategory
   })
 
+  // Look of each category: icon tile gradient, soft chip, and the filter tile in the header
   const categoryMeta = {
-    Transfer: { label: 'Ownership Transfer', desc: 'Sell or buy a vehicle — notices, applications and the complete transfer set.', tile: 'bg-orange-50 text-orange-600 ring-orange-100', chip: 'bg-orange-50 text-orange-700' },
-    Affidavit: { label: 'Affidavits', desc: 'Buyer, seller and RTO affidavits for notary or executive magistrate.', tile: 'bg-violet-50 text-violet-600 ring-violet-100', chip: 'bg-violet-50 text-violet-700' },
-    Registration: { label: 'Registration', desc: 'Apply for registration of a new motor vehicle.', tile: 'bg-sky-50 text-sky-600 ring-sky-100', chip: 'bg-sky-50 text-sky-700' },
-    Permit: { label: 'Permits', desc: 'Goods carriage, temporary, tourist and national permit applications.', tile: 'bg-emerald-50 text-emerald-600 ring-emerald-100', chip: 'bg-emerald-50 text-emerald-700' },
-    Office: { label: 'Office Forms', desc: 'Regional Transport Authority office letters and certificates.', tile: 'bg-slate-100 text-slate-600 ring-slate-200', chip: 'bg-slate-100 text-slate-700' }
+    All: { label: 'All Forms', Icon: LayoutGrid, dot: 'from-slate-500 to-slate-700' },
+    Transfer: { label: 'Ownership Transfer', desc: 'Sell or buy a vehicle — notices, applications and the complete transfer set', Icon: ArrowLeftRight, dot: 'from-orange-500 to-amber-500', chip: 'bg-orange-50 text-orange-700 ring-orange-200' },
+    Affidavit: { label: 'Affidavits', desc: 'Buyer, seller and RTO affidavits for notary or executive magistrate', Icon: Stamp, dot: 'from-violet-600 to-fuchsia-500', chip: 'bg-violet-50 text-violet-700 ring-violet-200' },
+    Registration: { label: 'Registration', desc: 'Registration of a new motor vehicle', Icon: Car, dot: 'from-sky-600 to-cyan-500', chip: 'bg-sky-50 text-sky-700 ring-sky-200' },
+    Permit: { label: 'Permits', desc: 'Goods carriage, temporary, tourist and national permits', Icon: Truck, dot: 'from-emerald-600 to-teal-500', chip: 'bg-emerald-50 text-emerald-700 ring-emerald-200' },
+    Office: { label: 'Office Forms', desc: 'Regional Transport Authority office letters', Icon: Landmark, dot: 'from-slate-600 to-slate-500', chip: 'bg-slate-100 text-slate-700 ring-slate-200' }
+  }
+
+  const formIcons = {
+    'new-form': Files,
+    'form-29': ArrowLeftRight,
+    'form-30': FileSignature,
+    'buyer-affidavit': UserCheck,
+    'seller-affidavit': Handshake,
+    'form-20': Car,
+    'form-44': Truck,
+    'form-45': Ticket,
+    'form-46': BusFront,
+    'form-48': Route,
+    'sapath-patra': ScrollText,
+    'karyalay-form': Building2,
+    'karyalay-form-2': Landmark
   }
 
   const countFor = (cat) => (cat === 'All' ? forms.length : forms.filter(f => f.category === cat).length)
@@ -679,53 +698,45 @@ const Forms = () => {
         .filter(s => s.items.length)
     : [{ cat: null, items: filteredForms }]
 
-  const heading = { fontFamily: "'Poppins', sans-serif" }
-
   const renderCard = (form) => {
     const [title, hindi] = splitName(form.name)
     const meta = categoryMeta[form.category] || categoryMeta.Office
+    const Icon = formIcons[form.id] || FileText
     return (
       <div
         key={form.id}
         onClick={() => handleFormClick(form)}
-        className="group flex cursor-pointer flex-col rounded-xl border border-slate-200 bg-white p-3.5 transition-all duration-200 hover:border-blue-300 hover:shadow-[0_8px_24px_-12px_rgba(31,42,60,0.25)]"
+        className="group flex cursor-pointer flex-col rounded-2xl bg-white p-4 shadow-xs ring-1 ring-slate-200 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_30px_-14px_rgba(15,23,42,0.28)] hover:ring-2 hover:ring-blue-500"
       >
         <div className="flex items-start gap-3">
-          <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-lg ring-1 ${meta.tile}`}>
-            {form.icon}
-          </div>
+          <span className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br text-white shadow-sm ${meta.dot}`}>
+            <Icon size={19} strokeWidth={2} />
+          </span>
           <div className="min-w-0 flex-1">
-            <div className="flex items-start justify-between gap-2">
-              <h3 style={heading} className="truncate text-sm font-semibold text-[#1f2a3c] group-hover:text-blue-600">
-                {title}
-              </h3>
-              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${meta.chip}`}>
-                {form.category}
-              </span>
-            </div>
-            {hindi && <p className="text-xs font-medium text-slate-400">{hindi}</p>}
+            <h3 className="truncate text-[14px] font-semibold leading-snug text-slate-800 group-hover:text-blue-700">
+              {title}
+            </h3>
+            {hindi
+              ? <p className="truncate text-xs font-medium text-slate-400">{hindi}</p>
+              : <span className={`mt-0.5 inline-flex rounded-full px-2 py-px text-[10px] font-semibold ring-1 ring-inset ${meta.chip}`}>{form.category}</span>}
           </div>
         </div>
 
-        <p className="mt-2 line-clamp-2 flex-1 text-xs leading-relaxed text-slate-600">
+        <p className="mt-2.5 line-clamp-2 flex-1 text-[12.5px] leading-relaxed text-slate-500">
           {form.description}
         </p>
 
-        <div className="mt-3 flex items-center gap-2">
-          <span className="inline-flex flex-1 items-center justify-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-blue-700">
+        <div className="mt-3.5 flex items-center gap-2">
+          <span className="inline-flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-gradient-to-r from-blue-700 to-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-md shadow-blue-700/20 transition group-hover:from-blue-800 group-hover:to-blue-700">
             Fill Form
-            <svg className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.2} d="M13 7l5 5-5 5M6 12h12" />
-            </svg>
+            <ArrowRight size={14} className="transition-transform group-hover:translate-x-0.5" />
           </span>
           <button
             onClick={(e) => handleDirectPrint(form.id, e)}
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition-colors hover:border-slate-300 hover:bg-slate-50"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-100"
             title="Print Blank / Quick Form"
           >
-            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-            </svg>
+            <Printer size={14} />
             Blank
           </button>
         </div>
@@ -734,40 +745,34 @@ const Forms = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#f4f6fa] px-3 pt-3 pb-10 sm:px-4 lg:pt-5">
+    <div className="min-h-screen bg-slate-50 px-3 pt-3 pb-10 sm:px-4 lg:pt-5" style={{ fontFamily: "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" }}>
       <div className="mx-auto max-w-6xl">
-        {/* Dark header band: title, search and category tabs in one compact block */}
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1f2a3c] to-[#2b3a52] px-4 py-4 sm:px-6 sm:py-5">
-          <div className="pointer-events-none absolute -right-16 -top-20 h-56 w-56 rounded-full bg-blue-500/20 blur-3xl" />
+        {/* Dark header: title, search, and category tiles that double as filters */}
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0f172a] via-[#1e293b] to-[#334155] p-4 shadow-[0_18px_42px_rgba(15,23,42,0.18)] sm:p-5">
+          <div className="pointer-events-none absolute -right-20 -top-24 h-64 w-64 rounded-full bg-blue-500/25 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-24 left-1/4 h-48 w-48 rounded-full bg-cyan-400/10 blur-3xl" />
 
           <div className="relative">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => navigate('/')}
-                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-white/10 text-slate-200 hover:bg-white/20 hover:text-white"
+                  className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-lg bg-white/10 text-slate-200 ring-1 ring-white/10 transition hover:bg-white/20 hover:text-white"
                   title="Back to Dashboard"
                 >
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
+                  <ChevronLeft size={18} />
                 </button>
                 <div>
-                  <h1 style={heading} className="text-lg font-semibold leading-tight text-white sm:text-xl">
-                    RTO Forms <span className="text-amber-300">·</span> <span className="text-slate-300 font-medium text-base">आरटीओ फॉर्म्स</span>
+                  <h1 className="text-lg font-bold leading-tight text-white sm:text-xl">
+                    RTO Forms <span className="ml-1 text-sm font-medium text-slate-400">आरटीओ फॉर्म्स</span>
                   </h1>
-                  <p className="text-xs text-slate-400 sm:text-[13px]">
-                    {forms.length} official forms — fill online, print on A4
-                  </p>
+                  <p className="mt-0.5 text-xs text-slate-400">Fill online, print on A4 — or print a blank copy</p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2">
-                {/* Search */}
-                <div className="flex h-9 min-w-0 flex-1 items-center rounded-lg bg-white focus-within:ring-2 focus-within:ring-blue-400 lg:w-80 lg:flex-none">
-                  <svg className="ml-3 h-4 w-4 shrink-0 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
+                <div className="flex h-10 min-w-0 flex-1 items-center rounded-xl bg-white shadow-sm ring-1 ring-white/20 transition focus-within:ring-4 focus-within:ring-blue-500/40 lg:w-96 lg:flex-none">
+                  <Search size={16} className="ml-3 shrink-0 text-slate-400" />
                   <input
                     type="text"
                     placeholder="Search Form 29, Affidavit, Permit..."
@@ -778,48 +783,51 @@ const Forms = () => {
                   {searchQuery && (
                     <button
                       onClick={() => setSearchQuery('')}
-                      className="mr-1.5 cursor-pointer rounded p-1 text-slate-400 hover:text-slate-700"
+                      className="mr-2 cursor-pointer rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
                       title="Clear"
                     >
-                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      <X size={14} />
                     </button>
                   )}
                 </div>
                 <button
                   onClick={() => navigate('/vehicle-transfer')}
-                  className="hidden h-9 cursor-pointer whitespace-nowrap rounded-lg bg-white/10 px-3 text-xs font-semibold text-slate-100 hover:bg-white/20 sm:block"
+                  className="hidden h-10 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-white/10 px-3.5 text-xs font-semibold text-slate-100 ring-1 ring-white/10 transition hover:bg-white/20 sm:inline-flex"
                 >
-                  Vehicle Transfer
+                  <ArrowLeftRight size={14} /> Vehicle Transfer
                 </button>
                 <button
                   onClick={() => navigate('/vehicle-registration')}
-                  className="hidden h-9 cursor-pointer whitespace-nowrap rounded-lg bg-white/10 px-3 text-xs font-semibold text-slate-100 hover:bg-white/20 sm:block"
+                  className="hidden h-10 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-xl bg-white/10 px-3.5 text-xs font-semibold text-slate-100 ring-1 ring-white/10 transition hover:bg-white/20 sm:inline-flex"
                 >
-                  Vehicles
+                  <Car size={14} /> Vehicles
                 </button>
               </div>
             </div>
 
             {/* Category tabs */}
-            <div className="mt-4 flex items-center gap-1.5 overflow-x-auto border-t border-white/10 pt-3">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
-                    selectedCategory === cat
-                      ? 'bg-white text-[#1f2a3c]'
-                      : 'text-slate-300 hover:bg-white/10 hover:text-white'
-                  }`}
-                >
-                  {cat === 'All' ? 'All Forms' : cat}
-                  <span className={`rounded px-1 text-[10px] ${selectedCategory === cat ? 'bg-[#1f2a3c]/10 text-[#1f2a3c]' : 'bg-white/10 text-slate-300'}`}>
-                    {countFor(cat)}
-                  </span>
-                </button>
-              ))}
+            <div className="mt-4 flex items-center gap-1.5 overflow-x-auto border-t border-white/10 pt-3 scrollbar-hide">
+              {categories.map(cat => {
+                const CatIcon = categoryMeta[cat].Icon
+                const active = selectedCategory === cat
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`inline-flex cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-semibold transition ${
+                      active
+                        ? 'bg-white text-slate-900 shadow-md shadow-black/20'
+                        : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <CatIcon size={14} className={active ? 'text-blue-600' : ''} />
+                    {cat === 'All' ? 'All Forms' : cat}
+                    <span className={`rounded px-1 text-[10px] ${active ? 'bg-slate-100 text-slate-600' : 'bg-white/10 text-slate-300'}`}>
+                      {countFor(cat)}
+                    </span>
+                  </button>
+                )
+              })}
             </div>
           </div>
         </div>
@@ -830,18 +838,17 @@ const Forms = () => {
             {sections.map(({ cat, items }) => (
               <section key={cat || 'results'}>
                 {cat ? (
-                  <div className="mb-2.5 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-slate-200 pb-2">
-                    <h2 style={heading} className="text-[15px] font-semibold text-[#1f2a3c]">
-                      {categoryMeta[cat].label}
-                      <span className="ml-1.5 text-xs font-medium text-slate-400">{items.length}</span>
-                    </h2>
-                    <p className="text-xs text-slate-500">{categoryMeta[cat].desc}</p>
+                  <div className="mb-3 flex items-center gap-2.5">
+                    <span className={`h-5 w-1 rounded-full bg-gradient-to-b ${categoryMeta[cat].dot}`} />
+                    <h2 className="text-[15px] font-semibold text-slate-900">{categoryMeta[cat].label}</h2>
+                    <span className="rounded-full bg-slate-200/70 px-2 py-px text-[11px] font-semibold text-slate-600">{items.length}</span>
+                    <p className="hidden truncate text-xs text-slate-500 md:block">— {categoryMeta[cat].desc}</p>
                   </div>
                 ) : (
-                  <p className="mb-2.5 text-[13px] text-slate-500">
-                    <span className="font-semibold text-[#1f2a3c]">{items.length}</span> form{items.length !== 1 ? 's' : ''}
-                    {selectedCategory !== 'All' && <> in <span className="font-semibold text-[#1f2a3c]">{selectedCategory}</span></>}
-                    {searchQuery && <> matching &ldquo;<span className="font-semibold text-[#1f2a3c]">{searchQuery}</span>&rdquo;</>}
+                  <p className="mb-3 text-[13px] text-slate-500">
+                    <span className="font-semibold text-slate-900">{items.length}</span> form{items.length !== 1 ? 's' : ''}
+                    {selectedCategory !== 'All' && <> in <span className="font-semibold text-slate-900">{selectedCategory}</span></>}
+                    {searchQuery && <> matching &ldquo;<span className="font-semibold text-slate-900">{searchQuery}</span>&rdquo;</>}
                   </p>
                 )}
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -851,14 +858,17 @@ const Forms = () => {
             ))}
           </div>
         ) : (
-          <div className="mt-6 rounded-2xl border border-dashed border-slate-300 bg-white py-14 text-center">
-            <p style={heading} className="text-base font-semibold text-[#1f2a3c]">
+          <div className="mt-5 rounded-2xl bg-white py-14 text-center shadow-xs ring-1 ring-slate-200">
+            <span className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+              <Search size={20} />
+            </span>
+            <p className="mt-3 text-sm font-semibold text-slate-900">
               No forms found{searchQuery ? ` for "${searchQuery}"` : ''}
             </p>
-            <p className="mt-1 text-[13px] text-slate-500">Try another keyword or pick a different category.</p>
+            <p className="mt-1 text-xs text-slate-500">Try another keyword or pick a different category.</p>
             <button
               onClick={() => { setSearchQuery(''); setSelectedCategory('All') }}
-              className="mt-4 cursor-pointer rounded-lg border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              className="mt-4 cursor-pointer rounded-lg border border-slate-300 bg-white px-4 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100"
             >
               Show all forms
             </button>
