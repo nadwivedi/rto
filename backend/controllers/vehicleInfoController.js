@@ -164,6 +164,44 @@ const lookupVehicle = async (req, res) => {
 }
 
 /**
+ * Check whether this user has looked up a vehicle before (NO external API call).
+ * Returns only light metadata so it can run while the user types.
+ */
+const checkSearchedVehicle = async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({ success: false, message: 'Unauthorized' })
+    }
+    const cleanVno = String(req.params.vno || '').replace(/[\s-]/g, '').toUpperCase()
+    if (!cleanVno) {
+      return res.status(400).json({ success: false, message: 'Vehicle number required' })
+    }
+    const record = await VehicleSearchHistory.findOne({ userId: req.user.id, vehicleNumber: cleanVno })
+      .select('vehicleNumber ownerName makerModel searchCount lastSearchedAt updatedAt')
+      .lean()
+
+    if (!record) {
+      return res.status(200).json({ success: true, found: false, vehicleNumber: cleanVno })
+    }
+    return res.status(200).json({
+      success: true,
+      found: true,
+      data: {
+        _id: record._id,
+        vehicleNumber: record.vehicleNumber,
+        ownerName: record.ownerName || '',
+        makerModel: record.makerModel || '',
+        searchCount: record.searchCount || 1,
+        lastSearchedAt: record.lastSearchedAt || record.updatedAt
+      }
+    })
+  } catch (error) {
+    console.error('Error checking searched vehicle:', error)
+    return res.status(500).json({ success: false, message: 'Failed to check search history' })
+  }
+}
+
+/**
  * Get saved vehicle details from MongoDB by vehicle number (NO external API call)
  */
 const getSavedVehicleByVno = async (req, res) => {
@@ -783,6 +821,7 @@ module.exports = {
   downloadHistoryRcPdf,
   lookupVehicle,
   getSavedVehicleByVno,
+  checkSearchedVehicle,
   getSearchHistory,
   moveHistoryToLeads,
   saveHistoryToRecords,

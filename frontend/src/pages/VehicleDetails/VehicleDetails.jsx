@@ -216,6 +216,48 @@ const VehicleDetails = () => {
     }
   }, [historyIdParam])
 
+  // While typing: once the number is 9+ characters, check the DB for an earlier lookup
+  // (no RTO API call, no quota used) so the user knows before pressing Get Details.
+  const [prevSearch, setPrevSearch] = useState(null) // { status: 'checking' | 'found' | 'new', vno, data }
+  useEffect(() => {
+    const vno = vehicleNo.replace(/[\s-]/g, '').toUpperCase()
+    if (vno.length < 9 || vno.length > 19) {
+      setPrevSearch(null)
+      return
+    }
+    let cancelled = false
+    setPrevSearch(prev => (prev?.vno === vno ? prev : { status: 'checking', vno }))
+    const timer = setTimeout(async () => {
+      try {
+        const res = await axios.get(
+          `${API_URL}/api/vehicle-info/history/check/${encodeURIComponent(vno)}`,
+          { withCredentials: true }
+        )
+        if (cancelled) return
+        setPrevSearch(
+          res.data?.found
+            ? { status: 'found', vno, data: res.data.data }
+            : { status: 'new', vno }
+        )
+      } catch (err) {
+        if (!cancelled) setPrevSearch(null)
+      }
+    }, 400)
+    return () => {
+      cancelled = true
+      clearTimeout(timer)
+    }
+  }, [vehicleNo, dataSourceMeta])
+
+  const formatLastSearched = (dateStr) => {
+    const d = new Date(dateStr)
+    if (isNaN(d.getTime())) return ''
+    const date = d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })
+    const days = Math.floor((Date.now() - d.getTime()) / 86400000)
+    const ago = days <= 0 ? 'today' : days === 1 ? 'yesterday' : `${days} days ago`
+    return `${date} (${ago})`
+  }
+
   // MANUAL Live RTO API Search (Only triggered when user enters number and clicks search)
   const handleLiveSearch = async (targetVno) => {
     const vnoToSearch = (targetVno || vehicleNo).trim().replace(/[\s-]/g, '').toUpperCase()
@@ -657,6 +699,45 @@ const VehicleDetails = () => {
                 {loading ? 'Searching RTO...' : 'Get Details'}
               </button>
             </form>
+
+            {/* Earlier lookup check (from database, no API call) */}
+            {prevSearch && (
+              <div className="mt-2.5 text-xs">
+                {prevSearch.status === 'checking' && (
+                  <p className="flex items-center gap-1.5 text-slate-400">
+                    <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+                    Checking your search history…
+                  </p>
+                )}
+                {prevSearch.status === 'new' && (
+                  <p className="flex items-center gap-1.5 text-slate-300">
+                    <Search className="h-3.5 w-3.5 text-slate-400" />
+                    <span><b className="font-mono text-white">{prevSearch.vno}</b> has not been searched before. Get Details will use 1 search.</span>
+                  </p>
+                )}
+                {prevSearch.status === 'found' && (
+                  <div className="flex flex-col gap-2 rounded-xl bg-amber-400/10 px-3 py-2 ring-1 ring-amber-400/30 sm:flex-row sm:items-center sm:justify-between">
+                    <p className="flex items-start gap-1.5 text-amber-100">
+                      <History className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-300" />
+                      <span>
+                        Last searched on <b className="text-white">{formatLastSearched(prevSearch.data.lastSearchedAt)}</b>
+                        {prevSearch.data.searchCount > 1 && <> · searched {prevSearch.data.searchCount} times</>}
+                        {prevSearch.data.ownerName && <> · {prevSearch.data.ownerName}</>}
+                      </span>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => loadFromHistoryId(prevSearch.data._id)}
+                      disabled={loading}
+                      className="inline-flex h-8 shrink-0 cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-amber-400 px-3 text-xs font-semibold text-slate-900 transition hover:bg-amber-300 disabled:opacity-50"
+                    >
+                      <Database className="h-3.5 w-3.5" />
+                      View saved (free)
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

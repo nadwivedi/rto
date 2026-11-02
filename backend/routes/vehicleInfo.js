@@ -39,6 +39,9 @@ router.get('/history/:id', vehicleInfoController.getHistoryById)
 // DELETE specific search history item
 router.delete('/history/:id', vehicleInfoController.deleteHistoryItem)
 
+// GET has this vehicle been searched before? (light metadata, NO API call)
+router.get('/history/check/:vno', vehicleInfoController.checkSearchedVehicle)
+
 // GET saved vehicle details by vehicle number (loads from database, NO API call)
 router.get('/saved/:vno', vehicleInfoController.getSavedVehicleByVno)
 
