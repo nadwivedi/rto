@@ -72,10 +72,11 @@ const RcApiUsageCard = ({ className = '' }) => {
   const oversold = hasRemaining && allocation && allocation.allocatedRemaining > remaining
 
   return (
-    <div className={`bg-white rounded-xl p-4 shadow-sm border border-gray-100 ${className}`}>
+    <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 ${className}`}>
+    <div className='bg-white rounded-xl p-4 shadow-sm border border-gray-100'>
       <div className='flex items-start justify-between gap-3'>
         <div>
-          <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>Vehicle API Limit</p>
+          <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>API 1 – Nikhil API Limit</p>
           <p className='text-[11px] text-gray-400 mt-0.5'>RC details searches left with the provider</p>
         </div>
         <div className='flex items-center gap-2 shrink-0'>
@@ -149,6 +150,93 @@ const RcApiUsageCard = ({ className = '' }) => {
               {oversold && <> — more than the {formatNumber(remaining)} the provider has left</>}.
             </p>
           )}
+        </>
+      )}
+    </div>
+    <ParzivalCard usage={data?.api3Usage} loading={loading && !data} error={error} />
+    </div>
+  )
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000
+const formatMoney = (n) => `₹${Number(n || 0).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`
+const formatDate = (value) =>
+  new Date(value).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' })
+
+// API 3 – Parzival API: wallet balance, quota and access expiry, as sent in the meta of its last reply
+const ParzivalCard = ({ usage, loading, error }) => {
+  // Time read once when the card mounts, for the days-left count
+  const [now] = useState(() => Date.now())
+  const has = (v) => v !== null && v !== undefined
+  const wallet = usage?.walletBalance
+  const charge = usage?.lastCharge
+  // How many more searches the wallet pays for at the last search's price
+  const searchesLeft = has(wallet) && charge > 0 ? Math.floor(wallet / charge) : null
+  const expires = usage?.accessExpiresAt ? new Date(usage.accessExpiresAt) : null
+  const daysLeft = expires ? Math.ceil((expires.getTime() - now) / DAY_MS) : null
+
+  let status = null
+  if (usage) {
+    if ((has(wallet) && wallet <= 0) || usage.quotaRemaining === 0 || (daysLeft !== null && daysLeft <= 0)) {
+      status = { label: daysLeft !== null && daysLeft <= 0 ? 'Expired' : 'Exhausted', icon: '⛔', chip: 'bg-red-50 text-red-700 border-red-200' }
+    } else if ((searchesLeft !== null && searchesLeft <= 25) || (daysLeft !== null && daysLeft <= 7)) {
+      status = { label: 'Running low', icon: '⚠️', chip: 'bg-orange-50 text-orange-700 border-orange-200' }
+    } else {
+      status = { label: 'Healthy', icon: '✓', chip: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+    }
+  }
+
+  return (
+    <div className='bg-white rounded-xl p-4 shadow-sm border border-gray-100'>
+      <div className='flex items-start justify-between gap-3'>
+        <div>
+          <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>API 3 – Parzival API</p>
+          <p className='text-[11px] text-gray-400 mt-0.5'>Wallet, quota and access with ParzivalHub</p>
+        </div>
+        {status && (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-bold shrink-0 ${status.chip}`}>
+            <span aria-hidden='true'>{status.icon}</span>
+            {status.label}
+          </span>
+        )}
+      </div>
+
+      {error ? null : loading ? (
+        <div className='mt-3 grid grid-cols-3 gap-2'>
+          {[0, 1, 2].map((i) => <div key={i} className='h-14 bg-gray-100 rounded-lg animate-pulse' />)}
+        </div>
+      ) : !usage ? (
+        <p className='text-sm text-gray-500 mt-3'>
+          No Parzival API search has been made yet. The wallet, quota and expiry appear here after the first search.
+        </p>
+      ) : (
+        <>
+          <div className='mt-3 grid grid-cols-3 gap-2'>
+            <div className='p-2.5 rounded-lg bg-emerald-50/60 border border-emerald-100'>
+              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Wallet balance</p>
+              <p className='text-lg sm:text-xl font-bold text-gray-900 tabular-nums'>{has(wallet) ? formatMoney(wallet) : '—'}</p>
+              {searchesLeft !== null && <p className='text-[11px] text-gray-500'>≈ {formatNumber(searchesLeft)} searches</p>}
+            </div>
+            <div className='p-2.5 rounded-lg bg-gray-50 border border-gray-100'>
+              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Quota left</p>
+              <p className='text-lg sm:text-xl font-bold text-gray-900 tabular-nums'>{has(usage.quotaRemaining) ? formatNumber(usage.quotaRemaining) : '—'}</p>
+              {has(charge) && <p className='text-[11px] text-gray-500'>{formatMoney(charge)} per search</p>}
+            </div>
+            <div className={`p-2.5 rounded-lg border ${daysLeft !== null && daysLeft <= 7 ? 'bg-orange-50 border-orange-200' : 'bg-gray-50 border-gray-100'}`}>
+              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Access expires</p>
+              <p className='text-sm sm:text-base font-bold text-gray-900'>{expires ? formatDate(expires) : '—'}</p>
+              {daysLeft !== null && (
+                <p className={`text-[11px] ${daysLeft <= 7 ? 'text-orange-700 font-semibold' : 'text-gray-500'}`}>
+                  {daysLeft > 0 ? `${daysLeft} day${daysLeft === 1 ? '' : 's'} left` : 'Expired'}
+                </p>
+              )}
+            </div>
+          </div>
+          <p className='text-[11px] text-gray-400 mt-2'>
+            As of the last search
+            {usage.checkedAt && <> on {formatDateTime(usage.checkedAt)}</>}
+            {usage.lastVehicleNumber && <> ({usage.lastVehicleNumber})</>}. Updates after every Parzival API search.
+          </p>
         </>
       )}
     </div>

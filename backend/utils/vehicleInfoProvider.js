@@ -87,9 +87,9 @@ const cleanVehicleNumber = (raw) => String(raw || '').replace(/[\s-]/g, '').toUp
 
 // The vehicle info sources an API key can be set to use (ApiKey.provider)
 const PROVIDERS = {
-  api1: 'API 1 (informationapi.shop)',
+  api1: 'API 1 – Nikhil API',
   api2: 'API 2',
-  api3: 'API 3 (ParzivalHub)'
+  api3: 'API 3 – Parzival API'
 }
 
 // The fields API 1 sends, in its order. API 2 replies are turned into exactly these fields,
@@ -322,7 +322,35 @@ const mapApi3Fields = (raw) => {
   return data
 }
 
-const fetchFromApi3 = async (vehicleNumber) => {
+const API3_USAGE_PROVIDER = 'parzivalhub'
+
+/**
+ * Every API 3 reply ends with meta: { charged, wallet_balance, quota_remaining, access_expires_at }.
+ * Keep the latest so the admin panel can show the wallet, quota and expiry. Never throws.
+ */
+const recordApi3Usage = async (meta, { vehicleNumber, userId } = {}) => {
+  if (!meta || typeof meta !== 'object') return
+  const snapshot = { checkedAt: new Date() }
+  const wallet = toNumber(meta.wallet_balance)
+  const quota = toNumber(meta.quota_remaining)
+  const charge = toNumber(meta.charged)
+  const expires = meta.access_expires_at ? new Date(meta.access_expires_at) : null
+  if (wallet !== undefined) snapshot.walletBalance = wallet
+  if (quota !== undefined) snapshot.remaining = quota
+  if (charge !== undefined) snapshot.lastCharge = charge
+  if (expires && !Number.isNaN(expires.getTime())) snapshot.accessExpiresAt = expires
+  if (Object.keys(snapshot).length === 1) return
+  if (vehicleNumber) snapshot.lastVehicleNumber = vehicleNumber
+  if (userId) snapshot.lastUserId = userId
+
+  try {
+    await ApiUsage.findOneAndUpdate({ provider: API3_USAGE_PROVIDER }, { $set: snapshot }, { upsert: true, setDefaultsOnInsert: true })
+  } catch (err) {
+    console.error('Failed to record API 3 usage:', err.message)
+  }
+}
+
+const fetchFromApi3 = async (vehicleNumber, { userId } = {}) => {
   const apiKey = process.env.PARZIVAL_API_KEY
   if (!apiKey) throw new Error('API 3 is not set up (PARZIVAL_API_KEY)')
 
@@ -333,6 +361,8 @@ const fetchFromApi3 = async (vehicleNumber) => {
   })
 
   const raw = response.data
+  // Recorded before the error checks so a "not found" reply still updates the wallet
+  await recordApi3Usage(raw?.meta, { vehicleNumber, userId })
   // meta.charged is what the lookup cost from the ParzivalHub wallet (e.g. 4), 0 when it was free
   const charged = raw?.meta?.charged === undefined ? null : Boolean(Number(raw.meta.charged))
 
@@ -360,7 +390,7 @@ const fetchFromApi3 = async (vehicleNumber) => {
  */
 const fetchVehicleInfo = async (vehicleNumber, { userId, provider } = {}) => {
   if (provider === 'api2') return fetchFromApi2(vehicleNumber)
-  if (provider === 'api3') return fetchFromApi3(vehicleNumber)
+  if (provider === 'api3') return fetchFromApi3(vehicleNumber, { userId })
 
   // API 1: like API 2, VEHICLE_INFO_API1_URL is the full URL up to the vehicle number, e.g.
   // https://host/api.php?key=xxx&vno= , and the number is added at the end.
@@ -407,4 +437,4 @@ const fetchVehicleInfo = async (vehicleNumber, { userId, provider } = {}) => {
   return { found: true, data, charged }
 }
 
-module.exports = { fetchVehicleInfo, recordProviderUsage, cleanVehicleNumber, PROVIDERS }
+module.exports = { fetchVehicleInfo, recordProviderUsage, cleanVehicleNumber, PROVIDERS, API3_USAGE_PROVIDER }

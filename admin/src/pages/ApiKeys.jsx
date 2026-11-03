@@ -236,7 +236,7 @@ const ApiKeys = () => {
           <div>
             <p className='text-sm font-semibold text-gray-800'>Vehicle data source for all keys</p>
             <p className='text-xs text-gray-500 mt-0.5'>
-              {formatNumber(totals.keys - (totals.api2 || 0) - (totals.api3 || 0))} on API 1 · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on API 3. Switch every key at once when one API is down.
+              {formatNumber(totals.keys - (totals.api2 || 0) - (totals.api3 || 0))} on Nikhil API · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on Parzival API. Switch every key at once when one API is down.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>

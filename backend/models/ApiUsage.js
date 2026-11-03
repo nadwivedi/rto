@@ -19,6 +19,17 @@ const apiUsageSchema = new mongoose.Schema(
     remaining: {
       type: Number
     },
+    // ParzivalHub (API 3) only: money left in the wallet, what the last search cost
+    // from it, and when our access to the API ends
+    walletBalance: {
+      type: Number
+    },
+    lastCharge: {
+      type: Number
+    },
+    accessExpiresAt: {
+      type: Date
+    },
     // When the provider last reported these numbers (i.e. the last API call)
     checkedAt: {
       type: Date

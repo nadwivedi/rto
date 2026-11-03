@@ -10,7 +10,7 @@ const crypto = require('crypto')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
 const { backupAndCleanUserData } = require('../utils/userDataClean')
-const { PROVIDERS } = require('../utils/vehicleInfoProvider')
+const { PROVIDERS, API3_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
 
 // '' / null clears a money field, a number >= 0 sets it, anything else is ignored (returns false)
 const parseMoney = (value) => {
@@ -1197,6 +1197,19 @@ exports.getRcApiUsage = async (req, res) => {
       }
     }
 
+    // API 3 (Parzival API): wallet, quota and access expiry from its last reply
+    const api3 = await ApiUsage.findOne({ provider: API3_USAGE_PROVIDER }).lean()
+    const api3Usage = api3
+      ? {
+          walletBalance: api3.walletBalance ?? null,
+          quotaRemaining: api3.remaining ?? null,
+          lastCharge: api3.lastCharge ?? null,
+          accessExpiresAt: api3.accessExpiresAt || null,
+          checkedAt: api3.checkedAt || api3.updatedAt || null,
+          lastVehicleNumber: api3.lastVehicleNumber || null
+        }
+      : null
+
     // Searches still promised to users who have the RC Details feature switched on
     const [allocation] = await User.aggregate([
       { $match: { 'features.rcDetails': true } },
@@ -1220,6 +1233,7 @@ exports.getRcApiUsage = async (req, res) => {
       success: true,
       data: {
         usage,
+        api3Usage,
         allocation: {
           users: allocation?.users || 0,
           allocatedRemaining: allocation?.allocatedRemaining || 0

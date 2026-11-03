@@ -888,12 +888,12 @@ const ApiCredits = () => {
             </div>
 
             <p className='mb-3 text-[11px] text-gray-500'>
-              API key calls · today: API 1 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Today)}</span>
+              API key calls · today: Nikhil API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Today)}</span>
               {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Today)}</span>
-              {' · '}API 3 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Today)}</span>
-              {' · last 28 days: '}API 1 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Last28)}</span>
+              {' · '}Parzival API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Today)}</span>
+              {' · last 28 days: '}Nikhil API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Last28)}</span>
               {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Last28)}</span>
-              {' · '}API 3 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Last28)}</span>
+              {' · '}Parzival API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Last28)}</span>
               {' · '}App <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.appLast28)}</span>
             </p>
 
@@ -907,9 +907,9 @@ const ApiCredits = () => {
                     <tr className='border-b border-gray-100 bg-gray-50/60'>
                       <th className={`${th} text-left`}>Day</th>
                       <th className={`${th} text-right`}>App</th>
-                      <th className={`${th} text-right`} title='API key calls served by API 1'>API 1</th>
+                      <th className={`${th} text-right`} title='API key calls served by API 1 – Nikhil API'>Nikhil</th>
                       <th className={`${th} text-right`} title='API key calls served by API 2'>API 2</th>
-                      <th className={`${th} text-right`} title='API key calls served by API 3'>API 3</th>
+                      <th className={`${th} text-right`} title='API key calls served by API 3 – Parzival API'>Parzival</th>
                       <th className={`${th} text-right`}>Total</th>
                       <th className={`${th} text-right`} title='Users and API keys that searched that day'>Active</th>
                     </tr>
