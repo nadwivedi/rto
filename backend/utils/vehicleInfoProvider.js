@@ -246,10 +246,15 @@ const fetchFromApi2 = async (vehicleNumber) => {
 const fetchVehicleInfo = async (vehicleNumber, { userId, provider } = {}) => {
   if (provider === 'api2') return fetchFromApi2(vehicleNumber)
 
-  const apiUrl = process.env.VEHICLE_INFO_API_URL || 'https://informationapi.shop/rtosathi767/api.php'
-  const apiKey = process.env.VEHICLE_INFO_API_KEY || 'xxnxxxxx8000'
+  // API 1: like API 2, VEHICLE_INFO_API1_URL is the full URL up to the vehicle number, e.g.
+  // https://host/api.php?key=xxx&vno= , and the number is added at the end.
+  // Falls back to the old VEHICLE_INFO_API_URL + VEHICLE_INFO_API_KEY pair until every .env is updated.
+  const { VEHICLE_INFO_API1_URL, VEHICLE_INFO_API_URL, VEHICLE_INFO_API_KEY } = process.env
+  const apiUrl = VEHICLE_INFO_API1_URL ||
+    (VEHICLE_INFO_API_URL && VEHICLE_INFO_API_KEY ? `${VEHICLE_INFO_API_URL}?key=${VEHICLE_INFO_API_KEY}&vno=` : null)
+  if (!apiUrl) throw new Error('API 1 is not set up (VEHICLE_INFO_API1_URL)')
 
-  const response = await axios.get(`${apiUrl}?key=${apiKey}&vno=${encodeURIComponent(vehicleNumber)}`, {
+  const response = await axios.get(`${apiUrl}${encodeURIComponent(vehicleNumber)}`, {
     timeout: 20000,
     headers: {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
