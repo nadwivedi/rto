@@ -434,7 +434,7 @@ const VehicleDetails = () => {
 💰 *Tax Upto:* ${vehicleData.TAX_UPTO || 'NA'}
 🌱 *PUC Upto:* ${vehicleData.PUCC_UPTO || vehicleData.PUC_UPTO || 'NA'}
 🏦 *Financer:* ${vehicleData.FINANCER_DETAILS || 'NA'}
-📜 *Permit No:* ${vehicleData.PERMIT_NO || 'NA'}
+📜 *Permit No:* ${vehicleData.PERMIT_NO || 'NA'}${vehicleData.PERMIT_TYPE && vehicleData.PERMIT_TYPE !== 'NA' ? ` (${vehicleData.PERMIT_TYPE})` : ''}${vehicleData.PERMIT_VALID_UPTO && vehicleData.PERMIT_VALID_UPTO !== 'NA' ? ` · Upto ${vehicleData.PERMIT_VALID_UPTO}` : ''}
 ━━━━━━━━━━━━━━━━━━━━
 📍 *Address:* ${vehicleData.PRESENT_ADDRESS || vehicleData.PERMANENT_ADDRESS || 'NA'}`
 
@@ -968,7 +968,21 @@ const VehicleDetails = () => {
               <Panel icon={FileText} title="Financer & Permit" tone="from-orange-500 to-amber-500" badge="Hypothecation" badgeTone="bg-orange-50 text-orange-700 ring-orange-200">
                 <Row stacked label="Financer / bank" value={v.FINANCER_DETAILS || 'No hypothecation (cash)'} />
                 <Row label="Permit no" value={v.PERMIT_NO} />
+                <Row label="Permit type" value={v.PERMIT_TYPE} />
                 <Row label="Permit issue date" value={v.PERMIT_ISSUE_DATE} />
+                {v.PERMIT_VALID_FROM && v.PERMIT_VALID_FROM !== 'NA' && <Row label="Permit valid from" value={v.PERMIT_VALID_FROM} />}
+                <Row
+                  label="Permit valid upto"
+                  value={v.PERMIT_VALID_UPTO}
+                  valueClass={
+                    !v.PERMIT_VALID_UPTO || v.PERMIT_VALID_UPTO === 'NA'
+                      ? 'text-slate-800'
+                      : isExpired(v.PERMIT_VALID_UPTO) ? 'text-rose-600' : 'text-emerald-700'
+                  }
+                />
+                {v.PERMIT_ISSUING_AUTHORITY && v.PERMIT_ISSUING_AUTHORITY !== 'NA' && (
+                  <Row stacked label="Permit issued by" value={v.PERMIT_ISSUING_AUTHORITY} />
+                )}
                 <Row label="National permit" value={v.RC_NP_NO} />
               </Panel>
 

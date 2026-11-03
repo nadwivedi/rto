@@ -91,6 +91,9 @@ Only successful calls use up your limit.
 | `FINANCER_DETAILS` | Financer (hypothecation) |
 | `INSURANCE_COMP` / `INS_POLICY_NO` / `INSURANCE_UPTO` | Insurance company / policy / valid up to |
 | `PUCC_UPTO` / `FIT_UPTO` / `TAX_UPTO` | PUC / fitness / road tax valid up to (LTT = lifetime tax) |
+| `PERMIT_NO` / `PERMIT_TYPE` / `PERMIT_CATEGORY` | Permit number / type (e.g. Tourist Permit) / category |
+| `PERMIT_ISSUE_DATE` / `PERMIT_VALID_FROM` / `PERMIT_VALID_UPTO` | Permit issued on / valid from / valid up to |
+| `PERMIT_ISSUING_AUTHORITY` | Who issued the permit (e.g. STATE TRANSPORT AUTHORITY) |
 | `BLACKLIST_STATUS` / `NOC_DETAILS` | Blacklist / NOC |
 
 ## Errors

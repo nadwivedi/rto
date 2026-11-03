@@ -97,6 +97,11 @@ number as JSON, in seconds.
    FIT_UPTO ........... Fitness valid
    TAX_UPTO ........... Tax valid (LTT =
                         lifetime tax)
+   PERMIT_NO .......... Permit number
+   PERMIT_TYPE ........ Permit type
+   PERMIT_VALID_UPTO .. Permit valid
+   PERMIT_ISSUING_AUTHORITY
+                        Permit issued by
    BLACKLIST_STATUS ... Blacklist
    NOC_DETAILS ........ NOC
 

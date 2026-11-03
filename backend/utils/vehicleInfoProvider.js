@@ -92,13 +92,15 @@ const PROVIDERS = {
   api3: 'API 3 – Parzival API'
 }
 
-// The fields API 1 sends, in its order. API 2 replies are turned into exactly these fields,
-// so a customer gets the same JSON from either API.
+// The fields every reply has, in API 1's order. API 2 / API 3 replies are turned into exactly
+// these fields and API 1 replies get any missing one as 'NA', so a customer gets the same JSON
+// from all 3. The permit fields after PERMIT_ISSUE_DATE are filled where the API sends them.
 const API1_FIELDS = [
   'REGN_NO', 'REGN_DT', 'REGN_UPTO', 'OWNER_NAME', 'F_NAME', 'STATE_CD', 'RTO_CD', 'PRESENT_ADDRESS',
   'PERMANENT_ADDRESS', 'MOBILE_NO', 'CHASI_NO', 'ENG_NO', 'MAKER_DESC', 'MAKER_MODEL', 'BODY_TYPE_DESC',
   'FUEL_DESC', 'COLOR', 'FIT_UPTO', 'INSURANCE_COMP', 'INSURANCE_UPTO', 'MANU_MONTH_YR', 'POLICY_NO',
-  'PUC_UPTO', 'INS_POLICY_NO', 'FINANCER_DETAILS', 'PERMIT_NO', 'PERMIT_ISSUE_DATE', 'RC_NP_NO',
+  'PUC_UPTO', 'INS_POLICY_NO', 'FINANCER_DETAILS', 'PERMIT_NO', 'PERMIT_ISSUE_DATE',
+  'PERMIT_TYPE', 'PERMIT_CATEGORY', 'PERMIT_VALID_FROM', 'PERMIT_VALID_UPTO', 'PERMIT_ISSUING_AUTHORITY', 'RC_NP_NO',
   'REGISTERED_AT', 'STATUS_AS_ON', 'PUCC_UPTO', 'PUCC_NO', 'STATUS', 'VEHICLE_SURRENDERED_TO_DEALER',
   'CURRENTADD_STATENAME', 'CURRENTADD_DISTRICTCODE', 'CURRENTADD_PINCODE', 'VEHICLE_CLASS',
   'VEHICLE_CATEGORY', 'SEATING_CAPACITY', 'SLEEPER_CAPACITY', 'STANDING_CAPACITY', 'OWNER_SERIAL_NO',
@@ -134,7 +136,13 @@ const API2_FIELDS = {
   PUCC_UPTO: ['puc_upto', 'pucc_upto'],
   PUCC_NO: ['pucc_no', 'puc_no'],
   FINANCER_DETAILS: ['financer_name', 'hypo'],
-  PERMIT_NO: ['permit_no'],
+  PERMIT_NO: ['permit_no', 'permit_number'],
+  PERMIT_ISSUE_DATE: ['permit_issue_date'],
+  PERMIT_TYPE: ['permit_type'],
+  PERMIT_CATEGORY: ['permit_category'],
+  PERMIT_VALID_FROM: ['permit_valid_from', 'permit_from'],
+  PERMIT_VALID_UPTO: ['permit_valid_upto', 'permit_upto'],
+  PERMIT_ISSUING_AUTHORITY: ['permit_issuing_authority'],
   REGISTERED_AT: ['registered_rto'],
   STATUS: ['rc_status', 'vehicle_status'],
   VEHICLE_CLASS: ['vehicle_class'],
@@ -145,7 +153,10 @@ const API2_FIELDS = {
   BLACKLIST_STATUS: ['blacklist_status'],
   NOC_DETAILS: ['noc_details']
 }
-const API2_DATE_FIELDS = ['REGN_DT', 'REGN_UPTO', 'FIT_UPTO', 'INSURANCE_UPTO', 'PUC_UPTO', 'PUCC_UPTO']
+const API2_DATE_FIELDS = [
+  'REGN_DT', 'REGN_UPTO', 'FIT_UPTO', 'INSURANCE_UPTO', 'PUC_UPTO', 'PUCC_UPTO',
+  'PERMIT_ISSUE_DATE', 'PERMIT_VALID_FROM', 'PERMIT_VALID_UPTO'
+]
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
 // '2023-02-14' or '14/02/2023' -> '14-Feb-2023', the date format API 1 uses
@@ -277,6 +288,11 @@ const API3_FIELDS = {
   FINANCER_DETAILS: 'financier',
   PERMIT_NO: 'permit_number',
   PERMIT_ISSUE_DATE: 'permit_issue_date',
+  PERMIT_TYPE: 'permit_type',
+  PERMIT_CATEGORY: 'permit_category',
+  PERMIT_VALID_FROM: 'permit_valid_from',
+  PERMIT_VALID_UPTO: 'permit_valid_upto',
+  PERMIT_ISSUING_AUTHORITY: 'permit_issuing_authority',
   REGISTERED_AT: 'rto',
   STATUS_AS_ON: 'status_as_on',
   STATUS: 'rc_status',
@@ -300,7 +316,7 @@ const API3_FIELDS = {
   NOC_DETAILS: 'noc_details',
   IS_COMMERCIAL: 'is_commercial'
 }
-const API3_DATE_FIELDS = [...API2_DATE_FIELDS, 'STATUS_AS_ON', 'PERMIT_ISSUE_DATE', 'TAX_UPTO']
+const API3_DATE_FIELDS = [...API2_DATE_FIELDS, 'STATUS_AS_ON', 'TAX_UPTO']
 
 const mapApi3Fields = (raw) => {
   const data = {}
@@ -312,6 +328,8 @@ const mapApi3Fields = (raw) => {
     data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
   }
   if (typeof data.IS_COMMERCIAL === 'boolean') data.IS_COMMERCIAL = data.IS_COMMERCIAL ? 'true' : 'false'
+  // API 3 sends permit_category -1 when there is no category
+  if (String(data.PERMIT_CATEGORY) === '-1') delete data.PERMIT_CATEGORY
   if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
     data.CUBIC_CAPACITY = Number(data.CUBIC_CAPACITY).toFixed(2)
   }
@@ -434,6 +452,9 @@ const fetchVehicleInfo = async (vehicleNumber, { userId, provider } = {}) => {
     return { found: false, charged, message: 'Vehicle details not found. Please check registration number.' }
   }
 
+  // API 1's own reply is kept as it is (with _usage, read for the admin quota card); only
+  // the fields it did not send are added as 'NA', so it has every field API 2 / API 3 have
+  for (const field of API1_FIELDS) if (data[field] === undefined || data[field] === null) data[field] = 'NA'
   return { found: true, data, charged }
 }
 
