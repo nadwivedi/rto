@@ -195,10 +195,14 @@ const mapApi2Fields = (raw) => {
   return data
 }
 
-// API 1's fields in API 1's order, 'NA' where API 2 has no value
-const fillApi2Fields = (data) => {
+// The reply API 1 sends: its fields in its order, every value a string, 'NA' where there is none.
+// API 2 and API 3 replies go through this so a user or API key customer gets the same JSON from all 3.
+const toApi1Reply = (data) => {
   const filled = {}
-  for (const field of API1_FIELDS) filled[field] = data[field] ?? 'NA'
+  for (const field of API1_FIELDS) {
+    const value = data[field]
+    filled[field] = value === undefined || value === null || value === '' ? 'NA' : String(value)
+  }
   return filled
 }
 
@@ -235,7 +239,7 @@ const fetchFromApi2 = async (vehicleNumber) => {
     return { found: false, charged: null, message: 'Vehicle details not found. Please check registration number.' }
   }
   if (!data.REGN_NO) data.REGN_NO = vehicleNumber
-  return { found: true, data: fillApi2Fields(data), charged: null }
+  return { found: true, data: toApi1Reply(data), charged: null }
 }
 
 // API 3 (ParzivalHub): POST { vehicle_number } with the key as a Bearer token. It replies
@@ -302,8 +306,8 @@ const mapApi3Fields = (raw) => {
   const data = {}
   for (const [field, name] of Object.entries(API3_FIELDS)) {
     const value = raw[name]
-    // API 3 masks some values (owner name, chassis no) with '*'; a masked value is still
-    // better than 'NA' since it has no unmasked copy, so only blanks are dropped here
+    // A live key gets full, unmasked values (only the pzk_test_ sandbox key masks them); they are
+    // passed on exactly as sent, only blanks are dropped
     if (value === undefined || value === null || /^(|na|n\/a|null|none|-)$/i.test(String(value).trim())) continue
     data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
   }
@@ -329,7 +333,7 @@ const fetchFromApi3 = async (vehicleNumber) => {
   })
 
   const raw = response.data
-  // meta.charged is 1 / 0 for a lookup that did / did not use a credit
+  // meta.charged is what the lookup cost from the ParzivalHub wallet (e.g. 4), 0 when it was free
   const charged = raw?.meta?.charged === undefined ? null : Boolean(Number(raw.meta.charged))
 
   if (!raw || typeof raw !== 'object' || !raw.success) {
@@ -345,7 +349,7 @@ const fetchFromApi3 = async (vehicleNumber) => {
     return { found: false, charged, message: 'Vehicle details not found. Please check registration number.' }
   }
   if (!data.REGN_NO) data.REGN_NO = vehicleNumber
-  return { found: true, data: fillApi2Fields(data), charged }
+  return { found: true, data: toApi1Reply(data), charged }
 }
 
 /**
