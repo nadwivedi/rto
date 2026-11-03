@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import ApiKeySaleModal from '../components/ApiKeySaleModal'
 import ApiKeyDeleteModal from '../components/ApiKeyDeleteModal'
 import ShareApiDocButton from '../components/ShareApiDocButton'
-import { PROVIDER_OPTIONS, providerLabel } from '../components/apiProviders'
+import { PROVIDER_OPTIONS, providerLabel, sourceOption } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const IST = 'Asia/Kolkata'
@@ -59,13 +59,8 @@ const ResultBadge = ({ call }) =>
 // Which of our APIs served the call (calls logged before this was saved show nothing)
 const SourceTag = ({ call }) =>
   call.source ? (
-    <span
-      className={`ml-1 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${
-        call.source === 'rtosarthi_api2' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-indigo-50 text-indigo-600 border-indigo-200'
-      }`}
-      title={call.source}
-    >
-      {call.source === 'rtosarthi_api2' ? 'API 2' : 'API 1'}
+    <span className={`ml-1 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${sourceOption(call.source).tag}`} title={call.source}>
+      {sourceOption(call.source).short}
     </span>
   ) : null
 

@@ -13,7 +13,7 @@ const apiKeyCallSchema = new mongoose.Schema(
       trim: true,
       uppercase: true
     },
-    // Which of our APIs served the call: 'rtosarthi_api1' or 'rtosarthi_api2'
+    // Which of our APIs served the call: 'rtosarthi_api1', 'rtosarthi_api2' or 'rtosarthi_api3'
     source: {
       type: String,
       trim: true

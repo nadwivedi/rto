@@ -4,7 +4,7 @@ const User = require('../models/User')
 const RcSearchUsage = require('../models/RcSearchUsage')
 const Lead = require('../models/Lead')
 const VehicleRegistration = require('../models/VehicleRegistration')
-const { fetchVehicleInfo } = require('../utils/vehicleInfoProvider')
+const { fetchVehicleInfo, PROVIDERS } = require('../utils/vehicleInfoProvider')
 const { VEHICLE_DOC_TYPES, getVehicleDocuments, matchExpiry, leadPriorityFor } = require('../utils/vehicleExpiry')
 const { saveHistoryRecords, canSaveRecords, SAVE_DISABLED_MESSAGE } = require('./vehicleRecordSaveController')
 
@@ -77,7 +77,7 @@ const lookupVehicle = async (req, res) => {
       })
     }
 
-    const result = await fetchVehicleInfo(cleanVno, { userId: targetUserId, provider: userDoc.rcProvider === 'api1' ? 'api1' : 'api2' })
+    const result = await fetchVehicleInfo(cleanVno, { userId: targetUserId, provider: PROVIDERS[userDoc.rcProvider] ? userDoc.rcProvider : 'api2' })
     if (!result.found) {
       return res.status(404).json({ success: false, message: result.message })
     }

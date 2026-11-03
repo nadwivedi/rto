@@ -123,9 +123,10 @@ exports.getApiKeys = async (req, res) => {
         pendingAmount: roundMoney(t.pendingAmount + k.pendingAmount),
         used: t.used + (k.callCount || 0),
         callsToday: t.callsToday + k.callsToday,
-        api2: t.api2 + (k.provider === 'api2' ? 1 : 0)
+        api2: t.api2 + (k.provider === 'api2' ? 1 : 0),
+        api3: t.api3 + (k.provider === 'api3' ? 1 : 0)
       }),
-      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0 }
+      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0, api3: 0 }
     )
 
     res.json({ success: true, data, totals })
@@ -142,7 +143,7 @@ exports.createApiKey = async (req, res) => {
     if (mobile.error) return badRequest(res, mobile.error)
     const email = readEmail(contactEmail)
     if (email.error) return badRequest(res, email.error)
-    if (provider !== undefined && !PROVIDERS[provider]) return badRequest(res, 'Please choose API 1 or API 2')
+    if (provider !== undefined && !PROVIDERS[provider]) return badRequest(res, 'Please choose API 1, API 2 or API 3')
 
     const link = await readUserId(userId)
     if (link.error) return badRequest(res, link.error)
@@ -176,10 +177,10 @@ exports.createApiKey = async (req, res) => {
 exports.setAllProvider = async (req, res) => {
   try {
     const { provider } = req.body || {}
-    if (!PROVIDERS[provider]) return badRequest(res, 'Please choose API 1 or API 2')
+    if (!PROVIDERS[provider]) return badRequest(res, 'Please choose API 1, API 2 or API 3')
 
     // Keys saved before the provider field existed use API 1
-    const filter = provider === 'api1' ? { provider: 'api2' } : { provider: { $ne: 'api2' } }
+    const filter = provider === 'api1' ? { provider: { $exists: true, $ne: 'api1' } } : { provider: { $ne: provider } }
     const result = await ApiKey.updateMany(filter, { $set: { provider } })
     const changed = result.modifiedCount || 0
 
@@ -229,7 +230,7 @@ exports.updateApiKey = async (req, res) => {
       apiKey.userId = link.userId || undefined
     }
     if (provider !== undefined) {
-      if (!PROVIDERS[provider]) return badRequest(res, 'Please choose API 1 or API 2')
+      if (!PROVIDERS[provider]) return badRequest(res, 'Please choose API 1, API 2 or API 3')
       const current = apiKey.provider || 'api1'
       if (current !== provider) changes.push({ field: 'Vehicle data source', from: PROVIDERS[current], to: PROVIDERS[provider] })
       apiKey.provider = provider

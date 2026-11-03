@@ -101,11 +101,11 @@ exports.setAllRcProvider = async (req, res) => {
   try {
     const { provider } = req.body || {}
     if (!PROVIDERS[provider]) {
-      return res.status(400).json({ success: false, message: 'Please choose API 1 or API 2' })
+      return res.status(400).json({ success: false, message: 'Please choose API 1, API 2 or API 3' })
     }
 
     // Users saved before the rcProvider field existed use API 2
-    const filter = provider === 'api2' ? { rcProvider: 'api1' } : { rcProvider: { $ne: 'api1' } }
+    const filter = provider === 'api2' ? { rcProvider: { $exists: true, $ne: 'api2' } } : { rcProvider: { $ne: provider } }
     const result = await User.updateMany(filter, { $set: { rcProvider: provider } })
     const changed = result.modifiedCount || 0
 
@@ -617,7 +617,7 @@ exports.updateUser = async (req, res) => {
       if (!PROVIDERS[rcProvider]) {
         return res.status(400).json({
           success: false,
-          message: 'Please choose API 1 or API 2'
+          message: 'Please choose API 1, API 2 or API 3'
         })
       }
       user.rcProvider = rcProvider
@@ -876,6 +876,7 @@ exports.getUserStatistics = async (req, res) => {
     const inactiveUsers = await User.countDocuments({ isActive: false })
     // Users without rcProvider use API 2
     const rcApi1Users = await User.countDocuments({ rcProvider: 'api1' })
+    const rcApi3Users = await User.countDocuments({ rcProvider: 'api3' })
     // Plan fee (lifetime fee or yearly price) against the money received
     const [fees] = await User.aggregate([
       {
@@ -905,7 +906,8 @@ exports.getUserStatistics = async (req, res) => {
         active: activeUsers,
         inactive: inactiveUsers,
         rcApi1: rcApi1Users,
-        rcApi2: totalUsers - rcApi1Users,
+        rcApi2: totalUsers - rcApi1Users - rcApi3Users,
+        rcApi3: rcApi3Users,
         fees: {
           totalFee: fees?.totalFee || 0,
           paidAmount: fees?.paidAmount || 0,

@@ -1,6 +1,6 @@
 const ApiKey = require('../models/ApiKey')
 const ApiKeyCall = require('../models/ApiKeyCall')
-const { fetchVehicleInfo, cleanVehicleNumber } = require('../utils/vehicleInfoProvider')
+const { fetchVehicleInfo, cleanVehicleNumber, PROVIDERS } = require('../utils/vehicleInfoProvider')
 
 const todayIST = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' })
 
@@ -49,7 +49,7 @@ exports.lookupVehicle = async (req, res) => {
   }
 
   // Which of our APIs served the call, sent back on every reply and saved in the log
-  const source = apiKey.provider === 'api2' ? 'rtosarthi_api2' : 'rtosarthi_api1'
+  const source = `rtosarthi_${PROVIDERS[apiKey.provider] ? apiKey.provider : 'api1'}`
 
   const reply = async (statusCode, payload, entry = {}) => {
     await logCall(apiKey, req, startedAt, { statusCode, success: statusCode === 200, message: payload.message, source, ...entry })

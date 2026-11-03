@@ -375,6 +375,8 @@ const shiftDate = (iso, days) => {
 
 // API key calls that used the key's limit. Calls logged before `charged` existed count when they returned details.
 const CHARGED_KEY_CALL = { $or: [{ charged: true }, { charged: { $exists: false }, success: true }] }
+// 'rtosarthi_api3' -> 'api3'; anything unknown counts as API 1
+const sourceApi = (source) => ({ rtosarthi_api2: 'api2', rtosarthi_api3: 'api3' })[source] || 'api1'
 
 // How many searches were actually made, by app users (RC search) and by API keys:
 // day-wise for the last 28 days, and per user / per key for today / 7 / 28 days
@@ -399,17 +401,17 @@ exports.getUsage = async (req, res) => {
     const dayMap = new Map()
     for (let i = 0; i < 28; i++) {
       const date = shiftDate(today, -i)
-      dayMap.set(date, { date, count: 0, appCount: 0, keyCount: 0, api1Count: 0, api2Count: 0, users: 0, keys: 0, keyIds: new Set() })
+      dayMap.set(date, { date, count: 0, appCount: 0, keyCount: 0, api1Count: 0, api2Count: 0, api3Count: 0, users: 0, keys: 0, keyIds: new Set() })
     }
 
-    const totals = { today: 0, last7: 0, last28: 0, appLast28: 0, keyLast28: 0, api1Last28: 0, api2Last28: 0, api1Today: 0, api2Today: 0 }
+    const totals = { today: 0, last7: 0, last28: 0, appLast28: 0, keyLast28: 0, api1Last28: 0, api2Last28: 0, api3Last28: 0, api1Today: 0, api2Today: 0, api3Today: 0 }
     // Adds one day's count to the day, the totals and the user / key row it belongs to
     const add = (map, id, base, row, kind) => {
       const day = dayMap.get(row.date)
       if (!day || !row.count) return
       day.count += row.count
       if (kind === 'key') {
-        const api = row.source === 'rtosarthi_api2' ? 'api2' : 'api1'
+        const api = sourceApi(row.source)
         day.keyCount += row.count
         day[`${api}Count`] += row.count
         // A key can have API 1 and API 2 calls on the same day; count it once
@@ -426,9 +428,9 @@ exports.getUsage = async (req, res) => {
         totals.appLast28 += row.count
       }
 
-      if (!map.has(id)) map.set(id, { ...base, today: 0, last7: 0, last28: 0, api1Last28: 0, api2Last28: 0 })
+      if (!map.has(id)) map.set(id, { ...base, today: 0, last7: 0, last28: 0, api1Last28: 0, api2Last28: 0, api3Last28: 0 })
       const usage = map.get(id)
-      if (kind === 'key') usage[row.source === 'rtosarthi_api2' ? 'api2Last28' : 'api1Last28'] += row.count
+      if (kind === 'key') usage[`${sourceApi(row.source)}Last28`] += row.count
       usage.last28 += row.count
       totals.last28 += row.count
       if (row.date >= from7) {

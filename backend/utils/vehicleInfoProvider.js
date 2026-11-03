@@ -88,7 +88,8 @@ const cleanVehicleNumber = (raw) => String(raw || '').replace(/[\s-]/g, '').toUp
 // The vehicle info sources an API key can be set to use (ApiKey.provider)
 const PROVIDERS = {
   api1: 'API 1 (informationapi.shop)',
-  api2: 'API 2'
+  api2: 'API 2',
+  api3: 'API 3 (ParzivalHub)'
 }
 
 // The fields API 1 sends, in its order. API 2 replies are turned into exactly these fields,
@@ -237,14 +238,125 @@ const fetchFromApi2 = async (vehicleNumber) => {
   return { found: true, data: fillApi2Fields(data), charged: null }
 }
 
+// API 3 (ParzivalHub): POST { vehicle_number } with the key as a Bearer token. It replies
+// { success, status: 'found', data: {...}, meta: { charged } } or { success: false, error: { code, message } }.
+const API3_URL = 'https://api.parzivalhub.com/v1/rc-details'
+
+// API 1 field <- API 3 field. API 3 sends clean snake_case names, so one name per field.
+const API3_FIELDS = {
+  REGN_NO: 'registration_number',
+  REGN_DT: 'registration_date',
+  REGN_UPTO: 'registration_upto',
+  OWNER_NAME: 'owner_name',
+  F_NAME: 'father_name',
+  STATE_CD: 'state_code',
+  RTO_CD: 'rto_code',
+  PRESENT_ADDRESS: 'present_address',
+  PERMANENT_ADDRESS: 'permanent_address',
+  MOBILE_NO: 'mobile_number',
+  CHASI_NO: 'chassis_number',
+  ENG_NO: 'engine_number',
+  MAKER_DESC: 'maker',
+  MAKER_MODEL: 'model',
+  BODY_TYPE_DESC: 'body_type',
+  FUEL_DESC: 'fuel_type',
+  COLOR: 'color',
+  FIT_UPTO: 'fitness_upto',
+  INSURANCE_COMP: 'insurance_company',
+  INSURANCE_UPTO: 'insurance_upto',
+  MANU_MONTH_YR: 'manufacturing_date',
+  POLICY_NO: 'insurance_policy_number',
+  INS_POLICY_NO: 'insurance_policy_number',
+  PUC_UPTO: 'puc_upto',
+  PUCC_UPTO: 'puc_upto',
+  PUCC_NO: 'puc_number',
+  FINANCER_DETAILS: 'financier',
+  PERMIT_NO: 'permit_number',
+  PERMIT_ISSUE_DATE: 'permit_issue_date',
+  REGISTERED_AT: 'rto',
+  STATUS_AS_ON: 'status_as_on',
+  STATUS: 'rc_status',
+  CURRENTADD_STATENAME: 'state',
+  CURRENTADD_DISTRICTCODE: 'district_code',
+  CURRENTADD_PINCODE: 'present_address_pincode',
+  VEHICLE_CLASS: 'vehicle_class',
+  VEHICLE_CATEGORY: 'vehicle_category',
+  SEATING_CAPACITY: 'seating_capacity',
+  SLEEPER_CAPACITY: 'sleeper_capacity',
+  STANDING_CAPACITY: 'standing_capacity',
+  OWNER_SERIAL_NO: 'owner_serial',
+  UNLADEN_WEIGHT: 'unladen_weight',
+  LADEN_WEIGHT: 'gross_vehicle_weight',
+  WHEELBASE: 'wheelbase',
+  NO_OF_CYLINDERS: 'cylinders',
+  CUBIC_CAPACITY: 'cubic_capacity',
+  FUEL_NORMS: 'emission_norms',
+  TAX_UPTO: 'tax_upto',
+  BLACKLIST_STATUS: 'blacklist_status',
+  NOC_DETAILS: 'noc_details',
+  IS_COMMERCIAL: 'is_commercial'
+}
+const API3_DATE_FIELDS = [...API2_DATE_FIELDS, 'STATUS_AS_ON', 'PERMIT_ISSUE_DATE', 'TAX_UPTO']
+
+const mapApi3Fields = (raw) => {
+  const data = {}
+  for (const [field, name] of Object.entries(API3_FIELDS)) {
+    const value = raw[name]
+    // API 3 masks some values (owner name, chassis no) with '*'; a masked value is still
+    // better than 'NA' since it has no unmasked copy, so only blanks are dropped here
+    if (value === undefined || value === null || /^(|na|n\/a|null|none|-)$/i.test(String(value).trim())) continue
+    data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
+  }
+  if (typeof data.IS_COMMERCIAL === 'boolean') data.IS_COMMERCIAL = data.IS_COMMERCIAL ? 'true' : 'false'
+  if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
+    data.CUBIC_CAPACITY = Number(data.CUBIC_CAPACITY).toFixed(2)
+  }
+  // '3/2024' -> '03/2024'
+  const mfg = String(data.MANU_MONTH_YR || '').match(/^(\d{1,2})\/(\d{4})$/)
+  if (mfg) data.MANU_MONTH_YR = `${mfg[1].padStart(2, '0')}/${mfg[2]}`
+  for (const field of API3_DATE_FIELDS) if (data[field]) data[field] = toApi1Date(data[field])
+  return data
+}
+
+const fetchFromApi3 = async (vehicleNumber) => {
+  const apiKey = process.env.PARZIVAL_API_KEY
+  if (!apiKey) throw new Error('API 3 is not set up (PARZIVAL_API_KEY)')
+
+  const response = await axios.post(API3_URL, { vehicle_number: vehicleNumber }, {
+    timeout: 30000,
+    validateStatus: (status) => status < 500,
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', Accept: 'application/json' }
+  })
+
+  const raw = response.data
+  // meta.charged is 1 / 0 for a lookup that did / did not use a credit
+  const charged = raw?.meta?.charged === undefined ? null : Boolean(Number(raw.meta.charged))
+
+  if (!raw || typeof raw !== 'object' || !raw.success) {
+    // A bad or used-up key is our problem, not the vehicle number, so it is thrown like a network error
+    if (response.status === 401 || response.status === 402 || response.status === 403) {
+      throw new Error(`API 3 refused the request: ${raw?.error?.code || response.status} ${raw?.error?.message || ''}`.trim())
+    }
+    return { found: false, charged, message: raw?.error?.message || 'Vehicle details not found. Please check registration number.' }
+  }
+
+  const data = raw.data && typeof raw.data === 'object' ? mapApi3Fields(raw.data) : null
+  if (!data || !hasVehicleDetails(data)) {
+    return { found: false, charged, message: 'Vehicle details not found. Please check registration number.' }
+  }
+  if (!data.REGN_NO) data.REGN_NO = vehicleNumber
+  return { found: true, data: fillApi2Fields(data), charged }
+}
+
 /**
- * One live lookup at a vehicle info provider: API 1 unless `provider` says 'api2'.
+ * One live lookup at a vehicle info provider: API 1 unless `provider` says 'api2' or 'api3'.
  * Resolves to { found: true, data, charged } or { found: false, message, charged }, where
  * `charged` says whether the provider used one of our credits (null when it did not say).
  * Throws when the provider can't be reached (network error, timeout, 5xx).
  */
 const fetchVehicleInfo = async (vehicleNumber, { userId, provider } = {}) => {
   if (provider === 'api2') return fetchFromApi2(vehicleNumber)
+  if (provider === 'api3') return fetchFromApi3(vehicleNumber)
 
   // API 1: like API 2, VEHICLE_INFO_API1_URL is the full URL up to the vehicle number, e.g.
   // https://host/api.php?key=xxx&vno= , and the number is added at the end.

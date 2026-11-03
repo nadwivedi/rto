@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import RcApiUsageCard from '../components/RcApiUsageCard'
 import SearchSelect from '../components/SearchSelect'
+import { providerOption } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -889,8 +890,10 @@ const ApiCredits = () => {
             <p className='mb-3 text-[11px] text-gray-500'>
               API key calls · today: API 1 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Today)}</span>
               {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Today)}</span>
+              {' · '}API 3 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Today)}</span>
               {' · last 28 days: '}API 1 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Last28)}</span>
               {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Last28)}</span>
+              {' · '}API 3 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Last28)}</span>
               {' · '}App <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.appLast28)}</span>
             </p>
 
@@ -906,6 +909,7 @@ const ApiCredits = () => {
                       <th className={`${th} text-right`}>App</th>
                       <th className={`${th} text-right`} title='API key calls served by API 1'>API 1</th>
                       <th className={`${th} text-right`} title='API key calls served by API 2'>API 2</th>
+                      <th className={`${th} text-right`} title='API key calls served by API 3'>API 3</th>
                       <th className={`${th} text-right`}>Total</th>
                       <th className={`${th} text-right`} title='Users and API keys that searched that day'>Active</th>
                     </tr>
@@ -920,6 +924,7 @@ const ApiCredits = () => {
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.appCount)}</td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api1Count)}</td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api2Count)}</td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api3Count)}</td>
                         <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                           {formatNumber(day.count)}
                         </td>
@@ -962,11 +967,9 @@ const ApiCredits = () => {
                                     </Link>
                                     <div className='text-gray-400'>
                                       <span
-                                        className={`mr-1 rounded px-1 py-px text-[10px] font-bold uppercase ${
-                                          u.provider === 'api2' ? 'bg-amber-50 text-amber-700' : 'bg-indigo-50 text-indigo-600'
-                                        }`}
+                                        className={`mr-1 rounded px-1 py-px text-[10px] font-bold uppercase ${providerOption(u.provider).tag}`}
                                       >
-                                        API key · {u.provider === 'api2' ? 'API 2' : 'API 1'}
+                                        API key · {providerOption(u.provider).short}
                                       </span>
                                       {u.userName}
                                       {!u.active && <span className='ml-1 text-rose-500'>· off</span>}

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { SlidersHorizontal, X, MoreVertical, Pencil, ExternalLink, CreditCard, Ban, CheckCircle, Eraser, Trash2 } from 'lucide-react'
 import RcApiUsageCard from '../components/RcApiUsageCard'
 import SearchSelect from '../components/SearchSelect'
-import { PROVIDER_OPTIONS, providerLabel } from '../components/apiProviders'
+import { PROVIDER_OPTIONS, providerLabel, providerOption } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const FRONTEND_URL = import.meta.env.VITE_FRONTEND_URL || 'https://app.rtosarthi.com'
@@ -633,7 +633,7 @@ const Users = () => {
       features_tempRc: user.features?.tempRc ?? false,
       features_nlParticular: user.features?.nlParticular ?? false,
       features_saveVehicleRecords: user.features?.saveVehicleRecords ?? false,
-      rcProvider: user.rcProvider === 'api1' ? 'api1' : 'api2',
+      rcProvider: providerOption(user.rcProvider, 'api2').value,
       rcSearchLimit: user.rcSearchLimit ?? 0,
       rcSearchCount: user.rcSearchCount ?? 0
     })
@@ -976,7 +976,7 @@ const Users = () => {
         }`}
         title={`${user.rcSearchCount || 0} searches done`}
       >
-        RC {left}/{user.rcSearchLimit || 0} left{user.rcProvider === 'api1' && ' · API 1'}
+        RC {left}/{user.rcSearchLimit || 0} left{(user.rcProvider === 'api1' || user.rcProvider === 'api3') && ` · ${providerOption(user.rcProvider).short}`}
       </span>
     )
   }
@@ -1033,25 +1033,21 @@ const Users = () => {
           <div>
             <p className='text-sm font-semibold text-gray-800'>RC Details API for app users</p>
             <p className='text-xs text-gray-500 mt-0.5'>
-              {stats.rcApi1 || 0} on API 1 · {stats.rcApi2 ?? stats.total} on API 2. Switch every user at once when one API is down, or change one user in Edit.
+              {stats.rcApi1 || 0} on API 1 · {stats.rcApi2 ?? stats.total} on API 2 · {stats.rcApi3 || 0} on API 3. Switch every user at once when one API is down, or change one user in Edit.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>
             {PROVIDER_OPTIONS.map((p) => {
-              const name = p.value === 'api2' ? 'API 2' : 'API 1'
-              const already = p.value === 'api2' ? !stats.rcApi1 : stats.rcApi1 === stats.total
+              const counts = { api1: stats.rcApi1 || 0, api2: stats.rcApi2 ?? stats.total, api3: stats.rcApi3 || 0 }
+              const already = counts[p.value] === stats.total
               return (
                 <button
                   key={p.value}
                   onClick={() => switchAllRcProvider(p.value)}
                   disabled={switchingAllRc || already}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                    p.value === 'api2'
-                      ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                      : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
-                  }`}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${p.tag} ${p.button}`}
                 >
-                  {already ? `All on ${name}` : `Switch all to ${name}`}
+                  {already ? `All on ${p.short}` : `Switch all to ${p.short}`}
                 </button>
               )
             })}

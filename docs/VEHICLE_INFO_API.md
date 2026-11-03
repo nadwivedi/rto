@@ -72,7 +72,7 @@ Sample data. Fields are returned wherever they are available on the vehicle reco
 `usage.remaining` is how many calls you have left.
 Only successful calls use up your limit.
 
-`source` says which RTO Sarthi API served the call: `rtosarthi_api1` or `rtosarthi_api2`. The fields in `data` are the same for both. Every reply has `source` and `usage`, including errors.
+`source` says which RTO Sarthi API served the call: `rtosarthi_api1`, `rtosarthi_api2` or `rtosarthi_api3`. The fields in `data` are the same for all of them. Every reply has `source` and `usage`, including errors.
 
 ## Main fields in `data`
 

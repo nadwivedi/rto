@@ -5,7 +5,7 @@ import { Pencil, Power, Trash2 } from 'lucide-react'
 import ApiKeyDeleteModal from '../components/ApiKeyDeleteModal'
 import RowMenu from '../components/RowMenu'
 import ShareApiDocButton from '../components/ShareApiDocButton'
-import { PROVIDER_OPTIONS, providerLabel } from '../components/apiProviders'
+import { PROVIDER_OPTIONS, providerLabel, providerOption } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -236,24 +236,21 @@ const ApiKeys = () => {
           <div>
             <p className='text-sm font-semibold text-gray-800'>Vehicle data source for all keys</p>
             <p className='text-xs text-gray-500 mt-0.5'>
-              {formatNumber(totals.keys - (totals.api2 || 0))} on API 1 · {formatNumber(totals.api2 || 0)} on API 2. Switch every key at once when one API is down.
+              {formatNumber(totals.keys - (totals.api2 || 0) - (totals.api3 || 0))} on API 1 · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on API 3. Switch every key at once when one API is down.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>
             {PROVIDER_OPTIONS.map((p) => {
-              const already = p.value === 'api2' ? totals.api2 === totals.keys : !totals.api2
+              const counts = { api1: totals.keys - (totals.api2 || 0) - (totals.api3 || 0), api2: totals.api2 || 0, api3: totals.api3 || 0 }
+              const already = counts[p.value] === totals.keys
               return (
                 <button
                   key={p.value}
                   onClick={() => switchAllProvider(p.value)}
                   disabled={switchingAll || already}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
-                    p.value === 'api2'
-                      ? 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
-                      : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
-                  }`}
+                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${p.tag} ${p.button}`}
                 >
-                  {already ? `All on ${p.value === 'api2' ? 'API 2' : 'API 1'}` : `Switch all to ${p.value === 'api2' ? 'API 2' : 'API 1'}`}
+                  {already ? `All on ${p.short}` : `Switch all to ${p.short}`}
                 </button>
               )
             })}
@@ -307,9 +304,9 @@ const ApiKeys = () => {
                               Off
                             </span>
                           )}
-                          {k.provider === 'api2' && (
-                            <span className='ml-1.5 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-50 text-amber-700 border border-amber-200'>
-                              API 2
+                          {(k.provider === 'api2' || k.provider === 'api3') && (
+                            <span className={`ml-1.5 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${providerOption(k.provider).tag}`}>
+                              {providerOption(k.provider).short}
                             </span>
                           )}
                           <div className='text-gray-400'>{k.userId ? `${k.userId.name} · ${k.userId.mobile1}` : 'No user linked'}</div>

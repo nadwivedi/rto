@@ -1,7 +1,15 @@
-// Vehicle info source an API key's calls go to (backend ApiKey.provider)
+// Vehicle info sources (backend utils/vehicleInfoProvider PROVIDERS): ApiKey.provider and User.rcProvider
 export const PROVIDER_OPTIONS = [
-  { value: 'api1', label: 'API 1 (informationapi.shop)' },
-  { value: 'api2', label: 'API 2' }
+  { value: 'api1', label: 'API 1 (informationapi.shop)', short: 'API 1', tag: 'bg-indigo-50 text-indigo-700 border-indigo-200', button: 'hover:bg-indigo-100' },
+  { value: 'api2', label: 'API 2', short: 'API 2', tag: 'bg-amber-50 text-amber-700 border-amber-200', button: 'hover:bg-amber-100' },
+  { value: 'api3', label: 'API 3 (ParzivalHub)', short: 'API 3', tag: 'bg-emerald-50 text-emerald-700 border-emerald-200', button: 'hover:bg-emerald-100' }
 ]
 
-export const providerLabel = (value) => (PROVIDER_OPTIONS.find((o) => o.value === (value || 'api1')) || PROVIDER_OPTIONS[0]).label
+// `fallback` is the source used when none is saved: API 1 for keys, API 2 for users
+export const providerOption = (value, fallback = 'api1') =>
+  PROVIDER_OPTIONS.find((o) => o.value === value) || PROVIDER_OPTIONS.find((o) => o.value === fallback)
+
+export const providerLabel = (value) => providerOption(value).label
+
+// 'rtosarthi_api3' (ApiKeyCall.source) -> the API 3 option
+export const sourceOption = (source) => providerOption(String(source || '').replace(/^rtosarthi_/, ''))
