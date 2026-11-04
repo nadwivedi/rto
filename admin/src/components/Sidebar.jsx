@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
+  Bell,
   Car,
   ChevronRight,
   ClipboardCheck,
@@ -14,6 +15,10 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { ALERTS_CHANGED_EVENT } from '../pages/Alerts';
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com';
+const ALERTS_POLL_MS = 60000;
 
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -21,6 +26,7 @@ const NAV_ITEMS = [
   { to: '/api-credits', label: 'User API Sales', icon: Wallet },
   { to: '/api-keys', label: 'Vehicle API Keys', icon: KeyRound, matchPrefix: true },
   { to: '/fitness-work', label: 'Fitness Work', icon: ClipboardCheck },
+  { to: '/alerts', label: 'Alerts', icon: Bell, badge: 'alerts' },
 ];
 
 // Less used pages, tucked away behind the "More" arrow
@@ -37,6 +43,30 @@ const Sidebar = ({ isOpen, onClose }) => {
   const [showMore, setShowMore] = useState(false);
   // Keep the group open while one of its pages is showing
   const moreOpen = showMore || isOnMorePage;
+  const [alertCounts, setAlertCounts] = useState({ openCount: 0, criticalCount: 0 });
+
+  // Open alert count for the badge, checked every minute and whenever the Alerts page changes one
+  useEffect(() => {
+    if (loading || !isAuthenticated) return undefined;
+    let active = true;
+    const loadAlertCount = async () => {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/admin/alerts/count`, { credentials: 'include' });
+        const json = await response.json();
+        if (active && json.success) setAlertCounts({ openCount: json.openCount || 0, criticalCount: json.criticalCount || 0 });
+      } catch {
+        // Badge only; keep the last count
+      }
+    };
+    loadAlertCount();
+    const timer = setInterval(loadAlertCount, ALERTS_POLL_MS);
+    window.addEventListener(ALERTS_CHANGED_EVENT, loadAlertCount);
+    return () => {
+      active = false;
+      clearInterval(timer);
+      window.removeEventListener(ALERTS_CHANGED_EVENT, loadAlertCount);
+    };
+  }, [loading, isAuthenticated]);
 
   const handleLinkClick = () => {
     // Close sidebar on mobile when a link is clicked
@@ -64,6 +94,15 @@ const Sidebar = ({ isOpen, onClose }) => {
       >
         <Icon className="h-4 w-4 shrink-0" />
         <span className="truncate">{item.label}</span>
+        {item.badge === 'alerts' && alertCounts.openCount > 0 && (
+          <span
+            className={`ml-auto min-w-5 rounded-full px-1.5 py-0.5 text-center text-[11px] font-bold leading-none text-white ${
+              alertCounts.criticalCount > 0 ? 'bg-red-600' : 'bg-amber-500'
+            }`}
+          >
+            {alertCounts.openCount}
+          </span>
+        )}
       </Link>
     );
   };

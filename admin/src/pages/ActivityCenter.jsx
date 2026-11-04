@@ -73,7 +73,8 @@ const ENTITIES = {
   blog: 'Blogs',
   vehicle_registration: 'Vehicles',
   admin: 'Admin Logins',
-  server: 'Deploys'
+  server: 'Deploys',
+  alert: 'Alerts'
 }
 
 const ENTITY_SINGULAR = {
@@ -84,7 +85,8 @@ const ENTITY_SINGULAR = {
   blog: 'Blog',
   vehicle_registration: 'Vehicle',
   admin: 'Admin',
-  server: 'Server'
+  server: 'Server',
+  alert: 'Alert'
 }
 
 const ICON_PATHS = {

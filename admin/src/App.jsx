@@ -10,6 +10,7 @@ import FitnessWork from './pages/FitnessWork';
 import Blogs from './pages/Blogs';
 import VehicleRegistrations from './pages/VehicleRegistrations';
 import Export from './pages/Export';
+import Alerts from './pages/Alerts';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import ActivityShortcut from './components/ActivityShortcut';
@@ -131,6 +132,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <VehicleRegistrations />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/alerts"
+                element={
+                  <ProtectedRoute>
+                    <Alerts />
                   </ProtectedRoute>
                 }
               />

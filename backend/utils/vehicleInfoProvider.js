@@ -1,6 +1,7 @@
 const axios = require('axios')
 const ApiUsage = require('../models/ApiUsage')
 const ProviderCharge = require('../models/ProviderCharge')
+const { raiseAlert, autoResolveAlerts } = require('./adminAlerts')
 
 const VEHICLE_INFO_PROVIDER = 'vehicleInfo'
 
@@ -341,6 +342,16 @@ const mapApi3Fields = (raw) => {
 }
 
 const API3_USAGE_PROVIDER = 'parzivalhub'
+// Below this wallet balance (₹) the admin gets a "running low" alert, before lookups start failing
+const API3_LOW_BALANCE = Number(process.env.PARZIVAL_LOW_BALANCE_ALERT) || 100
+
+// A problem with our provider account (bad key, empty wallet, rate limit), not with the vehicle number
+class ProviderError extends Error {
+  constructor (message, code) {
+    super(message)
+    this.providerCode = code
+  }
+}
 
 /**
  * Every API 3 reply ends with meta: { charged, wallet_balance, quota_remaining, access_expires_at }.
@@ -366,6 +377,23 @@ const recordApi3Usage = async (meta, { vehicleNumber, userId } = {}) => {
   } catch (err) {
     console.error('Failed to record API 3 usage:', err.message)
   }
+
+  if (wallet !== undefined) {
+    if (wallet < API3_LOW_BALANCE) {
+      await raiseAlert({
+        key: 'api3:low-balance',
+        severity: 'warning',
+        source: 'api3',
+        code: 'LOW_BALANCE',
+        title: 'Parzival API (API 3) wallet running low',
+        message: `Wallet balance is ₹${wallet}${charge ? ` (₹${charge} per search)` : ''}. Add money from the ParzivalHub dashboard before searches start failing.`,
+        vehicleNumber,
+        userId
+      })
+    } else {
+      await autoResolveAlerts('api3:low-balance')
+    }
+  }
 }
 
 const fetchFromApi3 = async (vehicleNumber, { userId } = {}) => {
@@ -385,9 +413,11 @@ const fetchFromApi3 = async (vehicleNumber, { userId } = {}) => {
   const charged = raw?.meta?.charged === undefined ? null : Boolean(Number(raw.meta.charged))
 
   if (!raw || typeof raw !== 'object' || !raw.success) {
-    // A bad or used-up key is our problem, not the vehicle number, so it is thrown like a network error
-    if (response.status === 401 || response.status === 402 || response.status === 403) {
-      throw new Error(`API 3 refused the request: ${raw?.error?.code || response.status} ${raw?.error?.message || ''}`.trim())
+    // A bad key, an empty wallet or a rate limit is our problem, not the vehicle number, so it is
+    // thrown like a network error: the admin gets an alert and the user a plain "unavailable"
+    if ([401, 402, 403, 429].includes(response.status)) {
+      const code = raw?.error?.code || `HTTP_${response.status}`
+      throw new ProviderError(`API 3 refused the request: ${code} ${raw?.error?.message || ''}`.trim(), code)
     }
     return { found: false, charged, message: raw?.error?.message || 'Vehicle details not found. Please check registration number.' }
   }
@@ -400,13 +430,59 @@ const fetchFromApi3 = async (vehicleNumber, { userId } = {}) => {
   return { found: true, data: toApi1Reply(data), charged }
 }
 
+// What a user or API key customer sees when a provider fails. The real reason goes to the admin alerts.
+const UNAVAILABLE_MESSAGE = 'Vehicle information service is temporarily unavailable. Please try again after some time.'
+
+const ALERT_TITLES = {
+  INSUFFICIENT_BALANCE: (name) => `${name}: wallet balance too low`,
+  NOT_SET_UP: (name) => `${name} is not set up`
+}
+
+const alertCodeOf = (err) => {
+  if (err.providerCode) return String(err.providerCode)
+  if (/is not set up/.test(err.message)) return 'NOT_SET_UP'
+  if (err.response?.status) return `HTTP_${err.response.status}`
+  return err.code || 'NO_RESPONSE'
+}
+
 /**
  * One live lookup at a vehicle info provider: API 1 unless `provider` says 'api2' or 'api3'.
  * Resolves to { found: true, data, charged } or { found: false, message, charged }, where
  * `charged` says whether the provider used one of our credits (null when it did not say).
- * Throws when the provider can't be reached (network error, timeout, 5xx).
+ * When the provider fails (down, timeout, 5xx, bad key, empty wallet) an admin alert is raised
+ * and an error with `providerUnavailable: true` and a message safe to show users is thrown;
+ * the provider's own reason is in `error.detail`.
  */
-const fetchVehicleInfo = async (vehicleNumber, { userId, provider } = {}) => {
+const fetchVehicleInfo = async (vehicleNumber, { userId, provider, via } = {}) => {
+  const source = PROVIDERS[provider] ? provider : 'api1'
+  try {
+    const result = await fetchFromProvider(vehicleNumber, { userId, provider: source })
+    // The provider answered, so any earlier "it failed" alert for it is over
+    await autoResolveAlerts(`${source}:error:`)
+    return result
+  } catch (err) {
+    const code = alertCodeOf(err)
+    const name = PROVIDERS[source]
+    console.error(`${name} lookup failed:`, err?.response?.data || err.message)
+    await raiseAlert({
+      key: `${source}:error:${code}`,
+      severity: err.providerCode || code === 'NOT_SET_UP' ? 'critical' : 'warning',
+      source,
+      code,
+      title: (ALERT_TITLES[code] || ((n) => (err.providerCode ? `${n} refused the request (${code})` : `${n} is not responding`)))(name),
+      message: String(err.message || '').slice(0, 500),
+      vehicleNumber,
+      userId,
+      via
+    })
+    const unavailable = new Error(UNAVAILABLE_MESSAGE)
+    unavailable.providerUnavailable = true
+    unavailable.detail = err.message
+    throw unavailable
+  }
+}
+
+const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
   if (provider === 'api2') return fetchFromApi2(vehicleNumber)
   if (provider === 'api3') return fetchFromApi3(vehicleNumber, { userId })
 

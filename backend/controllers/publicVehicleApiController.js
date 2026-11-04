@@ -84,7 +84,7 @@ exports.lookupVehicle = async (req, res) => {
   }
 
   try {
-    const result = await fetchVehicleInfo(vehicleNumber, { userId: apiKey.userId, provider: apiKey.provider })
+    const result = await fetchVehicleInfo(vehicleNumber, { userId: apiKey.userId, provider: apiKey.provider, via: `API key: ${apiKey.name || apiKey._id}` })
     if (!result.found) {
       await refund()
       return reply(404, { success: false, message: result.message }, { vehicleNumber, charged: false })
@@ -109,11 +109,11 @@ exports.lookupVehicle = async (req, res) => {
       }
     )
   } catch (error) {
-    console.error('API key vehicle lookup failed:', error?.response?.data || error.message)
+    console.error('API key vehicle lookup failed:', error.detail || error.message)
     await refund()
     return reply(502, { success: false, message: 'Vehicle information service is not responding. Please try again.' }, {
       vehicleNumber,
-      message: `Provider error: ${error.message}`.slice(0, 300)
+      message: `Provider error: ${error.detail || error.message}`.slice(0, 300)
     })
   }
 }

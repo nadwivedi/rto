@@ -77,7 +77,7 @@ const lookupVehicle = async (req, res) => {
       })
     }
 
-    const result = await fetchVehicleInfo(cleanVno, { userId: targetUserId, provider: PROVIDERS[userDoc.rcProvider] ? userDoc.rcProvider : 'api2' })
+    const result = await fetchVehicleInfo(cleanVno, { userId: targetUserId, provider: PROVIDERS[userDoc.rcProvider] ? userDoc.rcProvider : 'api2', via: 'User search' })
     if (!result.found) {
       return res.status(404).json({ success: false, message: result.message })
     }
@@ -147,6 +147,11 @@ const lookupVehicle = async (req, res) => {
       } : null
     })
   } catch (error) {
+    // Provider trouble (empty wallet, bad key, API down) is for the admin, who gets an alert;
+    // the user only hears that the service is unavailable
+    if (error.providerUnavailable) {
+      return res.status(503).json({ success: false, message: error.message })
+    }
     console.error('Error fetching vehicle details:', error?.response?.data || error.message)
     const status = error.response ? error.response.status : 500
     const msg =
