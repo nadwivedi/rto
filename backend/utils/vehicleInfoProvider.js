@@ -160,7 +160,7 @@ const API2_FIELDS = {
 }
 const API2_DATE_FIELDS = [
   'REGN_DT', 'REGN_UPTO', 'FIT_UPTO', 'INSURANCE_UPTO', 'PUC_UPTO', 'PUCC_UPTO',
-  'PERMIT_ISSUE_DATE', 'PERMIT_VALID_FROM', 'PERMIT_VALID_UPTO'
+  'PERMIT_ISSUE_DATE', 'PERMIT_VALID_FROM', 'PERMIT_VALID_UPTO', 'TAX_UPTO'
 ]
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -321,7 +321,7 @@ const API3_FIELDS = {
   NOC_DETAILS: 'noc_details',
   IS_COMMERCIAL: 'is_commercial'
 }
-const API3_DATE_FIELDS = [...API2_DATE_FIELDS, 'STATUS_AS_ON', 'TAX_UPTO']
+const API3_DATE_FIELDS = [...API2_DATE_FIELDS, 'STATUS_AS_ON']
 
 const mapApi3Fields = (raw) => {
   const data = {}
