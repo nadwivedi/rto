@@ -90,7 +90,8 @@ const cleanVehicleNumber = (raw) => String(raw || '').replace(/[\s-]/g, '').toUp
 const PROVIDERS = {
   api1: 'API 1 – Nikhil API',
   api2: 'API 2',
-  api3: 'API 3 – Parzival API'
+  api3: 'API 3 – Parzival API',
+  api4: 'API 4 – PeriOne API'
 }
 
 // The fields every reply has, in API 1's order. API 2 / API 3 replies are turned into exactly
@@ -430,6 +431,131 @@ const fetchFromApi3 = async (vehicleNumber, { userId } = {}) => {
   return { found: true, data: toApi1Reply(data), charged }
 }
 
+// API 4 (PeriOne VAHAN): POST https://api.perione.in/vahan/vehicleno?email=<registered email> with
+// client_id / client_secret headers and { vehiclenumber }. Transport (commercial) vehicles only.
+// It replies { code: '200', message: 'Success', response: [{ response: { rcRegnNo, ... }, responseStatus: 'SUCCESS' }] }
+// and sends no owner name, chassis, engine or mobile for transport vehicles, so those come back as NA.
+const API4_URL = 'https://api.perione.in/vahan/vehicleno'
+const API4_NOT_FOUND = 'Vehicle details not found. API 4 (PeriOne) only has transport vehicles; please check the registration number.'
+
+// API 1 field <- PeriOne field (VAHAN's rc* names, any case). The first 26 are in the replies seen
+// so far; the rest are the standard VAHAN names, picked up if PeriOne ever sends them.
+const API4_FIELDS = {
+  REGN_NO: 'rcRegnNo',
+  REGN_DT: 'rcRegnDt',
+  MAKER_DESC: 'rcMakerDesc',
+  MAKER_MODEL: 'rcMakerModel',
+  BODY_TYPE_DESC: 'rcBodyTypeDesc',
+  FUEL_DESC: 'rcFuelDesc',
+  COLOR: 'rcColor',
+  FIT_UPTO: 'rcFitUpto',
+  INSURANCE_COMP: 'rcInsuranceComp',
+  INSURANCE_UPTO: 'rcInsuranceUpto',
+  POLICY_NO: 'rcInsurancePolicyNo',
+  INS_POLICY_NO: 'rcInsurancePolicyNo',
+  MANU_MONTH_YR: 'rcManuMonthYr',
+  FINANCER_DETAILS: 'rcFinancer',
+  STATUS: 'rcStatus',
+  UNLADEN_WEIGHT: 'rcUnldWt',
+  SEATING_CAPACITY: 'rcSeatCap',
+  PRESENT_ADDRESS: 'rcPresentAddress',
+  PERMANENT_ADDRESS: 'rcPermanentAddress',
+  TAX_UPTO: 'rcTaxUpto',
+  PUC_UPTO: 'rcPuccUpto',
+  PUCC_UPTO: 'rcPuccUpto',
+  REGISTERED_AT: 'rcRegisteredAt',
+  VEHICLE_CLASS: 'rcVhClassDesc',
+  NO_OF_CYLINDERS: 'rcNoCyl',
+  WHEELBASE: 'rcWheelbase',
+  REGN_UPTO: 'rcRegnUpto',
+  OWNER_NAME: 'rcOwnerName',
+  F_NAME: 'rcFName',
+  MOBILE_NO: 'rcMobileNo',
+  CHASI_NO: 'rcChasiNo',
+  ENG_NO: 'rcEngNo',
+  PUCC_NO: 'rcPuccNo',
+  LADEN_WEIGHT: 'rcGvw',
+  CUBIC_CAPACITY: 'rcCubicCap',
+  FUEL_NORMS: 'rcNormsDesc',
+  SLEEPER_CAPACITY: 'rcSleeperCap',
+  STANDING_CAPACITY: 'rcStandCap',
+  OWNER_SERIAL_NO: 'rcOwnerSr',
+  STATUS_AS_ON: 'rcStatusAsOn',
+  VEHICLE_CATEGORY: 'rcVchCatg',
+  BLACKLIST_STATUS: 'rcBlacklistStatus',
+  NOC_DETAILS: 'rcNocDetails',
+  PERMIT_NO: 'rcPermitNo',
+  PERMIT_ISSUE_DATE: 'rcPermitIssueDt',
+  PERMIT_TYPE: 'rcPermitType',
+  PERMIT_VALID_FROM: 'rcPermitValidFrom',
+  PERMIT_VALID_UPTO: 'rcPermitValidUpto',
+  RC_NP_NO: 'rcNpNo'
+}
+
+const mapApi4Fields = (raw) => {
+  const byName = new Map(Object.entries(raw).map(([k, v]) => [k.toLowerCase(), v]))
+  const data = {}
+  for (const [field, name] of Object.entries(API4_FIELDS)) {
+    const value = byName.get(name.toLowerCase())
+    if (!isReal(value)) continue
+    data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
+  }
+  // rcVhType: T = transport, N = non-transport
+  const type = String(byName.get('rcvhtype') || '').trim().toUpperCase()
+  if (type === 'T' || type === 'N') data.IS_COMMERCIAL = type === 'T' ? 'true' : 'false'
+  const state = String(data.REGN_NO || '').match(/^([A-Z]{2})\d/i)
+  if (state) data.STATE_CD = state[1].toUpperCase()
+  // '5/2016' -> '05/2016'
+  const mfg = String(data.MANU_MONTH_YR || '').match(/^(\d{1,2})\/(\d{4})$/)
+  if (mfg) data.MANU_MONTH_YR = `${mfg[1].padStart(2, '0')}/${mfg[2]}`
+  if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
+    data.CUBIC_CAPACITY = Number(data.CUBIC_CAPACITY).toFixed(2)
+  }
+  for (const field of API3_DATE_FIELDS) if (data[field]) data[field] = toApi1Date(data[field])
+  return data
+}
+
+// Words in a PeriOne error that mean our account or setup is the problem, not the vehicle number
+const API4_ACCOUNT_ERROR = /client|secret|email|unauthori[sz]ed|forbidden|balance|wallet|credit|recharge|limit|plan|expired|inactive|blocked/i
+
+const fetchFromApi4 = async (vehicleNumber) => {
+  const { PERIONE_CLIENT_ID, PERIONE_CLIENT_SECRET, PERIONE_EMAIL } = process.env
+  if (!PERIONE_CLIENT_ID || !PERIONE_CLIENT_SECRET || !PERIONE_EMAIL) {
+    throw new Error('API 4 is not set up (PERIONE_CLIENT_ID, PERIONE_CLIENT_SECRET, PERIONE_EMAIL)')
+  }
+
+  const response = await axios.post(`${API4_URL}?email=${encodeURIComponent(PERIONE_EMAIL)}`, { vehiclenumber: vehicleNumber }, {
+    timeout: 30000,
+    validateStatus: (status) => status < 500,
+    headers: {
+      client_id: PERIONE_CLIENT_ID,
+      client_secret: PERIONE_CLIENT_SECRET,
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    }
+  })
+
+  const raw = response.data && typeof response.data === 'object' ? response.data : null
+  const entry = Array.isArray(raw?.response) ? raw.response[0] : null
+  const rc = entry?.response && typeof entry.response === 'object' ? entry.response : null
+
+  if (response.status >= 400 || !rc || !/success/i.test(String(entry?.responseStatus || ''))) {
+    // An error about the key, email or balance is ours to fix: thrown so the admin gets an alert
+    const reason = String(entry?.message || raw?.message || '').trim()
+    const status = Number(raw?.status || raw?.code) || response.status
+    const refused = [401, 402, 403, 429]
+    if (refused.includes(response.status) || refused.includes(status) || (status === 400 && API4_ACCOUNT_ERROR.test(reason))) {
+      throw new ProviderError(`API 4 refused the request: ${status} ${reason}`.trim(), `HTTP_${status}`)
+    }
+    return { found: false, charged: null, message: API4_NOT_FOUND }
+  }
+
+  const data = mapApi4Fields(rc)
+  if (!hasVehicleDetails(data)) return { found: false, charged: null, message: API4_NOT_FOUND }
+  if (!data.REGN_NO) data.REGN_NO = vehicleNumber
+  return { found: true, data: toApi1Reply(data), charged: null }
+}
+
 // What a user or API key customer sees when a provider fails. The real reason goes to the admin alerts.
 const UNAVAILABLE_MESSAGE = 'Vehicle information service is temporarily unavailable. Please try again after some time.'
 
@@ -446,7 +572,7 @@ const alertCodeOf = (err) => {
 }
 
 /**
- * One live lookup at a vehicle info provider: API 1 unless `provider` says 'api2' or 'api3'.
+ * One live lookup at a vehicle info provider: API 1 unless `provider` says 'api2', 'api3' or 'api4'.
  * Resolves to { found: true, data, charged } or { found: false, message, charged }, where
  * `charged` says whether the provider used one of our credits (null when it did not say).
  * When the provider fails (down, timeout, 5xx, bad key, empty wallet) an admin alert is raised
@@ -485,6 +611,7 @@ const fetchVehicleInfo = async (vehicleNumber, { userId, provider, via } = {}) =
 const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
   if (provider === 'api2') return fetchFromApi2(vehicleNumber)
   if (provider === 'api3') return fetchFromApi3(vehicleNumber, { userId })
+  if (provider === 'api4') return fetchFromApi4(vehicleNumber)
 
   // API 1: like API 2, VEHICLE_INFO_API1_URL is the full URL up to the vehicle number, e.g.
   // https://host/api.php?key=xxx&vno= , and the number is added at the end.
