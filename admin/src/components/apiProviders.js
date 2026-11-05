@@ -6,7 +6,9 @@ export const PROVIDER_OPTIONS = [
   // Transport (commercial) vehicles only; no owner name, chassis, engine or mobile
   { value: 'api4', label: 'API 4 – PeriOne API (transport only)', short: 'PeriOne API', tag: 'bg-sky-50 text-sky-700 border-sky-200', button: 'hover:bg-sky-100' },
   // Both at once: API 2's full record with API 4's latest insurance / PUC / tax / fitness (API 4 has transport vehicles only)
-  { value: 'api24', label: 'API 2 + API 4 – details + latest status', short: 'API 2 + 4', tag: 'bg-violet-50 text-violet-700 border-violet-200', button: 'hover:bg-violet-100' }
+  { value: 'api24', label: 'API 2 + API 4 – details + latest status', short: 'API 2 + 4', tag: 'bg-violet-50 text-violet-700 border-violet-200', button: 'hover:bg-violet-100' },
+  // Both at once: everything from API 3, only the mobile number from API 2
+  { value: 'api32', label: 'API 3 + API 2 – API 3 details + API 2 mobile', short: 'API 3 + 2', tag: 'bg-teal-50 text-teal-700 border-teal-200', button: 'hover:bg-teal-100' }
 ]
 
 // `fallback` is the source used when none is saved: API 1 for keys, API 2 for users

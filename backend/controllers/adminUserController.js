@@ -101,7 +101,7 @@ exports.setAllRcProvider = async (req, res) => {
   try {
     const { provider } = req.body || {}
     if (!PROVIDERS[provider]) {
-      return res.status(400).json({ success: false, message: 'Please choose API 1, API 2, API 3, API 4 or API 2 + API 4' })
+      return res.status(400).json({ success: false, message: 'Please choose one of the vehicle info APIs' })
     }
 
     // Users saved before the rcProvider field existed use API 2
@@ -617,7 +617,7 @@ exports.updateUser = async (req, res) => {
       if (!PROVIDERS[rcProvider]) {
         return res.status(400).json({
           success: false,
-          message: 'Please choose API 1, API 2, API 3, API 4 or API 2 + API 4'
+          message: 'Please choose one of the vehicle info APIs'
         })
       }
       user.rcProvider = rcProvider
@@ -879,6 +879,7 @@ exports.getUserStatistics = async (req, res) => {
     const rcApi3Users = await User.countDocuments({ rcProvider: 'api3' })
     const rcApi4Users = await User.countDocuments({ rcProvider: 'api4' })
     const rcApi24Users = await User.countDocuments({ rcProvider: 'api24' })
+    const rcApi32Users = await User.countDocuments({ rcProvider: 'api32' })
     // Plan fee (lifetime fee or yearly price) against the money received
     const [fees] = await User.aggregate([
       {
@@ -908,10 +909,11 @@ exports.getUserStatistics = async (req, res) => {
         active: activeUsers,
         inactive: inactiveUsers,
         rcApi1: rcApi1Users,
-        rcApi2: totalUsers - rcApi1Users - rcApi3Users - rcApi4Users - rcApi24Users,
+        rcApi2: totalUsers - rcApi1Users - rcApi3Users - rcApi4Users - rcApi24Users - rcApi32Users,
         rcApi3: rcApi3Users,
         rcApi4: rcApi4Users,
         rcApi24: rcApi24Users,
+        rcApi32: rcApi32Users,
         fees: {
           totalFee: fees?.totalFee || 0,
           paidAmount: fees?.paidAmount || 0,

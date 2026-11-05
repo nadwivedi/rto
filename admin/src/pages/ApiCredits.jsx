@@ -893,11 +893,13 @@ const ApiCredits = () => {
               {' · '}Parzival API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Today)}</span>
               {' · '}PeriOne API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api4Today)}</span>
               {' · '}API 2 + 4 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api24Today)}</span>
+              {' · '}API 3 + 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api32Today)}</span>
               {' · last 28 days: '}Nikhil API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Last28)}</span>
               {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Last28)}</span>
               {' · '}Parzival API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Last28)}</span>
               {' · '}PeriOne API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api4Last28)}</span>
               {' · '}API 2 + 4 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api24Last28)}</span>
+              {' · '}API 3 + 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api32Last28)}</span>
               {' · '}App <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.appLast28)}</span>
             </p>
 
@@ -916,6 +918,7 @@ const ApiCredits = () => {
                       <th className={`${th} text-right`} title='API key calls served by API 3 – Parzival API'>Parzival</th>
                       <th className={`${th} text-right`} title='API key calls served by API 4 – PeriOne API'>PeriOne</th>
                       <th className={`${th} text-right`} title='API key calls served by API 2 + API 4 together'>API 2+4</th>
+                      <th className={`${th} text-right`} title='API key calls served by API 3 + API 2 together'>API 3+2</th>
                       <th className={`${th} text-right`}>Total</th>
                       <th className={`${th} text-right`} title='Users and API keys that searched that day'>Active</th>
                     </tr>
@@ -933,6 +936,7 @@ const ApiCredits = () => {
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api3Count)}</td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api4Count)}</td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api24Count)}</td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api32Count)}</td>
                         <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                           {formatNumber(day.count)}
                         </td>

@@ -69,7 +69,8 @@ number as JSON, in seconds.
    ▸ Only successful calls use your limit
    ▸ source = which RTO Sarthi API served
      the call (rtosarthi_api1, _api2,
-     _api3, _api4 or _api24). The data fields are
+     _api3, _api4, _api24 or _api32). The data
+     fields are
      the same for all.
 
 

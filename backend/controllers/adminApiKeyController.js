@@ -126,9 +126,10 @@ exports.getApiKeys = async (req, res) => {
         api2: t.api2 + (k.provider === 'api2' ? 1 : 0),
         api3: t.api3 + (k.provider === 'api3' ? 1 : 0),
         api4: t.api4 + (k.provider === 'api4' ? 1 : 0),
-        api24: t.api24 + (k.provider === 'api24' ? 1 : 0)
+        api24: t.api24 + (k.provider === 'api24' ? 1 : 0),
+        api32: t.api32 + (k.provider === 'api32' ? 1 : 0)
       }),
-      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0, api3: 0, api4: 0, api24: 0 }
+      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0, api3: 0, api4: 0, api24: 0, api32: 0 }
     )
 
     res.json({ success: true, data, totals })
@@ -145,7 +146,7 @@ exports.createApiKey = async (req, res) => {
     if (mobile.error) return badRequest(res, mobile.error)
     const email = readEmail(contactEmail)
     if (email.error) return badRequest(res, email.error)
-    if (provider !== undefined && !PROVIDERS[provider]) return badRequest(res, 'Please choose API 1, API 2, API 3, API 4 or API 2 + API 4')
+    if (provider !== undefined && !PROVIDERS[provider]) return badRequest(res, 'Please choose one of the vehicle info APIs')
 
     const link = await readUserId(userId)
     if (link.error) return badRequest(res, link.error)
@@ -179,7 +180,7 @@ exports.createApiKey = async (req, res) => {
 exports.setAllProvider = async (req, res) => {
   try {
     const { provider } = req.body || {}
-    if (!PROVIDERS[provider]) return badRequest(res, 'Please choose API 1, API 2, API 3, API 4 or API 2 + API 4')
+    if (!PROVIDERS[provider]) return badRequest(res, 'Please choose one of the vehicle info APIs')
 
     // Keys saved before the provider field existed use API 1
     const filter = provider === 'api1' ? { provider: { $exists: true, $ne: 'api1' } } : { provider: { $ne: provider } }
@@ -232,7 +233,7 @@ exports.updateApiKey = async (req, res) => {
       apiKey.userId = link.userId || undefined
     }
     if (provider !== undefined) {
-      if (!PROVIDERS[provider]) return badRequest(res, 'Please choose API 1, API 2, API 3, API 4 or API 2 + API 4')
+      if (!PROVIDERS[provider]) return badRequest(res, 'Please choose one of the vehicle info APIs')
       const current = apiKey.provider || 'api1'
       if (current !== provider) changes.push({ field: 'Vehicle data source', from: PROVIDERS[current], to: PROVIDERS[provider] })
       apiKey.provider = provider
