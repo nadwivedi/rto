@@ -631,8 +631,8 @@ const lookupOne = async (source, vehicleNumber, { userId, via } = {}) => {
 
 // Combined sources: two providers asked at once, one reply. `base` gives the record; each `groups`
 // entry is taken whole from `extra` when `extra` has the group's first field; with `fillGaps`, any
-// other field `base` left empty is filled from `extra`. When one of the two finds nothing or fails,
-// the other one's reply is sent, and each raises its own admin alerts.
+// other field `base` left empty is filled from `extra`. When one of the two finds nothing, fails or
+// (for `extra`) is too slow, the other one's reply is sent as it is, and each raises its own admin alerts.
 const COMBINED = {
   // API 2 has the full record (owner, mobile, chassis, engine, address) but its insurance / PUC /
   // tax / fitness dates are often old; API 4 (PeriOne) has them up to date, for transport vehicles
@@ -647,7 +647,9 @@ const COMBINED = {
       ['FIT_UPTO'],
       ['STATUS']
     ],
-    fillGaps: true
+    fillGaps: true,
+    // Private vehicles are not on API 4, so API 2's record is not held back long for it
+    extraWaitMs: Number(process.env.COMBINED_EXTRA_WAIT_MS) || 8000
   },
   // API 3 has every detail except the mobile number, which comes from API 2
   api32: {
@@ -659,11 +661,24 @@ const COMBINED = {
 }
 const filled = (value) => value !== undefined && value !== null && value !== '' && value !== 'NA'
 
-const fetchCombined = async (vehicleNumber, { base, extra, groups, fillGaps }, { userId, via } = {}) => {
-  const [first, second] = await Promise.allSettled([
-    lookupOne(base, vehicleNumber, { userId, via }),
-    lookupOne(extra, vehicleNumber, { userId, via })
-  ])
+const settle = (promise) => promise.then(
+  (value) => ({ status: 'fulfilled', value }),
+  (reason) => ({ status: 'rejected', reason })
+)
+
+// With `extraWaitMs`, once `base` has the vehicle `extra` gets at most that long more (ms), so a slow
+// extra never holds the reply back: the user then gets `base`'s record alone
+const fetchCombined = async (vehicleNumber, { base, extra, groups, fillGaps, extraWaitMs }, { userId, via } = {}) => {
+  const asked = settle(lookupOne(extra, vehicleNumber, { userId, via }))
+  const first = await settle(lookupOne(base, vehicleNumber, { userId, via }))
+  let timer
+  const second = extraWaitMs && first.status === 'fulfilled' && first.value.found
+    ? await Promise.race([
+      asked,
+      new Promise((resolve) => { timer = setTimeout(() => resolve({ status: 'fulfilled', value: { found: false } }), extraWaitMs) })
+    ])
+    : await asked
+  clearTimeout(timer)
   const main = first.status === 'fulfilled' && first.value.found ? first.value : null
   const more = second.status === 'fulfilled' && second.value.found ? second.value : null
 
