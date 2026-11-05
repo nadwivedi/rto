@@ -236,12 +236,12 @@ const ApiKeys = () => {
           <div>
             <p className='text-sm font-semibold text-gray-800'>Vehicle data source for all keys</p>
             <p className='text-xs text-gray-500 mt-0.5'>
-              {formatNumber(totals.keys - (totals.api2 || 0) - (totals.api3 || 0) - (totals.api4 || 0))} on Nikhil API · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on Parzival API · {formatNumber(totals.api4 || 0)} on PeriOne API (transport only). Switch every key at once when one API is down.
+              {formatNumber(totals.keys - (totals.api2 || 0) - (totals.api3 || 0) - (totals.api4 || 0) - (totals.api24 || 0))} on Nikhil API · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on Parzival API · {formatNumber(totals.api4 || 0)} on PeriOne API (transport only) · {formatNumber(totals.api24 || 0)} on API 2 + 4. Switch every key at once when one API is down.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>
             {PROVIDER_OPTIONS.map((p) => {
-              const counts = { api1: totals.keys - (totals.api2 || 0) - (totals.api3 || 0) - (totals.api4 || 0), api2: totals.api2 || 0, api3: totals.api3 || 0, api4: totals.api4 || 0 }
+              const counts = { api1: totals.keys - (totals.api2 || 0) - (totals.api3 || 0) - (totals.api4 || 0) - (totals.api24 || 0), api2: totals.api2 || 0, api3: totals.api3 || 0, api4: totals.api4 || 0, api24: totals.api24 || 0 }
               const already = counts[p.value] === totals.keys
               return (
                 <button
@@ -304,7 +304,7 @@ const ApiKeys = () => {
                               Off
                             </span>
                           )}
-                          {(k.provider === 'api2' || k.provider === 'api3' || k.provider === 'api4') && (
+                          {k.provider && k.provider !== 'api1' && (
                             <span className={`ml-1.5 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${providerOption(k.provider).tag}`}>
                               {providerOption(k.provider).short}
                             </span>

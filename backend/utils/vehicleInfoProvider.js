@@ -91,7 +91,9 @@ const PROVIDERS = {
   api1: 'API 1 – Nikhil API',
   api2: 'API 2',
   api3: 'API 3 – Parzival API',
-  api4: 'API 4 – PeriOne API'
+  api4: 'API 4 – PeriOne API',
+  // Both at once: API 2 for the vehicle details, API 4 for the latest insurance / PUC / tax / fitness
+  api24: 'API 2 + API 4 – details + latest status'
 }
 
 // The fields every reply has, in API 1's order. API 2 / API 3 replies are turned into exactly
@@ -592,7 +594,12 @@ const alertCodeOf = (err) => {
  * the provider's own reason is in `error.detail`.
  */
 const fetchVehicleInfo = async (vehicleNumber, { userId, provider, via } = {}) => {
-  const source = PROVIDERS[provider] ? provider : 'api1'
+  if (provider === 'api24') return fetchCombined(vehicleNumber, { userId, via })
+  return lookupOne(PROVIDERS[provider] ? provider : 'api1', vehicleNumber, { userId, via })
+}
+
+// One provider, with its own admin alerts (see fetchVehicleInfo)
+const lookupOne = async (source, vehicleNumber, { userId, via } = {}) => {
   try {
     const result = await fetchFromProvider(vehicleNumber, { userId, provider: source })
     // The provider answered, so any earlier "it failed" alert for it is over
@@ -618,6 +625,44 @@ const fetchVehicleInfo = async (vehicleNumber, { userId, provider, via } = {}) =
     unavailable.detail = err.message
     throw unavailable
   }
+}
+
+// API 2 + API 4. API 2 has the full record (owner, mobile, chassis, engine, address) but its
+// insurance / PUC / tax / fitness dates are often old; API 4 (PeriOne) has them up to date but only
+// for transport vehicles. Each group below is taken whole from API 4 when API 4 has its date, so an
+// old policy number is never shown next to a new expiry date. Any other field API 2 left empty is
+// filled from API 4. When one of the two finds nothing or fails, the other one's reply is sent.
+const API4_STATUS_GROUPS = [
+  ['INSURANCE_UPTO', 'INSURANCE_COMP', 'POLICY_NO', 'INS_POLICY_NO'],
+  ['PUCC_UPTO', 'PUC_UPTO', 'PUCC_NO'],
+  ['TAX_UPTO'],
+  ['FIT_UPTO'],
+  ['STATUS']
+]
+const filled = (value) => value !== undefined && value !== null && value !== '' && value !== 'NA'
+
+const fetchCombined = async (vehicleNumber, { userId, via } = {}) => {
+  const [details, status] = await Promise.allSettled([
+    lookupOne('api2', vehicleNumber, { userId, via }),
+    lookupOne('api4', vehicleNumber, { userId, via })
+  ])
+  const base = details.status === 'fulfilled' && details.value.found ? details.value.data : null
+  const latest = status.status === 'fulfilled' && status.value.found ? status.value.data : null
+
+  if (!base && !latest) {
+    // Nothing found: when one of them could not be asked, say the service is unavailable
+    const failed = [details, status].find((r) => r.status === 'rejected')
+    if (failed) throw failed.reason
+    return { found: false, charged: null, message: 'Vehicle details not found. Please check registration number.' }
+  }
+  if (!base || !latest) return { found: true, data: base || latest, charged: null }
+
+  const data = { ...base }
+  for (const group of API4_STATUS_GROUPS) {
+    if (filled(latest[group[0]])) for (const field of group) data[field] = latest[field]
+  }
+  for (const field of API1_FIELDS) if (!filled(data[field]) && filled(latest[field])) data[field] = latest[field]
+  return { found: true, data, charged: null }
 }
 
 const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
