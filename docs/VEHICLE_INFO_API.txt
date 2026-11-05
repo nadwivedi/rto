@@ -104,6 +104,11 @@ number as JSON, in seconds.
                         Permit issued by
    BLACKLIST_STATUS ... Blacklist
    NOC_DETAILS ........ NOC
+   UNLADEN_WEIGHT ..... Unladen wt (kg)
+   LADEN_WEIGHT ....... Laden wt (kg)
+   IS_COMMERCIAL ...... TRUE = transport
+   PURCHASE_DT ........ Purchase date
+   SALE_AMT ........... Sale amount (Rs)
 
 
 ━━ 5. ERRORS ━━━━━━━━━━━━━━━━━━━━━━━━━━

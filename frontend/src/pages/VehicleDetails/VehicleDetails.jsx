@@ -123,6 +123,14 @@ const toolPrimary = `${toolBtn} bg-gradient-to-r from-blue-700 to-blue-600 text-
 
 const chip = 'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold ring-1 ring-inset'
 
+// A field the API actually sent (not empty, not its 'NA' placeholder)
+const has = (value) => value !== undefined && value !== null && !/^(|na|n\/a)$/i.test(String(value).trim())
+// '2739846' -> '₹27,39,846'
+const formatRupees = (value) => {
+  const n = Number(value)
+  return Number.isFinite(n) ? `₹${n.toLocaleString('en-IN', { maximumFractionDigits: 2 })}` : String(value)
+}
+
 const VehicleDetails = () => {
   const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -839,7 +847,7 @@ const VehicleDetails = () => {
                       </span>
                     )}
                     {v.COLOR && <span className={`${chip} bg-slate-100 text-slate-600 ring-slate-200`}>{v.COLOR}</span>}
-                    <span className={`${chip} bg-slate-100 text-slate-600 ring-slate-200`}>{v.IS_COMMERCIAL === 'TRUE' ? 'Commercial' : 'Private'}</span>
+                    <span className={`${chip} bg-slate-100 text-slate-600 ring-slate-200`}>{String(v.IS_COMMERCIAL).toUpperCase() === 'TRUE' ? 'Commercial' : 'Private'}</span>
                   </div>
                 </div>
 
@@ -937,6 +945,8 @@ const VehicleDetails = () => {
                 <Row label="Valid upto" value={v.REGN_UPTO} />
                 <Row label="State / RTO code" value={`${v.STATE_CD || 'NA'} - ${v.RTO_CD || 'NA'}`} />
                 <Row label="Category" value={`${v.VEHICLE_CATEGORY || 'NA'} (${v.VEHICLE_CLASS || 'NA'})`} />
+                {has(v.PURCHASE_DT) && <Row label="Purchase date" value={v.PURCHASE_DT} />}
+                {has(v.SALE_AMT) && <Row label="Sale amount" value={formatRupees(v.SALE_AMT)} />}
                 <Row label="Record as on" value={v.STATUS_AS_ON || 'Current'} valueClass="text-slate-500" />
               </Panel>
 
@@ -947,6 +957,13 @@ const VehicleDetails = () => {
                 <Row label="Fuel norms" value={v.FUEL_NORMS} />
                 <Row label="Mfg month / year" value={v.MANU_MONTH_YR} />
                 <Row label="Seats / unladen wt" value={`${v.SEATING_CAPACITY || '2'} seats · ${v.UNLADEN_WEIGHT || 'NA'} kg`} />
+                {has(v.LADEN_WEIGHT) && <Row label="Laden wt (GVW)" value={`${v.LADEN_WEIGHT} kg`} />}
+                {(has(v.NO_OF_CYLINDERS) || has(v.WHEELBASE)) && (
+                  <Row
+                    label="Cylinders / wheelbase"
+                    value={`${has(v.NO_OF_CYLINDERS) ? v.NO_OF_CYLINDERS : 'NA'} · ${has(v.WHEELBASE) ? `${v.WHEELBASE} mm` : 'NA'}`}
+                  />
+                )}
               </Panel>
 
               <Panel

@@ -96,7 +96,8 @@ const PROVIDERS = {
 
 // The fields every reply has, in API 1's order. API 2 / API 3 replies are turned into exactly
 // these fields and API 1 replies get any missing one as 'NA', so a customer gets the same JSON
-// from all 3. The permit fields after PERMIT_ISSUE_DATE are filled where the API sends them.
+// from all of them. The permit fields after PERMIT_ISSUE_DATE and PURCHASE_DT / SALE_AMT are
+// filled where the API sends them. IS_COMMERCIAL is 'TRUE' / 'FALSE', as API 1 sends it.
 const API1_FIELDS = [
   'REGN_NO', 'REGN_DT', 'REGN_UPTO', 'OWNER_NAME', 'F_NAME', 'STATE_CD', 'RTO_CD', 'PRESENT_ADDRESS',
   'PERMANENT_ADDRESS', 'MOBILE_NO', 'CHASI_NO', 'ENG_NO', 'MAKER_DESC', 'MAKER_MODEL', 'BODY_TYPE_DESC',
@@ -107,7 +108,7 @@ const API1_FIELDS = [
   'CURRENTADD_STATENAME', 'CURRENTADD_DISTRICTCODE', 'CURRENTADD_PINCODE', 'VEHICLE_CLASS',
   'VEHICLE_CATEGORY', 'SEATING_CAPACITY', 'SLEEPER_CAPACITY', 'STANDING_CAPACITY', 'OWNER_SERIAL_NO',
   'UNLADEN_WEIGHT', 'LADEN_WEIGHT', 'WHEELBASE', 'NO_OF_CYLINDERS', 'CUBIC_CAPACITY', 'FUEL_NORMS',
-  'TAX_UPTO', 'BLACKLIST_STATUS', 'NOC_DETAILS', 'IS_COMMERCIAL'
+  'TAX_UPTO', 'BLACKLIST_STATUS', 'NOC_DETAILS', 'IS_COMMERCIAL', 'PURCHASE_DT', 'SALE_AMT'
 ]
 
 // API 1 field <- API 2 field names (any case), first one with a real value wins.
@@ -329,7 +330,9 @@ const mapApi3Fields = (raw) => {
     if (value === undefined || value === null || /^(|na|n\/a|null|none|-)$/i.test(String(value).trim())) continue
     data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
   }
-  if (typeof data.IS_COMMERCIAL === 'boolean') data.IS_COMMERCIAL = data.IS_COMMERCIAL ? 'true' : 'false'
+  if (typeof data.IS_COMMERCIAL === 'boolean' || /^(true|false)$/i.test(String(data.IS_COMMERCIAL ?? ''))) {
+    data.IS_COMMERCIAL = String(data.IS_COMMERCIAL).toUpperCase()
+  }
   // API 3 sends permit_category -1 when there is no category
   if (String(data.PERMIT_CATEGORY) === '-1') delete data.PERMIT_CATEGORY
   if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
@@ -438,8 +441,9 @@ const fetchFromApi3 = async (vehicleNumber, { userId } = {}) => {
 const API4_URL = 'https://api.perione.in/vahan/vehicleno'
 const API4_NOT_FOUND = 'Vehicle details not found. API 4 (PeriOne) only has transport vehicles; please check the registration number.'
 
-// API 1 field <- PeriOne field (VAHAN's rc* names, any case). The first 26 are in the replies seen
-// so far; the rest are the standard VAHAN names, picked up if PeriOne ever sends them.
+// API 1 field <- PeriOne field (VAHAN's rc* names, any case). Everything down to PURCHASE_DT / SALE_AMT
+// is in the replies seen so far (plus rcVhType, read below); the rest are the standard VAHAN names,
+// picked up if PeriOne ever sends them, e.g. laden weight (rcGvw), which it has not sent yet.
 const API4_FIELDS = {
   REGN_NO: 'rcRegnNo',
   REGN_DT: 'rcRegnDt',
@@ -467,6 +471,8 @@ const API4_FIELDS = {
   VEHICLE_CLASS: 'rcVhClassDesc',
   NO_OF_CYLINDERS: 'rcNoCyl',
   WHEELBASE: 'rcWheelbase',
+  PURCHASE_DT: 'rcPurchaseDt',
+  SALE_AMT: 'rcSaleAmt',
   REGN_UPTO: 'rcRegnUpto',
   OWNER_NAME: 'rcOwnerName',
   F_NAME: 'rcFName',
@@ -502,7 +508,13 @@ const mapApi4Fields = (raw) => {
   }
   // rcVhType: T = transport, N = non-transport
   const type = String(byName.get('rcvhtype') || '').trim().toUpperCase()
-  if (type === 'T' || type === 'N') data.IS_COMMERCIAL = type === 'T' ? 'true' : 'false'
+  if (type === 'T' || type === 'N') data.IS_COMMERCIAL = type === 'T' ? 'TRUE' : 'FALSE'
+  // 'BRICK_RED' -> 'BRICK RED', 'TILT_CAB_HSD' -> 'TILT CAB HSD'
+  for (const field of ['COLOR', 'BODY_TYPE_DESC']) {
+    if (typeof data[field] === 'string') data[field] = data[field].replace(/_+/g, ' ').trim()
+  }
+  // '2739846.0' -> '2739846'
+  if (data.SALE_AMT !== undefined && Number.isFinite(Number(data.SALE_AMT))) data.SALE_AMT = String(Number(data.SALE_AMT))
   const state = String(data.REGN_NO || '').match(/^([A-Z]{2})\d/i)
   if (state) data.STATE_CD = state[1].toUpperCase()
   // '5/2016' -> '05/2016'
@@ -511,7 +523,7 @@ const mapApi4Fields = (raw) => {
   if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
     data.CUBIC_CAPACITY = Number(data.CUBIC_CAPACITY).toFixed(2)
   }
-  for (const field of API3_DATE_FIELDS) if (data[field]) data[field] = toApi1Date(data[field])
+  for (const field of [...API3_DATE_FIELDS, 'PURCHASE_DT']) if (data[field]) data[field] = toApi1Date(data[field])
   return data
 }
 

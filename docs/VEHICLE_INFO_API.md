@@ -95,6 +95,9 @@ Only successful calls use up your limit.
 | `PERMIT_ISSUE_DATE` / `PERMIT_VALID_FROM` / `PERMIT_VALID_UPTO` | Permit issued on / valid from / valid up to |
 | `PERMIT_ISSUING_AUTHORITY` | Who issued the permit (e.g. STATE TRANSPORT AUTHORITY) |
 | `BLACKLIST_STATUS` / `NOC_DETAILS` | Blacklist / NOC |
+| `UNLADEN_WEIGHT` / `LADEN_WEIGHT` / `WHEELBASE` | Weights (kg) / wheelbase (mm) |
+| `IS_COMMERCIAL` | `TRUE` for a transport (commercial) vehicle, `FALSE` for a private one |
+| `PURCHASE_DT` / `SALE_AMT` | Purchase date / sale amount (₹), where sent |
 
 ## Errors
 
