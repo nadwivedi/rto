@@ -179,8 +179,29 @@ const toApi1Date = (value) => {
 // A value worth sending: not empty, not the provider's 'NA' placeholder and not masked (N*****N)
 const isReal = (v) => v !== undefined && v !== null && !/^(|na|n\/a|null|none|-)$/i.test(String(v).trim()) && !String(v).includes('*')
 
+// API 2 also nests a second record under a key like "2": { sections: { 'Important Dates & Validity':
+// { 'Fitness Upto': ... }, ... } }. Its labels become snake_case names ('Fitness Upto' -> fitness_upto)
+// so the aliases above pick up fitness, tax, PUC, vehicle class, fuel norms and the registered RTO.
+// A flat field of the same name wins.
+const api2SectionEntries = (raw) => {
+  const entries = []
+  for (const value of Object.values(raw)) {
+    const sections = value && typeof value === 'object' ? value.sections : null
+    if (!sections || typeof sections !== 'object') continue
+    for (const section of Object.values(sections)) {
+      if (!section || typeof section !== 'object') continue
+      for (const [label, v] of Object.entries(section)) {
+        if (v !== null && typeof v === 'object') continue
+        entries.push([label.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''), v])
+      }
+    }
+  }
+  return entries
+}
+
 const mapApi2Fields = (raw) => {
   const byName = new Map(Object.entries(raw).map(([k, v]) => [k.toLowerCase(), v]))
+  for (const [name, v] of api2SectionEntries(raw)) if (!isReal(byName.get(name)) && isReal(v)) byName.set(name, v)
   const get = (...names) => names.map((n) => byName.get(n)).find(isReal)
   const data = {}
   for (const [field, names] of Object.entries(API2_FIELDS)) {
