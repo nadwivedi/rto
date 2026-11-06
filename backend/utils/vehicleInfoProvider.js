@@ -101,7 +101,7 @@ const PROVIDERS = {
 // The fields every reply has, in API 1's order. API 2 / API 3 replies are turned into exactly
 // these fields and API 1 replies get any missing one as 'NA', so a customer gets the same JSON
 // from all of them. The permit fields after PERMIT_ISSUE_DATE and PURCHASE_DT / SALE_AMT are
-// filled where the API sends them. IS_COMMERCIAL is 'TRUE' / 'FALSE', as API 1 sends it.
+// filled where the API sends them, VEHICLE_AGE .. RTO_PHONE only by API 2. IS_COMMERCIAL is 'TRUE' / 'FALSE', as API 1 sends it.
 const API1_FIELDS = [
   'REGN_NO', 'REGN_DT', 'REGN_UPTO', 'OWNER_NAME', 'F_NAME', 'STATE_CD', 'RTO_CD', 'PRESENT_ADDRESS',
   'PERMANENT_ADDRESS', 'MOBILE_NO', 'CHASI_NO', 'ENG_NO', 'MAKER_DESC', 'MAKER_MODEL', 'BODY_TYPE_DESC',
@@ -112,7 +112,8 @@ const API1_FIELDS = [
   'CURRENTADD_STATENAME', 'CURRENTADD_DISTRICTCODE', 'CURRENTADD_PINCODE', 'VEHICLE_CLASS',
   'VEHICLE_CATEGORY', 'SEATING_CAPACITY', 'SLEEPER_CAPACITY', 'STANDING_CAPACITY', 'OWNER_SERIAL_NO',
   'UNLADEN_WEIGHT', 'LADEN_WEIGHT', 'WHEELBASE', 'NO_OF_CYLINDERS', 'CUBIC_CAPACITY', 'FUEL_NORMS',
-  'TAX_UPTO', 'BLACKLIST_STATUS', 'NOC_DETAILS', 'IS_COMMERCIAL', 'PURCHASE_DT', 'SALE_AMT'
+  'TAX_UPTO', 'BLACKLIST_STATUS', 'NOC_DETAILS', 'IS_COMMERCIAL', 'PURCHASE_DT', 'SALE_AMT',
+  'VEHICLE_AGE', 'CLAIM_MADE', 'PREV_NCB', 'RTO_ADDRESS', 'RTO_PHONE'
 ]
 
 // API 1 field <- API 2 field names (any case), first one with a real value wins.
@@ -158,7 +159,13 @@ const API2_FIELDS = {
   FUEL_NORMS: ['fuel_norms', 'norms_desc'],
   TAX_UPTO: ['tax_upto'],
   BLACKLIST_STATUS: ['blacklist_status'],
-  NOC_DETAILS: ['noc_details']
+  NOC_DETAILS: ['noc_details'],
+  // Only API 2 sends these; 'address' / 'phone' are the RTO office's, from its "Vehicle Header" section
+  VEHICLE_AGE: ['vehicle_age', 'vehicleage'],
+  CLAIM_MADE: ['claimmade', 'claim_made'],
+  PREV_NCB: ['prevncb', 'prev_ncb'],
+  RTO_ADDRESS: ['address'],
+  RTO_PHONE: ['phone']
 }
 const API2_DATE_FIELDS = [
   'REGN_DT', 'REGN_UPTO', 'FIT_UPTO', 'INSURANCE_UPTO', 'PUC_UPTO', 'PUCC_UPTO',

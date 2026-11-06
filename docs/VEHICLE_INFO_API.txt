@@ -110,6 +110,11 @@ number as JSON, in seconds.
    IS_COMMERCIAL ...... TRUE = transport
    PURCHASE_DT ........ Purchase date
    SALE_AMT ........... Sale amount (Rs)
+   VEHICLE_AGE ........ Vehicle age (API 2)
+   CLAIM_MADE ......... Insurance claim made, Yes / No (API 2)
+   PREV_NCB ........... Previous NCB % (API 2)
+   RTO_ADDRESS ........ RTO office address (API 2)
+   RTO_PHONE .......... RTO office phone (API 2)
 
 
 ━━ 5. ERRORS ━━━━━━━━━━━━━━━━━━━━━━━━━━

@@ -942,11 +942,14 @@ const VehicleDetails = () => {
               <Panel icon={Building2} title="Registration" tone="from-emerald-600 to-teal-500" badge="RTO Record" badgeTone="bg-emerald-50 text-emerald-700 ring-emerald-200">
                 <Row label="Registered at" value={v.REGISTERED_AT} />
                 <Row label="Registration date" value={v.REGN_DT} />
+                {has(v.VEHICLE_AGE) && <Row label="Vehicle age" value={v.VEHICLE_AGE.replace(/\s+,/g, ',')} />}
                 <Row label="Valid upto" value={v.REGN_UPTO} />
                 <Row label="State / RTO code" value={`${v.STATE_CD || 'NA'} - ${v.RTO_CD || 'NA'}`} />
                 <Row label="Category" value={`${v.VEHICLE_CATEGORY || 'NA'} (${v.VEHICLE_CLASS || 'NA'})`} />
                 {has(v.PURCHASE_DT) && <Row label="Purchase date" value={v.PURCHASE_DT} />}
                 {has(v.SALE_AMT) && <Row label="Sale amount" value={formatRupees(v.SALE_AMT)} />}
+                {has(v.RTO_ADDRESS) && <Row stacked label="RTO office" value={v.RTO_ADDRESS} />}
+                {has(v.RTO_PHONE) && <Row label="RTO phone" value={v.RTO_PHONE} />}
                 <Row label="Record as on" value={v.STATUS_AS_ON || 'Current'} valueClass="text-slate-500" />
               </Panel>
 
@@ -980,6 +983,8 @@ const VehicleDetails = () => {
                   value={v.INSURANCE_UPTO}
                   valueClass={isExpired(v.INSURANCE_UPTO) ? 'text-rose-600' : 'text-emerald-700'}
                 />
+                {has(v.CLAIM_MADE) && <Row label="Claim made" value={v.CLAIM_MADE} />}
+                {has(v.PREV_NCB) && <Row label="Previous NCB" value={`${v.PREV_NCB}%`} />}
               </Panel>
 
               <Panel icon={FileText} title="Financer & Permit" tone="from-orange-500 to-amber-500" badge="Hypothecation" badgeTone="bg-orange-50 text-orange-700 ring-orange-200">

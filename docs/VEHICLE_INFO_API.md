@@ -98,6 +98,9 @@ Only successful calls use up your limit.
 | `UNLADEN_WEIGHT` / `LADEN_WEIGHT` / `WHEELBASE` | Weights (kg) / wheelbase (mm) |
 | `IS_COMMERCIAL` | `TRUE` for a transport (commercial) vehicle, `FALSE` for a private one |
 | `PURCHASE_DT` / `SALE_AMT` | Purchase date / sale amount (₹), where sent |
+| `VEHICLE_AGE` | Vehicle age, e.g. `0 years , 11 months & 15 days` (API 2) |
+| `CLAIM_MADE` / `PREV_NCB` | Insurance claim made (Yes / No) / previous NCB % (API 2) |
+| `RTO_ADDRESS` / `RTO_PHONE` | RTO office address / phone (API 2) |
 
 ## Errors
 
