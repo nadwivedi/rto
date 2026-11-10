@@ -978,6 +978,21 @@ const Users = () => {
     )
   }
 
+  // Which API this user's RC searches go to, shown next to the name for everyone with RC Details on
+  // (no rcProvider saved = API 2)
+  const renderApiChip = (user, extra = '') => {
+    if (!user.features?.rcDetails) return null
+    const p = providerOption(user.rcProvider, 'api2')
+    return (
+      <span
+        className={`${extra} inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-bold uppercase tracking-wide whitespace-nowrap ${p.tag}`}
+        title={`RC Details API: ${p.label}`}
+      >
+        {p.short}
+      </span>
+    )
+  }
+
   const renderRcBadge = (user) => {
     const hsrpLeft = Math.max(0, (user.hsrpSearchLimit || 0) - (user.hsrpSearchCount || 0))
     const hsrpBadge = user.features?.hsrp ? (
@@ -1000,7 +1015,7 @@ const Users = () => {
         }`}
         title={`${user.rcSearchCount || 0} searches done`}
       >
-        RC {left}/{user.rcSearchLimit || 0} left{user.rcProvider && user.rcProvider !== 'api2' && ` · ${providerOption(user.rcProvider).short}`}
+        RC {left}/{user.rcSearchLimit || 0} left
       </span>
       {hsrpBadge}
       </>
@@ -1341,6 +1356,7 @@ const Users = () => {
                             <div className='min-w-0'>
                               <div className='flex items-center gap-1.5'>
                                 <span className='text-[13px] font-semibold text-gray-900 truncate max-w-[180px]' title={user.name}>{user.name}</span>
+                                {renderApiChip(user, 'shrink-0')}
                                 {!user.isActive && (
                                   <span className='text-[9px] font-bold uppercase text-red-600 bg-red-50 px-1 rounded'>Inactive</span>
                                 )}
@@ -1436,6 +1452,7 @@ const Users = () => {
                       <div className='min-w-0 flex-1'>
                         <div className='flex items-center gap-1.5'>
                           <span className='text-[13px] font-semibold text-gray-900 truncate'>{user.name}</span>
+                          {renderApiChip(user, 'shrink-0')}
                           {!user.isActive && (
                             <span className='shrink-0 text-[9px] font-bold uppercase text-red-600 bg-red-50 px-1 rounded'>Inactive</span>
                           )}
