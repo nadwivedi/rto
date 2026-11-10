@@ -138,7 +138,9 @@ const userSchema = new mongoose.Schema({
     form23: { type: Boolean, default: false },
     tempRc: { type: Boolean, default: false },
     nlParticular: { type: Boolean, default: false },
-    saveVehicleRecords: { type: Boolean, default: false }
+    saveVehicleRecords: { type: Boolean, default: false },
+    // HSRP (number plate) details search; switched on when HSRP calls are sold to the user
+    hsrp: { type: Boolean, default: false }
   },
   rcSearchLimit: {
     type: Number,
@@ -146,6 +148,17 @@ const userSchema = new mongoose.Schema({
     min: 0
   },
   rcSearchCount: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  // HSRP searches: bought through API Sales (product HSRP), counted separately from RC searches
+  hsrpSearchLimit: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  hsrpSearchCount: {
     type: Number,
     default: 0,
     min: 0

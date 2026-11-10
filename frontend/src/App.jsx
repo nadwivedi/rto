@@ -46,6 +46,7 @@ import SpeedGovernor from './pages/SpeedGovernor/SpeedGovernor'
 import MoneyReceived from './pages/MoneyReceived/MoneyReceived'
 import VehicleDetails from './pages/VehicleDetails/VehicleDetails'
 import VehicleSearchHistory from './pages/VehicleDetails/VehicleSearchHistory'
+import HsrpSearch from './pages/Hsrp/HsrpSearch'
 import PWAPrompt from './components/PWAPrompt'
 // import { Agentation } from 'agentation'
 
@@ -78,6 +79,8 @@ function ProtectedLayout() {
         return true
       }
     }
+    // HSRP search only for accounts the admin has given it
+    if (location.pathname === '/hsrp' && !user?.features?.hsrp) return true
     return null
   }
 
@@ -111,7 +114,7 @@ function ProtectedLayout() {
         const isModalOpen = document.querySelector('.bg-slate-900\\/60, .fixed.inset-0, [role="dialog"]') !== null;
         if (isModalOpen) return;
 
-        const vahanHubPages = ['/vahan', '/forms', '/whatsapp', '/setting', '/javak', '/leads', '/kyc', '/vehicle-details', '/vehicle-detail', '/vehicle-search-history', '/vehicle-details/history'];
+        const vahanHubPages = ['/vahan', '/forms', '/whatsapp', '/setting', '/javak', '/leads', '/kyc', '/vehicle-details', '/vehicle-detail', '/vehicle-search-history', '/vehicle-details/history', '/hsrp'];
         const sarthiHubPages = ['/sarthi'];
         const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal', '/hpa-hpt', '/cashflow-report'];
 
@@ -178,6 +181,7 @@ function ProtectedLayout() {
                 <Route path='/vehicle-detail' element={<VehicleDetails />} />
                 <Route path='/vehicle-search-history' element={<VehicleSearchHistory />} />
                 <Route path='/vehicle-details/history' element={<VehicleSearchHistory />} />
+                <Route path='/hsrp' element={<HsrpSearch />} />
 
                 <Route path='/vehicle-ledger/:registrationNumber' element={<VehicleLedgerPage />} />
                 <Route path='/insurance' element={<Insurance />} />

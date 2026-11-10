@@ -544,10 +544,20 @@ const fetchFromApi4 = async (vehicleNumber) => {
 // with data in the same field names this module sends, or { success: false, error, calls_left? } with
 // 400 bad number, 401 bad key, 402 no calls left, 404 no record, 429 over 60 a minute, 502 / 503 down.
 // Errors are never charged.
-const API5_URL = 'https://api.parzivalapi.online/v1/vehicle'
+const API5_BASE = 'https://api.parzivalapi.online/v1'
+const API5_URL = `${API5_BASE}/vehicle`
+// The same key also serves HSRP (number plate) details: GET /v1/hsrp?number=<no>, its own calls_left.hsrp
+const API5_HSRP_URL = `${API5_BASE}/hsrp`
+// ApiUsage rows: Vehicle Info calls left, HSRP calls left
 const API5_USAGE_PROVIDER = 'parzivalapi5'
+const API5_HSRP_USAGE_PROVIDER = 'parzivalapi5hsrp'
 // At or below this many calls left the admin gets a "running low" alert, before lookups start failing
 const API5_LOW_CALLS = Number(process.env.PARZIVAL5_LOW_CALLS_ALERT) || 25
+const API5_HSRP_LOW_CALLS = Number(process.env.PARZIVAL5_HSRP_LOW_CALLS_ALERT) || 10
+const API5_APIS = {
+  vehicle: { usage: API5_USAGE_PROVIDER, low: API5_LOW_CALLS, alertKey: 'api5:low-balance', name: 'Vehicle Info' },
+  hsrp: { usage: API5_HSRP_USAGE_PROVIDER, low: API5_HSRP_LOW_CALLS, alertKey: 'api5:hsrp-low-balance', name: 'HSRP' }
+}
 
 const mapApi5Fields = (raw) => {
   const data = {}
@@ -570,38 +580,46 @@ const mapApi5Fields = (raw) => {
 }
 
 /**
- * Every API 5 reply (success or 402) says how many Vehicle Info calls are left; keep the latest
- * for the admin panel and alert when it runs low. Never throws.
+ * Every API 5 reply (success or 402) has calls_left for each of its APIs ({ vehicle, hsrp }); keep the
+ * latest of both for the admin panel, and alert when the API that was just called runs low. Never throws.
  */
-const recordApi5Usage = async (raw, { vehicleNumber, userId } = {}) => {
+const recordApi5Usage = async (raw, { vehicleNumber, userId, api = 'vehicle' } = {}) => {
   if (!raw || typeof raw !== 'object') return
-  const remaining = toNumber(raw.remaining ?? raw.calls_left?.vehicle)
-  if (remaining === undefined) return
-  const snapshot = { checkedAt: new Date(), remaining }
-  const charge = toNumber(raw.charged)
-  if (charge !== undefined) snapshot.lastCharge = charge
-  if (vehicleNumber) snapshot.lastVehicleNumber = vehicleNumber
-  if (userId) snapshot.lastUserId = userId
+  const left = { ...(raw.calls_left && typeof raw.calls_left === 'object' ? raw.calls_left : {}) }
+  // `remaining` is the API that was called
+  if (raw.remaining !== undefined) left[raw.api || api] = raw.remaining
 
-  try {
-    await ApiUsage.findOneAndUpdate({ provider: API5_USAGE_PROVIDER }, { $set: snapshot }, { upsert: true, setDefaultsOnInsert: true })
-  } catch (err) {
-    console.error('Failed to record API 5 usage:', err.message)
-  }
+  for (const [name, cfg] of Object.entries(API5_APIS)) {
+    const remaining = toNumber(left[name])
+    if (remaining === undefined) continue
+    const snapshot = { checkedAt: new Date(), remaining }
+    if (name === api) {
+      const charge = toNumber(raw.charged)
+      if (charge !== undefined) snapshot.lastCharge = charge
+      if (vehicleNumber) snapshot.lastVehicleNumber = vehicleNumber
+      if (userId) snapshot.lastUserId = userId
+    }
+    try {
+      await ApiUsage.findOneAndUpdate({ provider: cfg.usage }, { $set: snapshot }, { upsert: true, setDefaultsOnInsert: true })
+    } catch (err) {
+      console.error(`Failed to record API 5 ${cfg.name} usage:`, err.message)
+    }
 
-  if (remaining <= API5_LOW_CALLS) {
-    await raiseAlert({
-      key: 'api5:low-balance',
-      severity: remaining <= 0 ? 'critical' : 'warning',
-      source: 'api5',
-      code: 'LOW_BALANCE',
-      title: remaining <= 0 ? 'API 5: no Vehicle Info calls left' : 'API 5: Vehicle Info calls running low',
-      message: `${remaining} Vehicle Info call${remaining === 1 ? '' : 's'} left on parzivalapi.online. Buy more calls before searches start failing.`,
-      vehicleNumber,
-      userId
-    })
-  } else {
-    await autoResolveAlerts('api5:low-balance')
+    if (name !== api) continue
+    if (remaining <= cfg.low) {
+      await raiseAlert({
+        key: cfg.alertKey,
+        severity: remaining <= 0 ? 'critical' : 'warning',
+        source: 'api5',
+        code: 'LOW_BALANCE',
+        title: remaining <= 0 ? `API 5: no ${cfg.name} calls left` : `API 5: ${cfg.name} calls running low`,
+        message: `${remaining} ${cfg.name} call${remaining === 1 ? '' : 's'} left on parzivalapi.online. Buy more calls before searches start failing.`,
+        vehicleNumber,
+        userId
+      })
+    } else {
+      await autoResolveAlerts(cfg.alertKey)
+    }
   }
 }
 
@@ -619,7 +637,7 @@ const fetchFromApi5 = async (vehicleNumber, { userId } = {}) => {
 
   const raw = response.data && typeof response.data === 'object' ? response.data : null
   // Recorded before the error checks so a 402 "no calls left" still updates the count
-  await recordApi5Usage(raw, { vehicleNumber, userId })
+  await recordApi5Usage(raw, { vehicleNumber, userId, api: 'vehicle' })
 
   if (!raw || !raw.success) {
     // A bad key, no calls left or a rate limit is our problem, not the vehicle number
@@ -639,6 +657,74 @@ const fetchFromApi5 = async (vehicleNumber, { userId } = {}) => {
   }
   if (!data.REGN_NO) data.REGN_NO = vehicleNumber
   return { found: true, data: toApi1Reply(data), charged }
+}
+
+// API 5 HSRP: GET /v1/hsrp?number=<no> with the same key. data is
+// { status, regno, chassis, engine, hsrp_response: { message, fuel, maker, vchType, norms, vchCatg, regnDate,
+//   hsrpFrontLaserCode, hsrpRearLaserCode, stateCd, offCd, ... } }, sent on as it is.
+const HSRP_NOT_FOUND = 'HSRP details not found for this vehicle number. Please check the number.'
+
+const fetchHsrpFromApi5 = async (vehicleNumber, { userId } = {}) => {
+  const apiKey = process.env.PARZIVAL5_API_KEY
+  if (!apiKey) throw new Error('API 5 is not set up (PARZIVAL5_API_KEY)')
+
+  const response = await axios.get(API5_HSRP_URL, {
+    params: { number: vehicleNumber },
+    timeout: 30000,
+    validateStatus: (status) => status < 500,
+    headers: { 'X-API-Key': apiKey, Accept: 'application/json' }
+  })
+
+  const raw = response.data && typeof response.data === 'object' ? response.data : null
+  await recordApi5Usage(raw, { vehicleNumber, userId, api: 'hsrp' })
+
+  if (!raw || !raw.success) {
+    if ([401, 402, 403, 429].includes(response.status)) {
+      throw new ProviderError(`API 5 HSRP refused the request: HTTP ${response.status} ${raw?.error || ''}`.trim(), `HTTP_${response.status}`)
+    }
+    const message = response.status === 400 ? 'Invalid vehicle number. Please check the number.' : HSRP_NOT_FOUND
+    return { found: false, charged: false, message }
+  }
+
+  const data = raw.data && typeof raw.data === 'object' ? raw.data : null
+  const charged = raw.charged === undefined ? true : Boolean(Number(raw.charged))
+  const hsrp = data?.hsrp_response && typeof data.hsrp_response === 'object' ? data.hsrp_response : null
+  const hasDetails = hsrp && ['hsrpFrontLaserCode', 'hsrpRearLaserCode', 'maker', 'regnDate'].some((k) => isReal(hsrp[k]))
+  if (!data || (!hasDetails && /fail|not\s*found|invalid/i.test(String(data.status || hsrp?.message || '')))) {
+    return { found: false, charged, message: HSRP_NOT_FOUND }
+  }
+  return { found: true, data: { ...data, regno: data.regno || vehicleNumber }, charged }
+}
+
+/**
+ * HSRP details for a vehicle from API 5, with admin alerts like fetchVehicleInfo:
+ * { found: true, data, charged } or { found: false, message, charged }; when API 5 fails an error with
+ * `providerUnavailable: true` and a message safe to show users is thrown.
+ */
+const fetchHsrpInfo = async (vehicleNumber, { userId, via } = {}) => {
+  try {
+    const result = await fetchHsrpFromApi5(vehicleNumber, { userId })
+    await autoResolveAlerts('api5hsrp:error:')
+    return result
+  } catch (err) {
+    const code = alertCodeOf(err)
+    console.error('API 5 HSRP lookup failed:', err?.response?.data || err.message)
+    await raiseAlert({
+      key: `api5hsrp:error:${code}`,
+      severity: err.providerCode || code === 'NOT_SET_UP' ? 'critical' : 'warning',
+      source: 'api5',
+      code,
+      title: (ALERT_TITLES[code] || ((n) => (err.providerCode ? `${n} refused the request (${code})` : `${n} is not responding`)))('API 5 HSRP'),
+      message: String(err.message || '').slice(0, 500),
+      vehicleNumber,
+      userId,
+      via
+    })
+    const unavailable = new Error('HSRP service is temporarily unavailable. Please try again after some time.')
+    unavailable.providerUnavailable = true
+    unavailable.detail = err.message
+    throw unavailable
+  }
 }
 
 // What a user or API key customer sees when a provider fails. The real reason goes to the admin alerts.
@@ -775,4 +861,4 @@ const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
   return fetchFromApi5(vehicleNumber, { userId })
 }
 
-module.exports = { fetchVehicleInfo, cleanVehicleNumber, PROVIDERS, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER }
+module.exports = { fetchVehicleInfo, fetchHsrpInfo, cleanVehicleNumber, PROVIDERS, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER }

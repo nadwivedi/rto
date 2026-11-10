@@ -2,6 +2,7 @@ const mongoose = require('mongoose')
 const ApiCreditTransaction = require('../models/ApiCreditTransaction')
 const User = require('../models/User')
 const RcSearchUsage = require('../models/RcSearchUsage')
+const HsrpSearchUsage = require('../models/HsrpSearchUsage')
 const ApiKeySale = require('../models/ApiKeySale')
 const ApiKey = require('../models/ApiKey')
 const ApiKeyCall = require('../models/ApiKeyCall')
@@ -35,6 +36,18 @@ const badRequest = (res, message) =>
 // Rupee amounts are kept to 2 decimals (rates like 1.4 x 2000 would otherwise drift)
 const roundMoney = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100
 
+// What API calls are sold for. Each has its own limit / count on the user and a feature switch that a
+// sale turns on. Rows saved before `product` existed are RC.
+const PRODUCTS = {
+  rc: { limit: 'rcSearchLimit', count: 'rcSearchCount', feature: 'rcDetails', label: 'Vehicle RC', short: 'RC' },
+  hsrp: { limit: 'hsrpSearchLimit', count: 'hsrpSearchCount', feature: 'hsrp', label: 'HSRP', short: 'HSRP' }
+}
+const productOf = (value) => (value === 'hsrp' ? 'hsrp' : 'rc')
+// Mongo filter for one product ('rc' / 'hsrp'), or none for 'all'
+const productMatch = (product) => (product === 'hsrp' ? { product: 'hsrp' } : product === 'rc' ? { product: { $ne: 'hsrp' } } : {})
+// ?product= on the list / summary / usage: 'rc', 'hsrp' or 'all' (default)
+const productFilter = (value) => (value === 'rc' || value === 'hsrp' ? value : 'all')
+
 // Days shown in the day-wise income table
 const INCOME_DAYS = 30
 
@@ -56,15 +69,17 @@ const lastDaysIST = (n) => {
 exports.getTransactions = async (req, res) => {
   try {
     const { type = 'all', userId, page = 1, limit = 50 } = req.query
+    const product = productFilter(req.query.product)
 
     if (userId && !mongoose.isValidObjectId(userId)) return badRequest(res, 'Invalid user')
     const userObjectId = userId ? new mongoose.Types.ObjectId(String(userId)) : null
 
     const userTypes = { all: ['sale', 'purchase', 'adjustment'], sales: ['sale'], sale: ['sale'], purchase: ['purchase'], adjustment: ['adjustment'] }[type] || []
-    const withKeySales = ['all', 'sales', 'key_sale'].includes(type)
+    // API key sales are vehicle (RC) calls
+    const withKeySales = ['all', 'sales', 'key_sale'].includes(type) && product !== 'hsrp'
 
     // A user filter leaves out provider purchases, which belong to no user
-    const txnMatch = { type: { $in: userObjectId ? userTypes.filter((t) => t !== 'purchase') : userTypes } }
+    const txnMatch = { type: { $in: userObjectId ? userTypes.filter((t) => t !== 'purchase') : userTypes }, ...productMatch(product) }
     if (userObjectId) txnMatch.userId = userObjectId
     const keyMatch = {}
     if (userObjectId) {
@@ -83,7 +98,7 @@ exports.getTransactions = async (req, res) => {
       pipeline.push({
         $unionWith: {
           coll: ApiKeySale.collection.name,
-          pipeline: [{ $match: keyMatch }, { $addFields: { type: 'sale', source: 'key' } }]
+          pipeline: [{ $match: keyMatch }, { $addFields: { type: 'sale', source: 'key', product: 'rc' } }]
         }
       })
     }
@@ -123,6 +138,8 @@ exports.getTransactions = async (req, res) => {
 exports.createTransaction = async (req, res) => {
   try {
     const { type, userId, quantity, rate, date, note, paidAmount } = req.body
+    const product = productOf(req.body.product)
+    const P = PRODUCTS[product]
 
     if (type !== 'purchase' && type !== 'sale') {
       return badRequest(res, 'Type must be purchase or sale')
@@ -161,6 +178,7 @@ exports.createTransaction = async (req, res) => {
 
     const transaction = await ApiCreditTransaction.create({
       type,
+      product,
       userId: type === 'sale' ? userId : undefined,
       quantity: qty,
       rate: price,
@@ -176,9 +194,9 @@ exports.createTransaction = async (req, res) => {
         // Add the bought searches to the user's limit and make sure they can use them
         updatedUser = await User.findByIdAndUpdate(
           userId,
-          { $inc: { rcSearchLimit: qty }, $set: { 'features.rcDetails': true } },
+          { $inc: { [P.limit]: qty }, $set: { [`features.${P.feature}`]: true } },
           { new: true }
-        ).select('name mobile1 rcSearchLimit rcSearchCount features')
+        ).select(`name mobile1 ${P.limit} ${P.count} features`)
         if (!updatedUser) throw new Error('User not found')
       } catch (err) {
         // Don't leave a sale on the books that never reached the user's limit
@@ -194,15 +212,16 @@ exports.createTransaction = async (req, res) => {
       entityName: type === 'sale' ? user.name : 'Provider purchase',
       summary:
         type === 'sale'
-          ? `Sold ${qty} vehicle API calls to ${user.name} @ ₹${price} (₹${transaction.amount}). Limit +${qty}`
-          : `Recorded purchase of ${qty} vehicle API calls @ ₹${price} (₹${transaction.amount})`,
+          ? `Sold ${qty} ${P.label} API calls to ${user.name} @ ₹${price} (₹${transaction.amount}). Limit +${qty}`
+          : `Recorded purchase of ${qty} ${P.label} API calls @ ₹${price} (₹${transaction.amount})`,
       changes: [
         { field: 'Type', from: null, to: type === 'sale' ? 'Sale' : 'Purchase' },
+        { field: 'Product', from: null, to: P.label },
         { field: 'Quantity', from: null, to: qty },
         { field: 'Rate', from: null, to: price },
         { field: 'Amount', from: null, to: transaction.amount },
         ...(type === 'sale' ? [{ field: 'Paid', from: null, to: transaction.paidAmount }] : []),
-        ...(updatedUser ? [{ field: 'User RC Search Limit', from: updatedUser.rcSearchLimit - qty, to: updatedUser.rcSearchLimit }] : []),
+        ...(updatedUser ? [{ field: `User ${P.short} Search Limit`, from: updatedUser[P.limit] - qty, to: updatedUser[P.limit] }] : []),
         ...(transaction.note ? [{ field: 'Note', from: null, to: transaction.note }] : [])
       ]
     })
@@ -211,17 +230,18 @@ exports.createTransaction = async (req, res) => {
       success: true,
       message:
         type === 'sale'
-          ? `Sold ${qty} API calls to ${user.name}. Limit increased by ${qty}.`
-          : `Recorded purchase of ${qty} API calls`,
+          ? `Sold ${qty} ${P.label} calls to ${user.name}. ${P.short} limit increased by ${qty}.`
+          : `Recorded purchase of ${qty} ${P.label} calls`,
       data: {
         transaction,
         user: updatedUser
           ? {
               id: updatedUser._id,
               name: updatedUser.name,
-              rcSearchLimit: updatedUser.rcSearchLimit || 0,
-              rcSearchCount: updatedUser.rcSearchCount || 0,
-              rcSearchRemaining: Math.max(0, (updatedUser.rcSearchLimit || 0) - (updatedUser.rcSearchCount || 0))
+              product,
+              limit: updatedUser[P.limit] || 0,
+              count: updatedUser[P.count] || 0,
+              remaining: Math.max(0, (updatedUser[P.limit] || 0) - (updatedUser[P.count] || 0))
             }
           : null
       }
@@ -279,12 +299,13 @@ exports.updateTransaction = async (req, res) => {
     // A sale's calls are on the user's limit: move the limit by the difference
     let limitChange = 0
     if (hasQty && qty !== transaction.quantity && isSale && transaction.userId) {
-      const user = await User.findById(transaction.userId._id).select('rcSearchLimit')
+      const field = PRODUCTS[productOf(transaction.product)].limit
+      const user = await User.findById(transaction.userId._id).select(field)
       if (user) {
         const diff = qty - transaction.quantity
         // Never push the limit below zero if it was lowered by hand in the meantime
-        limitChange = Math.max(diff, -(user.rcSearchLimit || 0))
-        user.rcSearchLimit = (user.rcSearchLimit || 0) + limitChange
+        limitChange = Math.max(diff, -(user[field] || 0))
+        user[field] = (user[field] || 0) + limitChange
         await user.save()
       }
     }
@@ -358,12 +379,13 @@ exports.deleteTransaction = async (req, res) => {
 
     if (transaction.type === 'adjustment') {
       const change = (transaction.callsBefore || 0) - transaction.quantity
-      const user = transaction.userId ? await User.findById(transaction.userId).select('name rcSearchLimit') : null
+      const field = PRODUCTS[productOf(transaction.product)].limit
+      const user = transaction.userId ? await User.findById(transaction.userId).select(`name ${field}`) : null
       let limitChange = 0
       if (user) {
         // Never push the limit below zero if it was lowered by hand in the meantime
-        limitChange = Math.max(change, -(user.rcSearchLimit || 0))
-        user.rcSearchLimit = (user.rcSearchLimit || 0) + limitChange
+        limitChange = Math.max(change, -(user[field] || 0))
+        user[field] = (user[field] || 0) + limitChange
         await user.save()
       }
       recordActivity(req, {
@@ -374,7 +396,7 @@ exports.deleteTransaction = async (req, res) => {
         summary: `Deleted rate adjustment (${transaction.callsBefore} calls @ ₹${transaction.oldRate} -> ${transaction.quantity} @ ₹${transaction.rate}). Limit ${limitChange >= 0 ? '+' : ''}${limitChange}`,
         changes: [
           { field: 'Type', from: 'Adjustment', to: null },
-          { field: 'User RC Search Limit', from: user ? user.rcSearchLimit - limitChange : null, to: user ? user.rcSearchLimit : null }
+          { field: `User ${PRODUCTS[productOf(transaction.product)].short} Search Limit`, from: user ? user[field] - limitChange : null, to: user ? user[field] : null }
         ]
       })
       return res.json({
@@ -387,12 +409,13 @@ exports.deleteTransaction = async (req, res) => {
     let limitReducedBy = 0
     let saleUserName = null
     if (transaction.type === 'sale' && transaction.userId) {
-      const user = await User.findById(transaction.userId).select('name rcSearchLimit')
+      const field = PRODUCTS[productOf(transaction.product)].limit
+      const user = await User.findById(transaction.userId).select(`name ${field}`)
       if (user) {
         saleUserName = user.name
         // Never push the limit below zero if it was lowered by hand in the meantime
-        limitReducedBy = Math.min(user.rcSearchLimit || 0, transaction.quantity)
-        user.rcSearchLimit = (user.rcSearchLimit || 0) - limitReducedBy
+        limitReducedBy = Math.min(user[field] || 0, transaction.quantity)
+        user[field] = (user[field] || 0) - limitReducedBy
         await user.save()
       }
     }
@@ -432,9 +455,10 @@ exports.deleteTransaction = async (req, res) => {
 // their latest sale, whichever is newer
 const currentRateOf = (history) => history.find((t) => t.type === 'adjustment' || t.type === 'sale')?.rate ?? null
 
-const userCredits = (user) => {
-  const limit = user.rcSearchLimit || 0
-  const used = user.rcSearchCount || 0
+const userCredits = (user, product = 'rc') => {
+  const P = PRODUCTS[product]
+  const limit = user[P.limit] || 0
+  const used = user[P.count] || 0
   return { limit, used, left: Math.max(0, limit - used) }
 }
 
@@ -444,9 +468,10 @@ exports.getAdjustment = async (req, res) => {
   try {
     const { userId } = req.params
     if (!mongoose.isValidObjectId(userId)) return badRequest(res, 'Invalid user')
+    const product = productOf(req.query.product)
     const [user, history] = await Promise.all([
-      User.findById(userId).select('name mobile1 rcSearchLimit rcSearchCount').lean(),
-      ApiCreditTransaction.find({ userId, type: { $in: ['sale', 'adjustment'] } })
+      User.findById(userId).select('name mobile1 rcSearchLimit rcSearchCount hsrpSearchLimit hsrpSearchCount').lean(),
+      ApiCreditTransaction.find({ userId, type: { $in: ['sale', 'adjustment'] }, ...productMatch(product) })
         .sort({ date: -1, createdAt: -1 })
         .select('type quantity rate amount paidAmount callsBefore oldRate balance date note')
         .limit(100)
@@ -460,7 +485,8 @@ exports.getAdjustment = async (req, res) => {
     res.json({
       success: true,
       data: {
-        user: { _id: user._id, name: user.name, mobile1: user.mobile1, ...userCredits(user) },
+        product,
+        user: { _id: user._id, name: user.name, mobile1: user.mobile1, ...userCredits(user, product) },
         currentRate: currentRateOf(history),
         sales: { count: sales.length, quantity: soldQty, amount: soldAmount, avgRate: soldQty ? roundMoney(soldAmount / soldQty) : null },
         history
@@ -477,6 +503,8 @@ exports.getAdjustment = async (req, res) => {
 exports.createAdjustment = async (req, res) => {
   try {
     const { userId, newRate, oldRate, date, note } = req.body || {}
+    const product = productOf(req.body?.product)
+    const P = PRODUCTS[product]
     if (!userId || !mongoose.isValidObjectId(userId)) return badRequest(res, 'Please select a user')
     const price = Number(newRate)
     if (newRate === '' || newRate === null || newRate === undefined || Number.isNaN(price) || price <= 0) {
@@ -485,14 +513,14 @@ exports.createAdjustment = async (req, res) => {
     const dealDate = date ? new Date(date) : new Date()
     if (Number.isNaN(dealDate.getTime())) return badRequest(res, 'Please enter a valid date')
 
-    const user = await User.findById(userId).select('name rcSearchLimit rcSearchCount')
+    const user = await User.findById(userId).select(`name ${P.limit} ${P.count}`)
     if (!user) return res.status(404).json({ success: false, message: 'User not found' })
-    const { limit, used, left } = userCredits(user)
-    if (left <= 0) return badRequest(res, `${user.name} has no API calls left to adjust`)
+    const { limit, used, left } = userCredits(user, product)
+    if (left <= 0) return badRequest(res, `${user.name} has no ${P.label} calls left to adjust`)
 
     let valueRate = Number(oldRate)
     if (oldRate === '' || oldRate === null || oldRate === undefined) {
-      const history = await ApiCreditTransaction.find({ userId, type: { $in: ['sale', 'adjustment'] } })
+      const history = await ApiCreditTransaction.find({ userId, type: { $in: ['sale', 'adjustment'] }, ...productMatch(product) })
         .sort({ date: -1, createdAt: -1 }).select('type rate').limit(1).lean()
       valueRate = currentRateOf(history)
     }
@@ -509,10 +537,10 @@ exports.createAdjustment = async (req, res) => {
     // Only if the user did not search in the meantime, so the calls left are what was valued
     const newLimit = used + callsAfter
     const updated = await User.findOneAndUpdate(
-      { _id: userId, rcSearchLimit: user.rcSearchLimit, rcSearchCount: user.rcSearchCount },
-      { $set: { rcSearchLimit: newLimit } },
+      { _id: userId, [P.limit]: user[P.limit], [P.count]: user[P.count] },
+      { $set: { [P.limit]: newLimit } },
       { new: true }
-    ).select('name rcSearchLimit rcSearchCount')
+    ).select(`name ${P.limit} ${P.count}`)
     if (!updated) return res.status(409).json({ success: false, message: 'The user just made a search. Please open the adjustment again.' })
 
     const autoNote = `${left} calls @ ₹${valueRate} = ₹${balance} -> ${callsAfter} calls @ ₹${price}${leftover > 0 ? ` (₹${leftover} left over)` : ''}`
@@ -520,6 +548,7 @@ exports.createAdjustment = async (req, res) => {
     try {
       transaction = await ApiCreditTransaction.create({
         type: 'adjustment',
+        product,
         userId,
         quantity: callsAfter,
         rate: price,
@@ -532,7 +561,7 @@ exports.createAdjustment = async (req, res) => {
       })
     } catch (err) {
       // Don't leave the limit changed without the entry that explains it
-      await User.updateOne({ _id: userId }, { $inc: { rcSearchLimit: limit - newLimit } }).catch(() => {})
+      await User.updateOne({ _id: userId }, { $inc: { [P.limit]: limit - newLimit } }).catch(() => {})
       throw err
     }
 
@@ -541,19 +570,19 @@ exports.createAdjustment = async (req, res) => {
       entity: 'api_credit',
       entityId: transaction._id,
       entityName: user.name,
-      summary: `Rate adjustment for ${user.name}: ${autoNote}. Limit ${limit} -> ${newLimit}`,
+      summary: `${P.label} rate adjustment for ${user.name}: ${autoNote}. Limit ${limit} -> ${newLimit}`,
       changes: [
         { field: 'Type', from: null, to: 'Adjustment' },
         { field: 'Calls left', from: left, to: callsAfter },
         { field: 'Rate', from: valueRate, to: price },
-        { field: 'User RC Search Limit', from: limit, to: newLimit }
+        { field: `User ${P.short} Search Limit`, from: limit, to: newLimit }
       ]
     })
 
     res.status(201).json({
       success: true,
-      message: `${user.name}: ${autoNote}. Limit ${limit} -> ${newLimit}.`,
-      data: { transaction, callsBefore: left, callsAfter, balance, leftover, rcSearchLimit: newLimit }
+      message: `${user.name} (${P.label}): ${autoNote}. Limit ${limit} -> ${newLimit}.`,
+      data: { transaction, product, callsBefore: left, callsAfter, balance, leftover, limit: newLimit }
     })
   } catch (error) {
     sendError(res, req, error, error.name === 'ValidationError' ? 400 : 500)
@@ -579,16 +608,20 @@ exports.getUsage = async (req, res) => {
     const today = RcSearchUsage.todayIST()
     const from7 = shiftDate(today, -6)
     const from28 = shiftDate(today, -27)
+    // RC: app searches + API key calls; HSRP: app searches only (API keys serve vehicle details)
+    const product = req.query.product === 'hsrp' ? 'hsrp' : 'rc'
+    const P = PRODUCTS[product]
+    const Usage = product === 'hsrp' ? HsrpSearchUsage : RcSearchUsage
 
     const [rows, firstRow, keyRows, firstKeyCall] = await Promise.all([
-      RcSearchUsage.find({ date: { $gte: from28, $lte: today } }).select('userId date count').lean(),
-      RcSearchUsage.findOne({}).sort({ date: 1 }).select('date').lean(),
-      ApiKeyCall.aggregate([
+      Usage.find({ date: { $gte: from28, $lte: today } }).select('userId date count').lean(),
+      Usage.findOne({}).sort({ date: 1 }).select('date').lean(),
+      product === 'hsrp' ? [] : ApiKeyCall.aggregate([
         { $match: { date: { $gte: from28, $lte: today }, ...CHARGED_KEY_CALL } },
         // Calls logged before `source` was saved were all API 1
         { $group: { _id: { apiKeyId: '$apiKeyId', date: '$date', source: { $ifNull: ['$source', 'rtosarthi_api1'] } }, count: { $sum: 1 } } }
       ]),
-      ApiKeyCall.findOne(CHARGED_KEY_CALL).sort({ date: 1 }).select('date').lean()
+      product === 'hsrp' ? null : ApiKeyCall.findOne(CHARGED_KEY_CALL).sort({ date: 1 }).select('date').lean()
     ])
 
     // One entry per day, newest first, including days with no searches
@@ -647,7 +680,7 @@ exports.getUsage = async (req, res) => {
 
     const [users, keys] = await Promise.all([
       User.find({ _id: { $in: Array.from(userMap.values()).map((u) => u.userId) } })
-        .select('name mobile1 rcSearchLimit rcSearchCount')
+        .select(`name mobile1 ${P.limit} ${P.count}`)
         .lean(),
       ApiKey.find({ _id: { $in: Array.from(keyMap.values()).map((k) => k.apiKeyId) } })
         .select('name callLimit callCount active userId provider')
@@ -671,6 +704,7 @@ exports.getUsage = async (req, res) => {
     res.json({
       success: true,
       data: {
+        product,
         today,
         trackingSince,
         trackedDays,
@@ -687,9 +721,10 @@ exports.getUsage = async (req, res) => {
               ...usage,
               name: user?.name,
               mobile1: user?.mobile1,
-              rcSearchLimit: user?.rcSearchLimit || 0,
-              rcSearchCount: user?.rcSearchCount || 0,
-              rcSearchRemaining: Math.max(0, (user?.rcSearchLimit || 0) - (user?.rcSearchCount || 0))
+              // (named rcSearch* for both products; for HSRP they are the HSRP limit / count)
+              rcSearchLimit: user?.[P.limit] || 0,
+              rcSearchCount: user?.[P.count] || 0,
+              rcSearchRemaining: Math.max(0, (user?.[P.limit] || 0) - (user?.[P.count] || 0))
             }
           })
           .sort((a, b) => b.last28 - a.last28 || b.last7 - a.last7),
@@ -718,6 +753,11 @@ exports.getUsage = async (req, res) => {
 // Totals, month-wise cashflow and per-user sales
 exports.getSummary = async (req, res) => {
   try {
+    // ?product=rc / hsrp / all. API key sales are vehicle (RC) calls, so they are left out for HSRP.
+    const product = productFilter(req.query.product)
+    const pm = productMatch(product)
+    const withKeys = product !== 'hsrp'
+    const none = Promise.resolve([])
     // Sales dated today (India), from users and from API keys
     const today = RcSearchUsage.todayIST()
     const todayMatch = { $expr: { $eq: [{ $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: IST } }, today] } }
@@ -730,6 +770,7 @@ exports.getSummary = async (req, res) => {
 
     const [byType, byMonth, byUser, lastPurchase, lastSale, keySales, keySalesByMonth, userSalesToday, keySalesToday, byDay, keySalesByDay, adjustByUser] = await Promise.all([
       ApiCreditTransaction.aggregate([
+        { $match: pm },
         {
           $group: {
             _id: '$type',
@@ -741,7 +782,7 @@ exports.getSummary = async (req, res) => {
         }
       ]),
       ApiCreditTransaction.aggregate([
-        { $match: { type: { $in: ['sale', 'purchase'] } } },
+        { $match: { type: { $in: ['sale', 'purchase'] }, ...pm } },
         {
           $group: {
             _id: {
@@ -755,7 +796,7 @@ exports.getSummary = async (req, res) => {
         { $sort: { '_id.month': -1 } }
       ]),
       ApiCreditTransaction.aggregate([
-        { $match: { type: 'sale', userId: { $ne: null } } },
+        { $match: { type: 'sale', userId: { $ne: null }, ...pm } },
         {
           $group: {
             _id: '$userId',
@@ -777,6 +818,8 @@ exports.getSummary = async (req, res) => {
             mobile1: '$user.mobile1',
             rcSearchLimit: { $ifNull: ['$user.rcSearchLimit', 0] },
             rcSearchCount: { $ifNull: ['$user.rcSearchCount', 0] },
+            hsrpSearchLimit: { $ifNull: ['$user.hsrpSearchLimit', 0] },
+            hsrpSearchCount: { $ifNull: ['$user.hsrpSearchCount', 0] },
             quantity: 1,
             amount: 1,
             paid: 1,
@@ -785,11 +828,11 @@ exports.getSummary = async (req, res) => {
           }
         }
       ]),
-      ApiCreditTransaction.findOne({ type: 'purchase' }).sort({ date: -1, createdAt: -1 }).select('rate').lean(),
-      ApiCreditTransaction.findOne({ type: 'sale' }).sort({ date: -1, createdAt: -1 }).select('rate').lean(),
+      ApiCreditTransaction.findOne({ type: 'purchase', ...pm }).sort({ date: -1, createdAt: -1 }).select('rate').lean(),
+      ApiCreditTransaction.findOne({ type: 'sale', ...pm }).sort({ date: -1, createdAt: -1 }).select('rate').lean(),
       // Calls sold on API keys are sales of the same provider calls
-      ApiKeySale.aggregate([{ $group: { _id: null, quantity: { $sum: '$quantity' }, amount: { $sum: '$amount' }, paid: { $sum: PAID_EXPR } } }]),
-      ApiKeySale.aggregate([
+      withKeys ? ApiKeySale.aggregate([{ $group: { _id: null, quantity: { $sum: '$quantity' }, amount: { $sum: '$amount' }, paid: { $sum: PAID_EXPR } } }]) : none,
+      !withKeys ? none : ApiKeySale.aggregate([
         {
           $group: {
             _id: { month: { $dateToString: { format: '%Y-%m', date: '$date', timezone: IST } }, type: 'sale', key: { $literal: true } },
@@ -798,10 +841,10 @@ exports.getSummary = async (req, res) => {
           }
         }
       ]),
-      ApiCreditTransaction.aggregate([{ $match: { type: 'sale', ...todayMatch } }, todayTotal]),
-      ApiKeySale.aggregate([{ $match: todayMatch }, todayTotal]),
+      ApiCreditTransaction.aggregate([{ $match: { type: 'sale', ...pm, ...todayMatch } }, todayTotal]),
+      withKeys ? ApiKeySale.aggregate([{ $match: todayMatch }, todayTotal]) : none,
       ApiCreditTransaction.aggregate([
-        { $match: { date: { $gte: incomeSince }, type: { $in: ['sale', 'purchase'] } } },
+        { $match: { date: { $gte: incomeSince }, type: { $in: ['sale', 'purchase'] }, ...pm } },
         {
           $group: {
             _id: { day: dayKey, type: '$type' },
@@ -812,7 +855,7 @@ exports.getSummary = async (req, res) => {
           }
         }
       ]),
-      ApiKeySale.aggregate([
+      !withKeys ? none : ApiKeySale.aggregate([
         { $match: { date: { $gte: incomeSince } } },
         {
           $group: {
@@ -826,7 +869,7 @@ exports.getSummary = async (req, res) => {
       ]),
       // Calls taken back (or given) by rate adjustments, per user
       ApiCreditTransaction.aggregate([
-        { $match: { type: 'adjustment' } },
+        { $match: { type: 'adjustment', ...pm } },
         { $group: { _id: '$userId', taken: { $sum: { $subtract: [{ $ifNull: ['$callsBefore', 0] }, '$quantity'] } }, count: { $sum: 1 } } }
       ])
     ])
@@ -929,6 +972,7 @@ exports.getSummary = async (req, res) => {
     res.json({
       success: true,
       data: {
+        product,
         totals: {
           boughtQty: purchase.quantity,
           boughtAmount: roundMoney(purchase.amount),
@@ -974,7 +1018,8 @@ exports.getSummary = async (req, res) => {
           amount: roundMoney(u.amount),
           paid: roundMoney(u.paid),
           pending: roundMoney(u.amount - u.paid),
-          rcSearchRemaining: Math.max(0, (u.rcSearchLimit || 0) - (u.rcSearchCount || 0))
+          rcSearchRemaining: Math.max(0, (u.rcSearchLimit || 0) - (u.rcSearchCount || 0)),
+          hsrpSearchRemaining: Math.max(0, (u.hsrpSearchLimit || 0) - (u.hsrpSearchCount || 0))
         }))
       }
     })

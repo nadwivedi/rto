@@ -155,8 +155,42 @@ const RcApiUsageCard = ({ className = '' }) => {
           )}
         </>
       )}
+
+      {/* Same key, separate counter: HSRP (number plate) calls */}
+      <Api5HsrpRow usage={data?.hsrpUsage} allocation={data?.hsrpAllocation} />
     </div>
     <ParzivalCard usage={data?.api3Usage} loading={loading && !data} error={error} />
+    </div>
+  )
+}
+
+// API 5 HSRP calls left, from the last HSRP (or vehicle) reply, and what is still promised to users
+const Api5HsrpRow = ({ usage, allocation }) => {
+  const has = usage && usage.remaining !== null && usage.remaining !== undefined
+  const left = has ? usage.remaining : null
+  const oversold = has && allocation && allocation.allocatedRemaining > left
+  return (
+    <div className='mt-3 pt-3 border-t border-gray-100'>
+      <div className='flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1'>
+        <p className='text-[11px] font-semibold text-teal-700 uppercase tracking-wide'>HSRP calls left</p>
+        {has ? (
+          <p className='text-sm'>
+            <span className={`text-xl font-bold tabular-nums ${left <= 0 ? 'text-red-600' : left <= 10 ? 'text-orange-600' : 'text-gray-900'}`}>
+              {formatNumber(left)}
+            </span>
+            {usage.lastCharge > 0 && <span className='text-gray-400'> · ₹{usage.lastCharge} per call</span>}
+          </p>
+        ) : (
+          <p className='text-xs text-gray-400'>Shown after the first API 5 search</p>
+        )}
+      </div>
+      {allocation?.users > 0 && (
+        <p className={`text-[11px] mt-0.5 ${oversold ? 'text-orange-700 font-semibold' : 'text-gray-500'}`}>
+          {formatNumber(allocation.allocatedRemaining)} HSRP search{allocation.allocatedRemaining === 1 ? '' : 'es'} still allotted to {allocation.users} user
+          {allocation.users === 1 ? '' : 's'}
+          {oversold && <> — more than API 5 has left</>}.
+        </p>
+      )}
     </div>
   )
 }

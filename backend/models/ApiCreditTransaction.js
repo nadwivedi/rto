@@ -14,6 +14,14 @@ const apiCreditTransactionSchema = new mongoose.Schema(
       required: true,
       index: true
     },
+    // What the calls are for: 'rc' (vehicle RC details, also rows saved before this existed) or
+    // 'hsrp' (HSRP number plate details). Each has its own limit on the user.
+    product: {
+      type: String,
+      enum: ['rc', 'hsrp'],
+      default: 'rc',
+      index: true
+    },
     // Sales and adjustments: the user who bought the credits
     userId: {
       type: mongoose.Schema.Types.ObjectId,

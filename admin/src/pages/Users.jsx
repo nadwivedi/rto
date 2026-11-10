@@ -153,7 +153,8 @@ const FEATURE_OPTIONS = [
   { name: 'features_form23', label: 'Form 23 (RC)', title: 'Show Form 23 (Certificate of Registration) in RC Details' },
   { name: 'features_tempRc', label: 'Temporary RC', title: 'Show Temporary Authorization of Registration Certificate in RC Details' },
   { name: 'features_nlParticular', label: 'NL Particulars', title: 'Show NL Vehicle Particulars (For Internal Use) in RC Details' },
-  { name: 'features_saveVehicleRecords', label: 'Save Records (RC)', title: 'Show a Save button in RC Details that adds the vehicle to Vehicle Registration, Fitness, Insurance and PUC with 0 fee' }
+  { name: 'features_saveVehicleRecords', label: 'Save Records (RC)', title: 'Show a Save button in RC Details that adds the vehicle to Vehicle Registration, Fitness, Insurance and PUC with 0 fee' },
+  { name: 'features_hsrp', label: 'HSRP Search', title: 'HSRP (number plate) details search; switched on by itself when HSRP calls are sold to the user' }
 ]
 
 const INPUT_CLASS = 'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
@@ -294,9 +295,12 @@ const Users = () => {
     features_tempRc: false,
     features_nlParticular: false,
     features_saveVehicleRecords: false,
+    features_hsrp: false,
     rcProvider: 'api2',
     rcSearchLimit: 0,
-    rcSearchCount: 0
+    rcSearchCount: 0,
+    hsrpSearchLimit: 0,
+    hsrpSearchCount: 0
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -544,7 +548,8 @@ const Users = () => {
           form23: formData.features_form23,
           tempRc: formData.features_tempRc,
           nlParticular: formData.features_nlParticular,
-          saveVehicleRecords: formData.features_saveVehicleRecords
+          saveVehicleRecords: formData.features_saveVehicleRecords,
+          hsrp: formData.features_hsrp
         }
       }
       delete bodyData.features_greenTax
@@ -558,6 +563,9 @@ const Users = () => {
       delete bodyData.features_tempRc
       delete bodyData.features_nlParticular
       delete bodyData.features_saveVehicleRecords
+      delete bodyData.features_hsrp
+      delete bodyData.hsrpSearchLimit
+      delete bodyData.hsrpSearchCount
       // Shown in the form for reference only; the limit changes through User API Sales
       delete bodyData.rcSearchLimit
       delete bodyData.rcSearchCount
@@ -587,7 +595,7 @@ const Users = () => {
         setShowFeatures(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'lifetime', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'lifetime', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, features_hsrp: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, hsrpSearchLimit: 0, hsrpSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -633,9 +641,12 @@ const Users = () => {
       features_tempRc: user.features?.tempRc ?? false,
       features_nlParticular: user.features?.nlParticular ?? false,
       features_saveVehicleRecords: user.features?.saveVehicleRecords ?? false,
+      features_hsrp: user.features?.hsrp ?? false,
       rcProvider: providerOption(user.rcProvider, 'api2').value,
       rcSearchLimit: user.rcSearchLimit ?? 0,
-      rcSearchCount: user.rcSearchCount ?? 0
+      rcSearchCount: user.rcSearchCount ?? 0,
+      hsrpSearchLimit: user.hsrpSearchLimit ?? 0,
+      hsrpSearchCount: user.hsrpSearchCount ?? 0
     })
     setShowModal(true)
     setError('')
@@ -647,7 +658,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'lifetime', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'lifetime', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, features_hsrp: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, hsrpSearchLimit: 0, hsrpSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
   }
 
   const openDeleteModal = (user) => {
@@ -968,9 +979,21 @@ const Users = () => {
   }
 
   const renderRcBadge = (user) => {
-    if (!user.features?.rcDetails) return null
+    const hsrpLeft = Math.max(0, (user.hsrpSearchLimit || 0) - (user.hsrpSearchCount || 0))
+    const hsrpBadge = user.features?.hsrp ? (
+      <span
+        className={`inline-block mt-1 ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+          hsrpLeft <= 0 ? 'bg-rose-50 text-rose-700' : 'bg-teal-50 text-teal-700'
+        }`}
+        title={`${user.hsrpSearchCount || 0} HSRP searches done`}
+      >
+        HSRP {hsrpLeft}/{user.hsrpSearchLimit || 0} left
+      </span>
+    ) : null
+    if (!user.features?.rcDetails) return hsrpBadge
     const left = Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0))
     return (
+      <>
       <span
         className={`inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
           left <= 0 ? 'bg-rose-50 text-rose-700' : 'bg-indigo-50 text-indigo-700'
@@ -979,6 +1002,8 @@ const Users = () => {
       >
         RC {left}/{user.rcSearchLimit || 0} left{user.rcProvider && user.rcProvider !== 'api2' && ` · ${providerOption(user.rcProvider).short}`}
       </span>
+      {hsrpBadge}
+      </>
     )
   }
 
@@ -2188,6 +2213,50 @@ const Users = () => {
                         <p className='text-[11px] text-indigo-700'>
                           The user starts with a search limit of 0. After creating the user, record a sale in User API Sales to give them searches.
                         </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* HSRP limit: like RC, it only grows when HSRP calls are sold in API Sales */}
+                  {formData.features_hsrp && (
+                    <div className='mt-3 p-3.5 bg-white rounded-xl border border-teal-100 space-y-3'>
+                      <p className='text-xs font-semibold text-teal-900'>
+                        HSRP Search
+                        <span className='block text-[11px] font-normal text-teal-700'>Number plate (HSRP) details through API 5</span>
+                      </p>
+                      {isEditMode ? (
+                        <>
+                          <div className='grid grid-cols-3 gap-2 text-center'>
+                            <div className='p-2 bg-teal-50/60 rounded-lg border border-teal-100'>
+                              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>HSRP Limit</p>
+                              <p className='text-base font-bold text-teal-900 font-mono'>{formData.hsrpSearchLimit || 0}</p>
+                            </div>
+                            <div className='p-2 bg-teal-50/60 rounded-lg border border-teal-100'>
+                              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Used</p>
+                              <p className='text-base font-bold text-teal-900 font-mono'>{formData.hsrpSearchCount || 0}</p>
+                            </div>
+                            <div className='p-2 bg-teal-50/60 rounded-lg border border-teal-100'>
+                              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Left</p>
+                              <p className={`text-base font-bold font-mono ${
+                                (formData.hsrpSearchLimit || 0) - (formData.hsrpSearchCount || 0) <= 0 ? 'text-rose-700' : 'text-emerald-700'
+                              }`}>
+                                {Math.max(0, (formData.hsrpSearchLimit || 0) - (formData.hsrpSearchCount || 0))}
+                              </p>
+                            </div>
+                          </div>
+                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                            <p className='text-[11px] text-teal-700'>To increase it, sell HSRP calls in API Sales.</p>
+                            <button
+                              type='button'
+                              onClick={() => navigate(`/api-credits?user=${editingUserId}&product=hsrp`)}
+                              className='px-3 py-1.5 text-xs font-semibold bg-teal-600 text-white rounded-lg hover:bg-teal-700 cursor-pointer'
+                            >
+                              Sell HSRP Calls
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <p className='text-[11px] text-teal-700'>Starts at 0. After creating the user, sell HSRP calls in API Sales.</p>
                       )}
                     </div>
                   )}

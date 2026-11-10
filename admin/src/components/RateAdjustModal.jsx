@@ -21,8 +21,10 @@ const labelClass = 'block text-sm font-semibold text-gray-700 mb-1.5'
  * they were sold at becomes calls at the new rate, e.g. 400 calls left @ ₹2 = ₹800 -> 200 calls @ ₹4.
  * Shows the user's earlier sales and adjustments with their rates. `onDone(message)` after saving.
  */
-const RateAdjustModal = ({ userId: initialUserId = '', userOptions, onClose, onDone }) => {
+const RateAdjustModal = ({ userId: initialUserId = '', product: initialProduct = 'rc', userOptions, onClose, onDone }) => {
   const [userId, setUserId] = useState(initialUserId)
+  // Vehicle RC or HSRP calls: each has its own limit and rates
+  const [product, setProduct] = useState(initialProduct === 'hsrp' ? 'hsrp' : 'rc')
   const [info, setInfo] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -40,7 +42,7 @@ const RateAdjustModal = ({ userId: initialUserId = '', userOptions, onClose, onD
     let active = true
     setLoading(true)
     setError('')
-    fetch(`${BACKEND_URL}/api/admin/api-credits/adjust/${userId}`, { credentials: 'include' })
+    fetch(`${BACKEND_URL}/api/admin/api-credits/adjust/${userId}?product=${product}`, { credentials: 'include' })
       .then((r) => r.json())
       .then((json) => {
         if (!active) return
@@ -53,7 +55,7 @@ const RateAdjustModal = ({ userId: initialUserId = '', userOptions, onClose, onD
     return () => {
       active = false
     }
-  }, [userId])
+  }, [userId, product])
 
   const left = info?.user?.left || 0
   const oldPrice = Number(oldRate)
@@ -78,7 +80,7 @@ const RateAdjustModal = ({ userId: initialUserId = '', userOptions, onClose, onD
     if (!validOld) return setError('Enter the rate the calls left were sold at')
     if (!validNew) return setError('Enter the new rate per API call')
     if (change === 0) return setError('The number of calls stays the same at this rate')
-    const msg = `Adjust ${info.user.name}?\n\n${formatNumber(left)} calls @ ${formatRupees(oldPrice)} = ${formatRupees(balance)}\n→ ${formatNumber(callsAfter)} calls @ ${formatRupees(newPrice)}${leftover > 0 ? ` (${formatRupees(leftover)} left over)` : ''}\n\nTheir limit changes by ${change > 0 ? '+' : ''}${formatNumber(change)}.`
+    const msg = `Adjust ${info.user.name} (${product === 'hsrp' ? 'HSRP' : 'Vehicle RC'})?\n\n${formatNumber(left)} calls @ ${formatRupees(oldPrice)} = ${formatRupees(balance)}\n→ ${formatNumber(callsAfter)} calls @ ${formatRupees(newPrice)}${leftover > 0 ? ` (${formatRupees(leftover)} left over)` : ''}\n\nTheir limit changes by ${change > 0 ? '+' : ''}${formatNumber(change)}.`
     if (!confirm(msg)) return
     try {
       setSaving(true)
@@ -87,7 +89,7 @@ const RateAdjustModal = ({ userId: initialUserId = '', userOptions, onClose, onD
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, oldRate: oldPrice, newRate: newPrice, date, note })
+        body: JSON.stringify({ userId, product, oldRate: oldPrice, newRate: newPrice, date, note })
       })
       const json = await res.json()
       if (!json.success) return setError(json.message || 'Failed to save')
@@ -138,7 +140,27 @@ const RateAdjustModal = ({ userId: initialUserId = '', userOptions, onClose, onD
           <div className='flex-1 overflow-y-auto px-5 sm:px-8 py-5 sm:py-6 space-y-5 sm:space-y-6'>
             {/* Step 1: user */}
             <section className='bg-white rounded-2xl border border-gray-200 p-4 sm:p-5'>
-              <StepTitle n={1} title='Choose the user' />
+              <div className='flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4'>
+                <StepTitle n={1} title='Choose the user' className='' />
+                <div className='inline-flex rounded-lg border border-gray-300 overflow-hidden bg-white' role='group' aria-label='Calls for'>
+                  {[
+                    ['rc', 'Vehicle RC'],
+                    ['hsrp', 'HSRP']
+                  ].map(([value, label], i) => (
+                    <button
+                      key={value}
+                      type='button'
+                      onClick={() => setProduct(value)}
+                      aria-pressed={product === value}
+                      className={`px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
+                        product === value ? (value === 'hsrp' ? 'bg-teal-600 text-white' : 'bg-gray-900 text-white') : 'text-gray-600 hover:bg-gray-50'
+                      } ${i > 0 ? 'border-l border-gray-300' : ''}`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <SearchSelect
                 value={userId}
                 onChange={(value) => setUserId(value || '')}
@@ -157,7 +179,7 @@ const RateAdjustModal = ({ userId: initialUserId = '', userOptions, onClose, onD
 
               {info && !loading && (
                 <div className='mt-4 grid grid-cols-3 gap-2 sm:gap-3'>
-                  <Stat label='Calls left' value={formatNumber(left)} sub={`${formatNumber(info.user.used)} used of ${formatNumber(info.user.limit)}`} />
+                  <Stat label={product === 'hsrp' ? 'HSRP calls left' : 'RC calls left'} value={formatNumber(left)} sub={`${formatNumber(info.user.used)} used of ${formatNumber(info.user.limit)}`} />
                   <Stat
                     label='Current rate'
                     value={info.currentRate != null ? `${formatRupees(info.currentRate)}` : '-'}
@@ -362,8 +384,8 @@ const RateAdjustModal = ({ userId: initialUserId = '', userOptions, onClose, onD
   )
 }
 
-const StepTitle = ({ n, title }) => (
-  <div className='flex items-center gap-2.5 mb-3 sm:mb-4'>
+const StepTitle = ({ n, title, className = 'mb-3 sm:mb-4' }) => (
+  <div className={`flex items-center gap-2.5 ${className}`}>
     <span className='w-6 h-6 rounded-full bg-gray-900 text-white text-xs font-bold flex items-center justify-center'>{n}</span>
     <h3 className='text-sm sm:text-base font-bold text-gray-800'>{title}</h3>
   </div>

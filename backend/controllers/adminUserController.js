@@ -9,7 +9,7 @@ const crypto = require('crypto')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
 const { backupAndCleanUserData } = require('../utils/userDataClean')
-const { PROVIDERS, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
+const { PROVIDERS, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
 
 // '' / null clears a money field, a number >= 0 sets it, anything else is ignored (returns false)
 const parseMoney = (value) => {
@@ -92,7 +92,8 @@ const USER_FIELDS = [
   { key: 'features.form23', label: 'Feature: Form 23 in RC Details' },
   { key: 'features.tempRc', label: 'Feature: Temporary RC in RC Details' },
   { key: 'features.nlParticular', label: 'Feature: NL Particulars in RC Details' },
-  { key: 'features.saveVehicleRecords', label: 'Feature: Save Records in RC Details' }
+  { key: 'features.saveVehicleRecords', label: 'Feature: Save Records in RC Details' },
+  { key: 'features.hsrp', label: 'Feature: HSRP Search' }
 ]
 
 // Point every user's RC searches at one API, e.g. all to API 5 while API 2 is down
@@ -449,8 +450,9 @@ exports.createUser = async (req, res) => {
         form23: features.form23 === true,
         tempRc: features.tempRc === true,
         nlParticular: features.nlParticular === true,
-        saveVehicleRecords: features.saveVehicleRecords === true
-      } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false, form23: false, tempRc: false, nlParticular: false, saveVehicleRecords: false },
+        saveVehicleRecords: features.saveVehicleRecords === true,
+        hsrp: features.hsrp === true
+      } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false, form23: false, tempRc: false, nlParticular: false, saveVehicleRecords: false, hsrp: false },
       rcProvider: PROVIDERS[rcProvider] ? rcProvider : undefined,
       // Starts at 0; the limit only grows when a sale is recorded in Vehicle API Sales
       rcSearchLimit: 0,
@@ -609,7 +611,8 @@ exports.updateUser = async (req, res) => {
         form23: features.form23 === true,
         tempRc: features.tempRc === true,
         nlParticular: features.nlParticular === true,
-        saveVehicleRecords: features.saveVehicleRecords === true
+        saveVehicleRecords: features.saveVehicleRecords === true,
+        hsrp: features.hsrp === true
       }
     }
     if (rcProvider !== undefined) {
@@ -747,6 +750,9 @@ exports.updateUser = async (req, res) => {
         rcSearchLimit: user.rcSearchLimit || 0,
         rcSearchCount: user.rcSearchCount || 0,
         rcSearchRemaining: Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0)),
+        hsrpSearchLimit: user.hsrpSearchLimit || 0,
+        hsrpSearchCount: user.hsrpSearchCount || 0,
+        hsrpSearchRemaining: Math.max(0, (user.hsrpSearchLimit || 0) - (user.hsrpSearchCount || 0)),
         rcProvider: user.rcProvider,
         planType: user.planType,
         subscriptionExpiresAt: user.subscriptionExpiresAt,
@@ -1184,6 +1190,28 @@ exports.getRcApiUsage = async (req, res) => {
         }
       : null
 
+    // API 5 HSRP calls left (same key, its own counter)
+    const api5Hsrp = await ApiUsage.findOne({ provider: API5_HSRP_USAGE_PROVIDER }).lean()
+    const hsrpUsage = api5Hsrp
+      ? {
+          remaining: api5Hsrp.remaining ?? null,
+          lastCharge: api5Hsrp.lastCharge ?? null,
+          checkedAt: api5Hsrp.checkedAt || api5Hsrp.updatedAt || null,
+          lastVehicleNumber: api5Hsrp.lastVehicleNumber || null
+        }
+      : null
+    // HSRP searches still promised to users
+    const [hsrpAllocation] = await User.aggregate([
+      { $match: { 'features.hsrp': true } },
+      {
+        $group: {
+          _id: null,
+          users: { $sum: 1 },
+          allocatedRemaining: { $sum: { $max: [0, { $subtract: [{ $ifNull: ['$hsrpSearchLimit', 0] }, { $ifNull: ['$hsrpSearchCount', 0] }] }] } }
+        }
+      }
+    ])
+
     // API 3 (Parzival API): wallet, quota and access expiry from its last reply
     const api3 = await ApiUsage.findOne({ provider: API3_USAGE_PROVIDER }).lean()
     const api3Usage = api3
@@ -1220,6 +1248,8 @@ exports.getRcApiUsage = async (req, res) => {
       success: true,
       data: {
         usage,
+        hsrpUsage,
+        hsrpAllocation: { users: hsrpAllocation?.users || 0, allocatedRemaining: hsrpAllocation?.allocatedRemaining || 0 },
         api3Usage,
         allocation: {
           users: allocation?.users || 0,

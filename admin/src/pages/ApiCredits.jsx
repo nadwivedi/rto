@@ -43,7 +43,26 @@ const formatRupees = (n) =>
 
 const formatNumber = (n) => Number(n || 0).toLocaleString('en-IN')
 
-const EMPTY_FORM = { type: 'sale', userId: '', quantity: '', rate: '', totalAmount: '', paidAmount: '', date: '', note: '' }
+const EMPTY_FORM = { type: 'sale', product: 'rc', userId: '', quantity: '', rate: '', totalAmount: '', paidAmount: '', date: '', note: '' }
+
+// What calls are sold for: each has its own limit on the user (backend PRODUCTS in adminApiCreditController)
+const PRODUCT_INFO = {
+  rc: { label: 'Vehicle RC', short: 'RC', limit: 'rcSearchLimit', count: 'rcSearchCount', feature: 'rcDetails', featureName: 'RC Details' },
+  hsrp: { label: 'HSRP', short: 'HSRP', limit: 'hsrpSearchLimit', count: 'hsrpSearchCount', feature: 'hsrp', featureName: 'HSRP Search' }
+}
+const PRODUCT_FILTERS = [
+  ['all', 'All'],
+  ['rc', 'Vehicle RC'],
+  ['hsrp', 'HSRP']
+]
+const productParam = (value) => (value === 'rc' || value === 'hsrp' ? value : 'all')
+
+const ProductTag = ({ product }) =>
+  product === 'hsrp' ? (
+    <span className='inline-flex ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-teal-50 text-teal-700 border border-teal-200'>
+      HSRP
+    </span>
+  ) : null
 
 // Price per API call a sale to a user starts at
 const DEFAULT_SALE_RATE = 2
@@ -134,6 +153,8 @@ const ApiCredits = () => {
   const [success, setSuccess] = useState('')
 
   const [typeFilter, setTypeFilter] = useState('all')
+  // Vehicle RC, HSRP or both: the whole page (tiles, tables, list) follows it
+  const [product, setProduct] = useState(() => productParam(searchParams.get('product')))
   const [userFilter, setUserFilter] = useState(searchParams.get('user') || '')
   const [page, setPage] = useState(1)
 
@@ -152,22 +173,23 @@ const ApiCredits = () => {
   const [editSaving, setEditSaving] = useState(false)
 
   const fetchSummary = useCallback(async () => {
-    const res = await fetch(`${BACKEND_URL}/api/admin/api-credits/summary`, { credentials: 'include' })
+    const res = await fetch(`${BACKEND_URL}/api/admin/api-credits/summary?product=${product}`, { credentials: 'include' })
     const json = await res.json()
     if (!json.success) throw new Error(json.message || 'Failed to load summary')
     setSummary(json.data)
-  }, [])
+  }, [product])
 
   const fetchTransactions = useCallback(async () => {
     const params = new URLSearchParams({ page: String(page), limit: String(PAGE_SIZE) })
     if (typeFilter !== 'all') params.set('type', typeFilter)
+    params.set('product', product)
     if (userFilter) params.set('userId', userFilter)
     const res = await fetch(`${BACKEND_URL}/api/admin/api-credits?${params}`, { credentials: 'include' })
     const json = await res.json()
     if (!json.success) throw new Error(json.message || 'Failed to load history')
     setTransactions(json.data)
     setPagination(json.pagination)
-  }, [page, typeFilter, userFilter])
+  }, [page, typeFilter, userFilter, product])
 
   const fetchUsers = useCallback(async () => {
     const res = await fetch(`${BACKEND_URL}/api/admin/users?limit=1000`, { credentials: 'include' })
@@ -194,24 +216,31 @@ const ApiCredits = () => {
   const usersById = useMemo(() => new Map(users.map((u) => [u._id, u])), [users])
   const userOptions = useMemo(() => users.map((u) => ({ value: u._id, label: `${u.name} · ${u.mobile1}` })), [users])
   const selectedUser = usersById.get(formData.userId)
+  const formProduct = PRODUCT_INFO[formData.product] || PRODUCT_INFO.rc
   // What the user picked in the sell form has bought so far
   const selectedUserSales = summary?.users?.find((u) => String(u.userId) === formData.userId)
   const filteredUser = usersById.get(userFilter)
 
   const openModal = useCallback(
     (type, userId = '') => {
+      const forProduct = product === 'all' ? 'rc' : product
       setFormData({
         ...EMPTY_FORM,
         type,
+        product: forProduct,
         userId,
         date: todayIST(),
         // Sales start at the usual ₹2 per call; purchases at the price paid last time
-        rate: type === 'sale' ? String(DEFAULT_SALE_RATE) : String(summary?.lastRates?.[type] ?? '')
+        // RC sales start at the usual price; HSRP sales and purchases at the last price of this product
+        rate:
+          type === 'sale' && forProduct === 'rc'
+            ? String(DEFAULT_SALE_RATE)
+            : String((product === forProduct ? summary?.lastRates?.[type] : null) ?? '')
       })
       setFormError('')
       setShowModal(true)
     },
-    [summary]
+    [summary, product]
   )
 
   // Arriving from a user's row in Manage Users (?user=<id>): show that user's
@@ -248,12 +277,22 @@ const ApiCredits = () => {
     setFormError('')
   }
 
+  const changeProduct = (value) => {
+    setProduct(value)
+    setPage(1)
+    const next = new URLSearchParams(searchParams)
+    if (value === 'all') next.delete('product')
+    else next.set('product', value)
+    setSearchParams(next, { replace: true })
+  }
+
   const changeUserFilter = (value) => {
     setUserFilter(value)
     setPage(1)
     // Keep the address bar honest so a reload shows the same user
-    if (value) setSearchParams({ user: value }, { replace: true })
-    else setSearchParams({}, { replace: true })
+    const next = product === 'all' ? {} : { product }
+    if (value) setSearchParams({ ...next, user: value }, { replace: true })
+    else setSearchParams(next, { replace: true })
   }
 
   // API calls × price per call = total. Typing the total instead works the price per call out from it.
@@ -317,6 +356,7 @@ const ApiCredits = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: formData.type,
+          product: formData.product,
           userId: isSale ? formData.userId : undefined,
           quantity,
           rate,
@@ -489,6 +529,20 @@ const ApiCredits = () => {
             Vehicle API calls sold to users and on API keys, income, and what you buy from the provider ·{' '}
             <Link to='/api-usage' className='text-indigo-600 hover:underline font-semibold'>API usage →</Link>
           </p>
+          <div className='mt-2 inline-flex rounded-lg border border-gray-300 overflow-hidden bg-white' role='group' aria-label='Product'>
+            {PRODUCT_FILTERS.map(([value, label], i) => (
+              <button
+                key={value}
+                onClick={() => changeProduct(value)}
+                aria-pressed={product === value}
+                className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                  product === value ? (value === 'hsrp' ? 'bg-teal-600 text-white' : 'bg-indigo-600 text-white') : 'text-gray-600 hover:bg-gray-50'
+                } ${i > 0 ? 'border-l border-gray-300' : ''}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
         </div>
         <div className='grid grid-cols-3 sm:flex gap-2'>
           <button
@@ -537,8 +591,10 @@ const ApiCredits = () => {
         <>
           {/* Sales: today, yesterday, last 7 days, this month and all time, split into app users and API keys */}
           <div className='flex flex-wrap items-baseline justify-between gap-x-2 mb-2'>
-            <h2 className='text-sm font-bold text-gray-800'>Sales</h2>
-            <p className='text-[11px] text-gray-400'>Total, then sold to app users and sold on API keys</p>
+            <h2 className='text-sm font-bold text-gray-800'>Sales{product !== 'all' && ` · ${PRODUCT_INFO[product].label}`}</h2>
+            <p className='text-[11px] text-gray-400'>
+              {product === 'hsrp' ? 'HSRP calls are sold to app users only' : 'Total, then sold to app users and sold on API keys (vehicle RC)'}
+            </p>
           </div>
           <div className='grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-3 sm:mb-5'>
             {salePeriods.map((p) => (
@@ -770,6 +826,7 @@ const ApiCredits = () => {
                     <div className='min-w-0 flex-1'>
                       <div className='flex items-center gap-1.5 min-w-0'>
                         <TypeBadge type={txn.type} source={txn.source} />
+                        <ProductTag product={txn.product} />
                         <span className='text-xs font-semibold text-gray-900 truncate'>
                           {txn.type === 'purchase' ? 'API provider' : txn.source === 'key' ? txn.apiKeyId?.name || 'Deleted API key' : txn.userId ? txn.userId.name : 'Deleted user'}
                         </span>
@@ -842,6 +899,7 @@ const ApiCredits = () => {
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatDate(txn.date)}</td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5'>
                           <TypeBadge type={txn.type} source={txn.source} />
+                        <ProductTag product={txn.product} />
                         </td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'>
                           {txn.type === 'purchase' ? (
@@ -1011,18 +1069,30 @@ const ApiCredits = () => {
                             {u.pending > 0 ? formatRupees(u.pending) : 'Paid'}
                           </td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
-                            {formatNumber(u.rcSearchCount)} / {formatNumber(u.rcSearchLimit)}
+                            {product === 'hsrp' ? (
+                              `${formatNumber(u.hsrpSearchCount)} / ${formatNumber(u.hsrpSearchLimit)}`
+                            ) : (
+                              <>
+                                {formatNumber(u.rcSearchCount)} / {formatNumber(u.rcSearchLimit)}
+                                {product === 'all' && u.hsrpSearchLimit > 0 && (
+                                  <div className='text-[10px] text-teal-600'>HSRP {formatNumber(u.hsrpSearchCount)} / {formatNumber(u.hsrpSearchLimit)}</div>
+                                )}
+                              </>
+                            )}
                           </td>
-                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>
-                            {formatNumber(u.rcSearchRemaining)}
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
+                            {formatNumber(product === 'hsrp' ? u.hsrpSearchRemaining : u.rcSearchRemaining)}
+                            {product === 'all' && u.hsrpSearchLimit > 0 && (
+                              <div className='text-[10px] text-teal-600'>HSRP {formatNumber(u.hsrpSearchRemaining)}</div>
+                            )}
                           </td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatDate(u.lastDate)}</td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-right'>
                             <button
                               onClick={() => setAdjustFor(String(u.userId))}
-                              disabled={!u.rcSearchRemaining}
+                              disabled={!(product === 'hsrp' ? u.hsrpSearchRemaining : u.rcSearchRemaining || u.hsrpSearchRemaining)}
                               className='px-2 py-1 text-[11px] font-semibold text-amber-700 border border-amber-200 rounded-md hover:bg-amber-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap'
-                              title={u.rcSearchRemaining ? "Re-price this user's calls left at a new rate" : 'No calls left to adjust'}
+                              title="Re-price this user's calls left at a new rate"
                             >
                               Adjust rate
                             </button>
@@ -1042,7 +1112,13 @@ const ApiCredits = () => {
       )}
 
       {adjustFor !== null && (
-        <RateAdjustModal userId={adjustFor} userOptions={userOptions} onClose={() => setAdjustFor(null)} onDone={afterAdjust} />
+        <RateAdjustModal
+          userId={adjustFor}
+          product={product === 'all' ? 'rc' : product}
+          userOptions={userOptions}
+          onClose={() => setAdjustFor(null)}
+          onDone={afterAdjust}
+        />
       )}
 
       {/* Edit one entry: same details as the add popup (the user of a sale stays fixed) */}
@@ -1203,7 +1279,7 @@ const ApiCredits = () => {
               }`}>
                 <div>
                   <h2 className='text-lg font-bold'>
-                    {isSaleForm ? 'Sell API Calls to User' : 'API Calls Bought from Provider'}
+                    {isSaleForm ? `Sell ${formProduct.label} Calls to User` : `${formProduct.label} Calls Bought from Provider`}
                   </h2>
                   <p className='text-xs text-white/80 mt-0.5'>
                     {isSaleForm
@@ -1219,6 +1295,29 @@ const ApiCredits = () => {
               </div>
 
               <form onSubmit={handleSubmit} className='space-y-3 p-5'>
+                <div>
+                  <label className={labelClass}>Calls for</label>
+                  <div className='grid grid-cols-2 gap-2'>
+                    {Object.entries(PRODUCT_INFO).map(([value, info]) => (
+                      <button
+                        key={value}
+                        type='button'
+                        onClick={() => {
+                          setFormData((prev) => ({ ...prev, product: value }))
+                          setFormError('')
+                        }}
+                        aria-pressed={formData.product === value}
+                        className={`px-3 py-2 rounded-lg border text-sm font-semibold transition-colors cursor-pointer ${
+                          formData.product === value
+                            ? value === 'hsrp' ? 'bg-teal-600 border-teal-600 text-white' : 'bg-indigo-600 border-indigo-600 text-white'
+                            : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        {info.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
                 {isSaleForm && (
                   <div>
                     <label className={labelClass}>User</label>
@@ -1236,9 +1335,9 @@ const ApiCredits = () => {
                     />
                     {selectedUser && (
                       <p className='text-[11px] text-gray-500 mt-1'>
-                        Now: {formatNumber(selectedUser.rcSearchCount)} used of {formatNumber(selectedUser.rcSearchLimit)} ·{' '}
-                        {formatNumber(Math.max(0, (selectedUser.rcSearchLimit || 0) - (selectedUser.rcSearchCount || 0)))} left
-                        {!selectedUser.features?.rcDetails && ' · RC Details is off and will be switched on'}
+                        {formProduct.short} now: {formatNumber(selectedUser[formProduct.count])} used of {formatNumber(selectedUser[formProduct.limit])} ·{' '}
+                        {formatNumber(Math.max(0, (selectedUser[formProduct.limit] || 0) - (selectedUser[formProduct.count] || 0)))} left
+                        {!selectedUser.features?.[formProduct.feature] && ` · ${formProduct.featureName} is off and will be switched on`}
                       </p>
                     )}
                     {selectedUser && (
@@ -1362,8 +1461,8 @@ const ApiCredits = () => {
                   )}
                   {isSaleForm && selectedUser && Number.isInteger(quantity) && quantity > 0 && (
                     <p className='text-[11px] text-gray-500 mt-1'>
-                      Limit goes from {formatNumber(selectedUser.rcSearchLimit)} to{' '}
-                      <strong>{formatNumber((selectedUser.rcSearchLimit || 0) + quantity)}</strong>
+                      {formProduct.short} limit goes from {formatNumber(selectedUser[formProduct.limit])} to{' '}
+                      <strong>{formatNumber((selectedUser[formProduct.limit] || 0) + quantity)}</strong>
                     </p>
                   )}
                 </div>

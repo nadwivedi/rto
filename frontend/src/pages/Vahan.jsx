@@ -21,6 +21,7 @@ import { routeToSectionKey } from '../utils/sectionConfig'
 const vahanOptions = [
   { title: 'Manage Vehicle', path: '/vehicle-registration', note: 'Vehicle registration and master details', image: '/buttons/add vehicle.png', category: 'vehicle', badgeTone: 'bg-sky-100 text-sky-700' },
   { title: 'Vehicle Details', path: '/vehicle-details', note: 'Live RC search, specs and details lookup', image: '/buttons/add vehicle.png', category: 'vehicle', badgeTone: 'bg-indigo-100 text-indigo-700' },
+  { title: 'HSRP Details', path: '/hsrp', note: 'HSRP number plate details and laser codes', image: '/buttons/add vehicle.png', category: 'vehicle', badgeTone: 'bg-teal-100 text-teal-700' },
   { title: 'Add Permit', path: '/national-permit', note: 'National, state, and temporary permits', image: '/buttons/add permit.png', category: 'permit', badgeTone: 'bg-emerald-100 text-emerald-700' },
   { title: 'Add Tax', path: '/tax', note: 'Road Tax records and renewals', image: '/buttons/add tax.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
   { title: 'Add Fitness', path: '/fitness', note: 'Fitness certificate work', image: '/buttons/add fitness.png', category: 'compliance', badgeTone: 'bg-violet-100 text-violet-700' },
@@ -179,13 +180,14 @@ const Vahan = () => {
   const filteredVahanOptions = useMemo(() =>
     vahanOptions.filter(o => {
       if (o.title === 'Vehicle Details') return enabledFeatures.rcDetails === true
+      if (o.title === 'HSRP Details') return enabledFeatures.hsrp === true
       if (o.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (o.title === 'Professional Tax') return enabledFeatures.professionalTax === true
       if (o.title === 'Money Received') return enabledFeatures.moneyReceived === true
       if (o.title === 'RTO Forms' || o.title === 'Forms') return enabledFeatures.forms === true
       return canAccessSection(o.title)
     }),
-    [enabledFeatures.rcDetails, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledFeatures.forms, enabledSections, isStaff]
+    [enabledFeatures.rcDetails, enabledFeatures.hsrp, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledFeatures.forms, enabledSections, isStaff]
   )
 
   const filteredQuickButtons = useMemo(() =>

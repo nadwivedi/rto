@@ -39,6 +39,12 @@ const Navbar = () => {
       path: "/vehicle-details",
       description: "Live Vehicle RC Details",
     },
+    {
+      name: "HSRP",
+      icon: "🪪",
+      path: "/hsrp",
+      description: "HSRP Number Plate Details",
+    },
 
     {
       name: "NP",
@@ -250,6 +256,7 @@ const Navbar = () => {
 
   const featureFilter = (item) => {
     if (item.path === '/vehicle-details') return enabledFeatures.rcDetails === true;
+    if (item.path === '/hsrp') return enabledFeatures.hsrp === true;
     if (item.path === '/green-tax') return enabledFeatures.greenTax === true;
     if (item.path === '/professional-tax') return enabledFeatures.professionalTax === true;
     if (item.path === '/forms' || item.path?.startsWith('/forms/')) return enabledFeatures.forms === true;
