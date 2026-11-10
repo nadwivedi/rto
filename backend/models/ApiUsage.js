@@ -30,6 +30,17 @@ const apiUsageSchema = new mongoose.Schema(
     accessExpiresAt: {
       type: Date
     },
+    // API 2 only: each time searches were bought / set ({ quantity added, plan after, when }), newest last
+    planHistory: [
+      {
+        _id: false,
+        type: { type: String, enum: ['set', 'add'] },
+        quantity: Number,
+        totalAfter: Number,
+        note: String,
+        at: Date
+      }
+    ],
     // API 2 only: how long its searches take (average over our key, and the last one), in ms
     avgResponseMs: {
       type: Number

@@ -1172,30 +1172,43 @@ exports.getRevenueDashboard = async (req, res) => {
   }
 }
 
-// Set how many API 2 searches were bought in total (e.g. 2000), so the panel can show used / left.
-// API 2 reports the searches used (total_searches) on every reply.
+// API 2 plan: searches bought in total, for the used / left on the panel (API 2 reports the searches
+// used, total_searches, on every reply). Body: { add } to add newly bought searches on top of the
+// plan (e.g. +10000), or { totalLimit } to set the total; optional note.
 exports.setApi2Plan = async (req, res) => {
   try {
-    const totalLimit = Number(req.body?.totalLimit)
-    if (!Number.isInteger(totalLimit) || totalLimit < 1) {
-      return res.status(400).json({ success: false, message: 'Enter the total API 2 searches bought (a whole number, at least 1)' })
+    const { add, totalLimit, note } = req.body || {}
+    const adding = add !== undefined && add !== null && add !== ''
+    const value = Number(adding ? add : totalLimit)
+    if (!Number.isInteger(value) || value < 1) {
+      return res.status(400).json({
+        success: false,
+        message: adding ? 'Enter the API 2 searches you bought (a whole number, at least 1)' : 'Enter the total API 2 searches bought (a whole number, at least 1)'
+      })
     }
     const before = await ApiUsage.findOne({ provider: API2_USAGE_PROVIDER }).lean()
+    const newTotal = adding ? (before?.totalLimit || 0) + value : value
+    const entry = { type: adding ? 'add' : 'set', quantity: value, totalAfter: newTotal, at: new Date() }
+    if (note && String(note).trim()) entry.note = String(note).trim().slice(0, 200)
     const doc = await ApiUsage.findOneAndUpdate(
       { provider: API2_USAGE_PROVIDER },
-      { $set: { totalLimit, ...(before?.used != null ? { remaining: totalLimit - before.used } : {}) } },
+      {
+        $set: { totalLimit: newTotal, ...(before?.used != null ? { remaining: newTotal - before.used } : {}) },
+        $push: { planHistory: entry }
+      },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     ).lean()
     recordActivity(req, {
       action: 'update',
       entity: 'api_usage',
       entityName: 'API 2 plan',
-      summary: `API 2 plan size set to ${totalLimit} searches`,
-      changes: [{ field: 'API 2 searches bought', from: before?.totalLimit ?? null, to: totalLimit }]
+      summary: adding ? `Added ${value} API 2 searches (plan ${before?.totalLimit || 0} -> ${newTotal})` : `API 2 plan set to ${newTotal} searches`,
+      changes: [{ field: 'API 2 searches bought', from: before?.totalLimit ?? null, to: newTotal }]
     })
+    const leftText = doc.used != null ? `, ${doc.used} used, ${newTotal - doc.used} left` : ''
     res.json({
       success: true,
-      message: doc.used != null ? `API 2 plan: ${totalLimit} searches, ${doc.used} used, ${totalLimit - doc.used} left` : `API 2 plan set to ${totalLimit} searches`
+      message: adding ? `Added ${value} API 2 searches. Plan now ${newTotal}${leftText}.` : `API 2 plan set to ${newTotal}${leftText}.`
     })
   } catch (error) {
     logError(error, req)
@@ -1231,7 +1244,8 @@ exports.getRcApiUsage = async (req, res) => {
           avgResponseMs: api2.avgResponseMs ?? null,
           lastResponseMs: api2.lastResponseMs ?? null,
           checkedAt: api2.checkedAt || api2.updatedAt || null,
-          lastVehicleNumber: api2.lastVehicleNumber || null
+          lastVehicleNumber: api2.lastVehicleNumber || null,
+          planHistory: (api2.planHistory || []).slice(-20).reverse()
         }
       : null
 

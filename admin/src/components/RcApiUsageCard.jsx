@@ -202,30 +202,39 @@ const formatDate = (value) =>
   new Date(value).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' })
 
 // API 3 – Parzival API: wallet balance, quota and access expiry, as sent in the meta of its last reply
-// API 2: searches used on our key (API 2 sends the running total on every reply) against the plan size
-// entered here (searches bought, e.g. 2000)
+// API 2: searches used on our key (API 2 sends the running total on every reply) against the searches
+// bought. Newly bought searches are added on top of the plan ("+ Add searches"); "Edit total" corrects it.
 const Api2Card = ({ usage, loading, error, onSaved }) => {
-  const [editing, setEditing] = useState(false)
-  const [planInput, setPlanInput] = useState('')
+  // null, 'add' (bought more) or 'set' (correct the total)
+  const [mode, setMode] = useState(null)
+  const [amount, setAmount] = useState('')
+  const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
+  const [showHistory, setShowHistory] = useState(false)
   const has = (v) => v !== null && v !== undefined
   const used = usage?.used
   const plan = usage?.totalLimit
   const left = has(used) && plan > 0 ? plan - used : null
   const usedPct = has(used) && plan > 0 ? Math.min(100, Math.max(0, (used / plan) * 100)) : null
   const status = left === null ? null : getStatus(left, plan)
+  const history = usage?.planHistory || []
 
-  const startEdit = () => {
-    setPlanInput(plan ? String(plan) : '2000')
+  const value = Number(amount)
+  const validValue = amount !== '' && Number.isInteger(value) && value >= 1
+  const newTotal = !validValue ? null : mode === 'add' ? (plan || 0) + value : value
+  const newLeft = newTotal !== null && has(used) ? newTotal - used : null
+
+  const open = (next) => {
+    setMode(next)
+    setAmount(next === 'set' && plan ? String(plan) : '')
+    setNote('')
     setSaveError('')
-    setEditing(true)
   }
 
-  const savePlan = async (e) => {
+  const save = async (e) => {
     e.preventDefault()
-    const value = Number(planInput)
-    if (!Number.isInteger(value) || value < 1) return setSaveError('Enter a whole number')
+    if (!validValue) return setSaveError('Enter a whole number of searches')
     try {
       setSaving(true)
       setSaveError('')
@@ -233,11 +242,11 @@ const Api2Card = ({ usage, loading, error, onSaved }) => {
         method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ totalLimit: value })
+        body: JSON.stringify(mode === 'add' ? { add: value, note } : { totalLimit: value, note })
       })
       const json = await res.json()
       if (!json.success) return setSaveError(json.message || 'Failed to save')
-      setEditing(false)
+      setMode(null)
       onSaved?.()
     } catch {
       setSaveError('Failed to save')
@@ -253,90 +262,155 @@ const Api2Card = ({ usage, loading, error, onSaved }) => {
           <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>API 2 Searches</p>
           <p className='text-[11px] text-gray-400 mt-0.5'>Used on our API 2 key, against the searches bought</p>
         </div>
-        <div className='flex items-center gap-2 shrink-0'>
-          {status && (
-            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-bold ${status.chip}`}>
-              <span aria-hidden='true'>{status.icon}</span>
-              {status.label}
-            </span>
-          )}
-          {!editing && (
-            <button
-              onClick={startEdit}
-              className='px-2 py-1 text-[11px] font-semibold text-amber-700 border border-amber-200 rounded-md hover:bg-amber-50 cursor-pointer'
-              title='Set how many API 2 searches you bought'
-            >
-              {plan ? 'Edit plan' : 'Set plan'}
-            </button>
-          )}
-        </div>
+        {status && (
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-bold shrink-0 ${status.chip}`}>
+            <span aria-hidden='true'>{status.icon}</span>
+            {status.label}
+          </span>
+        )}
       </div>
-
-      {editing && (
-        <form onSubmit={savePlan} className='mt-3 flex flex-wrap items-center gap-2'>
-          <label htmlFor='api2-plan' className='text-xs font-semibold text-gray-600'>Searches bought</label>
-          <input
-            id='api2-plan'
-            type='number'
-            min='1'
-            step='1'
-            value={planInput}
-            onChange={(e) => setPlanInput(e.target.value)}
-            className='w-28 px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none tabular-nums'
-            autoFocus
-          />
-          <button type='submit' disabled={saving} className='px-3 py-1.5 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded-lg disabled:opacity-50 cursor-pointer'>
-            {saving ? 'Saving…' : 'Save'}
-          </button>
-          <button type='button' onClick={() => setEditing(false)} className='px-2 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 cursor-pointer'>
-            Cancel
-          </button>
-          {saveError && <p className='w-full text-xs text-red-600'>{saveError}</p>}
-        </form>
-      )}
 
       {error ? null : loading ? (
         <div className='mt-3 space-y-2'>
           <div className='h-8 w-40 bg-gray-100 rounded animate-pulse' />
           <div className='h-2 bg-gray-100 rounded animate-pulse' />
         </div>
-      ) : !has(used) ? (
-        <p className='text-sm text-gray-500 mt-3'>No API 2 search has been made yet. The searches used appear here after the next API 2 search.</p>
       ) : (
         <>
-          <div className='flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-3'>
-            {left !== null ? (
-              <>
-                <span className={`text-3xl font-bold tabular-nums ${left <= 0 ? 'text-red-600' : 'text-gray-900'}`}>{formatNumber(Math.max(0, left))}</span>
-                <span className='text-sm text-gray-500'>left of {formatNumber(plan)}</span>
-                <span className='text-sm text-gray-400'>· {formatNumber(used)} used</span>
-              </>
-            ) : (
-              <>
-                <span className='text-3xl font-bold text-gray-900 tabular-nums'>{formatNumber(used)}</span>
-                <span className='text-sm text-gray-500'>searches used · set the plan to see what is left</span>
-              </>
-            )}
-          </div>
-          {usedPct !== null && (
-            <div
-              className='mt-2.5 h-2 w-full bg-gray-100 rounded-full overflow-hidden'
-              role='meter'
-              aria-valuemin={0}
-              aria-valuemax={plan}
-              aria-valuenow={used}
-              aria-label='API 2 searches used'
-            >
-              <div className={`h-full rounded-full ${status?.bar || 'bg-amber-500'}`} style={{ width: `${usedPct}%` }} />
-            </div>
+          {!has(used) ? (
+            <p className='text-sm text-gray-500 mt-3'>No API 2 search has been made yet. The searches used appear here after the next API 2 search.</p>
+          ) : (
+            <>
+              <div className='flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-3'>
+                {left !== null ? (
+                  <>
+                    <span className={`text-3xl font-bold tabular-nums ${left <= 0 ? 'text-red-600' : 'text-gray-900'}`}>{formatNumber(Math.max(0, left))}</span>
+                    <span className='text-sm text-gray-500'>left of {formatNumber(plan)}</span>
+                    <span className='text-sm text-gray-400'>· {formatNumber(used)} used</span>
+                  </>
+                ) : (
+                  <>
+                    <span className='text-3xl font-bold text-gray-900 tabular-nums'>{formatNumber(used)}</span>
+                    <span className='text-sm text-gray-500'>searches used · add the searches you bought to see what is left</span>
+                  </>
+                )}
+              </div>
+              {usedPct !== null && (
+                <div
+                  className='mt-2.5 h-2 w-full bg-gray-100 rounded-full overflow-hidden'
+                  role='meter'
+                  aria-valuemin={0}
+                  aria-valuemax={plan}
+                  aria-valuenow={used}
+                  aria-label='API 2 searches used'
+                >
+                  <div className={`h-full rounded-full ${status?.bar || 'bg-amber-500'}`} style={{ width: `${usedPct}%` }} />
+                </div>
+              )}
+              <p className='text-[11px] text-gray-400 mt-2'>
+                {has(usage.avgResponseMs) && <>Avg {(usage.avgResponseMs / 1000).toFixed(1)}s per search · </>}
+                As of the last search
+                {usage.checkedAt && <> on {formatDateTime(usage.checkedAt)}</>}
+                {usage.lastVehicleNumber && <> ({usage.lastVehicleNumber})</>}
+                {has(usage.lastResponseMs) && <>, took {(usage.lastResponseMs / 1000).toFixed(1)}s</>}.
+              </p>
+            </>
           )}
-          <p className='text-[11px] text-gray-400 mt-2'>
-            {has(usage.avgResponseMs) && <>Avg {(usage.avgResponseMs / 1000).toFixed(1)}s per search · </>}
-            As of the last search
-            {usage.checkedAt && <> on {formatDateTime(usage.checkedAt)}</>}
-            {usage.lastVehicleNumber && <> ({usage.lastVehicleNumber})</>}
-            {has(usage.lastResponseMs) && <>, took {(usage.lastResponseMs / 1000).toFixed(1)}s</>}.
-          </p>
+
+          {mode === null ? (
+            <div className='mt-3 flex flex-wrap items-center gap-2'>
+              <button
+                onClick={() => open('add')}
+                className='px-3 py-1.5 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded-lg cursor-pointer'
+              >
+                + Add searches
+              </button>
+              {plan > 0 && (
+                <button
+                  onClick={() => open('set')}
+                  className='px-3 py-1.5 text-xs font-semibold text-gray-600 border border-gray-200 hover:bg-gray-50 rounded-lg cursor-pointer'
+                  title='Correct the total searches bought'
+                >
+                  Edit total
+                </button>
+              )}
+              {history.length > 0 && (
+                <button
+                  onClick={() => setShowHistory((v) => !v)}
+                  className='ml-auto text-[11px] font-semibold text-gray-500 hover:text-gray-800 cursor-pointer'
+                  aria-expanded={showHistory}
+                >
+                  {showHistory ? 'Hide' : 'Show'} purchases ({history.length})
+                </button>
+              )}
+            </div>
+          ) : (
+            <form onSubmit={save} className='mt-3 p-3 rounded-lg bg-amber-50/60 border border-amber-100 space-y-2'>
+              <p className='text-xs font-semibold text-gray-700'>
+                {mode === 'add' ? 'Searches you just bought from API 2' : 'Total searches bought (correction)'}
+              </p>
+              <div className='flex flex-wrap items-center gap-2'>
+                <input
+                  type='number'
+                  min='1'
+                  step='1'
+                  inputMode='numeric'
+                  value={amount}
+                  onChange={(e) => {
+                    setAmount(e.target.value)
+                    setSaveError('')
+                  }}
+                  placeholder={mode === 'add' ? 'e.g. 10000' : 'e.g. 12000'}
+                  aria-label={mode === 'add' ? 'Searches bought' : 'Total searches bought'}
+                  className='w-32 px-2.5 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none tabular-nums'
+                  autoFocus
+                />
+                <input
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  placeholder='Note (optional)'
+                  aria-label='Note'
+                  className='min-w-0 flex-1 px-2.5 py-1.5 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none'
+                />
+              </div>
+              {newTotal !== null && (
+                <p className='text-xs text-gray-700'>
+                  {mode === 'add' && <>{formatNumber(plan || 0)} + {formatNumber(value)} = </>}
+                  <strong>{formatNumber(newTotal)}</strong> searches bought
+                  {newLeft !== null && (
+                    <>
+                      {' '}· <strong className={newLeft <= 0 ? 'text-red-600' : 'text-emerald-700'}>{formatNumber(Math.max(0, newLeft))}</strong> left after{' '}
+                      {formatNumber(used)} used
+                    </>
+                  )}
+                </p>
+              )}
+              {saveError && <p className='text-xs text-red-600'>{saveError}</p>}
+              <div className='flex gap-2'>
+                <button type='submit' disabled={saving || !validValue} className='px-3 py-1.5 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded-lg disabled:opacity-50 cursor-pointer'>
+                  {saving ? 'Saving…' : mode === 'add' ? 'Add to plan' : 'Save total'}
+                </button>
+                <button type='button' onClick={() => setMode(null)} className='px-2 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 cursor-pointer'>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          )}
+
+          {showHistory && mode === null && history.length > 0 && (
+            <ul className='mt-2 divide-y divide-gray-100 border border-gray-100 rounded-lg text-[11px] max-h-40 overflow-y-auto'>
+              {history.map((h, i) => (
+                <li key={`${h.at}-${i}`} className='flex items-center justify-between gap-2 px-2.5 py-1.5'>
+                  <span className='text-gray-500 whitespace-nowrap'>{h.at ? formatDateTime(h.at) : '-'}</span>
+                  <span className='min-w-0 truncate text-gray-500' title={h.note || ''}>{h.note || ''}</span>
+                  <span className='font-semibold text-gray-800 tabular-nums whitespace-nowrap'>
+                    {h.type === 'add' ? `+${formatNumber(h.quantity)}` : `set ${formatNumber(h.quantity)}`}
+                    <span className='font-normal text-gray-400'> → {formatNumber(h.totalAfter)}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
         </>
       )}
     </div>
