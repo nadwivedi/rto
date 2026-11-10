@@ -24,6 +24,36 @@ export const AuthProvider = ({ children }) => {
     checkAuth()
   }, [])
 
+  // Features (HSRP, RC Details, ...) are switched on / off by the admin while the user is logged in.
+  // Re-read the profile when the user comes back to the tab and every 2 minutes, so a change shows
+  // up in the menu / Vahan page without logging out or reloading.
+  const isUserLoggedIn = isAuthenticated && !!user
+  useEffect(() => {
+    if (!isUserLoggedIn) return
+    let lastRefresh = Date.now()
+    const refreshUser = async () => {
+      if (Date.now() - lastRefresh < 15000) return
+      lastRefresh = Date.now()
+      try {
+        const res = await axios.get(`${BACKEND_URL}/api/auth/profile`, { withCredentials: true })
+        if (res.data?.success && res.data.data?.user) {
+          setUser(prev => (prev ? { ...prev, ...res.data.data.user } : prev))
+        }
+      } catch (e) {
+        // Keep the current state; a real logout is handled by the normal auth flow
+      }
+    }
+    const onVisible = () => { if (document.visibilityState === 'visible') refreshUser() }
+    window.addEventListener('focus', refreshUser)
+    document.addEventListener('visibilitychange', onVisible)
+    const timer = setInterval(() => { if (document.visibilityState === 'visible') refreshUser() }, 120000)
+    return () => {
+      window.removeEventListener('focus', refreshUser)
+      document.removeEventListener('visibilitychange', onVisible)
+      clearInterval(timer)
+    }
+  }, [isUserLoggedIn])
+
   const checkAuth = async () => {
     try {
       // Skip auth check if on certain pages
