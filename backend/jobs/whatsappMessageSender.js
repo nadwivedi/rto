@@ -4,6 +4,7 @@ const MessageLog = require('../models/MessageLog')
 const whatsappService = require('../services/whatsappService')
 const { WaUnavailableError, WaRecipientError } = require('../services/whatsappService')
 const waLog = require('../utils/whatsappLogger')
+const { isReminderSuperseded } = require('../utils/expiryAlertSupersede')
 
 const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000
 const SEND_WINDOW_START_HOUR = 7   // 7 AM IST
@@ -109,7 +110,15 @@ async function sendPendingForUser(uid) {
       continue
     }
     seen.add(key)
-    if (batch.length < quota) batch.push(p)
+    if (batch.length >= quota) continue
+    // The vehicle got a newer valid record after this reminder was queued: don't send it.
+    if (p.alertKey && await isReminderSuperseded(p)) {
+      p.status = 'failed'
+      p.errorReason = 'Cancelled: vehicle has a newer active record'
+      await p.save()
+      continue
+    }
+    batch.push(p)
   }
   if (batch.length === 0) return
 

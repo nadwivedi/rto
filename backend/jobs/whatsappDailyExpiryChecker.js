@@ -13,6 +13,7 @@ const TemporaryPermit = require('../models/TemporaryPermit')
 const Driving = require('../models/Driving')
 const User = require('../models/User')
 const { normalizeAlertSettings } = require('../utils/whatsappAlertSettings')
+const { buildSupersededCheck, normalizeVehicle } = require('../utils/expiryAlertSupersede')
 
 const parseDocDate = (dateStr) => {
   if (!dateStr) return null
@@ -302,35 +303,29 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
       const docs = await source.model.find(query).lean()
       console.log(`[WHATSAPP-CRON] ${source.name}: checking ${docs.length} docs with mobile numbers`)
 
-      // For services with active-status tracking, exclude vehicles that already have an active record
-      const activeCheckModels = {
-        insurance: Insurance,
-        tax: Tax,
-        puc: Puc
+      // A vehicle can have an old expiring record and a newer valid one (renewed / added later).
+      // Only the record with the latest expiry date gets a reminder.
+      const isSuperseded = await buildSupersededCheck(source.documentType, source.dateField, specificUserId)
+
+      // Also skip when a different record of the vehicle is marked active
+      const activeQuery = { status: 'active' }
+      if (specificUserId) activeQuery.userId = specificUserId
+      const activeRecords = await source.model.find(activeQuery).select('_id vehicleNumber userId').lean()
+      const activeByVehicle = new Map()
+      for (const r of activeRecords) {
+        if (!r.userId) continue
+        const key = `${r.userId.toString()}:${normalizeVehicle(r.vehicleNumber)}`
+        if (!activeByVehicle.has(key)) activeByVehicle.set(key, [])
+        activeByVehicle.get(key).push(r._id.toString())
       }
-      let vehiclesWithActiveService = null
-      if (activeCheckModels[source.key]) {
-        const Model = activeCheckModels[source.key]
-        const activeQuery = { status: 'active' }
-        if (specificUserId) activeQuery.userId = specificUserId
-        const activeRecords = await Model.find(activeQuery).select('vehicleNumber userId').lean()
-        vehiclesWithActiveService = new Set(
-          activeRecords
-            .filter(r => r.userId)
-            .map(r => `${r.userId.toString()}:${r.vehicleNumber}`)
-        )
+      const hasOtherActive = (doc) => {
+        const ids = activeByVehicle.get(`${doc.userId.toString()}:${normalizeVehicle(doc.vehicleNumber)}`)
+        return Boolean(ids && ids.some(id => id !== doc._id.toString()))
       }
 
       for (const doc of docs) {
         if (!doc.userId) continue
-
-        // Skip records for vehicles that have an active record of the same service
-        if (activeCheckModels[source.key] && vehiclesWithActiveService) {
-          const key = `${doc.userId.toString()}:${doc.vehicleNumber}`
-          if (vehiclesWithActiveService.has(key)) {
-            continue
-          }
-        }
+        if (isSuperseded(doc) || hasOtherActive(doc)) continue
 
         const docUserId = doc.userId.toString()
         const setting = await getSettingForUser(docUserId)
@@ -404,6 +399,12 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
     const nationalPermits = await NationalPermit.find(nationalPermitQuery).lean()
     console.log(`[WHATSAPP-CRON] NP: checking ${nationalPermits.length} docs with mobile numbers`)
 
+    // Per part: skip a part when another NP record of the vehicle has a later expiry for it
+    const npPartSuperseded = {}
+    for (const part of nationalPermitParts) {
+      npPartSuperseded[part.dateField] = await buildSupersededCheck('NationalPermit', part.dateField, specificUserId)
+    }
+
     for (const doc of nationalPermits) {
       if (!doc.userId) continue
 
@@ -415,6 +416,7 @@ const checkUserAndQueueAlerts = async (specificUserId = null) => {
 
       const partAlerts = nationalPermitParts
         .map((part) => {
+          if (npPartSuperseded[part.dateField](doc)) return null
           const expiryDate = parseDocDate(doc[part.dateField])
           if (!expiryDate) return null
 
