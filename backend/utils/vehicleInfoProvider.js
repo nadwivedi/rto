@@ -194,17 +194,13 @@ const toApi1Reply = (data) => {
 // API 2: VEHICLE_INFO_API2_URL is the full URL up to the vehicle number, e.g.
 // https://host/vehicle?key=xxx&no= , and the number is added at the end. It answers an unknown
 // number with HTTP 404 and status 'Failed', and sends no usage counter.
-// TEMPORARY: hardcoded because the tunnel URL in the server's .env went stale. Remove this
-// and go back to VEHICLE_INFO_API2_URL once the env is updated.
-const API2_URL_OVERRIDE = 'https://walking-knowing-wonder-rec.trycloudflare.com/vehicle?key=narayan&no='
-
 const fetchFromApi2 = async (vehicleNumber) => {
-  const apiUrl = API2_URL_OVERRIDE || process.env.VEHICLE_INFO_API2_URL
+  const apiUrl = process.env.VEHICLE_INFO_API2_URL
   if (!apiUrl) throw new Error('API 2 is not set up (VEHICLE_INFO_API2_URL)')
 
-  // API 2 sometimes takes 20s+ to answer, so it gets a longer wait than API 1
+  // API 2 sometimes takes 40s+ to answer (even for a number it does not have), so it gets a long wait
   const response = await axios.get(`${apiUrl}${encodeURIComponent(vehicleNumber)}`, {
-    timeout: 45000,
+    timeout: 60000,
     validateStatus: (status) => status < 500,
     headers: { Accept: 'application/json, text/plain, */*' }
   })
