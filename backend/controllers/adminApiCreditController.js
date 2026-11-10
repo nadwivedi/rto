@@ -48,30 +48,59 @@ const lastDaysIST = (n) => {
   return out
 }
 
-// List transactions (newest first), optionally filtered by type and user
+// List entries (newest first): purchases from the provider, sales to users and calls sold on API keys.
+// type: 'all' (default), 'sales' (users + API keys), 'sale' (users only), 'key_sale' (API keys only) or 'purchase'.
+// userId: that user's sales plus the sales on API keys linked to them.
+// API key sales come back with type 'sale', source 'key' and apiKeyId populated; the rest have source 'user'.
 exports.getTransactions = async (req, res) => {
   try {
-    const { type, userId, page = 1, limit = 50 } = req.query
+    const { type = 'all', userId, page = 1, limit = 50 } = req.query
 
-    const query = {}
-    if (type === 'purchase' || type === 'sale') query.type = type
-    if (userId) {
-      if (!mongoose.isValidObjectId(userId)) return badRequest(res, 'Invalid user')
-      query.userId = userId
+    if (userId && !mongoose.isValidObjectId(userId)) return badRequest(res, 'Invalid user')
+    const userObjectId = userId ? new mongoose.Types.ObjectId(String(userId)) : null
+
+    const userTypes = { all: ['sale', 'purchase'], sales: ['sale'], sale: ['sale'], purchase: ['purchase'] }[type] || []
+    const withKeySales = ['all', 'sales', 'key_sale'].includes(type)
+
+    // A user filter leaves out provider purchases, which belong to no user
+    const txnMatch = { type: { $in: userObjectId ? userTypes.filter((t) => t === 'sale') : userTypes } }
+    if (userObjectId) txnMatch.userId = userObjectId
+    const keyMatch = {}
+    if (userObjectId) {
+      const keys = await ApiKey.find({ userId: userObjectId }).select('_id').lean()
+      keyMatch.apiKeyId = { $in: keys.map((k) => k._id) }
     }
 
     const pageNum = Math.max(1, parseInt(page, 10) || 1)
     const limitNum = Math.min(200, Math.max(1, parseInt(limit, 10) || 50))
 
-    const [totalRecords, transactions] = await Promise.all([
-      ApiCreditTransaction.countDocuments(query),
-      ApiCreditTransaction.find(query)
-        .populate('userId', 'name mobile1 state rto')
-        .sort({ date: -1, createdAt: -1 })
-        .skip((pageNum - 1) * limitNum)
-        .limit(limitNum)
-        .lean()
-    ])
+    const pipeline = [
+      { $match: txnMatch },
+      { $addFields: { source: 'user' } }
+    ]
+    if (withKeySales) {
+      pipeline.push({
+        $unionWith: {
+          coll: ApiKeySale.collection.name,
+          pipeline: [{ $match: keyMatch }, { $addFields: { type: 'sale', source: 'key' } }]
+        }
+      })
+    }
+    pipeline.push(
+      { $sort: { date: -1, createdAt: -1, _id: -1 } },
+      { $facet: { rows: [{ $skip: (pageNum - 1) * limitNum }, { $limit: limitNum }], total: [{ $count: 'n' }] } }
+    )
+
+    const [result] = await ApiCreditTransaction.aggregate(pipeline)
+    let transactions = result?.rows || []
+    const totalRecords = result?.total?.[0]?.n || 0
+    transactions = await User.populate(transactions, { path: 'userId', select: 'name mobile1 state rto', model: User })
+    transactions = await ApiKey.populate(transactions, {
+      path: 'apiKeyId',
+      select: 'name userId',
+      model: ApiKey,
+      populate: { path: 'userId', select: 'name mobile1', model: User }
+    })
 
     res.json({
       success: true,
@@ -598,7 +627,7 @@ exports.getSummary = async (req, res) => {
       ApiKeySale.aggregate([
         {
           $group: {
-            _id: { month: { $dateToString: { format: '%Y-%m', date: '$date', timezone: IST } }, type: 'sale' },
+            _id: { month: { $dateToString: { format: '%Y-%m', date: '$date', timezone: IST } }, type: 'sale', key: { $literal: true } },
             quantity: { $sum: '$quantity' },
             amount: { $sum: '$amount' }
           }
@@ -650,7 +679,7 @@ exports.getSummary = async (req, res) => {
     for (const row of [...byMonth, ...keySalesByMonth]) {
       const key = row._id.month
       if (!monthMap.has(key)) {
-        monthMap.set(key, { month: key, boughtQty: 0, boughtAmount: 0, soldQty: 0, soldAmount: 0 })
+        monthMap.set(key, { month: key, boughtQty: 0, boughtAmount: 0, soldQty: 0, soldAmount: 0, keyQty: 0, keyAmount: 0 })
       }
       const m = monthMap.get(key)
       if (row._id.type === 'purchase') {
@@ -659,6 +688,10 @@ exports.getSummary = async (req, res) => {
       } else {
         m.soldQty += row.quantity
         m.soldAmount = roundMoney(m.soldAmount + row.amount)
+        if (row._id.key) {
+          m.keyQty += row.quantity
+          m.keyAmount = roundMoney(m.keyAmount + row.amount)
+        }
       }
     }
     const months = Array.from(monthMap.values())
@@ -667,7 +700,7 @@ exports.getSummary = async (req, res) => {
 
     // One row per day (days with nothing stay in, as zeros), newest first
     const dayMap = new Map(incomeDays.map((d) => [d, {
-      date: d, soldQty: 0, soldAmount: 0, receivedAmount: 0, keyAmount: 0, sales: 0, boughtQty: 0, boughtAmount: 0
+      date: d, soldQty: 0, soldAmount: 0, receivedAmount: 0, keyQty: 0, keyAmount: 0, keySales: 0, sales: 0, boughtQty: 0, boughtAmount: 0
     }]))
     for (const row of byDay) {
       const d = dayMap.get(row._id.day)
@@ -688,7 +721,9 @@ exports.getSummary = async (req, res) => {
       d.soldQty += row.quantity
       d.soldAmount += row.amount
       d.receivedAmount += row.paid
+      d.keyQty += row.quantity
       d.keyAmount += row.amount
+      d.keySales += row.entries
       d.sales += row.entries
     }
     const days = incomeDays.map((key) => {
@@ -711,6 +746,9 @@ exports.getSummary = async (req, res) => {
         soldAmount: sumDays(list, 'soldAmount'),
         receivedAmount: sumDays(list, 'receivedAmount'),
         soldQty: list.reduce((t, d) => t + d.soldQty, 0),
+        keyAmount: sumDays(list, 'keyAmount'),
+        keyQty: list.reduce((t, d) => t + d.keyQty, 0),
+        sales: list.reduce((t, d) => t + d.sales, 0),
         profit: avgBuyRate === null ? null : sumDays(list, 'profit')
       }
     }

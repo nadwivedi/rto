@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
+  Activity,
   Bell,
   Car,
   ChevronRight,
@@ -23,7 +24,8 @@ const ALERTS_POLL_MS = 60000;
 const NAV_ITEMS = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/', label: 'Manage Users', icon: Users2 },
-  { to: '/api-credits', label: 'User API Sales', icon: Wallet },
+  { to: '/api-credits', label: 'API Sales', icon: Wallet },
+  { to: '/api-usage', label: 'API Usage', icon: Activity },
   { to: '/api-keys', label: 'Vehicle API Keys', icon: KeyRound, matchPrefix: true },
   { to: '/fitness-work', label: 'Fitness Work', icon: ClipboardCheck },
   { to: '/alerts', label: 'Alerts', icon: Bell, badge: 'alerts' },

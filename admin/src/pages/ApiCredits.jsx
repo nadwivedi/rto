@@ -1,8 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import RcApiUsageCard from '../components/RcApiUsageCard'
 import SearchSelect from '../components/SearchSelect'
-import { providerOption } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -62,8 +60,12 @@ const Tile = ({ label, value, sub, accent = 'text-gray-900', className = '' }) =
   </div>
 )
 
-const TypeBadge = ({ type }) =>
-  type === 'sale' ? (
+const TypeBadge = ({ type, source }) =>
+  type === 'sale' && source === 'key' ? (
+    <span className='inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-violet-50 text-violet-700 border border-violet-200'>
+      API key
+    </span>
+  ) : type === 'sale' ? (
     <span className='inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200'>
       Sold
     </span>
@@ -73,22 +75,52 @@ const TypeBadge = ({ type }) =>
     </span>
   )
 
+// One sales period: total amount, then what app users and API keys bought
+const SalesTile = ({ label, amount, qty, sales, keyAmount, keyQty, received }) => {
+  const userAmount = Math.round(((amount || 0) - (keyAmount || 0)) * 100) / 100
+  const userQty = (qty || 0) - (keyQty || 0)
+  return (
+    <div className='bg-white rounded-xl border border-gray-100 p-2.5 sm:p-4 shadow-sm'>
+      <p className='text-[10px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wide'>{label}</p>
+      <p className='text-lg sm:text-2xl font-bold mt-0.5 sm:mt-1 tabular-nums text-emerald-700'>{formatRupees(amount)}</p>
+      <p className='text-[11px] text-gray-400 mt-0.5'>
+        {qty ? `${formatNumber(qty)} calls${sales ? ` · ${formatNumber(sales)} sale${sales === 1 ? '' : 's'}` : ''}` : 'No sale'}
+        {received != null && amount > 0 && received < amount && <span className='text-amber-600'> · {formatRupees(received)} received</span>}
+      </p>
+      <div className='mt-2 pt-2 border-t border-gray-100 grid grid-cols-2 gap-1 text-[11px]'>
+        <div>
+          <p className='text-gray-400'>Users</p>
+          <p className='font-semibold text-gray-800 tabular-nums'>{formatRupees(userAmount)}</p>
+          {userQty > 0 && <p className='text-gray-400 tabular-nums'>{formatNumber(userQty)} calls</p>}
+        </div>
+        <div>
+          <p className='text-violet-500'>API keys</p>
+          <p className='font-semibold text-gray-800 tabular-nums'>{formatRupees(keyAmount)}</p>
+          {keyQty > 0 && <p className='text-gray-400 tabular-nums'>{formatNumber(keyQty)} calls</p>}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// API key sales are edited / deleted on the key's page, which also changes its call limit
+const KeySaleLink = ({ txn, className = '' }) =>
+  txn.apiKeyId ? (
+    <Link
+      to={`/api-keys/${txn.apiKeyId._id}`}
+      className={`inline-block px-2 py-1 text-[11px] font-semibold text-indigo-600 hover:bg-indigo-50 rounded-md ${className}`}
+      title='Edit or delete this sale on the API key page'
+    >
+      Open key
+    </Link>
+  ) : null
+
 const th = 'px-2.5 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibold text-gray-500 uppercase tracking-wider'
 
 const ApiCredits = () => {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const [summary, setSummary] = useState(null)
-  const [usage, setUsage] = useState(null)
-  // App users and API keys in one list, most used first
-  const usageRows = useMemo(
-    () =>
-      [
-        ...(usage?.users || []).map((u) => ({ ...u, rowKey: `u-${u.userId}`, left: u.rcSearchRemaining })),
-        ...(usage?.apiKeys || []).map((k) => ({ ...k, rowKey: `k-${k.apiKeyId}`, isKey: true, left: k.remaining }))
-      ].sort((a, b) => b.last28 - a.last28 || b.last7 - a.last7),
-    [usage]
-  )
   const [transactions, setTransactions] = useState([])
   const [pagination, setPagination] = useState({ currentPage: 1, totalPages: 1, totalRecords: 0 })
   const [users, setUsers] = useState([])
@@ -111,21 +143,12 @@ const ApiCredits = () => {
   const [editForm, setEditForm] = useState(null)
   const [editError, setEditError] = useState('')
   const [editSaving, setEditSaving] = useState(false)
-  // Bumped after a sale/delete so the provider quota card and user limits re-read
-  const [refreshKey, setRefreshKey] = useState(0)
 
   const fetchSummary = useCallback(async () => {
     const res = await fetch(`${BACKEND_URL}/api/admin/api-credits/summary`, { credentials: 'include' })
     const json = await res.json()
     if (!json.success) throw new Error(json.message || 'Failed to load summary')
     setSummary(json.data)
-  }, [])
-
-  const fetchUsage = useCallback(async () => {
-    const res = await fetch(`${BACKEND_URL}/api/admin/api-credits/usage`, { credentials: 'include' })
-    const json = await res.json()
-    if (!json.success) throw new Error(json.message || 'Failed to load usage')
-    setUsage(json.data)
   }, [])
 
   const fetchTransactions = useCallback(async () => {
@@ -149,13 +172,13 @@ const ApiCredits = () => {
   const loadAll = useCallback(async () => {
     try {
       setError('')
-      await Promise.all([fetchSummary(), fetchUsage(), fetchTransactions(), fetchUsers()])
+      await Promise.all([fetchSummary(), fetchTransactions(), fetchUsers()])
     } catch (err) {
       setError(err.message || 'Failed to load API sales')
     } finally {
       setLoading(false)
     }
-  }, [fetchSummary, fetchUsage, fetchTransactions, fetchUsers])
+  }, [fetchSummary, fetchTransactions, fetchUsers])
 
   useEffect(() => {
     loadAll()
@@ -282,7 +305,6 @@ const ApiCredits = () => {
         setSuccess(json.message)
         setShowModal(false)
         setPage(1)
-        setRefreshKey((k) => k + 1)
         await loadAll()
       } else {
         setFormError(json.message || 'Failed to save')
@@ -313,7 +335,6 @@ const ApiCredits = () => {
       const json = await res.json()
       if (json.success) {
         setSuccess(json.message)
-        setRefreshKey((k) => k + 1)
         await loadAll()
       } else {
         setError(json.message || 'Failed to delete entry')
@@ -393,7 +414,6 @@ const ApiCredits = () => {
       setEditTxn(null)
       setError('')
       setSuccess(json.message)
-      setRefreshKey((k) => k + 1)
       await loadAll()
     } catch {
       setEditError('Failed to save')
@@ -403,6 +423,30 @@ const ApiCredits = () => {
   }
 
   const totals = summary?.totals
+  const thisMonth = summary?.months?.find((m) => m.month === todayIST().slice(0, 7))
+  const dayPeriod = (label, d) => ({
+    label,
+    amount: d?.soldAmount,
+    qty: d?.soldQty,
+    sales: d?.sales,
+    keyAmount: d?.keyAmount,
+    keyQty: d?.keyQty,
+    received: d?.receivedAmount
+  })
+  const salePeriods = [
+    dayPeriod('Today', summary?.days?.[0]),
+    dayPeriod('Yesterday', summary?.days?.[1]),
+    dayPeriod('Last 7 Days', summary?.income?.last7 && { ...summary.income.last7 }),
+    { label: 'This Month', amount: thisMonth?.soldAmount, qty: thisMonth?.soldQty, keyAmount: thisMonth?.keyAmount, keyQty: thisMonth?.keyQty },
+    {
+      label: 'All Time',
+      amount: totals?.soldAmount,
+      qty: totals?.soldQty,
+      keyAmount: totals?.keySoldAmount,
+      keyQty: totals?.keySoldQty,
+      received: totals?.receivedAmount
+    }
+  ]
   const isSaleForm = formData.type === 'sale'
   const inputClass =
     'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
@@ -413,9 +457,10 @@ const ApiCredits = () => {
       {/* Header */}
       <div className='flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2.5 sm:gap-4 mb-3 sm:mb-6'>
         <div>
-          <h1 className='text-xl sm:text-3xl font-bold text-gray-800'>User API Sales</h1>
+          <h1 className='text-xl sm:text-3xl font-bold text-gray-800'>API Sales</h1>
           <p className='text-xs sm:text-base text-gray-600 mt-0.5 sm:mt-1'>
-            Vehicle API calls sold to users, day-wise income, and what you buy from the provider
+            Vehicle API calls sold to users and on API keys, income, and what you buy from the provider ·{' '}
+            <Link to='/api-usage' className='text-indigo-600 hover:underline font-semibold'>API usage →</Link>
           </p>
         </div>
         <div className='grid grid-cols-2 sm:flex gap-2'>
@@ -456,53 +501,41 @@ const ApiCredits = () => {
         </div>
       ) : (
         <>
-          {/* Totals */}
-          <div className='grid grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 sm:gap-3 mb-3 sm:mb-5'>
-            <Tile
-              label="Today's Sales"
-              value={formatRupees(summary?.today?.amount)}
-              accent='text-emerald-700'
-              sub={
-                summary?.today?.entries
-                  ? `${formatNumber(summary.today.quantity)} API calls in ${summary.today.entries} sale(s)${
-                      summary.today.keyAmount ? ` · ${formatRupees(summary.today.keyAmount)} via API keys` : ''
-                    }`
-                  : 'No sale recorded today'
-              }
-            />
+          {/* Sales: today, yesterday, last 7 days, this month and all time, split into app users and API keys */}
+          <div className='flex flex-wrap items-baseline justify-between gap-x-2 mb-2'>
+            <h2 className='text-sm font-bold text-gray-800'>Sales</h2>
+            <p className='text-[11px] text-gray-400'>Total, then sold to app users and sold on API keys</p>
+          </div>
+          <div className='grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-3 sm:mb-5'>
+            {salePeriods.map((p) => (
+              <SalesTile key={p.label} {...p} />
+            ))}
+          </div>
+
+          {/* Buying from the provider, profit and money still to come in */}
+          <div className='flex flex-wrap items-baseline justify-between gap-x-2 mb-2'>
+            <h2 className='text-sm font-bold text-gray-800'>Buying &amp; profit</h2>
+            <p className='text-[11px] text-gray-400'>Profit is worked out at your average buying price</p>
+          </div>
+          <div className='grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-2 sm:gap-3 mb-3 sm:mb-5'>
             <Tile
               label='You Bought'
               value={formatRupees(totals?.boughtAmount)}
-              sub={
-                totals?.boughtQty
-                  ? `${formatNumber(totals.boughtQty)} API calls · avg ${formatRupees(totals.avgBuyRate)} each`
-                  : 'No purchase recorded yet'
-              }
+              sub={totals?.boughtQty ? `${formatNumber(totals.boughtQty)} API calls from the provider` : 'No purchase recorded yet'}
             />
             <Tile
-              label='Total Sale Amount'
-              value={formatRupees(totals?.soldAmount)}
-              sub={
-                totals?.soldQty
-                  ? `Received from users${totals.keySoldAmount ? ` · ${formatRupees(totals.keySoldAmount)} via API keys` : ''} · avg ${formatRupees(totals.avgSellRate)} per search`
-                  : 'No sale recorded yet'
-              }
+              label='Avg Buy Rate'
+              value={totals?.avgBuyRate != null ? formatRupees(totals.avgBuyRate) : '-'}
+              sub={`per call bought · sold at avg ${totals?.avgSellRate != null ? formatRupees(totals.avgSellRate) : '-'}`}
             />
             <Tile
-              label='To Receive'
-              value={formatRupees(totals?.pendingAmount)}
-              accent={totals?.pendingAmount > 0 ? 'text-amber-600' : 'text-emerald-700'}
-              sub={`${formatRupees(totals?.receivedAmount)} received${
-                totals?.keyPendingAmount > 0 ? ` · ${formatRupees(totals.keyPendingAmount)} pending on API keys` : ''
-              }`}
-            />
-            <Tile
-              label='RC Searches Sold'
+              label='Calls Sold'
               value={formatNumber(totals?.soldQty)}
+              accent={totals?.unsoldQty < 0 ? 'text-red-600' : 'text-gray-900'}
               sub={
                 totals?.boughtQty
                   ? `of ${formatNumber(totals.boughtQty)} bought · ${formatNumber(totals.unsoldQty)} not yet sold`
-                  : 'Total searches sold to users'
+                  : `${formatNumber(totals?.keySoldQty)} of them on API keys`
               }
             />
             <Tile
@@ -519,7 +552,15 @@ const ApiCredits = () => {
               label='Net Cashflow'
               value={formatRupees(totals?.netCashflow)}
               accent={totals?.netCashflow < 0 ? 'text-red-600' : 'text-emerald-700'}
-              sub={`Received minus paid · ${formatNumber(totals?.unsoldQty)} bought calls not yet sold`}
+              sub='All sales minus all you paid the provider'
+            />
+            <Tile
+              label='To Receive'
+              value={formatRupees(totals?.pendingAmount)}
+              accent={totals?.pendingAmount > 0 ? 'text-amber-600' : 'text-emerald-700'}
+              sub={`${formatRupees(totals?.receivedAmount)} received${
+                totals?.keyPendingAmount > 0 ? ` · ${formatRupees(totals.keyPendingAmount)} pending on API keys` : ''
+              }`}
             />
           </div>
 
@@ -527,33 +568,8 @@ const ApiCredits = () => {
           <div className='mb-3 sm:mb-5'>
             <div className='flex flex-wrap items-baseline justify-between gap-x-2 mb-2'>
               <h2 className='text-sm font-bold text-gray-800'>Income</h2>
-              <p className='text-[11px] text-gray-400'>Sales to users and API keys · profit at your average buying price</p>
+              <p className='text-[11px] text-gray-400'>Sales to users and API keys, day by day and month by month</p>
             </div>
-            <div className='grid grid-cols-3 gap-2 sm:gap-3 mb-3'>
-              <Tile
-                label='Today'
-                value={formatRupees(summary?.days?.[0]?.soldAmount)}
-                accent='text-emerald-700'
-                sub={summary?.days?.[0]?.soldAmount ? `${formatRupees(summary.days[0].receivedAmount)} received` : 'No sale yet today'}
-              />
-              <Tile
-                label='Last 7 Days'
-                value={formatRupees(summary?.income?.last7?.soldAmount)}
-                accent='text-emerald-700'
-                sub={`${formatRupees(summary?.income?.last7?.receivedAmount)} received${
-                  summary?.income?.last7?.profit != null ? ` · ${formatRupees(summary.income.last7.profit)} profit` : ''
-                }`}
-              />
-              <Tile
-                label='Last 30 Days'
-                value={formatRupees(summary?.income?.last30?.soldAmount)}
-                accent='text-emerald-700'
-                sub={`${formatRupees(summary?.income?.last30?.receivedAmount)} received${
-                  summary?.income?.last30?.profit != null ? ` · ${formatRupees(summary.income.last30.profit)} profit` : ''
-                }`}
-              />
-            </div>
-
             <div className='grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-5'>
               {/* Day-wise income */}
               <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
@@ -564,6 +580,8 @@ const ApiCredits = () => {
                       <tr className='border-b border-gray-100'>
                         <th className={`${th} text-left`}>Day</th>
                         <th className={`${th} text-right`}>Calls Sold</th>
+                        <th className={`${th} text-right`} title='Sold to app users'>Users</th>
+                        <th className={`${th} text-right`} title='Sold on API keys'>API Keys</th>
                         <th className={`${th} text-right`}>Income</th>
                         <th className={`${th} text-right`}>Received</th>
                         <th className={`${th} text-right`} title='Sale amount minus the cost of those calls at your average buying price'>Profit</th>
@@ -582,9 +600,14 @@ const ApiCredits = () => {
                             <td className={`px-2.5 sm:px-4 py-2 text-xs text-right tabular-nums ${idle ? '' : 'text-gray-700'}`}>
                               {day.soldQty ? formatNumber(day.soldQty) : '-'}
                             </td>
+                            <td className='px-2.5 sm:px-4 py-2 text-xs text-right tabular-nums whitespace-nowrap'>
+                              {day.soldAmount - (day.keyAmount || 0) > 0 ? formatRupees(day.soldAmount - (day.keyAmount || 0)) : '-'}
+                            </td>
+                            <td className='px-2.5 sm:px-4 py-2 text-xs text-right tabular-nums whitespace-nowrap'>
+                              {day.keyAmount > 0 ? formatRupees(day.keyAmount) : '-'}
+                            </td>
                             <td className={`px-2.5 sm:px-4 py-2 text-xs text-right tabular-nums whitespace-nowrap ${day.soldAmount ? 'font-bold text-gray-900' : ''}`}>
                               {day.soldAmount ? formatRupees(day.soldAmount) : '-'}
-                              {day.keyAmount > 0 && <div className='text-[10px] font-normal text-gray-400'>{formatRupees(day.keyAmount)} API keys</div>}
                             </td>
                             <td className='px-2.5 sm:px-4 py-2 text-xs text-right tabular-nums whitespace-nowrap'>
                               {day.soldAmount ? (
@@ -619,7 +642,7 @@ const ApiCredits = () => {
                         <tr className='border-b border-gray-100'>
                           <th className={`${th} text-left`}>Month</th>
                           <th className={`${th} text-right`}>Paid to Provider</th>
-                          <th className={`${th} text-right`}>Received from Users</th>
+                          <th className={`${th} text-right`}>Sold (Users + API Keys)</th>
                           <th className={`${th} text-right`}>Net</th>
                         </tr>
                       </thead>
@@ -634,6 +657,7 @@ const ApiCredits = () => {
                             <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums whitespace-nowrap'>
                               <div className='text-gray-700'>{m.soldAmount ? formatRupees(m.soldAmount) : '-'}</div>
                               {m.soldQty > 0 && <div className='text-gray-400'>{formatNumber(m.soldQty)} calls</div>}
+                              {m.keyAmount > 0 && <div className='text-[10px] text-violet-500'>{formatRupees(m.keyAmount)} on API keys</div>}
                             </td>
                             <td
                               className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-right tabular-nums whitespace-nowrap ${
@@ -654,22 +678,21 @@ const ApiCredits = () => {
             </div>
           </div>
 
-          {/* Provider quota actually left */}
-          <RcApiUsageCard key={refreshKey} className='mb-3 sm:mb-5' />
-
           {/* History */}
           <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-3 sm:mb-5'>
             <div className='p-2.5 sm:p-3 border-b border-gray-100 flex flex-col lg:flex-row lg:items-center gap-2 sm:gap-3'>
               <h2 className='text-sm font-bold text-gray-800 lg:mr-auto'>
-                History
+                Sales list
                 {filteredUser && <span className='font-normal text-gray-500'> · {filteredUser.name}</span>}
                 <span className='font-normal text-gray-400'> ({pagination.totalRecords})</span>
               </h2>
-              <div className='flex rounded-lg border border-gray-300 overflow-hidden bg-white self-start'>
+              <div className='flex flex-wrap rounded-lg border border-gray-300 overflow-hidden bg-white self-start'>
                 {[
                   ['all', 'All'],
-                  ['sale', 'Sold to users'],
-                  ['purchase', 'Bought from provider']
+                  ['sales', 'All sales'],
+                  ['sale', 'User sales'],
+                  ['key_sale', 'API key sales'],
+                  ['purchase', 'Bought']
                 ].map(([value, label], i) => (
                   <button
                     key={value}
@@ -693,7 +716,7 @@ const ApiCredits = () => {
                 searchPlaceholder='Search name or mobile…'
                 emptyText='No user found'
                 clearable
-                ariaLabel='Filter history by user'
+                ariaLabel='Filter the list by user'
                 className='lg:w-[260px]'
               />
             </div>
@@ -702,7 +725,7 @@ const ApiCredits = () => {
               <p className='p-8 text-center text-sm text-gray-500'>
                 {userFilter || typeFilter !== 'all'
                   ? 'No entries match this filter.'
-                  : 'Nothing recorded yet. Start with "I Bought from Provider", then "Sell to User".'}
+                  : 'Nothing recorded yet. Start with "I Bought from Provider", then "Sell to User" (API key sales are added on the API key page).'}
               </p>
             ) : (
               <>
@@ -711,9 +734,9 @@ const ApiCredits = () => {
                   <li key={txn._id} className='flex items-center gap-2 px-2.5 py-2'>
                     <div className='min-w-0 flex-1'>
                       <div className='flex items-center gap-1.5 min-w-0'>
-                        <TypeBadge type={txn.type} />
+                        <TypeBadge type={txn.type} source={txn.source} />
                         <span className='text-xs font-semibold text-gray-900 truncate'>
-                          {txn.type === 'purchase' ? 'API provider' : txn.userId ? txn.userId.name : 'Deleted user'}
+                          {txn.type === 'purchase' ? 'API provider' : txn.source === 'key' ? txn.apiKeyId?.name || 'Deleted API key' : txn.userId ? txn.userId.name : 'Deleted user'}
                         </span>
                       </div>
                       <div className='text-[11px] text-gray-500 truncate mt-0.5'>
@@ -727,6 +750,10 @@ const ApiCredits = () => {
                         <div className='text-[10px] font-semibold text-amber-600'>{formatRupees(txn.amount - paidOf(txn))} pending</div>
                       )}
                     </div>
+                    {txn.source === 'key' ? (
+                      <KeySaleLink txn={txn} className='shrink-0' />
+                    ) : (
+                    <>
                     <button
                       onClick={() => openEditRate(txn)}
                       className='shrink-0 p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
@@ -746,6 +773,8 @@ const ApiCredits = () => {
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
                       </svg>
                     </button>
+                    </>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -771,11 +800,20 @@ const ApiCredits = () => {
                       <tr key={txn._id} className='hover:bg-gray-50/80 transition-colors'>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatDate(txn.date)}</td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5'>
-                          <TypeBadge type={txn.type} />
+                          <TypeBadge type={txn.type} source={txn.source} />
                         </td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'>
                           {txn.type === 'purchase' ? (
                             <span className='text-gray-400'>API provider</span>
+                          ) : txn.source === 'key' ? (
+                            txn.apiKeyId ? (
+                              <Link to={`/api-keys/${txn.apiKeyId._id}`} className='group'>
+                                <div className='font-semibold text-gray-900 group-hover:text-indigo-600'>{txn.apiKeyId.name}</div>
+                                <div className='text-gray-400'>API key{txn.apiKeyId.userId?.name ? ` · ${txn.apiKeyId.userId.name}` : ''}</div>
+                              </Link>
+                            ) : (
+                              <span className='text-gray-400'>Deleted API key</span>
+                            )
                           ) : txn.userId ? (
                             <>
                               <div className='font-semibold text-gray-900'>{txn.userId.name}</div>
@@ -810,6 +848,10 @@ const ApiCredits = () => {
                           {txn.note || '-'}
                         </td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-right whitespace-nowrap'>
+                          {txn.source === 'key' ? (
+                            <KeySaleLink txn={txn} />
+                          ) : (
+                          <>
                           <button
                             onClick={() => openEditRate(txn)}
                             className='p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
@@ -829,6 +871,8 @@ const ApiCredits = () => {
                               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16' />
                             </svg>
                           </button>
+                          </>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -861,160 +905,6 @@ const ApiCredits = () => {
                 </div>
               </div>
             )}
-          </div>
-
-          {/* Searches users actually made */}
-          <div className='mb-3 sm:mb-5'>
-            <div className='flex flex-wrap items-baseline justify-between gap-x-2 mb-2'>
-              <h2 className='text-sm font-bold text-gray-800'>API Usage</h2>
-              <p className='text-[11px] text-gray-400'>
-                {usage?.trackingSince
-                  ? `Counting since ${formatDay(usage.trackingSince)} · searches before that are not included`
-                  : 'No search has been counted yet · counting starts with the next search'}
-              </p>
-            </div>
-            <div className='grid grid-cols-3 gap-2 sm:gap-3 mb-3'>
-              <Tile label='Today' value={formatNumber(usage?.totals?.today)} sub='searches so far today' />
-              <Tile
-                label='Last 7 Days'
-                value={formatNumber(usage?.totals?.last7)}
-                sub={`avg ${formatNumber(usage?.totals?.avg7)} per day`}
-              />
-              <Tile
-                label='Last 28 Days'
-                value={formatNumber(usage?.totals?.last28)}
-                sub={`avg ${formatNumber(usage?.totals?.avg28)} per day`}
-              />
-            </div>
-
-            <p className='mb-3 text-[11px] text-gray-500'>
-              API key calls · today: API 5 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api5Today)}</span>
-              {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Today)}</span>
-              {' · '}Parzival API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Today)}</span>
-              {' · '}PeriOne API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api4Today)}</span>
-              {' · '}API 2 + 4 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api24Today)}</span>
-              {' · '}API 3 + 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api32Today)}</span>
-              {' · last 28 days: '}API 5 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api5Last28)}</span>
-              {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Last28)}</span>
-              {' · '}Parzival API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Last28)}</span>
-              {' · '}PeriOne API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api4Last28)}</span>
-              {' · '}API 2 + 4 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api24Last28)}</span>
-              {' · '}API 3 + 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api32Last28)}</span>
-              {' · '}App <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.appLast28)}</span>
-              {/* Calls API 1 (Nikhil API, now removed) served before it was replaced by API 5 */}
-              {usage?.totals?.api1Last28 > 0 && <>{' · '}old API 1 <span className='font-semibold text-gray-800'>{formatNumber(usage.totals.api1Last28)}</span></>}
-            </p>
-
-            <div className='grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-5'>
-              {/* Day-wise */}
-              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden'>
-                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>Day-wise usage · last 7 days</h3>
-                <div className='overflow-x-auto'>
-                <table className='w-full'>
-                  <thead>
-                    <tr className='border-b border-gray-100 bg-gray-50/60'>
-                      <th className={`${th} text-left`}>Day</th>
-                      <th className={`${th} text-right`}>App</th>
-                      <th className={`${th} text-right`} title='API key calls served by API 5 (and by the removed API 1 before it)'>API 5</th>
-                      <th className={`${th} text-right`} title='API key calls served by API 2'>API 2</th>
-                      <th className={`${th} text-right`} title='API key calls served by API 3 – Parzival API'>Parzival</th>
-                      <th className={`${th} text-right`} title='API key calls served by API 4 – PeriOne API'>PeriOne</th>
-                      <th className={`${th} text-right`} title='API key calls served by API 2 + API 4 together'>API 2+4</th>
-                      <th className={`${th} text-right`} title='API key calls served by API 3 + API 2 together'>API 3+2</th>
-                      <th className={`${th} text-right`}>Total</th>
-                      <th className={`${th} text-right`} title='Users and API keys that searched that day'>Active</th>
-                    </tr>
-                  </thead>
-                  <tbody className='divide-y divide-gray-100'>
-                    {(usage?.days || []).slice(0, 7).map((day) => (
-                      <tr key={day.date} className='hover:bg-gray-50/80 transition-colors'>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>
-                          {formatDay(day.date)}
-                          {day.date === usage.today && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
-                        </td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.appCount)}</td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber((day.api5Count || 0) + (day.api1Count || 0))}</td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api2Count)}</td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api3Count)}</td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api4Count)}</td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api24Count)}</td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api32Count)}</td>
-                        <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
-                          {formatNumber(day.count)}
-                        </td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber((day.users || 0) + (day.keys || 0))}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                </div>
-              </div>
-
-              {/* User-wise */}
-              <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col'>
-                <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>
-                  Usage by user &amp; API key
-                  {usageRows.length > 0 && <span className='font-normal text-gray-400'> ({usageRows.length})</span>}
-                </h3>
-                {usageRows.length ? (
-                  // Side by side (xl) the list takes the height of the day-wise card and scrolls; stacked it is capped to about the same height
-                  <div className='relative max-h-[340px] overflow-auto xl:max-h-none xl:flex-1 xl:min-h-0'>
-                    <div className='xl:absolute xl:inset-0 xl:overflow-auto'>
-                      <table className='w-full'>
-                        <thead className='sticky top-0 z-10 bg-gray-50'>
-                          <tr className='border-b border-gray-100'>
-                            <th className={`${th} text-left`}>User</th>
-                            <th className={`${th} text-right`}>Today</th>
-                            <th className={`${th} text-right`}>Last 7 Days</th>
-                            <th className={`${th} text-right`}>Last 28 Days</th>
-                            <th className={`${th} text-right`}>Left</th>
-                          </tr>
-                        </thead>
-                        <tbody className='divide-y divide-gray-100'>
-                          {usageRows.map((u) => (
-                            <tr key={u.rowKey} className='hover:bg-gray-50/80 transition-colors'>
-                              <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs'>
-                                {u.isKey ? (
-                                  <>
-                                    <Link to={`/api-keys/${u.apiKeyId}`} className='font-semibold text-gray-900 hover:text-indigo-600'>
-                                      {u.name || 'Deleted API key'}
-                                    </Link>
-                                    <div className='text-gray-400'>
-                                      <span
-                                        className={`mr-1 rounded px-1 py-px text-[10px] font-bold uppercase ${providerOption(u.provider).tag}`}
-                                      >
-                                        API key · {providerOption(u.provider).short}
-                                      </span>
-                                      {u.userName}
-                                      {!u.active && <span className='ml-1 text-rose-500'>· off</span>}
-                                    </div>
-                                  </>
-                                ) : (
-                                  <>
-                                    <div className='font-semibold text-gray-900'>{u.name || 'Deleted user'}</div>
-                                    <div className='text-gray-400'>{u.mobile1 || ''}</div>
-                                  </>
-                                )}
-                              </td>
-                              <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.today ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
-                                {formatNumber(u.today)}
-                              </td>
-                              <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last7)}</td>
-                              <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(u.last28)}</td>
-                              <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${u.left <= 0 ? 'font-bold text-rose-600' : 'text-gray-700'}`}>
-                                {formatNumber(u.left)}
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                ) : (
-                  <p className='p-6 text-center text-sm text-gray-500'>No user or API key has searched in the last 28 days.</p>
-                )}
-              </div>
-            </div>
           </div>
 
           <div>

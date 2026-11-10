@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar';
 import Users from './pages/Users';
 import Dashboard from './pages/Dashboard';
 import ApiCredits from './pages/ApiCredits';
+import ApiUsage from './pages/ApiUsage';
 import ApiKeys from './pages/ApiKeys';
 import ApiKeyDetail from './pages/ApiKeyDetail';
 import FitnessWork from './pages/FitnessWork';
@@ -92,6 +93,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <ApiCredits />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/api-usage"
+                element={
+                  <ProtectedRoute>
+                    <ApiUsage />
                   </ProtectedRoute>
                 }
               />
