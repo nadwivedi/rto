@@ -369,7 +369,7 @@ const ApiKeyDetail = () => {
         <div className='flex flex-wrap gap-2'>
           <button
             onClick={() => {
-              setEditing({ name: apiKey.name, contactMobile: apiKey.contactMobile || '', contactEmail: apiKey.contactEmail || '', userId: apiKey.userId?._id || '', website: apiKey.website || '', note: apiKey.note || '', provider: apiKey.provider || 'api1' })
+              setEditing({ name: apiKey.name, contactMobile: apiKey.contactMobile || '', contactEmail: apiKey.contactEmail || '', userId: apiKey.userId?._id || '', website: apiKey.website || '', note: apiKey.note || '', provider: apiKey.provider || 'api5' })
               setEditError('')
             }}
             className='px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold text-sm cursor-pointer'

@@ -1,7 +1,6 @@
 const mongoose = require('mongoose')
 const User = require('../models/User')
 const ApiUsage = require('../models/ApiUsage')
-const VehicleSearchHistory = require('../models/VehicleSearchHistory')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
 const fs = require('fs')
@@ -10,7 +9,7 @@ const crypto = require('crypto')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
 const { backupAndCleanUserData } = require('../utils/userDataClean')
-const { PROVIDERS, API3_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
+const { PROVIDERS, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
 
 // '' / null clears a money field, a number >= 0 sets it, anything else is ignored (returns false)
 const parseMoney = (value) => {
@@ -96,7 +95,7 @@ const USER_FIELDS = [
   { key: 'features.saveVehicleRecords', label: 'Feature: Save Records in RC Details' }
 ]
 
-// Point every user's RC searches at one API, e.g. all to API 1 while API 2 is down
+// Point every user's RC searches at one API, e.g. all to API 5 while API 2 is down
 exports.setAllRcProvider = async (req, res) => {
   try {
     const { provider } = req.body || {}
@@ -875,7 +874,7 @@ exports.getUserStatistics = async (req, res) => {
     const activeUsers = await User.countDocuments({ isActive: true })
     const inactiveUsers = await User.countDocuments({ isActive: false })
     // Users without rcProvider use API 2
-    const rcApi1Users = await User.countDocuments({ rcProvider: 'api1' })
+    const rcApi5Users = await User.countDocuments({ rcProvider: 'api5' })
     const rcApi3Users = await User.countDocuments({ rcProvider: 'api3' })
     const rcApi4Users = await User.countDocuments({ rcProvider: 'api4' })
     const rcApi24Users = await User.countDocuments({ rcProvider: 'api24' })
@@ -908,8 +907,8 @@ exports.getUserStatistics = async (req, res) => {
         total: totalUsers,
         active: activeUsers,
         inactive: inactiveUsers,
-        rcApi1: rcApi1Users,
-        rcApi2: totalUsers - rcApi1Users - rcApi3Users - rcApi4Users - rcApi24Users - rcApi32Users,
+        rcApi5: rcApi5Users,
+        rcApi2: totalUsers - rcApi5Users - rcApi3Users - rcApi4Users - rcApi24Users - rcApi32Users,
         rcApi3: rcApi3Users,
         rcApi4: rcApi4Users,
         rcApi24: rcApi24Users,
@@ -1167,41 +1166,23 @@ exports.getRevenueDashboard = async (req, res) => {
   }
 }
 
-// Vehicle (RC details) API quota for the admin panel.
-// The provider only reports its quota on a search response, so this is the snapshot
+// Vehicle (RC details) API quota for the admin panel: API 5's calls left and API 3's wallet.
+// The providers only report these on a search response, so this is the snapshot
 // from the most recent search - it is never fetched live (that would spend a credit).
 exports.getRcApiUsage = async (req, res) => {
   try {
-    let usage = null
-
-    const snapshot = await ApiUsage.findOne({ provider: 'vehicleInfo' }).lean()
-    if (snapshot) {
-      usage = {
-        totalLimit: snapshot.totalLimit ?? null,
-        used: snapshot.used ?? null,
-        remaining: snapshot.remaining ?? null,
-        checkedAt: snapshot.checkedAt || snapshot.updatedAt || null,
-        lastVehicleNumber: snapshot.lastVehicleNumber || null
-      }
-    } else {
-      // Nothing recorded yet (no search since this was deployed): fall back to the
-      // newest saved search, which carries the provider's reply from that time
-      const last = await VehicleSearchHistory.findOne({ 'rawResponse._usage': { $exists: true } })
-        .sort({ lastSearchedAt: -1 })
-        .select('rawResponse._usage lastSearchedAt vehicleNumber')
-        .lean()
-      const raw = last?.rawResponse?._usage
-      if (raw) {
-        const toNumber = (value) => (Number.isFinite(Number(value)) ? Number(value) : null)
-        usage = {
-          totalLimit: toNumber(raw.total_limit),
-          used: toNumber(raw.used),
-          remaining: toNumber(raw.remaining),
-          checkedAt: last.lastSearchedAt || null,
-          lastVehicleNumber: last.vehicleNumber || null
+    // API 5 (parzivalapi.online): Vehicle Info calls left, from its last reply
+    const api5 = await ApiUsage.findOne({ provider: API5_USAGE_PROVIDER }).lean()
+    const usage = api5
+      ? {
+          totalLimit: null,
+          used: null,
+          remaining: api5.remaining ?? null,
+          lastCharge: api5.lastCharge ?? null,
+          checkedAt: api5.checkedAt || api5.updatedAt || null,
+          lastVehicleNumber: api5.lastVehicleNumber || null
         }
-      }
-    }
+      : null
 
     // API 3 (Parzival API): wallet, quota and access expiry from its last reply
     const api3 = await ApiUsage.findOne({ provider: API3_USAGE_PROVIDER }).lean()

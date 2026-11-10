@@ -43,7 +43,7 @@ const ApiKeys = () => {
   const [copiedId, setCopiedId] = useState(null)
 
   const [showCreate, setShowCreate] = useState(false)
-  const [createForm, setCreateForm] = useState({ name: '', contactMobile: '', contactEmail: '', userId: '', website: '', note: '', provider: 'api1' })
+  const [createForm, setCreateForm] = useState({ name: '', contactMobile: '', contactEmail: '', userId: '', website: '', note: '', provider: 'api5' })
   const [createError, setCreateError] = useState('')
   const [creating, setCreating] = useState(false)
   const [sellKey, setSellKey] = useState(null)
@@ -111,7 +111,7 @@ const ApiKeys = () => {
     }
   }
 
-  // Point every key at one API, e.g. all to API 2 while API 1 is down
+  // Point every key at one API, e.g. all to API 2 while API 5 is down
   const switchAllProvider = async (provider) => {
     if (!confirm(`Switch ALL API keys to ${providerLabel(provider)}? Every customer's calls will go to ${providerLabel(provider)} until you change it.`)) return
     try {
@@ -142,7 +142,7 @@ const ApiKeys = () => {
       contactMobile: apiKey.contactMobile || '',
       contactEmail: apiKey.contactEmail || '',
       userId: apiKey.userId?._id || '',
-      provider: apiKey.provider || 'api1',
+      provider: apiKey.provider || 'api5',
       website: apiKey.website || '',
       note: apiKey.note || ''
     })
@@ -220,7 +220,7 @@ const ApiKeys = () => {
           <ShareApiDocButton />
           <button
             onClick={() => {
-              setCreateForm({ name: '', contactMobile: '', contactEmail: '', userId: '', website: '', note: '', provider: 'api1' })
+              setCreateForm({ name: '', contactMobile: '', contactEmail: '', userId: '', website: '', note: '', provider: 'api5' })
               setCreateError('')
               setShowCreate(true)
             }}
@@ -236,12 +236,12 @@ const ApiKeys = () => {
           <div>
             <p className='text-sm font-semibold text-gray-800'>Vehicle data source for all keys</p>
             <p className='text-xs text-gray-500 mt-0.5'>
-              {formatNumber(totals.keys - (totals.api2 || 0) - (totals.api3 || 0) - (totals.api4 || 0) - (totals.api24 || 0) - (totals.api32 || 0))} on Nikhil API · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on Parzival API · {formatNumber(totals.api4 || 0)} on PeriOne API (transport only) · {formatNumber(totals.api24 || 0)} on API 2 + 4 · {formatNumber(totals.api32 || 0)} on API 3 + 2. Switch every key at once when one API is down.
+              {formatNumber(totals.api5 || 0)} on API 5 · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on Parzival API · {formatNumber(totals.api4 || 0)} on PeriOne API (transport only) · {formatNumber(totals.api24 || 0)} on API 2 + 4 · {formatNumber(totals.api32 || 0)} on API 3 + 2. Switch every key at once when one API is down.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>
             {PROVIDER_OPTIONS.map((p) => {
-              const counts = { api1: totals.keys - (totals.api2 || 0) - (totals.api3 || 0) - (totals.api4 || 0) - (totals.api24 || 0) - (totals.api32 || 0), api2: totals.api2 || 0, api3: totals.api3 || 0, api4: totals.api4 || 0, api24: totals.api24 || 0, api32: totals.api32 || 0 }
+              const counts = { api5: totals.api5 || 0, api2: totals.api2 || 0, api3: totals.api3 || 0, api4: totals.api4 || 0, api24: totals.api24 || 0, api32: totals.api32 || 0 }
               const already = counts[p.value] === totals.keys
               return (
                 <button
@@ -304,7 +304,7 @@ const ApiKeys = () => {
                               Off
                             </span>
                           )}
-                          {k.provider && k.provider !== 'api1' && (
+                          {k.provider && k.provider !== 'api5' && (
                             <span className={`ml-1.5 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${providerOption(k.provider).tag}`}>
                               {providerOption(k.provider).short}
                             </span>

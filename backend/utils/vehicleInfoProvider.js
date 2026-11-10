@@ -1,72 +1,10 @@
 const axios = require('axios')
 const ApiUsage = require('../models/ApiUsage')
-const ProviderCharge = require('../models/ProviderCharge')
 const { raiseAlert, autoResolveAlerts } = require('./adminAlerts')
-
-const VEHICLE_INFO_PROVIDER = 'vehicleInfo'
 
 const toNumber = (value) => {
   const n = Number(value)
   return value !== null && value !== '' && Number.isFinite(n) ? n : undefined
-}
-
-/**
- * Did this lookup use one of our provider credits? The provider's `used` counter goes up by
- * one for every credit, so each new value is saved once (unique index). Seeing a value that
- * is already saved means the provider did not charge for this call.
- * Resolves to true / false, or null when the reply has no counter (caller decides).
- */
-const providerCharged = async (usage, vehicleNumber) => {
-  const used = toNumber(usage?.used)
-  if (used === undefined) return null
-  const totalLimit = toNumber(usage.total_limit)
-  try {
-    await ProviderCharge.create({
-      provider: VEHICLE_INFO_PROVIDER,
-      totalLimit: totalLimit ?? null,
-      used,
-      remaining: toNumber(usage.remaining),
-      vehicleNumber
-    })
-    return true
-  } catch (err) {
-    if (err?.code === 11000) return false
-    console.error('Failed to check provider charge:', err.message)
-    return null
-  }
-}
-
-/**
- * The provider reports its own account quota on every response as
- * `_usage: { total_limit, used, remaining }`. Keep the latest snapshot so the
- * admin panel can show how many searches are left. Never throws - a failure
- * here must not break the vehicle lookup.
- */
-const recordProviderUsage = async (usage, { vehicleNumber, userId } = {}) => {
-  if (!usage || typeof usage !== 'object') return
-
-  const totalLimit = toNumber(usage.total_limit)
-  const used = toNumber(usage.used)
-  const remaining = toNumber(usage.remaining)
-  if (totalLimit === undefined && used === undefined && remaining === undefined) return
-
-  // Only write the fields the provider actually sent, so a partial reply can't blank the rest
-  const snapshot = { checkedAt: new Date() }
-  if (totalLimit !== undefined) snapshot.totalLimit = totalLimit
-  if (used !== undefined) snapshot.used = used
-  if (remaining !== undefined) snapshot.remaining = remaining
-  if (vehicleNumber) snapshot.lastVehicleNumber = vehicleNumber
-  if (userId) snapshot.lastUserId = userId
-
-  try {
-    await ApiUsage.findOneAndUpdate(
-      { provider: VEHICLE_INFO_PROVIDER },
-      { $set: snapshot },
-      { upsert: true, setDefaultsOnInsert: true }
-    )
-  } catch (err) {
-    console.error('Failed to record vehicle API usage:', err.message)
-  }
 }
 
 const NOT_FOUND_TEXT = /not\s*found|no\s*record|invalid/i
@@ -87,8 +25,9 @@ const hasVehicleDetails = (data) =>
 const cleanVehicleNumber = (raw) => String(raw || '').replace(/[\s-]/g, '').toUpperCase()
 
 // The vehicle info sources an API key can be set to use (ApiKey.provider)
+// (API 1 – Nikhil API was removed; its keys and users were moved to API 5, see utils/migrateApi1ToApi5)
 const PROVIDERS = {
-  api1: 'API 1 – Nikhil API',
+  api5: 'API 5',
   api2: 'API 2',
   api3: 'API 3 – Parzival API',
   api4: 'API 4 – PeriOne API',
@@ -98,10 +37,10 @@ const PROVIDERS = {
   api32: 'API 3 + API 2 – API 3 details + API 2 mobile'
 }
 
-// The fields every reply has, in API 1's order. API 2 / API 3 replies are turned into exactly
-// these fields and API 1 replies get any missing one as 'NA', so a customer gets the same JSON
-// from all of them. The permit fields after PERMIT_ISSUE_DATE and PURCHASE_DT / SALE_AMT are
-// filled where the API sends them, VEHICLE_AGE .. RTO_PHONE only by API 2. IS_COMMERCIAL is 'TRUE' / 'FALSE', as API 1 sends it.
+// The fields every reply has, in the order the old API 1 used (API 5 sends the same names). Every
+// API's reply is turned into exactly these fields, so a customer gets the same JSON from all of them.
+// The permit fields after PERMIT_ISSUE_DATE and PURCHASE_DT / SALE_AMT are filled where the API
+// sends them, VEHICLE_AGE .. RTO_PHONE only by API 2. IS_COMMERCIAL is 'TRUE' / 'FALSE'.
 const API1_FIELDS = [
   'REGN_NO', 'REGN_DT', 'REGN_UPTO', 'OWNER_NAME', 'F_NAME', 'STATE_CD', 'RTO_CD', 'PRESENT_ADDRESS',
   'PERMANENT_ADDRESS', 'MOBILE_NO', 'CHASI_NO', 'ENG_NO', 'MAKER_DESC', 'MAKER_MODEL', 'BODY_TYPE_DESC',
@@ -600,6 +539,108 @@ const fetchFromApi4 = async (vehicleNumber) => {
   return { found: true, data: toApi1Reply(data), charged: null }
 }
 
+// API 5 (parzivalapi.online): GET /v1/vehicle?number=<no> with the key in the X-API-Key header.
+// It replies { success: true, api, charged, remaining, calls_left: { vehicle, hsrp }, data: { REGN_NO, ... } }
+// with data in the same field names this module sends, or { success: false, error, calls_left? } with
+// 400 bad number, 401 bad key, 402 no calls left, 404 no record, 429 over 60 a minute, 502 / 503 down.
+// Errors are never charged.
+const API5_URL = 'https://api.parzivalapi.online/v1/vehicle'
+const API5_USAGE_PROVIDER = 'parzivalapi5'
+// At or below this many calls left the admin gets a "running low" alert, before lookups start failing
+const API5_LOW_CALLS = Number(process.env.PARZIVAL5_LOW_CALLS_ALERT) || 25
+
+const mapApi5Fields = (raw) => {
+  const data = {}
+  for (const field of API1_FIELDS) {
+    const value = raw[field]
+    if (value === undefined || value === null || /^(|na|n\/a|null|none|-)$/i.test(String(value).trim())) continue
+    data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
+  }
+  // 'Y' / 'N' (or true / false) -> 'TRUE' / 'FALSE', as the other APIs send it
+  const commercial = String(data.IS_COMMERCIAL ?? '').trim().toUpperCase()
+  if (['Y', 'YES', 'TRUE'].includes(commercial)) data.IS_COMMERCIAL = 'TRUE'
+  else if (['N', 'NO', 'FALSE'].includes(commercial)) data.IS_COMMERCIAL = 'FALSE'
+  if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
+    data.CUBIC_CAPACITY = Number(data.CUBIC_CAPACITY).toFixed(2)
+  }
+  const mfg = String(data.MANU_MONTH_YR || '').match(/^(\d{1,2})\/(\d{4})$/)
+  if (mfg) data.MANU_MONTH_YR = `${mfg[1].padStart(2, '0')}/${mfg[2]}`
+  for (const field of [...API3_DATE_FIELDS, 'PURCHASE_DT']) if (data[field]) data[field] = toApi1Date(data[field])
+  return data
+}
+
+/**
+ * Every API 5 reply (success or 402) says how many Vehicle Info calls are left; keep the latest
+ * for the admin panel and alert when it runs low. Never throws.
+ */
+const recordApi5Usage = async (raw, { vehicleNumber, userId } = {}) => {
+  if (!raw || typeof raw !== 'object') return
+  const remaining = toNumber(raw.remaining ?? raw.calls_left?.vehicle)
+  if (remaining === undefined) return
+  const snapshot = { checkedAt: new Date(), remaining }
+  const charge = toNumber(raw.charged)
+  if (charge !== undefined) snapshot.lastCharge = charge
+  if (vehicleNumber) snapshot.lastVehicleNumber = vehicleNumber
+  if (userId) snapshot.lastUserId = userId
+
+  try {
+    await ApiUsage.findOneAndUpdate({ provider: API5_USAGE_PROVIDER }, { $set: snapshot }, { upsert: true, setDefaultsOnInsert: true })
+  } catch (err) {
+    console.error('Failed to record API 5 usage:', err.message)
+  }
+
+  if (remaining <= API5_LOW_CALLS) {
+    await raiseAlert({
+      key: 'api5:low-balance',
+      severity: remaining <= 0 ? 'critical' : 'warning',
+      source: 'api5',
+      code: 'LOW_BALANCE',
+      title: remaining <= 0 ? 'API 5: no Vehicle Info calls left' : 'API 5: Vehicle Info calls running low',
+      message: `${remaining} Vehicle Info call${remaining === 1 ? '' : 's'} left on parzivalapi.online. Buy more calls before searches start failing.`,
+      vehicleNumber,
+      userId
+    })
+  } else {
+    await autoResolveAlerts('api5:low-balance')
+  }
+}
+
+const fetchFromApi5 = async (vehicleNumber, { userId } = {}) => {
+  const apiKey = process.env.PARZIVAL5_API_KEY
+  if (!apiKey) throw new Error('API 5 is not set up (PARZIVAL5_API_KEY)')
+
+  // 502 / 503 (their data source down) are thrown by axios like a network error
+  const response = await axios.get(API5_URL, {
+    params: { number: vehicleNumber },
+    timeout: 30000,
+    validateStatus: (status) => status < 500,
+    headers: { 'X-API-Key': apiKey, Accept: 'application/json' }
+  })
+
+  const raw = response.data && typeof response.data === 'object' ? response.data : null
+  // Recorded before the error checks so a 402 "no calls left" still updates the count
+  await recordApi5Usage(raw, { vehicleNumber, userId })
+
+  if (!raw || !raw.success) {
+    // A bad key, no calls left or a rate limit is our problem, not the vehicle number
+    if ([401, 402, 403, 429].includes(response.status)) {
+      throw new ProviderError(`API 5 refused the request: HTTP ${response.status} ${raw?.error || ''}`.trim(), `HTTP_${response.status}`)
+    }
+    const message = response.status === 400
+      ? 'Invalid vehicle number. Please check registration number.'
+      : 'Vehicle details not found. Please check registration number.'
+    return { found: false, charged: false, message }
+  }
+
+  const data = raw.data && typeof raw.data === 'object' ? mapApi5Fields(raw.data) : null
+  const charged = raw.charged === undefined ? true : Boolean(Number(raw.charged))
+  if (!data || !hasVehicleDetails(data)) {
+    return { found: false, charged, message: 'Vehicle details not found. Please check registration number.' }
+  }
+  if (!data.REGN_NO) data.REGN_NO = vehicleNumber
+  return { found: true, data: toApi1Reply(data), charged }
+}
+
 // What a user or API key customer sees when a provider fails. The real reason goes to the admin alerts.
 const UNAVAILABLE_MESSAGE = 'Vehicle information service is temporarily unavailable. Please try again after some time.'
 
@@ -616,7 +657,7 @@ const alertCodeOf = (err) => {
 }
 
 /**
- * One live lookup at a vehicle info provider: API 1 unless `provider` says 'api2', 'api3' or 'api4'.
+ * One live lookup at a vehicle info provider: API 5 unless `provider` says 'api2', 'api3' or 'api4'.
  * Resolves to { found: true, data, charged } or { found: false, message, charged }, where
  * `charged` says whether the provider used one of our credits (null when it did not say).
  * When the provider fails (down, timeout, 5xx, bad key, empty wallet) an admin alert is raised
@@ -625,7 +666,7 @@ const alertCodeOf = (err) => {
  */
 const fetchVehicleInfo = async (vehicleNumber, { userId, provider, via } = {}) => {
   if (COMBINED[provider]) return fetchCombined(vehicleNumber, COMBINED[provider], { userId, via })
-  return lookupOne(PROVIDERS[provider] ? provider : 'api1', vehicleNumber, { userId, via })
+  return lookupOne(PROVIDERS[provider] ? provider : 'api5', vehicleNumber, { userId, via })
 }
 
 // One provider, with its own admin alerts (see fetchVehicleInfo)
@@ -731,53 +772,7 @@ const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
   if (provider === 'api2') return fetchFromApi2(vehicleNumber)
   if (provider === 'api3') return fetchFromApi3(vehicleNumber, { userId })
   if (provider === 'api4') return fetchFromApi4(vehicleNumber)
-
-  // API 1: like API 2, VEHICLE_INFO_API1_URL is the full URL up to the vehicle number, e.g.
-  // https://host/api.php?key=xxx&vno= , and the number is added at the end.
-  // Falls back to the old VEHICLE_INFO_API_URL + VEHICLE_INFO_API_KEY pair until every .env is updated.
-  const { VEHICLE_INFO_API1_URL, VEHICLE_INFO_API_URL, VEHICLE_INFO_API_KEY } = process.env
-  const apiUrl = VEHICLE_INFO_API1_URL ||
-    (VEHICLE_INFO_API_URL && VEHICLE_INFO_API_KEY ? `${VEHICLE_INFO_API_URL}?key=${VEHICLE_INFO_API_KEY}&vno=` : null)
-  if (!apiUrl) throw new Error('API 1 is not set up (VEHICLE_INFO_API1_URL)')
-
-  const response = await axios.get(`${apiUrl}${encodeURIComponent(vehicleNumber)}`, {
-    timeout: 20000,
-    headers: {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-      Accept: 'application/json, text/plain, */*'
-    }
-  })
-
-  let data = response.data
-  // The provider sometimes answers with plain text instead of JSON
-  if (typeof data === 'string') {
-    try {
-      data = JSON.parse(data)
-    } catch (err) {
-      return { found: false, message: response.data || 'No vehicle information found for this registration number.' }
-    }
-  }
-
-  // Recorded before the error check so a "not found" reply still updates the quota
-  await recordProviderUsage(data?._usage, { vehicleNumber, userId })
-  const charged = await providerCharged(data?._usage, vehicleNumber)
-
-  if (!data || typeof data !== 'object' || data.error || data.status === 'error' || data.status === false) {
-    return {
-      found: false,
-      charged,
-      message: data?.message || data?.error || 'Vehicle details not found. Please check registration number.'
-    }
-  }
-
-  if (!hasVehicleDetails(data)) {
-    return { found: false, charged, message: 'Vehicle details not found. Please check registration number.' }
-  }
-
-  // API 1's own reply is kept as it is (with _usage, read for the admin quota card); only
-  // the fields it did not send are added as 'NA', so it has every field API 2 / API 3 have
-  for (const field of API1_FIELDS) if (data[field] === undefined || data[field] === null) data[field] = 'NA'
-  return { found: true, data, charged }
+  return fetchFromApi5(vehicleNumber, { userId })
 }
 
-module.exports = { fetchVehicleInfo, recordProviderUsage, cleanVehicleNumber, PROVIDERS, API3_USAGE_PROVIDER }
+module.exports = { fetchVehicleInfo, cleanVehicleNumber, PROVIDERS, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER }

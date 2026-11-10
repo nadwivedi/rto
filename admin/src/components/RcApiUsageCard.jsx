@@ -30,7 +30,7 @@ const getStatus = (remaining, totalLimit) => {
   return { label: 'Healthy', icon: '✓', chip: 'bg-emerald-50 text-emerald-700 border-emerald-200', bar: 'bg-emerald-600' }
 }
 
-// Shows how many vehicle (RC details) searches are left with the API provider.
+// Shows how many Vehicle Info calls are left with API 5 (parzivalapi.online), and API 3's wallet.
 // The provider only reports this on a search response, so the figure is as of the last search.
 const RcApiUsageCard = ({ className = '' }) => {
   const [data, setData] = useState(null)
@@ -76,8 +76,8 @@ const RcApiUsageCard = ({ className = '' }) => {
     <div className='bg-white rounded-xl p-4 shadow-sm border border-gray-100'>
       <div className='flex items-start justify-between gap-3'>
         <div>
-          <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>API 1 – Nikhil API Limit</p>
-          <p className='text-[11px] text-gray-400 mt-0.5'>RC details searches left with the provider</p>
+          <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>API 5 Limit</p>
+          <p className='text-[11px] text-gray-400 mt-0.5'>Vehicle Info calls left with parzivalapi.online</p>
         </div>
         <div className='flex items-center gap-2 shrink-0'>
           {status && (
@@ -108,7 +108,7 @@ const RcApiUsageCard = ({ className = '' }) => {
         </div>
       ) : !hasRemaining ? (
         <p className='text-sm text-gray-500 mt-3'>
-          No vehicle search has been made yet. The limit appears here after the first RC details search.
+          No API 5 search has been made yet. The calls left appear here after the first API 5 search.
         </p>
       ) : (
         <>
@@ -119,6 +119,9 @@ const RcApiUsageCard = ({ className = '' }) => {
             </span>
             {usage.used !== null && usage.used !== undefined && (
               <span className='text-sm text-gray-400'>· {formatNumber(usage.used)} used</span>
+            )}
+            {usage.lastCharge > 0 && (
+              <span className='text-sm text-gray-400'>· ₹{usage.lastCharge} per call</span>
             )}
           </div>
 
@@ -138,7 +141,7 @@ const RcApiUsageCard = ({ className = '' }) => {
           <p className='text-[11px] text-gray-400 mt-2'>
             As of the last search
             {usage.checkedAt && <> on {formatDateTime(usage.checkedAt)}</>}
-            {usage.lastVehicleNumber && <> ({usage.lastVehicleNumber})</>}. Updates after every vehicle search.
+            {usage.lastVehicleNumber && <> ({usage.lastVehicleNumber})</>}. Updates after every API 5 search.
           </p>
 
           {allocation && allocation.users > 0 && (

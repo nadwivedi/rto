@@ -57,7 +57,7 @@ number as JSON, in seconds.
     "TAX_UPTO": "31-Mar-2027",
     "BLACKLIST_STATUS": "NA"
   },
-  "source": "rtosarthi_api1",
+  "source": "rtosarthi_api5",
   "usage": { "limit": 1000, "used": 101, "remaining": 899 }
 }
 
@@ -68,7 +68,7 @@ number as JSON, in seconds.
    ▸ usage.remaining = calls you have left
    ▸ Only successful calls use your limit
    ▸ source = which RTO Sarthi API served
-     the call (rtosarthi_api1, _api2,
+     the call (rtosarthi_api5, _api2,
      _api3, _api4, _api24 or _api32). The data
      fields are
      the same for all.

@@ -17,7 +17,7 @@ router.get('/revenue-dashboard', adminUserController.getRevenueDashboard)
 // Vehicle (RC details) API quota left with the provider
 router.get('/rc-api-usage', adminUserController.getRcApiUsage)
 
-// Point every user's RC searches at API 1 or API 2 (body: { provider })
+// Point every user's RC searches at one vehicle info API (body: { provider })
 router.post('/rc-provider-all', adminUserController.setAllRcProvider)
 
 // Upload a fee payment screenshot (base64 image/PDF); the returned path is saved on the user

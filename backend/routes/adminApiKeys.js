@@ -11,7 +11,7 @@ router.get('/', adminApiKeyController.getApiKeys)
 // Create a key (limit starts at 0; sell calls to raise it)
 router.post('/', adminApiKeyController.createApiKey)
 
-// Point every key at API 1 or API 2 (body: { provider })
+// Point every key at one vehicle info API (body: { provider })
 router.post('/provider-all', adminApiKeyController.setAllProvider)
 
 // One key: stats, day-wise calls and sales

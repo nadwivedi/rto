@@ -888,19 +888,21 @@ const ApiCredits = () => {
             </div>
 
             <p className='mb-3 text-[11px] text-gray-500'>
-              API key calls · today: Nikhil API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Today)}</span>
+              API key calls · today: API 5 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api5Today)}</span>
               {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Today)}</span>
               {' · '}Parzival API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Today)}</span>
               {' · '}PeriOne API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api4Today)}</span>
               {' · '}API 2 + 4 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api24Today)}</span>
               {' · '}API 3 + 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api32Today)}</span>
-              {' · last 28 days: '}Nikhil API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api1Last28)}</span>
+              {' · last 28 days: '}API 5 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api5Last28)}</span>
               {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Last28)}</span>
               {' · '}Parzival API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Last28)}</span>
               {' · '}PeriOne API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api4Last28)}</span>
               {' · '}API 2 + 4 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api24Last28)}</span>
               {' · '}API 3 + 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api32Last28)}</span>
               {' · '}App <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.appLast28)}</span>
+              {/* Calls API 1 (Nikhil API, now removed) served before it was replaced by API 5 */}
+              {usage?.totals?.api1Last28 > 0 && <>{' · '}old API 1 <span className='font-semibold text-gray-800'>{formatNumber(usage.totals.api1Last28)}</span></>}
             </p>
 
             <div className='grid grid-cols-1 xl:grid-cols-2 gap-3 sm:gap-5'>
@@ -913,7 +915,7 @@ const ApiCredits = () => {
                     <tr className='border-b border-gray-100 bg-gray-50/60'>
                       <th className={`${th} text-left`}>Day</th>
                       <th className={`${th} text-right`}>App</th>
-                      <th className={`${th} text-right`} title='API key calls served by API 1 – Nikhil API'>Nikhil</th>
+                      <th className={`${th} text-right`} title='API key calls served by API 5 (and by the removed API 1 before it)'>API 5</th>
                       <th className={`${th} text-right`} title='API key calls served by API 2'>API 2</th>
                       <th className={`${th} text-right`} title='API key calls served by API 3 – Parzival API'>Parzival</th>
                       <th className={`${th} text-right`} title='API key calls served by API 4 – PeriOne API'>PeriOne</th>
@@ -931,7 +933,7 @@ const ApiCredits = () => {
                           {day.date === usage.today && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
                         </td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.appCount)}</td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api1Count)}</td>
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber((day.api5Count || 0) + (day.api1Count || 0))}</td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api2Count)}</td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api3Count)}</td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api4Count)}</td>

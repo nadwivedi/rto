@@ -354,7 +354,7 @@ const Users = () => {
     }
   }, [])
 
-  // Point every user's RC searches at one API, e.g. all to API 1 while API 2 is down
+  // Point every user's RC searches at one API, e.g. all to API 5 while API 2 is down
   const switchAllRcProvider = async (provider) => {
     if (!confirm(`Switch RC Details of ALL users to ${providerLabel(provider)}? Every app user's searches will go to ${providerLabel(provider)} until you change it.`)) return
     try {
@@ -1033,12 +1033,12 @@ const Users = () => {
           <div>
             <p className='text-sm font-semibold text-gray-800'>RC Details API for app users</p>
             <p className='text-xs text-gray-500 mt-0.5'>
-              {stats.rcApi1 || 0} on Nikhil API · {stats.rcApi2 ?? stats.total} on API 2 · {stats.rcApi3 || 0} on Parzival API · {stats.rcApi4 || 0} on PeriOne API (transport only) · {stats.rcApi24 || 0} on API 2 + 4 · {stats.rcApi32 || 0} on API 3 + 2. Switch every user at once when one API is down, or change one user in Edit.
+              {stats.rcApi5 || 0} on API 5 · {stats.rcApi2 ?? stats.total} on API 2 · {stats.rcApi3 || 0} on Parzival API · {stats.rcApi4 || 0} on PeriOne API (transport only) · {stats.rcApi24 || 0} on API 2 + 4 · {stats.rcApi32 || 0} on API 3 + 2. Switch every user at once when one API is down, or change one user in Edit.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>
             {PROVIDER_OPTIONS.map((p) => {
-              const counts = { api1: stats.rcApi1 || 0, api2: stats.rcApi2 ?? stats.total, api3: stats.rcApi3 || 0, api4: stats.rcApi4 || 0, api24: stats.rcApi24 || 0, api32: stats.rcApi32 || 0 }
+              const counts = { api5: stats.rcApi5 || 0, api2: stats.rcApi2 ?? stats.total, api3: stats.rcApi3 || 0, api4: stats.rcApi4 || 0, api24: stats.rcApi24 || 0, api32: stats.rcApi32 || 0 }
               const already = counts[p.value] === stats.total
               return (
                 <button

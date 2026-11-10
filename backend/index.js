@@ -56,6 +56,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
 // MongoDB Connection
 const whatsappService = require('./services/whatsappService')
 connectDB().then(() => {
+  require('./utils/migrateApi1ToApi5')()
   whatsappService.start().catch(err => console.error('[WHATSAPP] Startup failed:', err))
 })
 

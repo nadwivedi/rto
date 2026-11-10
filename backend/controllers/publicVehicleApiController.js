@@ -49,7 +49,7 @@ exports.lookupVehicle = async (req, res) => {
   }
 
   // Which of our APIs served the call, sent back on every reply and saved in the log
-  const source = `rtosarthi_${PROVIDERS[apiKey.provider] ? apiKey.provider : 'api1'}`
+  const source = `rtosarthi_${PROVIDERS[apiKey.provider] ? apiKey.provider : 'api5'}`
 
   const reply = async (statusCode, payload, entry = {}) => {
     await logCall(apiKey, req, startedAt, { statusCode, success: statusCode === 200, message: payload.message, source, ...entry })

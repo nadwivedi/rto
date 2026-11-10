@@ -124,12 +124,13 @@ exports.getApiKeys = async (req, res) => {
         used: t.used + (k.callCount || 0),
         callsToday: t.callsToday + k.callsToday,
         api2: t.api2 + (k.provider === 'api2' ? 1 : 0),
+        api5: t.api5 + (k.provider === 'api5' || !k.provider ? 1 : 0),
         api3: t.api3 + (k.provider === 'api3' ? 1 : 0),
         api4: t.api4 + (k.provider === 'api4' ? 1 : 0),
         api24: t.api24 + (k.provider === 'api24' ? 1 : 0),
         api32: t.api32 + (k.provider === 'api32' ? 1 : 0)
       }),
-      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0, api3: 0, api4: 0, api24: 0, api32: 0 }
+      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0, api5: 0, api3: 0, api4: 0, api24: 0, api32: 0 }
     )
 
     res.json({ success: true, data, totals })
@@ -155,7 +156,7 @@ exports.createApiKey = async (req, res) => {
       name: String(name).trim(),
       key: ApiKey.generateKey(),
       userId: link.userId || undefined,
-      provider: provider || 'api1',
+      provider: provider || 'api5',
       contactMobile: mobile.value,
       contactEmail: email.value || undefined,
       website: website && String(website).trim() ? String(website).trim() : undefined,
@@ -176,14 +177,14 @@ exports.createApiKey = async (req, res) => {
   }
 }
 
-// Point every API key at one vehicle info source, e.g. all to API 2 while API 1 is down
+// Point every API key at one vehicle info source, e.g. all to API 2 while API 5 is down
 exports.setAllProvider = async (req, res) => {
   try {
     const { provider } = req.body || {}
     if (!PROVIDERS[provider]) return badRequest(res, 'Please choose one of the vehicle info APIs')
 
-    // Keys saved before the provider field existed use API 1
-    const filter = provider === 'api1' ? { provider: { $exists: true, $ne: 'api1' } } : { provider: { $ne: provider } }
+    // Keys saved before the provider field existed use API 5 (moved there at startup)
+    const filter = provider === 'api5' ? { provider: { $exists: true, $ne: 'api5' } } : { provider: { $ne: provider } }
     const result = await ApiKey.updateMany(filter, { $set: { provider } })
     const changed = result.modifiedCount || 0
 
@@ -234,7 +235,7 @@ exports.updateApiKey = async (req, res) => {
     }
     if (provider !== undefined) {
       if (!PROVIDERS[provider]) return badRequest(res, 'Please choose one of the vehicle info APIs')
-      const current = apiKey.provider || 'api1'
+      const current = apiKey.provider || 'api5'
       if (current !== provider) changes.push({ field: 'Vehicle data source', from: PROVIDERS[current], to: PROVIDERS[provider] })
       apiKey.provider = provider
     }
