@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import SearchSelect from '../components/SearchSelect'
+import RateAdjustModal from '../components/RateAdjustModal'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 
@@ -61,7 +62,11 @@ const Tile = ({ label, value, sub, accent = 'text-gray-900', className = '' }) =
 )
 
 const TypeBadge = ({ type, source }) =>
-  type === 'sale' && source === 'key' ? (
+  type === 'adjustment' ? (
+    <span className='inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200'>
+      Adjusted
+    </span>
+  ) : type === 'sale' && source === 'key' ? (
     <span className='inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-violet-50 text-violet-700 border border-violet-200'>
       API key
     </span>
@@ -137,6 +142,8 @@ const ApiCredits = () => {
   const [formError, setFormError] = useState('')
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState(null)
+  // Rate adjustment popup: null when closed, else the user it opens for ('' = pick one)
+  const [adjustFor, setAdjustFor] = useState(null)
   // Entry whose rate / money received is being changed (API calls can't be edited)
   const [editTxn, setEditTxn] = useState(null)
   // { quantity, rate, paidAmount, date, note } for the entry being edited
@@ -217,6 +224,24 @@ const ApiCredits = () => {
       openModal('sale', fromUser)
     }
   }, [searchParams, autoOpened, loading, usersById, openModal])
+
+  useEffect(() => {
+    const id = searchParams.get('adjust')
+    if (id && adjustFor === null && !loading) {
+      setAdjustFor(id)
+      const next = new URLSearchParams(searchParams)
+      next.delete('adjust')
+      setSearchParams(next, { replace: true })
+    }
+  }, [searchParams, setSearchParams, adjustFor, loading])
+
+  const afterAdjust = async (message) => {
+    setAdjustFor(null)
+    setError('')
+    setSuccess(message)
+    setPage(1)
+    await loadAll()
+  }
 
   const closeModal = () => {
     setShowModal(false)
@@ -319,7 +344,9 @@ const ApiCredits = () => {
   const handleDelete = async (txn) => {
     const who = txn.userId?.name ? ` to ${txn.userId.name}` : ''
     const warning =
-      txn.type === 'sale'
+      txn.type === 'adjustment'
+        ? `Delete this rate adjustment${who.replace(' to ', ' for ')}?\n\nThe calls it changed go back: their limit changes by ${(txn.callsBefore || 0) - txn.quantity > 0 ? '+' : ''}${(txn.callsBefore || 0) - txn.quantity}.`
+        : txn.type === 'sale'
         ? `Delete this sale of ${txn.quantity} API calls${who}?\n\nThe user's vehicle API limit will be reduced by ${txn.quantity}.`
         : `Delete this purchase of ${txn.quantity} API calls?`
     if (!confirm(warning)) return
@@ -463,7 +490,14 @@ const ApiCredits = () => {
             <Link to='/api-usage' className='text-indigo-600 hover:underline font-semibold'>API usage →</Link>
           </p>
         </div>
-        <div className='grid grid-cols-2 sm:flex gap-2'>
+        <div className='grid grid-cols-3 sm:flex gap-2'>
+          <button
+            onClick={() => setAdjustFor(userFilter || '')}
+            className='px-2 py-2 sm:px-4 sm:py-2.5 bg-white border border-amber-300 text-amber-700 rounded-xl hover:bg-amber-50 font-semibold text-sm transition-colors cursor-pointer'
+            title="Re-price a user's calls left at a new rate"
+          >
+            Adjust Rate
+          </button>
           <button
             onClick={() => openModal('purchase')}
             className='px-2 py-2 sm:px-4 sm:py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold text-sm transition-colors cursor-pointer'
@@ -692,6 +726,7 @@ const ApiCredits = () => {
                   ['sales', 'All sales'],
                   ['sale', 'User sales'],
                   ['key_sale', 'API key sales'],
+                  ['adjustment', 'Adjustments'],
                   ['purchase', 'Bought']
                 ].map(([value, label], i) => (
                   <button
@@ -740,12 +775,16 @@ const ApiCredits = () => {
                         </span>
                       </div>
                       <div className='text-[11px] text-gray-500 truncate mt-0.5'>
-                        {formatDate(txn.date)} · {formatNumber(txn.quantity)} calls @ {formatRupees(txn.rate)}
+                        {formatDate(txn.date)} ·{' '}
+                        {txn.type === 'adjustment'
+                          ? `${formatNumber(txn.callsBefore)} @ ${formatRupees(txn.oldRate)} → ${formatNumber(txn.quantity)} @ ${formatRupees(txn.rate)}`
+                          : `${formatNumber(txn.quantity)} calls @ ${formatRupees(txn.rate)}`}
                         {txn.note && <span className='text-gray-400'> · {txn.note}</span>}
                       </div>
                     </div>
                     <div className='shrink-0 text-right tabular-nums'>
                       <div className='text-xs font-bold text-gray-900'>{formatRupees(txn.amount)}</div>
+                      {txn.type === 'adjustment' && <div className='text-[10px] text-gray-400'>balance value</div>}
                       {txn.type === 'sale' && txn.amount - paidOf(txn) > 0 && (
                         <div className='text-[10px] font-semibold text-amber-600'>{formatRupees(txn.amount - paidOf(txn))} pending</div>
                       )}
@@ -754,6 +793,7 @@ const ApiCredits = () => {
                       <KeySaleLink txn={txn} className='shrink-0' />
                     ) : (
                     <>
+                    {txn.type !== 'adjustment' && (
                     <button
                       onClick={() => openEditRate(txn)}
                       className='shrink-0 p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
@@ -763,6 +803,7 @@ const ApiCredits = () => {
                         <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
                       </svg>
                     </button>
+                    )}
                     <button
                       onClick={() => handleDelete(txn)}
                       disabled={deletingId === txn._id}
@@ -823,11 +864,11 @@ const ApiCredits = () => {
                             <span className='text-gray-400'>Deleted user</span>
                           )}
                         </td>
-                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>
-                          {formatNumber(txn.quantity)}
+                        <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
+                          {txn.type === 'adjustment' ? `${formatNumber(txn.callsBefore)} → ${formatNumber(txn.quantity)}` : formatNumber(txn.quantity)}
                         </td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
-                          {formatRupees(txn.rate)}
+                          {txn.type === 'adjustment' ? `${formatRupees(txn.oldRate)} → ${formatRupees(txn.rate)}` : formatRupees(txn.rate)}
                         </td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-gray-900 text-right tabular-nums whitespace-nowrap'>
                           {formatRupees(txn.amount)}
@@ -852,6 +893,7 @@ const ApiCredits = () => {
                             <KeySaleLink txn={txn} />
                           ) : (
                           <>
+                          {txn.type !== 'adjustment' && (
                           <button
                             onClick={() => openEditRate(txn)}
                             className='p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors cursor-pointer'
@@ -861,6 +903,7 @@ const ApiCredits = () => {
                               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth={2} d='M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z' />
                             </svg>
                           </button>
+                          )}
                           <button
                             onClick={() => handleDelete(txn)}
                             disabled={deletingId === txn._id}
@@ -927,6 +970,7 @@ const ApiCredits = () => {
                         <th className={`${th} text-right`}>Used / Limit</th>
                         <th className={`${th} text-right`}>Left</th>
                         <th className={`${th} text-left`}>Last Bought</th>
+                        <th className={`${th} text-right`}></th>
                       </tr>
                     </thead>
                     <tbody className='divide-y divide-gray-100'>
@@ -944,8 +988,14 @@ const ApiCredits = () => {
                               <div className='text-gray-400'>{u.mobile1 || ''}</div>
                             </button>
                           </td>
-                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
                             {formatNumber(u.quantity)}
+                            {u.adjustedQty !== 0 && u.adjustedQty != null && (
+                              <div className='text-[10px] text-amber-600' title='Calls changed by rate adjustments'>
+                                {u.adjustedQty > 0 ? '−' : '+'}
+                                {formatNumber(Math.abs(u.adjustedQty))} adjusted
+                              </div>
+                            )}
                           </td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs font-bold text-gray-900 text-right tabular-nums whitespace-nowrap'>
                             {formatRupees(u.amount)}
@@ -967,6 +1017,16 @@ const ApiCredits = () => {
                             {formatNumber(u.rcSearchRemaining)}
                           </td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatDate(u.lastDate)}</td>
+                          <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-right'>
+                            <button
+                              onClick={() => setAdjustFor(String(u.userId))}
+                              disabled={!u.rcSearchRemaining}
+                              className='px-2 py-1 text-[11px] font-semibold text-amber-700 border border-amber-200 rounded-md hover:bg-amber-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap'
+                              title={u.rcSearchRemaining ? "Re-price this user's calls left at a new rate" : 'No calls left to adjust'}
+                            >
+                              Adjust rate
+                            </button>
+                          </td>
                         </tr>
                       ))}
                     </tbody>
@@ -979,6 +1039,10 @@ const ApiCredits = () => {
 
           </div>
         </>
+      )}
+
+      {adjustFor !== null && (
+        <RateAdjustModal userId={adjustFor} userOptions={userOptions} onClose={() => setAdjustFor(null)} onDone={afterAdjust} />
       )}
 
       {/* Edit one entry: same details as the add popup (the user of a sale stays fixed) */}

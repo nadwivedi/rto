@@ -49,7 +49,8 @@ const lastDaysIST = (n) => {
 }
 
 // List entries (newest first): purchases from the provider, sales to users and calls sold on API keys.
-// type: 'all' (default), 'sales' (users + API keys), 'sale' (users only), 'key_sale' (API keys only) or 'purchase'.
+// type: 'all' (default), 'sales' (users + API keys), 'sale' (users only), 'key_sale' (API keys only), 'purchase'
+// or 'adjustment' (a user's calls left re-priced at a new rate).
 // userId: that user's sales plus the sales on API keys linked to them.
 // API key sales come back with type 'sale', source 'key' and apiKeyId populated; the rest have source 'user'.
 exports.getTransactions = async (req, res) => {
@@ -59,11 +60,11 @@ exports.getTransactions = async (req, res) => {
     if (userId && !mongoose.isValidObjectId(userId)) return badRequest(res, 'Invalid user')
     const userObjectId = userId ? new mongoose.Types.ObjectId(String(userId)) : null
 
-    const userTypes = { all: ['sale', 'purchase'], sales: ['sale'], sale: ['sale'], purchase: ['purchase'] }[type] || []
+    const userTypes = { all: ['sale', 'purchase', 'adjustment'], sales: ['sale'], sale: ['sale'], purchase: ['purchase'], adjustment: ['adjustment'] }[type] || []
     const withKeySales = ['all', 'sales', 'key_sale'].includes(type)
 
     // A user filter leaves out provider purchases, which belong to no user
-    const txnMatch = { type: { $in: userObjectId ? userTypes.filter((t) => t === 'sale') : userTypes } }
+    const txnMatch = { type: { $in: userObjectId ? userTypes.filter((t) => t !== 'purchase') : userTypes } }
     if (userObjectId) txnMatch.userId = userObjectId
     const keyMatch = {}
     if (userObjectId) {
@@ -261,6 +262,9 @@ exports.updateTransaction = async (req, res) => {
     if (!transaction) {
       return res.status(404).json({ success: false, message: 'Entry not found' })
     }
+    if (transaction.type === 'adjustment') {
+      return badRequest(res, 'A rate adjustment cannot be edited. Delete it (the calls go back) and adjust again.')
+    }
 
     const isSale = transaction.type === 'sale'
     const before = {
@@ -352,6 +356,34 @@ exports.deleteTransaction = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Entry not found' })
     }
 
+    if (transaction.type === 'adjustment') {
+      const change = (transaction.callsBefore || 0) - transaction.quantity
+      const user = transaction.userId ? await User.findById(transaction.userId).select('name rcSearchLimit') : null
+      let limitChange = 0
+      if (user) {
+        // Never push the limit below zero if it was lowered by hand in the meantime
+        limitChange = Math.max(change, -(user.rcSearchLimit || 0))
+        user.rcSearchLimit = (user.rcSearchLimit || 0) + limitChange
+        await user.save()
+      }
+      recordActivity(req, {
+        action: 'delete',
+        entity: 'api_credit',
+        entityId: transaction._id,
+        entityName: user?.name || 'Deleted user',
+        summary: `Deleted rate adjustment (${transaction.callsBefore} calls @ ₹${transaction.oldRate} -> ${transaction.quantity} @ ₹${transaction.rate}). Limit ${limitChange >= 0 ? '+' : ''}${limitChange}`,
+        changes: [
+          { field: 'Type', from: 'Adjustment', to: null },
+          { field: 'User RC Search Limit', from: user ? user.rcSearchLimit - limitChange : null, to: user ? user.rcSearchLimit : null }
+        ]
+      })
+      return res.json({
+        success: true,
+        message: `Adjustment deleted. User limit ${limitChange >= 0 ? '+' : ''}${limitChange}.`,
+        data: { limitChange }
+      })
+    }
+
     let limitReducedBy = 0
     let saleUserName = null
     if (transaction.type === 'sale' && transaction.userId) {
@@ -393,6 +425,138 @@ exports.deleteTransaction = async (req, res) => {
     })
   } catch (error) {
     sendError(res, req, error)
+  }
+}
+
+// The rate a user's calls left are worth now: the new rate of their latest adjustment or the rate of
+// their latest sale, whichever is newer
+const currentRateOf = (history) => history.find((t) => t.type === 'adjustment' || t.type === 'sale')?.rate ?? null
+
+const userCredits = (user) => {
+  const limit = user.rcSearchLimit || 0
+  const used = user.rcSearchCount || 0
+  return { limit, used, left: Math.max(0, limit - used) }
+}
+
+// What a rate adjustment for a user starts from: calls left, the sales and adjustments so far
+// (newest first, with their rates) and the rate the calls left are valued at now
+exports.getAdjustment = async (req, res) => {
+  try {
+    const { userId } = req.params
+    if (!mongoose.isValidObjectId(userId)) return badRequest(res, 'Invalid user')
+    const [user, history] = await Promise.all([
+      User.findById(userId).select('name mobile1 rcSearchLimit rcSearchCount').lean(),
+      ApiCreditTransaction.find({ userId, type: { $in: ['sale', 'adjustment'] } })
+        .sort({ date: -1, createdAt: -1 })
+        .select('type quantity rate amount paidAmount callsBefore oldRate balance date note')
+        .limit(100)
+        .lean()
+    ])
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' })
+
+    const sales = history.filter((t) => t.type === 'sale')
+    const soldQty = sales.reduce((t, s) => t + s.quantity, 0)
+    const soldAmount = roundMoney(sales.reduce((t, s) => t + s.amount, 0))
+    res.json({
+      success: true,
+      data: {
+        user: { _id: user._id, name: user.name, mobile1: user.mobile1, ...userCredits(user) },
+        currentRate: currentRateOf(history),
+        sales: { count: sales.length, quantity: soldQty, amount: soldAmount, avgRate: soldQty ? roundMoney(soldAmount / soldQty) : null },
+        history
+      }
+    })
+  } catch (error) {
+    sendError(res, req, error)
+  }
+}
+
+// Re-price a user's calls left: value = calls left x old rate, new calls = value / new rate (rounded down).
+// The user's limit moves by the difference; any rupees too few for one more call are saved as leftover.
+// Body: { userId, newRate, oldRate? (default: the current rate), date?, note? }
+exports.createAdjustment = async (req, res) => {
+  try {
+    const { userId, newRate, oldRate, date, note } = req.body || {}
+    if (!userId || !mongoose.isValidObjectId(userId)) return badRequest(res, 'Please select a user')
+    const price = Number(newRate)
+    if (newRate === '' || newRate === null || newRate === undefined || Number.isNaN(price) || price <= 0) {
+      return badRequest(res, 'Enter the new rate per API call (more than 0)')
+    }
+    const dealDate = date ? new Date(date) : new Date()
+    if (Number.isNaN(dealDate.getTime())) return badRequest(res, 'Please enter a valid date')
+
+    const user = await User.findById(userId).select('name rcSearchLimit rcSearchCount')
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' })
+    const { limit, used, left } = userCredits(user)
+    if (left <= 0) return badRequest(res, `${user.name} has no API calls left to adjust`)
+
+    let valueRate = Number(oldRate)
+    if (oldRate === '' || oldRate === null || oldRate === undefined) {
+      const history = await ApiCreditTransaction.find({ userId, type: { $in: ['sale', 'adjustment'] } })
+        .sort({ date: -1, createdAt: -1 }).select('type rate').limit(1).lean()
+      valueRate = currentRateOf(history)
+    }
+    if (valueRate === null || Number.isNaN(valueRate) || valueRate < 0) {
+      return badRequest(res, 'Enter the rate the calls left were sold at')
+    }
+
+    const balance = roundMoney(left * valueRate)
+    // A tiny epsilon so ₹800 / ₹4 is exactly 200, not 199.999…
+    const callsAfter = Math.floor(balance / price + 1e-9)
+    const leftover = roundMoney(balance - callsAfter * price)
+    if (callsAfter === left) return badRequest(res, `No change: ${left} calls at ₹${valueRate} are still ${callsAfter} calls at ₹${price}`)
+
+    // Only if the user did not search in the meantime, so the calls left are what was valued
+    const newLimit = used + callsAfter
+    const updated = await User.findOneAndUpdate(
+      { _id: userId, rcSearchLimit: user.rcSearchLimit, rcSearchCount: user.rcSearchCount },
+      { $set: { rcSearchLimit: newLimit } },
+      { new: true }
+    ).select('name rcSearchLimit rcSearchCount')
+    if (!updated) return res.status(409).json({ success: false, message: 'The user just made a search. Please open the adjustment again.' })
+
+    const autoNote = `${left} calls @ ₹${valueRate} = ₹${balance} -> ${callsAfter} calls @ ₹${price}${leftover > 0 ? ` (₹${leftover} left over)` : ''}`
+    let transaction
+    try {
+      transaction = await ApiCreditTransaction.create({
+        type: 'adjustment',
+        userId,
+        quantity: callsAfter,
+        rate: price,
+        amount: balance,
+        callsBefore: left,
+        oldRate: valueRate,
+        balance,
+        date: dealDate,
+        note: note && String(note).trim() ? `${String(note).trim()} · ${autoNote}` : autoNote
+      })
+    } catch (err) {
+      // Don't leave the limit changed without the entry that explains it
+      await User.updateOne({ _id: userId }, { $inc: { rcSearchLimit: limit - newLimit } }).catch(() => {})
+      throw err
+    }
+
+    recordActivity(req, {
+      action: 'create',
+      entity: 'api_credit',
+      entityId: transaction._id,
+      entityName: user.name,
+      summary: `Rate adjustment for ${user.name}: ${autoNote}. Limit ${limit} -> ${newLimit}`,
+      changes: [
+        { field: 'Type', from: null, to: 'Adjustment' },
+        { field: 'Calls left', from: left, to: callsAfter },
+        { field: 'Rate', from: valueRate, to: price },
+        { field: 'User RC Search Limit', from: limit, to: newLimit }
+      ]
+    })
+
+    res.status(201).json({
+      success: true,
+      message: `${user.name}: ${autoNote}. Limit ${limit} -> ${newLimit}.`,
+      data: { transaction, callsBefore: left, callsAfter, balance, leftover, rcSearchLimit: newLimit }
+    })
+  } catch (error) {
+    sendError(res, req, error, error.name === 'ValidationError' ? 400 : 500)
   }
 }
 
@@ -564,7 +728,7 @@ exports.getSummary = async (req, res) => {
     const incomeSince = new Date(Date.now() - (INCOME_DAYS + 1) * 86400000)
     const dayKey = { $dateToString: { format: '%Y-%m-%d', date: '$date', timezone: IST } }
 
-    const [byType, byMonth, byUser, lastPurchase, lastSale, keySales, keySalesByMonth, userSalesToday, keySalesToday, byDay, keySalesByDay] = await Promise.all([
+    const [byType, byMonth, byUser, lastPurchase, lastSale, keySales, keySalesByMonth, userSalesToday, keySalesToday, byDay, keySalesByDay, adjustByUser] = await Promise.all([
       ApiCreditTransaction.aggregate([
         {
           $group: {
@@ -577,6 +741,7 @@ exports.getSummary = async (req, res) => {
         }
       ]),
       ApiCreditTransaction.aggregate([
+        { $match: { type: { $in: ['sale', 'purchase'] } } },
         {
           $group: {
             _id: {
@@ -636,7 +801,7 @@ exports.getSummary = async (req, res) => {
       ApiCreditTransaction.aggregate([{ $match: { type: 'sale', ...todayMatch } }, todayTotal]),
       ApiKeySale.aggregate([{ $match: todayMatch }, todayTotal]),
       ApiCreditTransaction.aggregate([
-        { $match: { date: { $gte: incomeSince } } },
+        { $match: { date: { $gte: incomeSince }, type: { $in: ['sale', 'purchase'] } } },
         {
           $group: {
             _id: { day: dayKey, type: '$type' },
@@ -658,6 +823,11 @@ exports.getSummary = async (req, res) => {
             entries: { $sum: 1 }
           }
         }
+      ]),
+      // Calls taken back (or given) by rate adjustments, per user
+      ApiCreditTransaction.aggregate([
+        { $match: { type: 'adjustment' } },
+        { $group: { _id: '$userId', taken: { $sum: { $subtract: [{ $ifNull: ['$callsBefore', 0] }, '$quantity'] } }, count: { $sum: 1 } } }
       ])
     ])
 
@@ -665,8 +835,11 @@ exports.getSummary = async (req, res) => {
     const purchase = pick('purchase')
     const userSale = pick('sale')
     const keySale = keySales[0] || { quantity: 0, amount: 0, paid: 0 }
+    // Calls that rate adjustments took back from users are unsold again (negative: calls given)
+    const adjustedQty = adjustByUser.reduce((t, a) => t + a.taken, 0)
+    const adjustByUserId = new Map(adjustByUser.map((a) => [String(a._id), a]))
     const sale = {
-      quantity: userSale.quantity + keySale.quantity,
+      quantity: userSale.quantity + keySale.quantity - adjustedQty,
       amount: userSale.amount + keySale.amount,
       paid: userSale.paid + keySale.paid
     }
@@ -775,7 +948,9 @@ exports.getSummary = async (req, res) => {
           // What was earned on the calls actually sold, at the average buying price
           profitOnSold: avgBuyRate === null ? null : roundMoney(sale.amount - sale.quantity * avgBuyRate),
           // Bought from the provider but not yet sold to any user
-          unsoldQty: purchase.quantity - sale.quantity
+          unsoldQty: purchase.quantity - sale.quantity,
+          // Calls taken back from users by rate adjustments (already left out of soldQty)
+          adjustedQty
         },
         today: {
           date: today,
@@ -793,6 +968,9 @@ exports.getSummary = async (req, res) => {
         income: { last7: incomeTotals(7), last30: incomeTotals(INCOME_DAYS) },
         users: byUser.map((u) => ({
           ...u,
+          // Calls bought, less what rate adjustments took back
+          adjustedQty: adjustByUserId.get(String(u.userId))?.taken || 0,
+          adjustments: adjustByUserId.get(String(u.userId))?.count || 0,
           amount: roundMoney(u.amount),
           paid: roundMoney(u.paid),
           pending: roundMoney(u.amount - u.paid),

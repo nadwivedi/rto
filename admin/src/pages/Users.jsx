@@ -858,6 +858,7 @@ const Users = () => {
       { label: 'Edit user', icon: Pencil, tone: 'hover:bg-indigo-50 hover:text-indigo-700', onClick: run(() => handleEdit(user)) },
       { label: 'Access as user', icon: ExternalLink, tone: 'hover:bg-emerald-50 hover:text-emerald-700', onClick: run(() => handleAccess(user)), disabled: accessingId === user._id },
       { label: 'Sell API calls / purchases', icon: CreditCard, tone: 'hover:bg-amber-50 hover:text-amber-700', onClick: run(() => navigate(`/api-credits?user=${user._id}`)) },
+      { label: 'Adjust API rate', hint: 'Re-price calls left at a new rate', icon: CreditCard, tone: 'hover:bg-amber-50 hover:text-amber-700', onClick: run(() => navigate(`/api-credits?adjust=${user._id}`)) },
       user.isActive
         ? { label: 'Deactivate user', icon: Ban, tone: 'hover:bg-red-50 hover:text-red-700', onClick: run(() => handleToggleActive(user)), disabled: togglingId === user._id }
         : { label: 'Activate user', icon: CheckCircle, tone: 'hover:bg-emerald-50 hover:text-emerald-700', onClick: run(() => handleToggleActive(user)), disabled: togglingId === user._id },

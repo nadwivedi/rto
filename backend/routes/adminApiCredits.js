@@ -11,6 +11,10 @@ router.get('/summary', adminApiCreditController.getSummary)
 // Searches actually made: day-wise and per user
 router.get('/usage', adminApiCreditController.getUsage)
 
+// Rate adjustment: re-price a user's calls left at a new rate (GET: what it starts from)
+router.get('/adjust/:userId', adminApiCreditController.getAdjustment)
+router.post('/adjust', adminApiCreditController.createAdjustment)
+
 // List purchases / sales
 router.get('/', adminApiCreditController.getTransactions)
 
