@@ -57,3 +57,27 @@ test('reminder queued earlier is superseded once a newer record is added', async
   await fitness('CG12AA4793', dmy(300), 'active')
   assert.equal(await isReminderSuperseded(msg), true)
 })
+
+// Tax and Insurance: old expiring / expired record + an active record → no reminder queued
+const Tax = require('../models/Tax')
+const Insurance = require('../models/Insurance')
+for (const [label, Model, dateField] of [['Tax', Tax, 'taxTo'], ['Insurance', Insurance, 'validTo']]) {
+  for (const [state, days] of [['expiring soon', 5], ['expired', -3]]) {
+    test(`${label}: ${state} record + active record → no reminder`, async () => {
+      await Model.deleteMany({})
+      await WhatsAppSetting.updateOne({ userId: uid }, { $set: { 'alertRules.tax.sendAfterExpiry': true, 'alertRules.insurance.sendAfterExpiry': true } })
+      const base = { userId: uid, mobileNumber: '9876543210', isRenewed: false, policyHolderName: 'A', ownerName: 'A' }
+      await Model.collection.insertOne({ ...base, vehicleNumber: 'CG12AA4793', [dateField]: dmy(days), status: days < 0 ? 'expired' : 'expiring_soon' })
+      await Model.collection.insertOne({ ...base, vehicleNumber: 'CG12AA4793', [dateField]: dmy(300), status: 'active' })
+      await checkUserAndQueueAlerts(uid.toString())
+      assert.equal(await MessageLog.countDocuments({ documentType: label }), 0)
+    })
+  }
+
+  test(`${label}: expiring record alone → reminder queued`, async () => {
+    await Model.deleteMany({})
+    await Model.collection.insertOne({ userId: uid, mobileNumber: '9876543210', isRenewed: false, vehicleNumber: 'CG12AA4793', [dateField]: dmy(5), status: 'expiring_soon' })
+    await checkUserAndQueueAlerts(uid.toString())
+    assert.equal(await MessageLog.countDocuments({ documentType: label }), 1)
+  })
+}

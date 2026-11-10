@@ -150,3 +150,35 @@ test('outside 7 AM – 9 PM IST nothing is sent', async () => {
   mock.timers.setTime(new Date('2026-09-19T05:30:00Z').getTime())
   assert.equal(stub.sent.length, 0)
 })
+
+// Reminder queued for an old expiring record; then a newer / active record of the same vehicle is added
+for (const [documentType, modelFile, dateField] of [['Tax', 'Tax', 'taxTo'], ['Insurance', 'Insurance', 'validTo']]) {
+  test(`${documentType}: reminder for an old record is not sent once the vehicle has an active record`, async () => {
+    const Model = require(`../models/${modelFile}`)
+    await Model.deleteMany({})
+    const { insertedId: oldId } = await Model.collection.insertOne({
+      userId: uid, vehicleNumber: 'CG12AA4793', [dateField]: '25-09-2026', status: 'expiring_soon', isRenewed: false
+    })
+    await queue(1, { documentId: oldId, documentType, alertKey: 'before-7' })
+    await Model.collection.insertOne({
+      userId: uid, vehicleNumber: 'CG 12 AA 4793', [dateField]: '30-09-2027', status: 'active', isRenewed: false
+    })
+
+    await processPendingMessagesForUser(uid)
+    assert.equal(stub.sent.length, 0)
+    const row = await MessageLog.findOne({ documentId: oldId }).lean()
+    assert.equal(row.status, 'failed')
+    assert.match(row.errorReason, /newer active record/)
+  })
+
+  test(`${documentType}: reminder is sent when the vehicle has no active record`, async () => {
+    const Model = require(`../models/${modelFile}`)
+    await Model.deleteMany({})
+    const { insertedId: oldId } = await Model.collection.insertOne({
+      userId: uid, vehicleNumber: 'CG12AA4793', [dateField]: '25-09-2026', status: 'expiring_soon', isRenewed: false
+    })
+    await queue(1, { documentId: oldId, documentType, alertKey: 'before-7' })
+    await processPendingMessagesForUser(uid)
+    assert.equal(stub.sent.length, 1)
+  })
+}
