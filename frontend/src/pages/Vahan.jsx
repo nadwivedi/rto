@@ -424,7 +424,7 @@ const Vahan = () => {
       </aside>
 
       <div className='min-h-screen bg-slate-100 px-2 pb-8 pt-3 sm:px-4 sm:pt-4 lg:px-6 lg:pt-5'>
-        <div className='flex w-full flex-col gap-6 lg:flex-row lg:max-h-[calc(100vh-5rem)]'>
+        <div className='flex w-full flex-col gap-6 lg:flex-row lg:h-[calc(100vh-5rem)]'>
           <aside className='hidden lg:block lg:w-96 lg:shrink-0 lg:self-start lg:sticky lg:top-4'>
             <div className='bg-white rounded-xl shadow-lg border border-gray-200 p-4'>
               <div className='grid grid-cols-2 gap-3'>
