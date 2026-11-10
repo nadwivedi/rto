@@ -14,7 +14,7 @@ import AddInsuranceModal from './Insurance/components/AddInsuranceModal'
 import AddDealerBillModal from '../components/AddDealerBillModal'
 import AddMoneyReceivedModal from './Party/components/AddMoneyReceivedModal'
 import VahanDashboard from './Vahan/components/VahanDashboard'
-import { Menu, X, FileText, Users, Truck, Globe, ScrollText, Bus, Clock, FilePlus, Shield, Activity, Receipt, Wind, MapPin, Gauge, Leaf, Wallet } from 'lucide-react'
+import { Menu, X, FileText, Users, Truck, Globe, ScrollText, Bus, Clock, FilePlus, Shield, Activity, Receipt, Wind, MapPin, Gauge, Leaf, Wallet, CreditCard } from 'lucide-react'
 import IssueBusPermitModal from './BusPermit/components/IssueBusPermitModal'
 import { routeToSectionKey } from '../utils/sectionConfig'
 
@@ -39,6 +39,7 @@ const vahanOptions = [
 const quickButtons = [
   { title: 'Party', shortLabel: 'Party', tone: 'border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100', path: '/party' },
   { title: 'Manage Vehicle', shortLabel: 'Vehicle', tone: 'border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100' },
+  { title: 'HSRP Details', shortLabel: 'HSRP', tone: 'border-teal-200 bg-teal-50 text-teal-700 hover:bg-teal-100', path: '/hsrp' },
   { title: 'Add NP', shortLabel: 'NP', tone: 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100', path: '/national-permit' },
   { title: 'Add State Permit', shortLabel: 'State Permit', tone: 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100', path: '/state-permit' },
   { title: 'Add Bus Permit', shortLabel: 'Bus Permit', tone: 'border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100', path: '/bus-permit' },
@@ -62,6 +63,7 @@ const actionNavbarButtons = []
 const buttonIcons = {
   Party: Users,
   'Manage Vehicle': Truck,
+  'HSRP Details': CreditCard,
   'Add NP': Globe,
   'Add State Permit': ScrollText,
   'Add Bus Permit': Bus,
@@ -192,13 +194,14 @@ const Vahan = () => {
 
   const filteredQuickButtons = useMemo(() =>
     quickButtons.filter(b => {
+      if (b.title === 'HSRP Details') return enabledFeatures.hsrp === true
       if (b.title === 'Green Tax') return enabledFeatures.greenTax === true
       if (b.title === 'Professional Tax') return enabledFeatures.professionalTax === true
       if (b.title === 'Money Received') return enabledFeatures.moneyReceived === true
       if (b.title === 'RTO Forms' || b.title === 'Forms') return enabledFeatures.forms === true
       return canAccessSection(b.title)
     }),
-    [enabledFeatures.rcDetails, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledFeatures.forms, enabledSections, isStaff]
+    [enabledFeatures.rcDetails, enabledFeatures.hsrp, enabledFeatures.greenTax, enabledFeatures.professionalTax, enabledFeatures.moneyReceived, enabledFeatures.forms, enabledSections, isStaff]
   )
 
   const openModal = (title) => {

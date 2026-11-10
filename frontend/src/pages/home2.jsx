@@ -238,6 +238,15 @@ const Home2 = () => {
               RC Details
             </button>
           )}
+          {user?.features?.hsrp && (
+            <button
+              onClick={() => navigate('/hsrp')}
+              className='flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-2 sm:px-2.5 sm:py-1.5 lg:px-3 shrink-0 whitespace-nowrap bg-teal-600 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-teal-700 transition-all duration-300 font-bold text-xs sm:text-[13px] lg:text-sm cursor-pointer'
+            >
+              <span className='text-base sm:text-[15px] lg:text-base'>🪪</span>
+              HSRP
+            </button>
+          )}
           <button
             onClick={() => navigate('/setting')}
             className='flex items-center justify-center gap-1 sm:gap-1.5 px-2.5 py-2 sm:px-2.5 sm:py-1.5 lg:px-3 shrink-0 whitespace-nowrap bg-slate-700 text-white rounded-lg sm:rounded-xl shadow-md hover:bg-slate-800 transition-all duration-300 font-bold text-xs sm:text-[13px] lg:text-sm'
