@@ -197,6 +197,8 @@ const toApi1Reply = (data) => {
 const fetchFromApi2 = async (vehicleNumber) => {
   const apiUrl = process.env.VEHICLE_INFO_API2_URL
   if (!apiUrl) throw new Error('API 2 is not set up (VEHICLE_INFO_API2_URL)')
+  // Shown in pm2 logs (key hidden) so the URL actually used can be checked
+  console.log(`[API 2] ${vehicleNumber} -> ${String(apiUrl).replace(/([?&]key=)[^&]*/i, '$1***')}`)
 
   // API 2 sometimes takes 40s+ to answer (even for a number it does not have), so it gets a long wait
   const response = await axios.get(`${apiUrl}${encodeURIComponent(vehicleNumber)}`, {

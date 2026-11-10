@@ -1,4 +1,8 @@
-require('dotenv').config()
+// override: .env always wins. The admin Deploy button restarts pm2 with --update-env from the running
+// backend's own environment, which still holds the values read at the last start, so without this an
+// edited .env (e.g. a new VEHICLE_INFO_API2_URL) would never take effect.
+require('dotenv').config({ override: true, quiet: true })
+require('./utils/logProviderConfig')()
 const express = require('express')
 const cors = require('cors')
 const path = require('path')
