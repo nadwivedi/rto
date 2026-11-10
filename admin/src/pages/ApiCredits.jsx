@@ -66,6 +66,8 @@ const ProductTag = ({ product }) =>
 
 // Price per API call a sale to a user starts at
 const DEFAULT_SALE_RATE = 2
+// Usual selling price per call for each product (₹): RC 2, HSRP 25
+const DEFAULT_SALE_RATES = { rc: DEFAULT_SALE_RATE, hsrp: 25 }
 
 const round2 = (n) => Math.round(n * 100) / 100
 
@@ -231,10 +233,10 @@ const ApiCredits = () => {
         userId,
         date: todayIST(),
         // Sales start at the usual ₹2 per call; purchases at the price paid last time
-        // RC sales start at the usual price; HSRP sales and purchases at the last price of this product
+        // Sales start at the usual price of the product (RC ₹2, HSRP ₹25); purchases at the last price paid
         rate:
-          type === 'sale' && forProduct === 'rc'
-            ? String(DEFAULT_SALE_RATE)
+          type === 'sale'
+            ? String(DEFAULT_SALE_RATES[forProduct])
             : String((product === forProduct ? summary?.lastRates?.[type] : null) ?? '')
       })
       setFormError('')
@@ -1303,7 +1305,19 @@ const ApiCredits = () => {
                         key={value}
                         type='button'
                         onClick={() => {
-                          setFormData((prev) => ({ ...prev, product: value }))
+                          // A sale switches to that product's usual price (and works the total out again)
+                          setFormData((prev) => {
+                            if (prev.product === value || prev.type !== 'sale') return { ...prev, product: value }
+                            const price = DEFAULT_SALE_RATES[value]
+                            const qty = Number(prev.quantity)
+                            return {
+                              ...prev,
+                              product: value,
+                              rate: String(price),
+                              exactRate: null,
+                              totalAmount: prev.quantity !== '' && qty > 0 ? String(round2(qty * price)) : ''
+                            }
+                          })
                           setFormError('')
                         }}
                         aria-pressed={formData.product === value}
@@ -1372,7 +1386,7 @@ const ApiCredits = () => {
                       name='rate'
                       value={formData.rate}
                       onChange={handleChange}
-                      placeholder={isSaleForm ? '2' : '1.4'}
+                      placeholder={isSaleForm ? String(DEFAULT_SALE_RATES[formData.product] ?? DEFAULT_SALE_RATE) : '1.4'}
                       min='0'
                       step='any'
                       inputMode='decimal'
