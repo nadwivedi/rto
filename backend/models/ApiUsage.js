@@ -30,6 +30,13 @@ const apiUsageSchema = new mongoose.Schema(
     accessExpiresAt: {
       type: Date
     },
+    // API 2 only: how long its searches take (average over our key, and the last one), in ms
+    avgResponseMs: {
+      type: Number
+    },
+    lastResponseMs: {
+      type: Number
+    },
     // When the provider last reported these numbers (i.e. the last API call)
     checkedAt: {
       type: Date

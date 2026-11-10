@@ -72,7 +72,7 @@ const RcApiUsageCard = ({ className = '' }) => {
   const oversold = hasRemaining && allocation && allocation.allocatedRemaining > remaining
 
   return (
-    <div className={`grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 ${className}`}>
+    <div className={`grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 ${className}`}>
     <div className='bg-white rounded-xl p-4 shadow-sm border border-gray-100'>
       <div className='flex items-start justify-between gap-3'>
         <div>
@@ -159,6 +159,7 @@ const RcApiUsageCard = ({ className = '' }) => {
       {/* Same key, separate counter: HSRP (number plate) calls */}
       <Api5HsrpRow usage={data?.hsrpUsage} allocation={data?.hsrpAllocation} />
     </div>
+    <Api2Card usage={data?.api2Usage} loading={loading && !data} error={error} onSaved={fetchUsage} />
     <ParzivalCard usage={data?.api3Usage} loading={loading && !data} error={error} />
     </div>
   )
@@ -201,6 +202,147 @@ const formatDate = (value) =>
   new Date(value).toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' })
 
 // API 3 – Parzival API: wallet balance, quota and access expiry, as sent in the meta of its last reply
+// API 2: searches used on our key (API 2 sends the running total on every reply) against the plan size
+// entered here (searches bought, e.g. 2000)
+const Api2Card = ({ usage, loading, error, onSaved }) => {
+  const [editing, setEditing] = useState(false)
+  const [planInput, setPlanInput] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const has = (v) => v !== null && v !== undefined
+  const used = usage?.used
+  const plan = usage?.totalLimit
+  const left = has(used) && plan > 0 ? plan - used : null
+  const usedPct = has(used) && plan > 0 ? Math.min(100, Math.max(0, (used / plan) * 100)) : null
+  const status = left === null ? null : getStatus(left, plan)
+
+  const startEdit = () => {
+    setPlanInput(plan ? String(plan) : '2000')
+    setSaveError('')
+    setEditing(true)
+  }
+
+  const savePlan = async (e) => {
+    e.preventDefault()
+    const value = Number(planInput)
+    if (!Number.isInteger(value) || value < 1) return setSaveError('Enter a whole number')
+    try {
+      setSaving(true)
+      setSaveError('')
+      const res = await fetch(`${BACKEND_URL}/api/admin/users/rc-api-usage/api2`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ totalLimit: value })
+      })
+      const json = await res.json()
+      if (!json.success) return setSaveError(json.message || 'Failed to save')
+      setEditing(false)
+      onSaved?.()
+    } catch {
+      setSaveError('Failed to save')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className='bg-white rounded-xl p-4 shadow-sm border border-gray-100'>
+      <div className='flex items-start justify-between gap-3'>
+        <div>
+          <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>API 2 Searches</p>
+          <p className='text-[11px] text-gray-400 mt-0.5'>Used on our API 2 key, against the searches bought</p>
+        </div>
+        <div className='flex items-center gap-2 shrink-0'>
+          {status && (
+            <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full border text-[11px] font-bold ${status.chip}`}>
+              <span aria-hidden='true'>{status.icon}</span>
+              {status.label}
+            </span>
+          )}
+          {!editing && (
+            <button
+              onClick={startEdit}
+              className='px-2 py-1 text-[11px] font-semibold text-amber-700 border border-amber-200 rounded-md hover:bg-amber-50 cursor-pointer'
+              title='Set how many API 2 searches you bought'
+            >
+              {plan ? 'Edit plan' : 'Set plan'}
+            </button>
+          )}
+        </div>
+      </div>
+
+      {editing && (
+        <form onSubmit={savePlan} className='mt-3 flex flex-wrap items-center gap-2'>
+          <label htmlFor='api2-plan' className='text-xs font-semibold text-gray-600'>Searches bought</label>
+          <input
+            id='api2-plan'
+            type='number'
+            min='1'
+            step='1'
+            value={planInput}
+            onChange={(e) => setPlanInput(e.target.value)}
+            className='w-28 px-2.5 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none tabular-nums'
+            autoFocus
+          />
+          <button type='submit' disabled={saving} className='px-3 py-1.5 text-xs font-semibold text-white bg-amber-500 hover:bg-amber-600 rounded-lg disabled:opacity-50 cursor-pointer'>
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+          <button type='button' onClick={() => setEditing(false)} className='px-2 py-1.5 text-xs font-semibold text-gray-500 hover:text-gray-700 cursor-pointer'>
+            Cancel
+          </button>
+          {saveError && <p className='w-full text-xs text-red-600'>{saveError}</p>}
+        </form>
+      )}
+
+      {error ? null : loading ? (
+        <div className='mt-3 space-y-2'>
+          <div className='h-8 w-40 bg-gray-100 rounded animate-pulse' />
+          <div className='h-2 bg-gray-100 rounded animate-pulse' />
+        </div>
+      ) : !has(used) ? (
+        <p className='text-sm text-gray-500 mt-3'>No API 2 search has been made yet. The searches used appear here after the next API 2 search.</p>
+      ) : (
+        <>
+          <div className='flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-3'>
+            {left !== null ? (
+              <>
+                <span className={`text-3xl font-bold tabular-nums ${left <= 0 ? 'text-red-600' : 'text-gray-900'}`}>{formatNumber(Math.max(0, left))}</span>
+                <span className='text-sm text-gray-500'>left of {formatNumber(plan)}</span>
+                <span className='text-sm text-gray-400'>· {formatNumber(used)} used</span>
+              </>
+            ) : (
+              <>
+                <span className='text-3xl font-bold text-gray-900 tabular-nums'>{formatNumber(used)}</span>
+                <span className='text-sm text-gray-500'>searches used · set the plan to see what is left</span>
+              </>
+            )}
+          </div>
+          {usedPct !== null && (
+            <div
+              className='mt-2.5 h-2 w-full bg-gray-100 rounded-full overflow-hidden'
+              role='meter'
+              aria-valuemin={0}
+              aria-valuemax={plan}
+              aria-valuenow={used}
+              aria-label='API 2 searches used'
+            >
+              <div className={`h-full rounded-full ${status?.bar || 'bg-amber-500'}`} style={{ width: `${usedPct}%` }} />
+            </div>
+          )}
+          <p className='text-[11px] text-gray-400 mt-2'>
+            {has(usage.avgResponseMs) && <>Avg {(usage.avgResponseMs / 1000).toFixed(1)}s per search · </>}
+            As of the last search
+            {usage.checkedAt && <> on {formatDateTime(usage.checkedAt)}</>}
+            {usage.lastVehicleNumber && <> ({usage.lastVehicleNumber})</>}
+            {has(usage.lastResponseMs) && <>, took {(usage.lastResponseMs / 1000).toFixed(1)}s</>}.
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
 const ParzivalCard = ({ usage, loading, error }) => {
   // Time read once when the card mounts, for the days-left count
   const [now] = useState(() => Date.now())

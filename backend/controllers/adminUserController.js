@@ -9,7 +9,7 @@ const crypto = require('crypto')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
 const { backupAndCleanUserData } = require('../utils/userDataClean')
-const { PROVIDERS, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
+const { PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
 
 // '' / null clears a money field, a number >= 0 sets it, anything else is ignored (returns false)
 const parseMoney = (value) => {
@@ -1172,6 +1172,37 @@ exports.getRevenueDashboard = async (req, res) => {
   }
 }
 
+// Set how many API 2 searches were bought in total (e.g. 2000), so the panel can show used / left.
+// API 2 reports the searches used (total_searches) on every reply.
+exports.setApi2Plan = async (req, res) => {
+  try {
+    const totalLimit = Number(req.body?.totalLimit)
+    if (!Number.isInteger(totalLimit) || totalLimit < 1) {
+      return res.status(400).json({ success: false, message: 'Enter the total API 2 searches bought (a whole number, at least 1)' })
+    }
+    const before = await ApiUsage.findOne({ provider: API2_USAGE_PROVIDER }).lean()
+    const doc = await ApiUsage.findOneAndUpdate(
+      { provider: API2_USAGE_PROVIDER },
+      { $set: { totalLimit, ...(before?.used != null ? { remaining: totalLimit - before.used } : {}) } },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).lean()
+    recordActivity(req, {
+      action: 'update',
+      entity: 'api_usage',
+      entityName: 'API 2 plan',
+      summary: `API 2 plan size set to ${totalLimit} searches`,
+      changes: [{ field: 'API 2 searches bought', from: before?.totalLimit ?? null, to: totalLimit }]
+    })
+    res.json({
+      success: true,
+      message: doc.used != null ? `API 2 plan: ${totalLimit} searches, ${doc.used} used, ${totalLimit - doc.used} left` : `API 2 plan set to ${totalLimit} searches`
+    })
+  } catch (error) {
+    logError(error, req)
+    res.status(500).json({ success: false, message: 'Failed to save the API 2 plan' })
+  }
+}
+
 // Vehicle (RC details) API quota for the admin panel: API 5's calls left and API 3's wallet.
 // The providers only report these on a search response, so this is the snapshot
 // from the most recent search - it is never fetched live (that would spend a credit).
@@ -1187,6 +1218,20 @@ exports.getRcApiUsage = async (req, res) => {
           lastCharge: api5.lastCharge ?? null,
           checkedAt: api5.checkedAt || api5.updatedAt || null,
           lastVehicleNumber: api5.lastVehicleNumber || null
+        }
+      : null
+
+    // API 2: searches used on our key (from its replies) against the plan size the admin entered
+    const api2 = await ApiUsage.findOne({ provider: API2_USAGE_PROVIDER }).lean()
+    const api2Usage = api2
+      ? {
+          used: api2.used ?? null,
+          totalLimit: api2.totalLimit ?? null,
+          remaining: api2.totalLimit > 0 && api2.used != null ? api2.totalLimit - api2.used : null,
+          avgResponseMs: api2.avgResponseMs ?? null,
+          lastResponseMs: api2.lastResponseMs ?? null,
+          checkedAt: api2.checkedAt || api2.updatedAt || null,
+          lastVehicleNumber: api2.lastVehicleNumber || null
         }
       : null
 
@@ -1248,6 +1293,7 @@ exports.getRcApiUsage = async (req, res) => {
       success: true,
       data: {
         usage,
+        api2Usage,
         hsrpUsage,
         hsrpAllocation: { users: hsrpAllocation?.users || 0, allocatedRemaining: hsrpAllocation?.allocatedRemaining || 0 },
         api3Usage,

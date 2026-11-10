@@ -52,13 +52,13 @@ const API1_FIELDS = [
   'VEHICLE_CATEGORY', 'SEATING_CAPACITY', 'SLEEPER_CAPACITY', 'STANDING_CAPACITY', 'OWNER_SERIAL_NO',
   'UNLADEN_WEIGHT', 'LADEN_WEIGHT', 'WHEELBASE', 'NO_OF_CYLINDERS', 'CUBIC_CAPACITY', 'FUEL_NORMS',
   'TAX_UPTO', 'BLACKLIST_STATUS', 'NOC_DETAILS', 'IS_COMMERCIAL', 'PURCHASE_DT', 'SALE_AMT',
-  'VEHICLE_AGE', 'CLAIM_MADE', 'PREV_NCB', 'RTO_ADDRESS', 'RTO_PHONE'
+  'VEHICLE_AGE', 'CLAIM_MADE', 'PREV_NCB', 'RTO_ADDRESS', 'RTO_PHONE',
+  'RTO_CITY', 'RTO_WEBSITE', 'INSURANCE_STATUS', 'OWNERSHIP_CHANGE'
 ]
 
 // API 1 field <- API 2 field names (any case), first one with a real value wins.
-// API 2's `status` is the request result (Success / Failed), not the RC status, and its
-// cubic_capacity / seating_capacity come back with the same values even when no vehicle is
-// found, so none of them are used.
+// API 2's `status` is the request result (Success / Failed), not the RC status. A reply without a
+// vehicle is dropped before these are read (hasVehicleDetails), so capacities are safe to use.
 const API2_FIELDS = {
   REGN_NO: ['regno', 'registration_number', 'vehicle_number'],
   REGN_DT: ['registration_date', 'registrationdate', 'regdate', 'reg_date'],
@@ -104,7 +104,12 @@ const API2_FIELDS = {
   CLAIM_MADE: ['claimmade', 'claim_made'],
   PREV_NCB: ['prevncb', 'prev_ncb'],
   RTO_ADDRESS: ['address'],
-  RTO_PHONE: ['phone']
+  RTO_PHONE: ['phone'],
+  RTO_CITY: ['city_name'],
+  RTO_WEBSITE: ['website'],
+  INSURANCE_STATUS: ['insurance_status'],
+  OWNERSHIP_CHANGE: ['ownershipchange', 'ownership_change'],
+  SEATING_CAPACITY: ['seating_capacity']
 }
 const API2_DATE_FIELDS = [
   'REGN_DT', 'REGN_UPTO', 'FIT_UPTO', 'INSURANCE_UPTO', 'PUC_UPTO', 'PUCC_UPTO',
@@ -125,15 +130,19 @@ const toApi1Date = (value) => {
 // A value worth sending: not empty, not the provider's 'NA' placeholder and not masked (N*****N)
 const isReal = (v) => v !== undefined && v !== null && !/^(|na|n\/a|null|none|-)$/i.test(String(v).trim()) && !String(v).includes('*')
 
-// API 2 also nests a second record under a key like "2": { sections: { 'Important Dates & Validity':
-// { 'Fitness Upto': ... }, ... } }. Its labels become snake_case names ('Fitness Upto' -> fitness_upto)
-// so the aliases above pick up fitness, tax, PUC, vehicle class, fuel norms and the registered RTO.
-// A flat field of the same name wins.
+// API 2 also sends a second record with `sections`: { 'Important Dates & Validity': { 'Fitness Upto': ... }, ... }
+// (now under additional_info.data_2, earlier under a key like "2"). Its labels become snake_case names
+// ('Fitness Upto' -> fitness_upto) so the aliases above pick up fitness, tax, PUC, insurance, vehicle class,
+// fuel norms, the registered RTO and the RTO office. A field of the main record with the same name wins.
+const findSections = (value, depth = 0, out = []) => {
+  if (!value || typeof value !== 'object' || depth > 3) return out
+  if (value.sections && typeof value.sections === 'object') out.push(value.sections)
+  for (const [key, child] of Object.entries(value)) if (key !== 'sections') findSections(child, depth + 1, out)
+  return out
+}
 const api2SectionEntries = (raw) => {
   const entries = []
-  for (const value of Object.values(raw)) {
-    const sections = value && typeof value === 'object' ? value.sections : null
-    if (!sections || typeof sections !== 'object') continue
+  for (const sections of findSections(raw)) {
     for (const section of Object.values(sections)) {
       if (!section || typeof section !== 'object') continue
       for (const [label, v] of Object.entries(section)) {
@@ -146,7 +155,9 @@ const api2SectionEntries = (raw) => {
 }
 
 const mapApi2Fields = (raw) => {
-  const byName = new Map(Object.entries(raw).map(([k, v]) => [k.toLowerCase(), v]))
+  // The main record is now under `vehicle` (earlier at the top level); its fields win over the sections
+  const main = { ...raw, ...(raw.vehicle && typeof raw.vehicle === 'object' ? raw.vehicle : {}) }
+  const byName = new Map(Object.entries(main).filter(([, v]) => v === null || typeof v !== 'object').map(([k, v]) => [k.toLowerCase(), v]))
   for (const [name, v] of api2SectionEntries(raw)) if (!isReal(byName.get(name)) && isReal(v)) byName.set(name, v)
   const get = (...names) => names.map((n) => byName.get(n)).find(isReal)
   const data = {}
@@ -171,8 +182,9 @@ const mapApi2Fields = (raw) => {
   }
   // No ownership change means the first owner
   if (data.OWNER_SERIAL_NO === undefined && /^no$/i.test(String(get('ownershipchange') || ''))) data.OWNER_SERIAL_NO = 1
-  if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
-    data.CUBIC_CAPACITY = Number(data.CUBIC_CAPACITY).toFixed(2)
+  if (data.CUBIC_CAPACITY !== undefined) {
+    const cc = Number(String(data.CUBIC_CAPACITY).replace(/\s*cc$/i, ''))
+    if (Number.isFinite(cc)) data.CUBIC_CAPACITY = cc.toFixed(2)
   }
   const variant = get('variant')
   if (data.MAKER_MODEL && variant && !String(data.MAKER_MODEL).includes(variant)) data.MAKER_MODEL = `${data.MAKER_MODEL} ${variant}`
@@ -191,10 +203,57 @@ const toApi1Reply = (data) => {
   return filled
 }
 
+// API 2 replies end with usage: { key_label, total_searches, avg_response_ms, this_request_ms, ... }.
+// total_searches is every search made on our key; the admin sets the plan size (e.g. 2000 bought),
+// so the panel shows used / left. Never throws.
+const API2_USAGE_PROVIDER = 'api2'
+const API2_LOW_LEFT = Number(process.env.API2_LOW_SEARCHES_ALERT) || 100
+
+const recordApi2Usage = async (usage, { vehicleNumber, userId } = {}) => {
+  if (!usage || typeof usage !== 'object') return
+  const used = toNumber(usage.total_searches)
+  if (used === undefined) return
+  const snapshot = { checkedAt: new Date(), used }
+  const avg = toNumber(usage.avg_response_ms)
+  const last = toNumber(usage.this_request_ms)
+  if (avg !== undefined) snapshot.avgResponseMs = avg
+  if (last !== undefined) snapshot.lastResponseMs = last
+  if (vehicleNumber) snapshot.lastVehicleNumber = vehicleNumber
+  if (userId) snapshot.lastUserId = userId
+  try {
+    const doc = await ApiUsage.findOneAndUpdate(
+      { provider: API2_USAGE_PROVIDER },
+      { $set: snapshot },
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    ).lean()
+    // Left = plan size - used, once the admin has set the plan size
+    if (doc?.totalLimit > 0) {
+      const left = doc.totalLimit - used
+      await ApiUsage.updateOne({ provider: API2_USAGE_PROVIDER }, { $set: { remaining: left } })
+      if (left <= API2_LOW_LEFT) {
+        await raiseAlert({
+          key: 'api2:low-balance',
+          severity: left <= 0 ? 'critical' : 'warning',
+          source: 'api2',
+          code: 'LOW_BALANCE',
+          title: left <= 0 ? 'API 2: plan used up' : 'API 2: searches running low',
+          message: `${used} of ${doc.totalLimit} API 2 searches used, ${Math.max(0, left)} left. Buy more and update the plan size in the admin panel.`,
+          vehicleNumber,
+          userId
+        })
+      } else {
+        await autoResolveAlerts('api2:low-balance')
+      }
+    }
+  } catch (err) {
+    console.error('Failed to record API 2 usage:', err.message)
+  }
+}
+
 // API 2: VEHICLE_INFO_API2_URL is the full URL up to the vehicle number, e.g.
 // https://host/vehicle?key=xxx&no= , and the number is added at the end. It answers an unknown
-// number with HTTP 404 and status 'Failed', and sends no usage counter.
-const fetchFromApi2 = async (vehicleNumber) => {
+// number with HTTP 404 and status 'Failed'.
+const fetchFromApi2 = async (vehicleNumber, { userId } = {}) => {
   const apiUrl = process.env.VEHICLE_INFO_API2_URL
   if (!apiUrl) throw new Error('API 2 is not set up (VEHICLE_INFO_API2_URL)')
   // Shown in pm2 logs (key hidden) so the URL actually used can be checked
@@ -215,6 +274,9 @@ const fetchFromApi2 = async (vehicleNumber) => {
       return { found: false, charged: null, message: 'No vehicle information found for this registration number.' }
     }
   }
+
+  // Recorded before the checks so a "not found" reply still updates the count
+  await recordApi2Usage(raw?.usage, { vehicleNumber, userId })
 
   const failed = !raw || typeof raw !== 'object' || response.status >= 400 || /fail|error/i.test(String(raw.status || ''))
   const data = failed ? null : mapApi2Fields(raw)
@@ -853,10 +915,10 @@ const fetchCombined = async (vehicleNumber, { base, extra, groups, fillGaps, ext
 }
 
 const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
-  if (provider === 'api2') return fetchFromApi2(vehicleNumber)
+  if (provider === 'api2') return fetchFromApi2(vehicleNumber, { userId })
   if (provider === 'api3') return fetchFromApi3(vehicleNumber, { userId })
   if (provider === 'api4') return fetchFromApi4(vehicleNumber)
   return fetchFromApi5(vehicleNumber, { userId })
 }
 
-module.exports = { fetchVehicleInfo, fetchHsrpInfo, cleanVehicleNumber, PROVIDERS, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER }
+module.exports = { fetchVehicleInfo, fetchHsrpInfo, cleanVehicleNumber, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, mapApi2Fields }

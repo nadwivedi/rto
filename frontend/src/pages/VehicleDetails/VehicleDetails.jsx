@@ -950,6 +950,18 @@ const VehicleDetails = () => {
                 {has(v.SALE_AMT) && <Row label="Sale amount" value={formatRupees(v.SALE_AMT)} />}
                 {has(v.RTO_ADDRESS) && <Row stacked label="RTO office" value={v.RTO_ADDRESS} />}
                 {has(v.RTO_PHONE) && <Row label="RTO phone" value={v.RTO_PHONE} />}
+                {has(v.RTO_CITY) && <Row label="RTO city" value={v.RTO_CITY} />}
+                {has(v.RTO_WEBSITE) && (
+                  <Row
+                    label="RTO website"
+                    value={
+                      <a href={v.RTO_WEBSITE} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline break-all">
+                        {v.RTO_WEBSITE.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                      </a>
+                    }
+                  />
+                )}
+                {has(v.OWNERSHIP_CHANGE) && <Row label="Ownership changed" value={v.OWNERSHIP_CHANGE} />}
                 <Row label="Record as on" value={v.STATUS_AS_ON || 'Current'} valueClass="text-slate-500" />
               </Panel>
 
@@ -983,6 +995,7 @@ const VehicleDetails = () => {
                   value={v.INSURANCE_UPTO}
                   valueClass={isExpired(v.INSURANCE_UPTO) ? 'text-rose-600' : 'text-emerald-700'}
                 />
+                {has(v.INSURANCE_STATUS) && <Row label="Status" value={v.INSURANCE_STATUS} />}
                 {has(v.CLAIM_MADE) && <Row label="Claim made" value={v.CLAIM_MADE} />}
                 {has(v.PREV_NCB) && <Row label="Previous NCB" value={`${v.PREV_NCB}%`} />}
               </Panel>
