@@ -129,6 +129,7 @@ export default function VehicleVerificationApi() {
         ],
       }}
       related={[
+        { to: '/vehicle-to-hsrp-details-api', label: 'Vehicle to HSRP details API' },
         { to: '/vehicle-rc-verification-api', label: 'Vehicle RC verification API' },
         { to: '/vehicle-lookup-api', label: 'Vehicle lookup API' },
         { to: '/vahan-api', label: 'Vahan API' },

@@ -12,6 +12,7 @@ import { rcToRegistrationDateApiFaqs, RC_TO_REGISTRATION_DATE_API_PATH } from '.
 import { pucDetailsApiFaqs, PUC_DETAILS_API_PATH } from '../data/pucDetailsApi'
 import { fitnessDetailsApiFaqs, FITNESS_DETAILS_API_PATH } from '../data/fitnessDetailsApi'
 import { roadTaxDetailsApiFaqs, ROAD_TAX_DETAILS_API_PATH } from '../data/roadTaxDetailsApi'
+import { hsrpDetailsApiFaqs, HSRP_DETAILS_API_PATH } from '../data/hsrpDetailsApi'
 import { registrationDetailsApiFaqs, REGISTRATION_DETAILS_API_PATH } from '../data/registrationDetailsApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
@@ -316,6 +317,20 @@ const PRODUCT_PAGES = {
       'Vehicle class, registering RTO and permit number',
       'Fitness, insurance and PUC validity',
       'Vehicles from all states of India, including BH series',
+      'Pay only for successful searches',
+    ],
+  },
+  [HSRP_DETAILS_API_PATH]: {
+    name: 'Vehicle to HSRP Details API',
+    faqs: hsrpDetailsApiFaqs,
+    alternateName: ['HSRP Details API', 'HSRP API India', 'HSRP Laser Code API', 'HSRP Check by Vehicle Number API'],
+    category: 'DeveloperApplication',
+    offer: { price: '25', description: 'Starting price per successful HSRP search' },
+    features: [
+      'Front and rear HSRP laser codes by vehicle number as JSON',
+      'Maker, fuel, vehicle type, category and emission norms',
+      'Registration date, chassis and engine number',
+      'State and RTO office code, vehicles from all states of India',
       'Pay only for successful searches',
     ],
   },

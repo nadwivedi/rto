@@ -205,6 +205,13 @@ export const PAGE_SEO = {
     path: '/rc-to-road-tax-details-api',
     keywords: 'RC to road tax details API, RC to road tax API, road tax details API, road tax API India, vehicle road tax API, road tax status API, road tax check API, road tax check by vehicle number API, vehicle tax details API, vehicle tax API, tax paid upto API, TAX_UPTO API, road tax validity API, road tax expiry API, lifetime tax check API, LTT check API, road tax details by vehicle number, vehicle number to road tax details, commercial vehicle tax check API, truck road tax check API, fleet road tax check API, bulk road tax check API, road tax details API price, RTO Sarthi road tax API',
   },
+  '/vehicle-to-hsrp-details-api': {
+    title: `Vehicle to HSRP Details API - HSRP Laser Code by Vehicle Number | RTO Sarthi`,
+    description:
+      'Vehicle to HSRP details API for India: get the front & rear HSRP laser codes of any vehicle number as JSON, with maker, fuel, type, norms, registration date, chassis, engine & RTO. From ₹25.',
+    path: '/vehicle-to-hsrp-details-api',
+    keywords: 'vehicle to HSRP details API, vehicle to HSRP detail API, vehicle to HSRP API, HSRP details API, HSRP detail API, HSRP API, HSRP API India, HSRP check API, HSRP status API, HSRP verification API, HSRP laser code API, HSRP laser code by vehicle number, HSRP details by vehicle number, vehicle number to HSRP details, RC to HSRP details API, high security registration plate API, high security number plate API, HSRP number plate API, number plate verification API, HSRP front laser code, HSRP rear laser code, HSRP booking API, HSRP details API price, RTO Sarthi HSRP API',
+  },
   '/vehicle-registration-details-api': {
     title: `Vehicle Registration Details API India - RC Registration Record from ₹1.5 | RTO Sarthi`,
     description:
