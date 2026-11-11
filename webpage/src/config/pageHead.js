@@ -13,6 +13,7 @@ import { pucDetailsApiFaqs, PUC_DETAILS_API_PATH } from '../data/pucDetailsApi'
 import { fitnessDetailsApiFaqs, FITNESS_DETAILS_API_PATH } from '../data/fitnessDetailsApi'
 import { roadTaxDetailsApiFaqs, ROAD_TAX_DETAILS_API_PATH } from '../data/roadTaxDetailsApi'
 import { hsrpDetailsApiFaqs, HSRP_DETAILS_API_PATH } from '../data/hsrpDetailsApi'
+import { chassisToVehicleApiFaqs, CHASSIS_TO_VEHICLE_API_PATH } from '../data/chassisToVehicleApi'
 import { registrationDetailsApiFaqs, REGISTRATION_DETAILS_API_PATH } from '../data/registrationDetailsApi'
 import { vehicleDetailsApiIndiaFaqs, VEHICLE_DETAILS_API_INDIA_PATH } from '../data/vehicleDetailsApiIndia'
 import { makeModelApiFaqs, MAKE_MODEL_API_PATH } from '../data/makeModelApi'
@@ -334,6 +335,21 @@ const PRODUCT_PAGES = {
       'Pay only for successful searches',
     ],
   },
+  [CHASSIS_TO_VEHICLE_API_PATH]: {
+    name: 'Chassis Number to Vehicle API',
+    faqs: chassisToVehicleApiFaqs,
+    alternateName: ['Chassis Number to Vehicle Number API', 'Chassis to RC API', 'VIN to Registration Number API', 'Vehicle Number by Chassis Number API'],
+    category: 'DeveloperApplication',
+    // Price on request: no Offer in the structured data (the default would show a ₹0 free trial)
+    offer: null,
+    features: [
+      'Vehicle registration number from the chassis number (VIN) as JSON',
+      'Maker, model, vehicle class, fuel and engine number',
+      'Registration date, registering RTO and registration status',
+      'Vehicles from all states of India',
+      'Pay only for successful searches',
+    ],
+  },
   [REGISTRATION_DETAILS_API_PATH]: {
     name: 'Vehicle Registration Details API',
     faqs: registrationDetailsApiFaqs,
@@ -565,12 +581,14 @@ function getSoftwareJsonLd(name, description, url, { alternateName, features, ca
     availableOnDevice: ['Desktop', 'Laptop', 'Mobile', 'Tablet'],
     description,
     url,
-    offers: {
-      '@type': 'Offer',
-      price: offer?.price || '0',
-      priceCurrency: 'INR',
-      description: offer?.description || 'Free trial available',
-    },
+    ...(offer !== null && {
+      offers: {
+        '@type': 'Offer',
+        price: offer?.price || '0',
+        priceCurrency: 'INR',
+        description: offer?.description || 'Free trial available',
+      },
+    }),
     provider: {
       '@type': 'Organization',
       name: 'SoftwareBytes',

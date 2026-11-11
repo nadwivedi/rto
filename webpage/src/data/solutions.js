@@ -51,6 +51,7 @@ export const SOLUTION_GROUPS = [
       { to: '/vehicle-to-hsrp-details-api', label: 'Vehicle to HSRP Details API', desc: 'Front and rear HSRP laser codes of any vehicle number as JSON, with maker, fuel, norms and registration date' },
       { to: '/vehicle-verification-api', label: 'Vehicle Verification API', desc: 'Verify any vehicle before onboarding: registration status, validity dates, financer, blacklist & NOC' },
       { to: '/vehicle-rc-verification-api', label: 'Vehicle RC Verification API', desc: 'Verify RC by vehicle number: owner, chassis, engine, status, financer, blacklist & NOC as JSON' },
+      { to: '/chassis-number-to-vehicle-api', label: 'Chassis Number to Vehicle API', desc: 'Vehicle registration number and details of any chassis number (VIN), as JSON' },
       { to: '/rc-to-chassis-number-api', label: 'RC to Chassis Number API', desc: 'Chassis number (VIN) and engine number of any vehicle from its RC number, as JSON' },
       { to: '/rc-to-registration-date-api', label: 'RC to Registration Date API', desc: 'Registration date, validity and manufacturing date of any vehicle from its RC number, as JSON' },
       { to: '/vehicle-lookup-api', label: 'Vehicle Lookup API', desc: 'Look up any registration number: status, owner, chassis & engine, validity, financer, blacklist & NOC' },

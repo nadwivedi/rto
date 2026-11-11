@@ -22,6 +22,7 @@ import VehiclePucDetailsApi from './pages/VehiclePucDetailsApi'
 import VehicleFitnessDetailsApi from './pages/VehicleFitnessDetailsApi'
 import RcToRoadTaxDetailsApi from './pages/RcToRoadTaxDetailsApi'
 import VehicleToHsrpDetailsApi from './pages/VehicleToHsrpDetailsApi'
+import ChassisNumberToVehicleApi from './pages/ChassisNumberToVehicleApi'
 import VehicleRegistrationDetailsApi from './pages/VehicleRegistrationDetailsApi'
 import VehicleDetailsApiIndia from './pages/VehicleDetailsApiIndia'
 import VehicleDataApi from './pages/VehicleDataApi'
@@ -78,6 +79,7 @@ export default function AppRoutes() {
         <Route path="vehicle-fitness-details-api" element={<VehicleFitnessDetailsApi />} />
         <Route path="rc-to-road-tax-details-api" element={<RcToRoadTaxDetailsApi />} />
         <Route path="vehicle-to-hsrp-details-api" element={<VehicleToHsrpDetailsApi />} />
+        <Route path="chassis-number-to-vehicle-api" element={<ChassisNumberToVehicleApi />} />
         <Route path="vehicle-registration-details-api" element={<VehicleRegistrationDetailsApi />} />
         <Route path="api-for-vehicle-details" element={<Navigate to="/vehicle-details-api" replace />} />
         <Route path="vehicle-details-api" element={<VehicleDetailsApiIndia />} />

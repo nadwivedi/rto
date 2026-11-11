@@ -212,6 +212,13 @@ export const PAGE_SEO = {
     path: '/vehicle-to-hsrp-details-api',
     keywords: 'vehicle to HSRP details API, vehicle to HSRP detail API, vehicle to HSRP API, HSRP details API, HSRP detail API, HSRP API, HSRP API India, HSRP check API, HSRP status API, HSRP verification API, HSRP laser code API, HSRP laser code by vehicle number, HSRP details by vehicle number, vehicle number to HSRP details, RC to HSRP details API, high security registration plate API, high security number plate API, HSRP number plate API, number plate verification API, HSRP front laser code, HSRP rear laser code, HSRP booking API, HSRP details API price, RTO Sarthi HSRP API',
   },
+  '/chassis-number-to-vehicle-api': {
+    title: `Chassis Number to Vehicle API - Find Vehicle Number by Chassis No | RTO Sarthi`,
+    description:
+      'Chassis number to vehicle API for India: get the vehicle registration number of any chassis number (VIN) as JSON, with maker, model, engine no, class, fuel, registration date, RTO & status.',
+    path: '/chassis-number-to-vehicle-api',
+    keywords: 'chassis number to vehicle API, chassis no to vehicle API, chassis number to vehicle number API, chassis no to vehicle number API, chassis to vehicle number API, chassis to vehicle API, chassis number to RC API, chassis to RC API, chassis number to registration number API, VIN to registration number API, VIN to vehicle number API, VIN lookup API India, chassis number lookup API, chassis number search API, chassis number API, chassis number API India, vehicle number by chassis number, find vehicle number from chassis number, chassis number to vehicle details API, chassis number to owner details API, vehicle details by chassis number API, chassis number verification API, chassis number to vehicle API price, RTO Sarthi chassis number API',
+  },
   '/vehicle-registration-details-api': {
     title: `Vehicle Registration Details API India - RC Registration Record from ₹1.5 | RTO Sarthi`,
     description:

@@ -25,7 +25,7 @@ export const rcToChassisApiFaqs = [
   },
   {
     q: 'Can I get the vehicle number from a chassis number?',
-    a: 'No. The API works from the vehicle registration number. Send the vehicle number and it returns the chassis number with the rest of the record.',
+    a: 'Yes. Use the RTO Sarthi chassis number to vehicle API for the reverse search: send the chassis number (VIN) and get the vehicle registration number with the vehicle details.',
   },
   {
     q: 'What does it cost?',

@@ -123,6 +123,7 @@ export default function RcToChassisApi() {
         ],
       }}
       related={[
+        { to: '/chassis-number-to-vehicle-api', label: 'Chassis number to vehicle API' },
         { to: '/vehicle-to-hsrp-details-api', label: 'Vehicle to HSRP details API' },
         { to: '/vehicle-rc-verification-api', label: 'Vehicle RC verification API' },
         { to: '/vehicle-verification-api', label: 'Vehicle verification API' },
