@@ -75,12 +75,13 @@ const readUserId = async (userId) => {
   return user ? { userId: user._id } : { error: 'User not found' }
 }
 
-// All keys with sales and today's / total call counts
+// All keys with sales and today's / total call counts: active keys first, switched-off keys at the
+// bottom, newest first within each
 exports.getApiKeys = async (req, res) => {
   try {
     const today = todayIST()
     const [keys, sales, calls] = await Promise.all([
-      ApiKey.find({}).populate('userId', 'name mobile1').sort({ createdAt: -1 }).lean(),
+      ApiKey.find({}).populate('userId', 'name mobile1').sort({ active: -1, createdAt: -1 }).lean(),
       ApiKeySale.aggregate([
         { $group: { _id: '$apiKeyId', quantity: { $sum: '$quantity' }, amount: { $sum: '$amount' }, paid: { $sum: PAID_EXPR } } }
       ]),
