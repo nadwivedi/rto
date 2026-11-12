@@ -42,11 +42,12 @@ const ApiUsage = () => {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
-  // Vehicle RC searches (app + API keys), HSRP or Chassis searches (app only)
+  // Vehicle RC searches (app + API keys), Chassis searches (app + Chassis to RC API keys) or HSRP (app only)
   const [searchParams, setSearchParams] = useSearchParams()
   const product = USAGE_PRODUCTS[searchParams.get('product')] ? searchParams.get('product') : 'rc'
-  // App searches only, no API key columns
+  // No per-source API key columns (Chassis keys all use the one Chassis to RC API: one "API keys" column)
   const appOnly = product !== 'rc'
+  const chassisKeys = product === 'chassis'
   const changeProduct = (value) => setSearchParams(value === 'rc' ? {} : { product: value }, { replace: true })
 
   // App users and API keys in one list, most used first
@@ -198,6 +199,7 @@ const ApiUsage = () => {
                     <tr className='border-b border-gray-100 bg-gray-50/60'>
                       <th className={`${th} text-left`}>Day</th>
                       <th className={`${th} text-right`}>App</th>
+                      {chassisKeys && <th className={`${th} text-right`} title='Calls made with Chassis to RC API keys'>API keys</th>}
                       {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 5 (and by the removed API 1 before it)'>API 5</th>}
                       {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 2'>API 2</th>}
                       {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 3 – Parzival API'>Parzival</th>}
@@ -216,6 +218,7 @@ const ApiUsage = () => {
                           {day.date === usage.today && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
                         </td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.appCount)}</td>
+                        {chassisKeys && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.keyCount)}</td>}
                         {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber((day.api5Count || 0) + (day.api1Count || 0))}</td>}
                         {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api2Count)}</td>}
                         {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api3Count)}</td>}
@@ -236,7 +239,7 @@ const ApiUsage = () => {
               {/* User-wise */}
               <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col'>
                 <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>
-                  {appOnly ? 'Usage by user' : <>Usage by user &amp; API key</>}
+                  {appOnly && !chassisKeys ? 'Usage by user' : <>Usage by user &amp; API key</>}
                   {usageRows.length > 0 && <span className='font-normal text-gray-400'> ({usageRows.length})</span>}
                 </h3>
                 {usageRows.length ? (
@@ -263,11 +266,15 @@ const ApiUsage = () => {
                                       {u.name || 'Deleted API key'}
                                     </Link>
                                     <div className='text-gray-400'>
-                                      <span
-                                        className={`mr-1 rounded px-1 py-px text-[10px] font-bold uppercase ${providerOption(u.provider).tag}`}
-                                      >
-                                        API key · {providerOption(u.provider).short}
-                                      </span>
+                                      {chassisKeys ? (
+                                        <span className='mr-1 rounded px-1 py-px text-[10px] font-bold uppercase bg-violet-100 text-violet-700'>API key · Chassis</span>
+                                      ) : (
+                                        <span
+                                          className={`mr-1 rounded px-1 py-px text-[10px] font-bold uppercase ${providerOption(u.provider).tag}`}
+                                        >
+                                          API key · {providerOption(u.provider).short}
+                                        </span>
+                                      )}
                                       {u.userName}
                                       {!u.active && <span className='ml-1 text-rose-500'>· off</span>}
                                     </div>

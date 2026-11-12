@@ -16,6 +16,12 @@ const chassisSearchHistorySchema = new mongoose.Schema(
       trim: true,
       uppercase: true
     },
+    // The engine number searched with (PeriOne needs it with the chassis number)
+    engineNumber: {
+      type: String,
+      trim: true,
+      uppercase: true
+    },
     // Registration number(s) found, for the list and its search box
     vehicleNumbers: {
       type: [String],

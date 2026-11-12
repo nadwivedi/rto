@@ -617,21 +617,25 @@ exports.getUsage = async (req, res) => {
     const today = RcSearchUsage.todayIST()
     const from7 = shiftDate(today, -6)
     const from28 = shiftDate(today, -27)
-    // RC: app searches + API key calls; HSRP / Chassis: app searches only (API keys serve vehicle details)
+    // RC: app searches + Vehicle RC API key calls; Chassis: app searches + Chassis to RC API key calls;
+    // HSRP: app searches only
     const product = productOf(req.query.product)
     const P = PRODUCTS[product]
     const Usage = { rc: RcSearchUsage, hsrp: HsrpSearchUsage, chassis: ChassisSearchUsage }[product]
-    const keyCalls = withApiKeys(product)
+    const keyCalls = product === 'rc' || product === 'chassis'
+    // Calls of the keys made for this product (keys saved before `product` existed are Vehicle RC)
+    const chassisKeyIds = keyCalls ? await ApiKey.find({ product: 'chassis' }).distinct('_id') : []
+    const keyMatch = { apiKeyId: product === 'chassis' ? { $in: chassisKeyIds } : { $nin: chassisKeyIds }, ...CHARGED_KEY_CALL }
 
     const [rows, firstRow, keyRows, firstKeyCall] = await Promise.all([
       Usage.find({ date: { $gte: from28, $lte: today } }).select('userId date count').lean(),
       Usage.findOne({}).sort({ date: 1 }).select('date').lean(),
       !keyCalls ? [] : ApiKeyCall.aggregate([
-        { $match: { date: { $gte: from28, $lte: today }, ...CHARGED_KEY_CALL } },
+        { $match: { date: { $gte: from28, $lte: today }, ...keyMatch } },
         // Calls logged before `source` was saved were all API 1
         { $group: { _id: { apiKeyId: '$apiKeyId', date: '$date', source: { $ifNull: ['$source', 'rtosarthi_api1'] } }, count: { $sum: 1 } } }
       ]),
-      !keyCalls ? null : ApiKeyCall.findOne(CHARGED_KEY_CALL).sort({ date: 1 }).select('date').lean()
+      !keyCalls ? null : ApiKeyCall.findOne(keyMatch).sort({ date: 1 }).select('date').lean()
     ])
 
     // One entry per day, newest first, including days with no searches

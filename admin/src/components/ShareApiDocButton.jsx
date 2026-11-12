@@ -1,13 +1,18 @@
 import { useState } from 'react'
 import apiDocMd from '../../../docs/VEHICLE_INFO_API.md?raw'
 import apiDocTxt from '../../../docs/VEHICLE_INFO_API.txt?raw'
+import chassisDocMd from '../../../docs/CHASSIS_INFO_API.md?raw'
+import chassisDocTxt from '../../../docs/CHASSIS_INFO_API.txt?raw'
 
-const FILE_NAME = 'RTO-Sarthi-Vehicle-Info-API'
-const MESSAGE = 'RTO Sarthi Vehicle Info API documentation'
+// The doc of each kind of key (ApiKey.product)
+const DOCS = {
+  rc: { fileName: 'RTO-Sarthi-Vehicle-Info-API', message: 'RTO Sarthi Vehicle Info API documentation', txt: apiDocTxt, md: apiDocMd },
+  chassis: { fileName: 'RTO-Sarthi-Chassis-to-RC-API', message: 'RTO Sarthi Chassis to RC API documentation', txt: chassisDocTxt, md: chassisDocMd }
+}
 // .txt opens on any phone; .md suits developers who read Markdown
 const FORMATS = {
-  txt: { doc: apiDocTxt, type: 'text/plain' },
-  md: { doc: apiDocMd, type: 'text/markdown' }
+  txt: { type: 'text/plain' },
+  md: { type: 'text/markdown' }
 }
 
 const download = (text, name, type) => {
@@ -20,14 +25,16 @@ const download = (text, name, type) => {
 }
 
 /**
- * Shares docs/VEHICLE_INFO_API.txt (or .md) as a file through the phone / PC share sheet (pick WhatsApp).
- * With `apiKey`, the customer's key is filled in for YOUR_API_KEY.
+ * Shares docs/VEHICLE_INFO_API.txt (or .md; CHASSIS_INFO_API for product 'chassis') as a file through the
+ * phone / PC share sheet (pick WhatsApp). With `apiKey`, the customer's key is filled in for YOUR_API_KEY.
  * Where files can't be shared, the file is downloaded and WhatsApp opens to attach it.
  */
-const ShareApiDocButton = ({ apiKey, className = '' }) => {
+const ShareApiDocButton = ({ apiKey, product = 'rc', className = '' }) => {
   const [note, setNote] = useState('')
   const [format, setFormat] = useState('txt')
-  const { doc, type } = FORMATS[format]
+  const { fileName: FILE_NAME, message: MESSAGE, ...docs } = DOCS[product] || DOCS.rc
+  const doc = docs[format]
+  const { type } = FORMATS[format]
   const text = apiKey ? doc.replaceAll('YOUR_API_KEY', apiKey) : doc
   const name = `${FILE_NAME}.${format}`
 

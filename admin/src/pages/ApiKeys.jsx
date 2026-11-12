@@ -18,6 +18,13 @@ const formatDateTime = (value) =>
 
 const maskKey = (key) => (key ? `${key.slice(0, 8)}••••${key.slice(-4)}` : '')
 
+// What a key opens (backend ApiKey.product)
+const KEY_PRODUCTS = [
+  { value: 'rc', label: 'Vehicle RC', note: 'Vehicle number → RC details (/api/v1/vehicle-info)' },
+  { value: 'chassis', label: 'Chassis to RC', note: 'Chassis + engine number → vehicle details (/api/v1/chassis-info)' }
+]
+const EMPTY_CREATE = { name: '', contactMobile: '', contactEmail: '', userId: '', website: '', note: '', provider: 'api5', product: 'rc' }
+
 const Tile = ({ label, value, sub }) => (
   <div className='bg-white rounded-xl border border-gray-100 p-2.5 sm:p-4 shadow-sm'>
     <p className='text-[10px] sm:text-xs text-gray-500 font-semibold uppercase tracking-wide'>{label}</p>
@@ -43,7 +50,7 @@ const ApiKeys = () => {
   const [copiedId, setCopiedId] = useState(null)
 
   const [showCreate, setShowCreate] = useState(false)
-  const [createForm, setCreateForm] = useState({ name: '', contactMobile: '', contactEmail: '', userId: '', website: '', note: '', provider: 'api5' })
+  const [createForm, setCreateForm] = useState(EMPTY_CREATE)
   const [createError, setCreateError] = useState('')
   const [creating, setCreating] = useState(false)
   const [sellKey, setSellKey] = useState(null)
@@ -143,6 +150,7 @@ const ApiKeys = () => {
       contactEmail: apiKey.contactEmail || '',
       userId: apiKey.userId?._id || '',
       provider: apiKey.provider || 'api5',
+      product: apiKey.product || 'rc',
       website: apiKey.website || '',
       note: apiKey.note || ''
     })
@@ -155,7 +163,9 @@ const ApiKeys = () => {
     try {
       setSaving(true)
       setEditError('')
-      const { _id, ...body } = editing
+      // The product is fixed when the key is made
+      const { _id, product, ...body } = editing
+      if (product === 'chassis') delete body.provider
       const res = await fetch(`${BACKEND_URL}/api/admin/api-keys/${_id}`, {
         method: 'PATCH',
         credentials: 'include',
@@ -213,14 +223,14 @@ const ApiKeys = () => {
         <div>
           <h1 className='text-xl sm:text-3xl font-bold text-gray-800'>Vehicle API Keys</h1>
           <p className='text-xs sm:text-base text-gray-600 mt-0.5 sm:mt-1'>
-            Keys you share with customers to fetch vehicle details from their own software. Each key has its own limit.
+            Keys you share with customers to fetch vehicle details (by vehicle number, or by chassis number on a Chassis to RC key) from their own software. Each key has its own limit.
           </p>
         </div>
         <div className='flex flex-wrap items-center gap-2'>
           <ShareApiDocButton />
           <button
             onClick={() => {
-              setCreateForm({ name: '', contactMobile: '', contactEmail: '', userId: '', website: '', note: '', provider: 'api5' })
+              setCreateForm(EMPTY_CREATE)
               setCreateError('')
               setShowCreate(true)
             }}
@@ -231,10 +241,10 @@ const ApiKeys = () => {
         </div>
       </div>
 
-      {!loading && totals?.keys > 0 && (
+      {!loading && totals?.keys - (totals?.chassisKeys || 0) > 0 && (
         <div className='mb-3 sm:mb-5 p-3 sm:p-4 bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5'>
           <div>
-            <p className='text-sm font-semibold text-gray-800'>Vehicle data source for all keys</p>
+            <p className='text-sm font-semibold text-gray-800'>Vehicle data source for all Vehicle RC keys</p>
             <p className='text-xs text-gray-500 mt-0.5'>
               {formatNumber(totals.api5 || 0)} on API 5 · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on Parzival API · {formatNumber(totals.api4 || 0)} on PeriOne API (transport only) · {formatNumber(totals.api24 || 0)} on API 2 + 4 · {formatNumber(totals.api32 || 0)} on API 3 + 2. Switch every key at once when one API is down.
             </p>
@@ -242,7 +252,7 @@ const ApiKeys = () => {
           <div className='flex flex-wrap gap-2'>
             {PROVIDER_OPTIONS.map((p) => {
               const counts = { api5: totals.api5 || 0, api2: totals.api2 || 0, api3: totals.api3 || 0, api4: totals.api4 || 0, api24: totals.api24 || 0, api32: totals.api32 || 0 }
-              const already = counts[p.value] === totals.keys
+              const already = counts[p.value] === totals.keys - (totals.chassisKeys || 0)
               return (
                 <button
                   key={p.value}
@@ -304,7 +314,12 @@ const ApiKeys = () => {
                               Off
                             </span>
                           )}
-                          {k.provider && k.provider !== 'api5' && (
+                          {k.product === 'chassis' && (
+                            <span className='ml-1.5 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border bg-violet-50 text-violet-700 border-violet-200'>
+                              Chassis to RC
+                            </span>
+                          )}
+                          {k.product !== 'chassis' && k.provider && k.provider !== 'api5' && (
                             <span className={`ml-1.5 inline-flex px-1.5 py-0.5 rounded text-[10px] font-bold uppercase border ${providerOption(k.provider).tag}`}>
                               {providerOption(k.provider).short}
                             </span>
@@ -422,6 +437,11 @@ const ApiKeys = () => {
                   ))}
                 </select>
               </div>
+              {editing.product === 'chassis' ? (
+                <p className='text-xs text-violet-700 bg-violet-50 border border-violet-200 rounded-lg p-2.5'>
+                  Chassis to RC key: calls go to <code>/api/v1/chassis-info</code> and use the Chassis to RC API.
+                </p>
+              ) : (
               <div>
                 <label className={labelClass}>Vehicle data source</label>
                 <select
@@ -437,6 +457,7 @@ const ApiKeys = () => {
                 </select>
                 <p className='text-[11px] text-gray-400 mt-1'>Which API this key's calls go to. The customer always gets the same response format.</p>
               </div>
+              )}
               <div>
                 <label className={labelClass}>
                   Website <span className='text-gray-400'>(Opt)</span>
@@ -495,6 +516,26 @@ const ApiKeys = () => {
                 <p className='text-xs text-gray-500 mt-0.5'>The key starts with 0 calls. Sell API calls on it to give it a limit.</p>
               </div>
               <div>
+                <label className={labelClass}>API</label>
+                <div className='grid grid-cols-2 gap-2'>
+                  {KEY_PRODUCTS.map((p) => (
+                    <button
+                      key={p.value}
+                      type='button'
+                      onClick={() => setCreateForm((f) => ({ ...f, product: p.value }))}
+                      className={`p-2 rounded-lg border text-left cursor-pointer ${
+                        createForm.product === p.value
+                          ? p.value === 'chassis' ? 'border-violet-500 bg-violet-50 ring-1 ring-violet-500' : 'border-indigo-500 bg-indigo-50 ring-1 ring-indigo-500'
+                          : 'border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className='block text-sm font-semibold text-gray-800'>{p.label}</span>
+                      <span className='block text-[11px] text-gray-500 mt-0.5'>{p.note}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
                 <label className={labelClass}>Name</label>
                 <input
                   value={createForm.name}
@@ -549,6 +590,7 @@ const ApiKeys = () => {
                   ))}
                 </select>
               </div>
+              {createForm.product !== 'chassis' && (
               <div>
                 <label className={labelClass}>Vehicle data source</label>
                 <select
@@ -564,6 +606,7 @@ const ApiKeys = () => {
                 </select>
                 <p className='text-[11px] text-gray-400 mt-1'>Which API this key's calls go to. The customer always gets the same response format.</p>
               </div>
+              )}
               <div>
                 <label className={labelClass}>
                   Website <span className='text-gray-400'>(Opt)</span>

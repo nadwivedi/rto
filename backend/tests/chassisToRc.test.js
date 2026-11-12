@@ -1,6 +1,7 @@
 // Chassis -> RC lookup through ParzivalHub (API 3). No database needed: axios, ApiUsage and the admin
 // alerts are stubbed. Run: node --test tests/
 process.env.PARZIVAL_API_KEY = 'pzk_test_x'
+process.env.CHASSIS_PROVIDER = 'api3'
 const { test, beforeEach } = require('node:test')
 const assert = require('node:assert/strict')
 const path = require('path')

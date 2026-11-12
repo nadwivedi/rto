@@ -45,6 +45,10 @@ const shiftDate = (iso, days) => {
 
 const isDateKey = (value) => /^\d{4}-\d{2}-\d{2}$/.test(value || '')
 
+// What a key opens: Vehicle RC (/api/v1/vehicle-info) or Chassis to RC (/api/v1/chassis-info)
+const KEY_PRODUCTS = { rc: 'Vehicle RC', chassis: 'Chassis to RC' }
+const isChassisKey = (key) => key.product === 'chassis'
+
 const withRemaining = (key) => ({
   ...key,
   remaining: Math.max(0, (key.callLimit || 0) - (key.callCount || 0))
@@ -115,23 +119,25 @@ exports.getApiKeys = async (req, res) => {
       }
     })
 
+    // The data source counts are for Vehicle RC keys (Chassis keys all use the Chassis to RC API)
     const totals = data.reduce(
       (t, k) => ({
         keys: t.keys + 1,
+        chassisKeys: t.chassisKeys + (isChassisKey(k) ? 1 : 0),
         active: t.active + (k.active ? 1 : 0),
         soldQty: t.soldQty + k.soldQty,
         soldAmount: roundMoney(t.soldAmount + k.soldAmount),
         pendingAmount: roundMoney(t.pendingAmount + k.pendingAmount),
         used: t.used + (k.callCount || 0),
         callsToday: t.callsToday + k.callsToday,
-        api2: t.api2 + (k.provider === 'api2' ? 1 : 0),
-        api5: t.api5 + (k.provider === 'api5' || !k.provider ? 1 : 0),
-        api3: t.api3 + (k.provider === 'api3' ? 1 : 0),
-        api4: t.api4 + (k.provider === 'api4' ? 1 : 0),
-        api24: t.api24 + (k.provider === 'api24' ? 1 : 0),
-        api32: t.api32 + (k.provider === 'api32' ? 1 : 0)
+        api2: t.api2 + (!isChassisKey(k) && k.provider === 'api2' ? 1 : 0),
+        api5: t.api5 + (!isChassisKey(k) && (k.provider === 'api5' || !k.provider) ? 1 : 0),
+        api3: t.api3 + (!isChassisKey(k) && k.provider === 'api3' ? 1 : 0),
+        api4: t.api4 + (!isChassisKey(k) && k.provider === 'api4' ? 1 : 0),
+        api24: t.api24 + (!isChassisKey(k) && k.provider === 'api24' ? 1 : 0),
+        api32: t.api32 + (!isChassisKey(k) && k.provider === 'api32' ? 1 : 0)
       }),
-      { keys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0, api5: 0, api3: 0, api4: 0, api24: 0, api32: 0 }
+      { keys: 0, chassisKeys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0, api5: 0, api3: 0, api4: 0, api24: 0, api32: 0 }
     )
 
     res.json({ success: true, data, totals })
@@ -142,8 +148,9 @@ exports.getApiKeys = async (req, res) => {
 
 exports.createApiKey = async (req, res) => {
   try {
-    const { name, userId, note, provider, website, contactMobile, contactEmail } = req.body || {}
+    const { name, userId, note, provider, website, contactMobile, contactEmail, product } = req.body || {}
     if (!name || !String(name).trim()) return badRequest(res, 'Please enter a name for this API key')
+    if (product !== undefined && !KEY_PRODUCTS[product]) return badRequest(res, 'Please choose Vehicle RC or Chassis to RC')
     const mobile = readMobile(contactMobile)
     if (mobile.error) return badRequest(res, mobile.error)
     const email = readEmail(contactEmail)
@@ -156,6 +163,7 @@ exports.createApiKey = async (req, res) => {
     const apiKey = await ApiKey.create({
       name: String(name).trim(),
       key: ApiKey.generateKey(),
+      product: product || 'rc',
       userId: link.userId || undefined,
       provider: provider || 'api5',
       contactMobile: mobile.value,
@@ -169,7 +177,7 @@ exports.createApiKey = async (req, res) => {
       entity: 'api_key',
       entityId: apiKey._id,
       entityName: apiKey.name,
-      summary: `Created vehicle API key "${apiKey.name}"`
+      summary: `Created ${KEY_PRODUCTS[apiKey.product] || 'Vehicle RC'} API key "${apiKey.name}"`
     })
 
     res.status(201).json({ success: true, message: `API key "${apiKey.name}" created`, data: apiKey })
@@ -178,7 +186,8 @@ exports.createApiKey = async (req, res) => {
   }
 }
 
-// Point every API key at one vehicle info source, e.g. all to API 2 while API 5 is down
+// Point every Vehicle RC API key at one vehicle info source, e.g. all to API 2 while API 5 is down
+// (Chassis to RC keys are left alone: they use the Chassis to RC API)
 exports.setAllProvider = async (req, res) => {
   try {
     const { provider } = req.body || {}
@@ -186,6 +195,7 @@ exports.setAllProvider = async (req, res) => {
 
     // Keys saved before the provider field existed use API 5 (moved there at startup)
     const filter = provider === 'api5' ? { provider: { $exists: true, $ne: 'api5' } } : { provider: { $ne: provider } }
+    filter.product = { $ne: 'chassis' }
     const result = await ApiKey.updateMany(filter, { $set: { provider } })
     const changed = result.modifiedCount || 0
 
@@ -446,7 +456,8 @@ exports.getApiKeyCalls = async (req, res) => {
     }
     if (vehicle && String(vehicle).trim()) {
       const clean = String(vehicle).replace(/[\s-]/g, '').toUpperCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-      query.vehicleNumber = new RegExp(clean)
+      // Chassis to RC calls: the chassis number asked for, or the vehicle number found
+      query.$or = [{ vehicleNumber: new RegExp(clean) }, { chassisNumber: new RegExp(clean) }]
     }
     if (status === 'success') query.success = true
     if (status === 'failed') query.success = false

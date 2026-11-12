@@ -482,9 +482,18 @@ const fetchFromApi3 = async (vehicleNumber, { userId } = {}) => {
 // with several vehicles (an array, or data.matches / results / records / vehicles) gives each of them.
 const API3_CHASSIS_URL = 'https://api.parzivalhub.com/v1/chassis-to-rc'
 const CHASSIS_NOT_FOUND = 'No vehicle found for this chassis number. Please check the chassis number.'
+const CHASSIS_ENGINE_NOT_FOUND = 'No vehicle found for this chassis and engine number. Please check both numbers.'
+const ENGINE_REQUIRED = 'Please enter the engine number too.'
 
 // 'MA3 EWB-22S00 123456' -> 'MA3EWB22S00123456'
 const cleanChassisNumber = (raw) => String(raw || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+// Engine numbers are cleaned the same way
+const cleanEngineNumber = cleanChassisNumber
+
+// Which API serves Chassis to RC: PeriOne (API 4, needs the engine number too) unless
+// CHASSIS_PROVIDER=api3 picks ParzivalHub (chassis number only)
+const chassisProvider = () => (String(process.env.CHASSIS_PROVIDER || '').trim().toLowerCase() === 'api3' ? 'api3' : 'api4')
+const chassisNeedsEngine = () => chassisProvider() === 'api4'
 
 // Other names the registration / chassis number may come under, if not the rc-details ones
 const CHASSIS_REGN_ALIASES = ['vehicle_number', 'rc_number', 'registration_no', 'regn_no', 'reg_no', 'regno']
@@ -637,13 +646,24 @@ const mapApi4Fields = (raw) => {
 // Words in a PeriOne error that mean our account or setup is the problem, not the vehicle number
 const API4_ACCOUNT_ERROR = /client|secret|email|unauthori[sz]ed|forbidden|balance|wallet|credit|recharge|limit|plan|expired|inactive|blocked/i
 
-const fetchFromApi4 = async (vehicleNumber) => {
+// PeriOne's error text: a plain string, or { id, code, params, text } on a per-entry error, and
+// { status: 200, data: { error: 'true', code: '400 BAD_REQUEST', message } } when a body field is missing
+const api4Text = (m) => (m && typeof m === 'object' ? m.text || m.message || m.code || '' : m || '')
+const api4Reason = (raw, entry) => String(api4Text(entry?.message) || api4Text(raw?.data?.message) || api4Text(raw?.message) || '').trim()
+
+/**
+ * POST one PeriOne VAHAN call and read its reply: resolves to { records: [rc, ...] } with the
+ * successful entries, or { records: [], status, reason } when it found nothing / the input was refused.
+ * Throws a ProviderError when our account is the problem (bad client id / secret / email, balance,
+ * daily limit), so the admin gets an alert.
+ */
+const postApi4 = async (url, body) => {
   const { PERIONE_CLIENT_ID, PERIONE_CLIENT_SECRET, PERIONE_EMAIL } = process.env
   if (!PERIONE_CLIENT_ID || !PERIONE_CLIENT_SECRET || !PERIONE_EMAIL) {
     throw new Error('API 4 is not set up (PERIONE_CLIENT_ID, PERIONE_CLIENT_SECRET, PERIONE_EMAIL)')
   }
 
-  const response = await axios.post(`${API4_URL}?email=${encodeURIComponent(PERIONE_EMAIL)}`, { vehiclenumber: vehicleNumber }, {
+  const response = await axios.post(`${url}?email=${encodeURIComponent(PERIONE_EMAIL)}`, body, {
     timeout: 30000,
     validateStatus: (status) => status < 500,
     headers: {
@@ -655,24 +675,50 @@ const fetchFromApi4 = async (vehicleNumber) => {
   })
 
   const raw = response.data && typeof response.data === 'object' ? response.data : null
-  const entry = Array.isArray(raw?.response) ? raw.response[0] : null
-  const rc = entry?.response && typeof entry.response === 'object' ? entry.response : null
+  const entries = Array.isArray(raw?.response) ? raw.response : []
+  const records = entries
+    .filter((e) => e?.response && typeof e.response === 'object' && /success/i.test(String(e.responseStatus || '')))
+    .map((e) => e.response)
+  if (response.status < 400 && records.length) return { records }
 
-  if (response.status >= 400 || !rc || !/success/i.test(String(entry?.responseStatus || ''))) {
-    // An error about the key, email or balance is ours to fix: thrown so the admin gets an alert
-    const reason = String(entry?.message || raw?.message || '').trim()
-    const status = Number(raw?.status || raw?.code) || response.status
-    const refused = [401, 402, 403, 429]
-    if (refused.includes(response.status) || refused.includes(status) || (status === 400 && API4_ACCOUNT_ERROR.test(reason))) {
-      throw new ProviderError(`API 4 refused the request: ${status} ${reason}`.trim(), `HTTP_${status}`)
-    }
-    return { found: false, charged: null, message: API4_NOT_FOUND }
+  // '400 BAD_REQUEST' -> 400; a reply with only an error entry says code '200' at the top
+  const reason = api4Reason(raw, entries[0])
+  const status = parseInt(raw?.data?.code, 10) || Number(raw?.status || raw?.code) || response.status
+  const refused = [401, 402, 403, 429]
+  if (refused.includes(response.status) || refused.includes(status) || API4_ACCOUNT_ERROR.test(reason)) {
+    const code = /daily.*limit|limit.*exceed/i.test(reason) ? 'DAILY_LIMIT_REACHED' : `HTTP_${status === 200 ? response.status : status}`
+    throw new ProviderError(`API 4 refused the request: ${status} ${reason}`.trim(), code)
   }
+  return { records: [], status, reason }
+}
 
-  const data = mapApi4Fields(rc)
+const fetchFromApi4 = async (vehicleNumber) => {
+  const { records } = await postApi4(API4_URL, { vehiclenumber: vehicleNumber })
+  if (!records.length) return { found: false, charged: null, message: API4_NOT_FOUND }
+
+  const data = mapApi4Fields(records[0])
   if (!hasVehicleDetails(data)) return { found: false, charged: null, message: API4_NOT_FOUND }
   if (!data.REGN_NO) data.REGN_NO = vehicleNumber
   return { found: true, data: toApi1Reply(data), charged: null }
+}
+
+// API 4 Chassis -> RC (PeriOne VAHAN): POST https://api.perione.in/vahan/chassisno?email=<registered email>
+// with the same client_id / client_secret headers and { chasisnumber, enginenumber }. Both are required
+// (without the engine number it replies 400 "enginenumber:is mandatory field."). The reply is the
+// vehicleno one: { response: [{ response: { rcRegnNo, ... }, responseStatus: 'SUCCESS' | 'ERROR', message }] }
+const API4_CHASSIS_URL = 'https://api.perione.in/vahan/chassisno'
+
+const fetchChassisFromApi4 = async (chassisNumber, engineNumber) => {
+  if (!engineNumber) return { found: false, charged: null, message: ENGINE_REQUIRED }
+
+  const { records, status } = await postApi4(API4_CHASSIS_URL, { chasisnumber: chassisNumber, enginenumber: engineNumber })
+  const matches = records.map(mapApi4Fields).filter((d) => isReal(d.REGN_NO) || hasVehicleDetails(d))
+  if (!matches.length) {
+    const message = status === 400 || status === 422 ? 'Invalid chassis or engine number. Please check both numbers.' : CHASSIS_ENGINE_NOT_FOUND
+    return { found: false, charged: null, message }
+  }
+  for (const d of matches) if (!d.CHASI_NO) d.CHASI_NO = chassisNumber
+  return { found: true, data: { chassisNumber, matches: matches.map(toApi1Reply) }, charged: null }
 }
 
 // API 5 (parzivalapi.online): GET /v1/vehicle?number=<no> with the key in the X-API-Key header.
@@ -864,24 +910,30 @@ const fetchHsrpInfo = async (vehicleNumber, { userId, via } = {}) => {
 }
 
 /**
- * Vehicle(s) for a chassis number from ParzivalHub (API 3), with admin alerts like fetchHsrpInfo:
+ * Vehicle(s) for a chassis number from PeriOne (API 4, chassis + engine number) or ParzivalHub
+ * (API 3, CHASSIS_PROVIDER=api3), with admin alerts like fetchHsrpInfo:
  * { found: true, data: { chassisNumber, matches: [record, ...] }, charged } or { found: false, message, charged };
  * when the provider fails an error with `providerUnavailable: true` and a message safe to show users is thrown.
  */
-const fetchChassisInfo = async (chassisNumber, { userId, via } = {}) => {
+const fetchChassisInfo = async (chassisNumber, { userId, via, engineNumber } = {}) => {
+  const provider = chassisProvider()
   try {
-    const result = await fetchChassisFromApi3(chassisNumber, { userId })
-    await autoResolveAlerts('api3chassis:error:')
-    return result
+    const result = provider === 'api3'
+      ? await fetchChassisFromApi3(chassisNumber, { userId })
+      : await fetchChassisFromApi4(chassisNumber, engineNumber)
+    await autoResolveAlerts(`${provider}chassis:error:`)
+    return { ...result, provider }
   } catch (err) {
     const code = alertCodeOf(err)
     console.error('Chassis to RC lookup failed:', err?.response?.data || err.message)
     await raiseAlert({
-      key: `api3chassis:error:${code}`,
+      key: `${provider}chassis:error:${code}`,
       severity: err.providerCode || code === 'NOT_SET_UP' ? 'critical' : 'warning',
-      source: 'api3',
+      source: provider,
       code,
-      title: (ALERT_TITLES[code] || ((n) => (err.providerCode ? `${n} refused the request (${code})` : `${n} is not responding`)))('Chassis to RC (API 3)'),
+      title: (ALERT_TITLES[code] || ((n) => (err.providerCode ? `${n} refused the request (${code})` : `${n} is not responding`)))(
+        provider === 'api3' ? 'Chassis to RC (API 3)' : 'Chassis to RC (API 4 PeriOne)'
+      ),
       message: String(err.message || '').slice(0, 500),
       vehicleNumber: chassisNumber,
       userId,
@@ -899,6 +951,7 @@ const UNAVAILABLE_MESSAGE = 'Vehicle information service is temporarily unavaila
 
 const ALERT_TITLES = {
   INSUFFICIENT_BALANCE: (name) => `${name}: wallet balance too low`,
+  DAILY_LIMIT_REACHED: (name) => `${name}: daily limit reached`,
   NOT_SET_UP: (name) => `${name} is not set up`
 }
 
@@ -1028,4 +1081,4 @@ const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
   return fetchFromApi5(vehicleNumber, { userId })
 }
 
-module.exports = { fetchVehicleInfo, fetchHsrpInfo, fetchChassisInfo, cleanVehicleNumber, cleanChassisNumber, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, mapApi2Fields }
+module.exports = { fetchVehicleInfo, fetchHsrpInfo, fetchChassisInfo, cleanVehicleNumber, cleanChassisNumber, cleanEngineNumber, chassisProvider, chassisNeedsEngine, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, mapApi2Fields }

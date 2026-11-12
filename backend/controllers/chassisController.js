@@ -2,9 +2,10 @@ const mongoose = require('mongoose')
 const User = require('../models/User')
 const ChassisSearchUsage = require('../models/ChassisSearchUsage')
 const ChassisSearchHistory = require('../models/ChassisSearchHistory')
-const { fetchChassisInfo, cleanChassisNumber } = require('../utils/vehicleInfoProvider')
+const { fetchChassisInfo, cleanChassisNumber, cleanEngineNumber, chassisNeedsEngine } = require('../utils/vehicleInfoProvider')
 
-// Chassis number -> vehicle (RC) search for app users, through ParzivalHub (API 3) POST /v1/chassis-to-rc.
+// Chassis number -> vehicle (RC) search for app users, through PeriOne (API 4) POST /vahan/chassisno
+// (chassis + engine number), or ParzivalHub (API 3) POST /v1/chassis-to-rc when CHASSIS_PROVIDER=api3.
 // Uses the account's own Chassis limit (chassisSearchLimit / chassisSearchCount), sold in the admin's API Sales.
 
 // The account whose limit is used: the admin user, also when their staff searches
@@ -23,19 +24,24 @@ exports.getQuota = async (req, res) => {
   try {
     const user = await User.findById(accountIdOf(req)).select('features chassisSearchLimit chassisSearchCount').lean()
     if (!user) return res.status(404).json({ success: false, message: 'User account not found' })
-    res.json({ success: true, enabled: user.features?.chassisToRc === true, ...quotaOf(user) })
+    // engineRequired: the search form asks for the engine number too (PeriOne needs it)
+    res.json({ success: true, enabled: user.features?.chassisToRc === true, engineRequired: chassisNeedsEngine(), ...quotaOf(user) })
   } catch (error) {
     console.error('Chassis quota failed:', error.message)
     res.status(500).json({ success: false, message: 'Failed to load Chassis search limit' })
   }
 }
 
-// GET /api/chassis-to-rc/lookup?chassis=... or POST { chassis } - a live (paid) chassis search
+// GET /api/chassis-to-rc/lookup?chassis=...&engine=... or POST { chassis, engine } - a live (paid) chassis search
 exports.lookup = async (req, res) => {
   try {
     const chassis = cleanChassisNumber(req.query.chassis || req.body?.chassis)
     if (chassis.length < 5 || chassis.length > 25) {
       return res.status(400).json({ success: false, message: 'Please enter a valid chassis number (e.g. MA3EWB22S00123456).' })
+    }
+    const engine = cleanEngineNumber(req.query.engine || req.body?.engine)
+    if (chassisNeedsEngine() && (engine.length < 4 || engine.length > 25)) {
+      return res.status(400).json({ success: false, message: 'Please enter a valid engine number.' })
     }
 
     const accountId = accountIdOf(req)
@@ -54,7 +60,7 @@ exports.lookup = async (req, res) => {
       })
     }
 
-    const result = await fetchChassisInfo(chassis, { userId: accountId, via: 'User Chassis to RC search' })
+    const result = await fetchChassisInfo(chassis, { userId: accountId, engineNumber: engine, via: 'User Chassis to RC search' })
     if (!result.found) return res.status(404).json({ success: false, message: result.message, ...quota })
 
     let saved = null
@@ -62,7 +68,7 @@ exports.lookup = async (req, res) => {
       const vehicleNumbers = result.data.matches.map((m) => m.REGN_NO).filter((v) => v && v !== 'NA')
       saved = await ChassisSearchHistory.findOneAndUpdate(
         { userId: accountId, chassisNumber: chassis },
-        { $set: { data: result.data, vehicleNumbers, lastSearchedAt: new Date() }, $inc: { searchCount: 1 } },
+        { $set: { data: result.data, vehicleNumbers, engineNumber: engine || undefined, lastSearchedAt: new Date() }, $inc: { searchCount: 1 } },
         { upsert: true, new: true, setDefaultsOnInsert: true }
       )
     } catch (err) {

@@ -6,4 +6,8 @@ const publicVehicleApiController = require('../controllers/publicVehicleApiContr
 router.get('/vehicle-info', publicVehicleApiController.lookupVehicle)
 router.post('/vehicle-info', publicVehicleApiController.lookupVehicle)
 
+// Chassis (+ engine) number -> vehicle details, for Chassis to RC API keys
+router.get('/chassis-info', publicVehicleApiController.lookupChassis)
+router.post('/chassis-info', publicVehicleApiController.lookupChassis)
+
 module.exports = router

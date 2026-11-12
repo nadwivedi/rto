@@ -307,8 +307,11 @@ const ApiKeyDetail = () => {
   }
 
   const { apiKey, stats, days, sales } = detail
-  const endpoint = `${BACKEND_URL}/api/v1/vehicle-info`
-  const curl = `curl -H "x-api-key: ${apiKey.key}" "${endpoint}?vno=CG04AB1234"`
+  // Chassis to RC keys call /chassis-info with the chassis + engine number
+  const isChassis = apiKey.product === 'chassis'
+  const endpoint = `${BACKEND_URL}/api/v1/${isChassis ? 'chassis-info' : 'vehicle-info'}`
+  const exampleQuery = isChassis ? '?chassis=MA1XXYZ1234567890&engine=ABC12345' : '?vno=CG04AB1234'
+  const curl = `curl -H "x-api-key: ${apiKey.key}" "${endpoint}${exampleQuery}"`
   const daysWithCalls = days.filter((d) => d.total > 0)
 
   return (
@@ -330,8 +333,17 @@ const ApiKeyDetail = () => {
           </h1>
           <p className='text-xs sm:text-sm text-gray-600 mt-1'>
             {apiKey.userId ? `${apiKey.userId.name} · ${apiKey.userId.mobile1}` : 'No user linked'} · Created {formatDate(apiKey.createdAt)}
-            {' · Source: '}
-            <span className='font-semibold text-gray-700'>{providerLabel(apiKey.provider)}</span>
+            {isChassis ? (
+              <>
+                {' · API: '}
+                <span className='font-semibold text-violet-700'>Chassis to RC</span>
+              </>
+            ) : (
+              <>
+                {' · Source: '}
+                <span className='font-semibold text-gray-700'>{providerLabel(apiKey.provider)}</span>
+              </>
+            )}
             {apiKey.website && (
               <>
                 {' · '}
@@ -369,7 +381,7 @@ const ApiKeyDetail = () => {
         <div className='flex flex-wrap gap-2'>
           <button
             onClick={() => {
-              setEditing({ name: apiKey.name, contactMobile: apiKey.contactMobile || '', contactEmail: apiKey.contactEmail || '', userId: apiKey.userId?._id || '', website: apiKey.website || '', note: apiKey.note || '', provider: apiKey.provider || 'api5' })
+              setEditing({ name: apiKey.name, contactMobile: apiKey.contactMobile || '', contactEmail: apiKey.contactEmail || '', userId: apiKey.userId?._id || '', website: apiKey.website || '', note: apiKey.note || '', ...(isChassis ? {} : { provider: apiKey.provider || 'api5' }) })
               setEditError('')
             }}
             className='px-3 py-2 bg-white border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-semibold text-sm cursor-pointer'
@@ -455,15 +467,21 @@ const ApiKeyDetail = () => {
           </button>
         </div>
         <div className='mt-2 flex flex-wrap items-center gap-2'>
-          <ShareApiDocButton apiKey={apiKey.key} />
+          <ShareApiDocButton apiKey={apiKey.key} product={isChassis ? 'chassis' : 'rc'} />
           <span className='text-xs text-gray-500'>API doc with this key filled in. Pick WhatsApp to send it to the customer.</span>
         </div>
 
         <div className='mt-3 grid grid-cols-1 xl:grid-cols-2 gap-3 text-xs text-gray-600'>
           <div className='space-y-1.5'>
             <p>
-              <span className='font-semibold text-gray-800'>Endpoint:</span> <code className='break-all'>GET {endpoint}?vno=CG04AB1234</code>
+              <span className='font-semibold text-gray-800'>Endpoint:</span> <code className='break-all'>GET {endpoint}{exampleQuery}</code>
             </p>
+            {isChassis && (
+              <p>
+                <code>chassis</code> = chassis number, <code>engine</code> = engine number (both required). POST with a JSON body{' '}
+                <code>{'{ "chassis": "...", "engine": "..." }'}</code> works too.
+              </p>
+            )}
             <p>
               <span className='font-semibold text-gray-800'>Key:</span> send in the <code>x-api-key</code> header (or as <code>&amp;key=</code> in the URL).
             </p>
@@ -474,7 +492,17 @@ const ApiKeyDetail = () => {
             </button>
           </div>
           <pre className='p-2.5 bg-gray-900 text-gray-100 rounded-lg overflow-x-auto text-[11px] leading-relaxed'>
-{`{
+{isChassis
+  ? `{
+  "success": true,
+  "message": "Vehicle details fetched successfully",
+  "chassisNumber": "MA1XXYZ1234567890",
+  "vehicleNumber": "CG04AB1234",
+  "data": { "REGN_NO": "CG04AB1234", "MAKER_MODEL": "...", ... },
+  "matches": [ { ...same as data... } ],
+  "usage": { "limit": ${apiKey.callLimit}, "used": ${apiKey.callCount}, "remaining": ${apiKey.remaining} }
+}`
+  : `{
   "success": true,
   "message": "Vehicle details fetched successfully",
   "vehicleNumber": "CG04AB1234",
@@ -619,7 +647,7 @@ const ApiKeyDetail = () => {
             <input
               value={callFilters.vehicle}
               onChange={(e) => changeCallFilter('vehicle', e.target.value)}
-              placeholder='Vehicle number'
+              placeholder={isChassis ? 'Chassis / vehicle no.' : 'Vehicle number'}
               className={`${smallInput} w-36`}
             />
             <input type='date' value={callFilters.from} onChange={(e) => changeCallFilter('from', e.target.value)} className={smallInput} />
@@ -667,7 +695,14 @@ const ApiKeyDetail = () => {
                 {calls.map((call) => (
                   <tr key={call._id} onClick={() => viewCall(call)} className='hover:bg-indigo-50/60 cursor-pointer' title='View the full response'>
                     <td className={`${td} text-gray-700 whitespace-nowrap`}>{formatDateTime(call.createdAt)}</td>
-                    <td className={`${td} font-semibold text-gray-900 whitespace-nowrap`}>{call.vehicleNumber || '-'}</td>
+                    <td className={`${td} font-semibold text-gray-900 whitespace-nowrap`}>
+                      {call.vehicleNumber || '-'}
+                      {call.chassisNumber && (
+                        <div className='font-normal text-gray-400' title={call.engineNumber ? `Engine ${call.engineNumber}` : undefined}>
+                          Chassis {call.chassisNumber}
+                        </div>
+                      )}
+                    </td>
                     <td className={`${td} text-gray-700 max-w-[260px]`}>
                       {call.success ? (
                         <>
@@ -849,6 +884,7 @@ const ApiKeyDetail = () => {
                   ))}
                 </select>
               </div>
+              {editing.provider !== undefined && (
               <div>
                 <label className={labelClass}>Vehicle data source</label>
                 <select
@@ -864,6 +900,7 @@ const ApiKeyDetail = () => {
                 </select>
                 <p className='text-[11px] text-gray-400 mt-1'>Which API this key's calls go to. The customer always gets the same response format.</p>
               </div>
+              )}
               <div>
                 <label className={labelClass}>
                   Website <span className='text-gray-400'>(Opt)</span>

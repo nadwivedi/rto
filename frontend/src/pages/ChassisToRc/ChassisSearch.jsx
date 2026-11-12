@@ -164,8 +164,12 @@ const ChassisResult = ({ result }) => {
   )
 }
 
+const inputClass =
+  'w-full min-w-0 rounded-xl border border-slate-300 px-4 py-3 font-mono text-lg font-bold uppercase tracking-wider text-slate-900 outline-none placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:tracking-normal focus:border-transparent focus:ring-2 focus:ring-violet-500'
+
 const ChassisSearch = () => {
   const [chassis, setChassis] = useState('')
+  const [engine, setEngine] = useState('')
   const [quota, setQuota] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -201,6 +205,9 @@ const ChassisSearch = () => {
 
   const left = quota?.chassisSearchRemaining ?? null
   const number = cleanChassis(chassis)
+  const engineNumber = cleanChassis(engine)
+  // PeriOne needs the engine number with the chassis number (the server says so in /quota)
+  const engineRequired = quota ? quota.engineRequired !== false : true
   const saved = history.find((h) => h.chassisNumber === number)
   const setQuotaFrom = (d) =>
     setQuota((q) => ({ ...(q || {}), chassisSearchLimit: d.chassisSearchLimit, chassisSearchCount: d.chassisSearchCount, chassisSearchRemaining: d.chassisSearchRemaining }))
@@ -211,6 +218,10 @@ const ChassisSearch = () => {
       setError('Please enter a valid chassis number, e.g. MA3EWB22S00123456')
       return
     }
+    if (engineRequired && (engineNumber.length < 4 || engineNumber.length > 25)) {
+      setError('Please enter the engine number too')
+      return
+    }
     if (saved && !window.confirm(`${number} was already searched on ${formatWhen(saved.lastSearchedAt)}.\n\nSearch again? This uses 1 Chassis search. (Cancel shows the saved details.)`)) {
       setResult({ data: saved.data, chassisNumber: saved.chassisNumber, fromHistory: true, when: saved.lastSearchedAt })
       setError('')
@@ -219,7 +230,8 @@ const ChassisSearch = () => {
     try {
       setLoading(true)
       setError('')
-      const res = await axios.get(`${API_URL}/api/chassis-to-rc/lookup`, { params: { chassis: number }, withCredentials: true })
+      const params = engineRequired ? { chassis: number, engine: engineNumber } : { chassis: number }
+      const res = await axios.get(`${API_URL}/api/chassis-to-rc/lookup`, { params, withCredentials: true })
       if (res.data?.success) {
         setResult({ data: res.data.data, chassisNumber: res.data.chassisNumber })
         setQuotaFrom(res.data)
@@ -253,7 +265,9 @@ const ChassisSearch = () => {
         <div className='flex flex-wrap items-end justify-between gap-3'>
           <div>
             <h1 className='text-xl font-bold text-slate-900 sm:text-2xl'>Chassis to RC</h1>
-            <p className='text-sm text-slate-500'>Find the vehicle number and RC details from a chassis number</p>
+            <p className='text-sm text-slate-500'>
+              Find the vehicle number and RC details from a chassis number{engineRequired ? ' and engine number' : ''}
+            </p>
           </div>
           {left !== null && (
             <span
@@ -268,21 +282,40 @@ const ChassisSearch = () => {
 
         {/* Search */}
         <form onSubmit={search} className='rounded-2xl bg-white p-3 shadow-xs ring-1 ring-slate-200 sm:p-4'>
-          <label htmlFor='chassis-no' className='mb-1.5 block text-sm font-semibold text-slate-700'>Chassis number</label>
-          <div className='flex flex-col gap-2 sm:flex-row'>
-            <input
-              id='chassis-no'
-              value={chassis}
-              onChange={(e) => {
-                setChassis(e.target.value.toUpperCase())
-                setError('')
-              }}
-              placeholder='e.g. MA3EWB22S00123456'
-              autoComplete='off'
-              autoFocus
-              maxLength={40}
-              className='min-w-0 flex-1 rounded-xl border border-slate-300 px-4 py-3 font-mono text-lg font-bold uppercase tracking-wider text-slate-900 outline-none placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:tracking-normal focus:border-transparent focus:ring-2 focus:ring-violet-500'
-            />
+          <div className='flex flex-col gap-2 sm:flex-row sm:items-end'>
+            <div className='min-w-0 flex-[3]'>
+              <label htmlFor='chassis-no' className='mb-1.5 block text-sm font-semibold text-slate-700'>Chassis number</label>
+              <input
+                id='chassis-no'
+                value={chassis}
+                onChange={(e) => {
+                  setChassis(e.target.value.toUpperCase())
+                  setError('')
+                }}
+                placeholder='e.g. MA3EWB22S00123456'
+                autoComplete='off'
+                autoFocus
+                maxLength={40}
+                className={inputClass}
+              />
+            </div>
+            {engineRequired && (
+              <div className='min-w-0 flex-[2]'>
+                <label htmlFor='engine-no' className='mb-1.5 block text-sm font-semibold text-slate-700'>Engine number</label>
+                <input
+                  id='engine-no'
+                  value={engine}
+                  onChange={(e) => {
+                    setEngine(e.target.value.toUpperCase())
+                    setError('')
+                  }}
+                  placeholder='e.g. ABC12345'
+                  autoComplete='off'
+                  maxLength={40}
+                  className={inputClass}
+                />
+              </div>
+            )}
             <button
               type='submit'
               disabled={loading || left === 0}
@@ -347,6 +380,7 @@ const ChassisSearch = () => {
                       type='button'
                       onClick={() => {
                         setChassis(item.chassisNumber)
+                        setEngine(item.engineNumber || '')
                         setError('')
                         setResult({ data: item.data, chassisNumber: item.chassisNumber, fromHistory: true, when: item.lastSearchedAt })
                         window.scrollTo({ top: 0, behavior: 'smooth' })

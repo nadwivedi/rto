@@ -13,6 +13,17 @@ const apiKeyCallSchema = new mongoose.Schema(
       trim: true,
       uppercase: true
     },
+    // Chassis to RC keys: the chassis / engine number asked for (vehicleNumber is then the one found)
+    chassisNumber: {
+      type: String,
+      trim: true,
+      uppercase: true
+    },
+    engineNumber: {
+      type: String,
+      trim: true,
+      uppercase: true
+    },
     // Which of our APIs served the call: 'rtosarthi_api5' (the removed API 1 logged 'rtosarthi_api1'), 'rtosarthi_api2', 'rtosarthi_api3', 'rtosarthi_api4', 'rtosarthi_api24' (API 2 + API 4) or 'rtosarthi_api32' (API 3 + API 2)
     source: {
       type: String,
@@ -89,6 +100,7 @@ const apiKeyCallSchema = new mongoose.Schema(
 apiKeyCallSchema.index({ apiKeyId: 1, createdAt: -1 })
 apiKeyCallSchema.index({ apiKeyId: 1, date: 1 })
 apiKeyCallSchema.index({ apiKeyId: 1, vehicleNumber: 1 })
+apiKeyCallSchema.index({ apiKeyId: 1, chassisNumber: 1 })
 // Day-wise usage across all keys (admin API Usage)
 apiKeyCallSchema.index({ date: 1 })
 

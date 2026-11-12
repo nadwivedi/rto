@@ -2,8 +2,9 @@ const crypto = require('crypto')
 const mongoose = require('mongoose')
 
 // A key the admin shares with a customer so their own software can call the vehicle
-// info API (/api/v1/vehicle-info). Each key has its own call limit, raised by recording
-// sales (ApiKeySale); it never touches the linked user's RC search limit.
+// info API (/api/v1/vehicle-info) or, for a Chassis to RC key, the chassis API
+// (/api/v1/chassis-info). Each key has its own call limit, raised by recording
+// sales (ApiKeySale); it never touches the linked user's search limits.
 const apiKeySchema = new mongoose.Schema(
   {
     // Label shown in the admin panel, e.g. the customer's business name
@@ -36,7 +37,15 @@ const apiKeySchema = new mongoose.Schema(
       default: 0,
       min: 0
     },
-    // Which vehicle info source this key's calls go to (see utils/vehicleInfoProvider PROVIDERS)
+    // Which API the key opens: 'rc' vehicle number -> details (/api/v1/vehicle-info) or 'chassis'
+    // chassis (+ engine) number -> vehicle details (/api/v1/chassis-info). Set when the key is made.
+    product: {
+      type: String,
+      enum: ['rc', 'chassis'],
+      default: 'rc'
+    },
+    // Which vehicle info source this key's calls go to (see utils/vehicleInfoProvider PROVIDERS).
+    // RC keys only: Chassis keys use the Chassis to RC API (CHASSIS_PROVIDER)
     provider: {
       type: String,
       enum: ['api2', 'api3', 'api4', 'api5', 'api24', 'api32'],
