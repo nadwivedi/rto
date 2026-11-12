@@ -79,3 +79,6 @@ pnpm-lock.yaml
 # WhatsApp session auth data (contains sensitive login keys)
 .wwebjs_auth/
 .wwebjs_cache/
+
+# Daily data backups (jobs/emailDataExport.js)
+backups/
