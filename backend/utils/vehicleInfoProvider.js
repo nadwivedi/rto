@@ -741,7 +741,63 @@ const API5_APIS = {
   hsrp: { usage: API5_HSRP_USAGE_PROVIDER, low: API5_HSRP_LOW_CALLS, alertKey: 'api5:hsrp-low-balance', name: 'HSRP' }
 }
 
-const mapApi5Fields = (raw) => {
+// Parzival can serve a key from its Kundan provider, which sends readable labels instead of API 1 names:
+// { 'Registration number', 'Owner name', 'Chassis number', ..., verification: { 'RC status', ... } }.
+// API 1 field <- Kundan label (any case); the top-level record wins over `verification`.
+const API5_KUNDAN_FIELDS = {
+  REGN_NO: ['registration number'],
+  OWNER_NAME: ['owner name'],
+  F_NAME: ['father/husband name'],
+  REGN_DT: ['registration date'],
+  REGN_UPTO: ['rc/fitness valid date'],
+  FIT_UPTO: ['rc/fitness valid date'],
+  CHASI_NO: ['chassis number'],
+  ENG_NO: ['engine number'],
+  MAKER_DESC: ['manufacturer / maker'],
+  MAKER_MODEL: ['model', 'model name'],
+  FUEL_DESC: ['fuel type'],
+  FUEL_NORMS: ['emission norms'],
+  COLOR: ['color', 'colour'],
+  SEATING_CAPACITY: ['seating capacity'],
+  FINANCER_DETAILS: ['finance status / financer'],
+  INSURANCE_COMP: ['insurance company'],
+  POLICY_NO: ['insurance policy number'],
+  INS_POLICY_NO: ['insurance policy number'],
+  INSURANCE_UPTO: ['insurance valid date'],
+  PUCC_NO: ['pucc number'],
+  PUCC_UPTO: ['pucc valid date'],
+  PUC_UPTO: ['pucc valid date'],
+  REGISTERED_AT: ['registering authority'],
+  STATUS: ['rc status']
+}
+
+const isKundanFormat = (raw) => Object.hasOwn(raw, 'Registration number') || Object.hasOwn(raw, 'Owner name')
+
+// Kundan reply -> the API 1 names mapApi5Fields reads. Dates stay 'YYYY-MM-DD' here; mapApi5Fields converts them.
+const fromKundanFields = (raw) => {
+  const verification = raw.verification && typeof raw.verification === 'object' ? raw.verification : {}
+  const byName = new Map()
+  for (const record of [verification, raw]) {
+    for (const [k, v] of Object.entries(record)) if (v === null || typeof v !== 'object') byName.set(k.trim().toLowerCase(), v)
+  }
+  const out = {}
+  for (const [field, names] of Object.entries(API5_KUNDAN_FIELDS)) {
+    const value = names.map((n) => byName.get(n)).find(isReal)
+    if (value !== undefined) out[field] = value
+  }
+  // 'On Cash' means no loan on the vehicle
+  if (/^on\s*cash$/i.test(String(out.FINANCER_DETAILS || '').trim())) delete out.FINANCER_DETAILS
+  // 'MH-12' -> state MH, RTO MH12
+  const rto = String(byName.get('rto / registering authority') ?? byName.get('rto') ?? '').match(/^([A-Za-z]{2})-?(\d+)/)
+  if (rto) {
+    out.STATE_CD = rto[1].toUpperCase()
+    out.RTO_CD = `${rto[1].toUpperCase()}${rto[2]}`
+  }
+  return out
+}
+
+const mapApi5Fields = (input) => {
+  const raw = isKundanFormat(input) ? fromKundanFields(input) : input
   const data = {}
   for (const field of API1_FIELDS) {
     const value = raw[field]
@@ -809,10 +865,11 @@ const fetchFromApi5 = async (vehicleNumber, { userId } = {}) => {
   const apiKey = process.env.PARZIVAL5_API_KEY
   if (!apiKey) throw new Error('API 5 is not set up (PARZIVAL5_API_KEY)')
 
-  // 502 / 503 (their data source down) are thrown by axios like a network error
+  // 502 / 503 (their data source down) are thrown by axios like a network error.
+  // Parzival's Kundan provider takes ~10s for a hit and ~26s for a miss (it waits up to 45s), so wait 60s.
   const response = await axios.get(API5_URL, {
     params: { number: vehicleNumber },
-    timeout: 30000,
+    timeout: 60000,
     validateStatus: (status) => status < 500,
     headers: { 'X-API-Key': apiKey, Accept: 'application/json' }
   })
