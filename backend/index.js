@@ -151,6 +151,7 @@ const speedGovernorRoutes = require('./routes/speedGovernor')
 const sarthiDashboardRoutes = require('./routes/sarthiDashboard')
 const vehicleInfoRoutes = require('./routes/vehicleInfo')
 const hsrpRoutes = require('./routes/hsrp')
+const chassisToRcRoutes = require('./routes/chassisToRc')
 
 // Use Routes
 
@@ -174,6 +175,7 @@ app.use('/api/dashboard', userAuth, dashboardRoutes)
 app.use('/api/upload', userAuth, uploadRoutes)
 app.use('/api/vehicle-info', userAuth, vehicleInfoRoutes)
 app.use('/api/hsrp', userAuth, hsrpRoutes)
+app.use('/api/chassis-to-rc', userAuth, chassisToRcRoutes)
 
 app.use('/api/driving-licenses', userAuth, drivingLicenseRoutes)
 app.use('/api/national-permits', userAuth, nationalPermitRoutes)

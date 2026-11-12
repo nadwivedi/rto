@@ -377,6 +377,8 @@ const mapApi3Fields = (raw) => {
 }
 
 const API3_USAGE_PROVIDER = 'parzivalhub'
+// The same ParzivalHub account (one wallet) also serves Chassis -> RC: its own quota / charge are kept here
+const API3_CHASSIS_USAGE_PROVIDER = 'parzivalhubchassis'
 // Below this wallet balance (₹) the admin gets a "running low" alert, before lookups start failing
 const API3_LOW_BALANCE = Number(process.env.PARZIVAL_LOW_BALANCE_ALERT) || 100
 
@@ -391,8 +393,10 @@ class ProviderError extends Error {
 /**
  * Every API 3 reply ends with meta: { charged, wallet_balance, quota_remaining, access_expires_at }.
  * Keep the latest so the admin panel can show the wallet, quota and expiry. Never throws.
+ * `api: 'chassis'` (Chassis -> RC): the quota, charge and expiry are that API's own and go to its own
+ * row; the wallet is the account's, so it still goes to the API 3 row.
  */
-const recordApi3Usage = async (meta, { vehicleNumber, userId } = {}) => {
+const recordApi3Usage = async (meta, { vehicleNumber, userId, api = 'rc' } = {}) => {
   if (!meta || typeof meta !== 'object') return
   const snapshot = { checkedAt: new Date() }
   const wallet = toNumber(meta.wallet_balance)
@@ -407,8 +411,15 @@ const recordApi3Usage = async (meta, { vehicleNumber, userId } = {}) => {
   if (vehicleNumber) snapshot.lastVehicleNumber = vehicleNumber
   if (userId) snapshot.lastUserId = userId
 
+  const upsert = (provider, set) =>
+    ApiUsage.findOneAndUpdate({ provider }, { $set: set }, { upsert: true, setDefaultsOnInsert: true })
   try {
-    await ApiUsage.findOneAndUpdate({ provider: API3_USAGE_PROVIDER }, { $set: snapshot }, { upsert: true, setDefaultsOnInsert: true })
+    if (api === 'chassis') {
+      await upsert(API3_CHASSIS_USAGE_PROVIDER, snapshot)
+      if (wallet !== undefined) await upsert(API3_USAGE_PROVIDER, { checkedAt: snapshot.checkedAt, walletBalance: wallet })
+    } else {
+      await upsert(API3_USAGE_PROVIDER, snapshot)
+    }
   } catch (err) {
     console.error('Failed to record API 3 usage:', err.message)
   }
@@ -463,6 +474,71 @@ const fetchFromApi3 = async (vehicleNumber, { userId } = {}) => {
   }
   if (!data.REGN_NO) data.REGN_NO = vehicleNumber
   return { found: true, data: toApi1Reply(data), charged }
+}
+
+// API 3 Chassis -> RC (ParzivalHub): POST /v1/chassis-to-rc { chassis_number } with the same key and the
+// same reply envelope as rc-details ({ success, data, meta } / { success: false, error: { code, message } }).
+// The data is read with the rc-details field names (registration_number, owner_name, maker, ...); a reply
+// with several vehicles (an array, or data.matches / results / records / vehicles) gives each of them.
+const API3_CHASSIS_URL = 'https://api.parzivalhub.com/v1/chassis-to-rc'
+const CHASSIS_NOT_FOUND = 'No vehicle found for this chassis number. Please check the chassis number.'
+
+// 'MA3 EWB-22S00 123456' -> 'MA3EWB22S00123456'
+const cleanChassisNumber = (raw) => String(raw || '').replace(/[^A-Za-z0-9]/g, '').toUpperCase()
+
+// Other names the registration / chassis number may come under, if not the rc-details ones
+const CHASSIS_REGN_ALIASES = ['vehicle_number', 'rc_number', 'registration_no', 'regn_no', 'reg_no', 'regno']
+const CHASSIS_NO_ALIASES = ['chassis_no', 'chassis', 'chasi_no']
+
+const chassisRecordsOf = (data) => {
+  if (Array.isArray(data)) return data
+  if (!data || typeof data !== 'object') return []
+  for (const key of ['matches', 'results', 'records', 'vehicles', 'items']) if (Array.isArray(data[key])) return data[key]
+  return [data]
+}
+
+const mapChassisRecord = (raw) => {
+  const data = mapApi3Fields(raw)
+  const pick = (names) => names.map((n) => raw[n]).find(isReal)
+  if (!data.REGN_NO && pick(CHASSIS_REGN_ALIASES)) data.REGN_NO = cleanVehicleNumber(pick(CHASSIS_REGN_ALIASES))
+  if (!data.CHASI_NO && pick(CHASSIS_NO_ALIASES)) data.CHASI_NO = String(pick(CHASSIS_NO_ALIASES)).trim()
+  return data
+}
+
+const fetchChassisFromApi3 = async (chassisNumber, { userId } = {}) => {
+  const apiKey = process.env.PARZIVAL_API_KEY
+  if (!apiKey) throw new Error('API 3 is not set up (PARZIVAL_API_KEY)')
+
+  // 502 / 503 / 504 (their source down or slow) are thrown by axios like a network error
+  const response = await axios.post(API3_CHASSIS_URL, { chassis_number: chassisNumber }, {
+    timeout: 30000,
+    validateStatus: (status) => status < 500,
+    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', Accept: 'application/json' }
+  })
+
+  const raw = response.data
+  await recordApi3Usage(raw?.meta, { vehicleNumber: chassisNumber, userId, api: 'chassis' })
+  const charged = raw?.meta?.charged === undefined ? null : Boolean(Number(raw.meta.charged))
+
+  if (!raw || typeof raw !== 'object' || !raw.success) {
+    const code = raw?.error?.code || `HTTP_${response.status}`
+    // Bad key, not subscribed to this API, empty wallet, quota or rate limit: our problem, not the number
+    if ([401, 402, 403, 429].includes(response.status)) {
+      throw new ProviderError(`Chassis to RC (API 3) refused the request: ${code} ${raw?.error?.message || ''}`.trim(), code)
+    }
+    if (response.status !== 404) console.warn(`[Chassis to RC] ${chassisNumber}: HTTP ${response.status} ${code} ${raw?.error?.message || ''}`)
+    const message = response.status === 400 || response.status === 422
+      ? 'Invalid chassis number. Please check the chassis number.'
+      : CHASSIS_NOT_FOUND
+    return { found: false, charged, message }
+  }
+
+  const matches = chassisRecordsOf(raw.data)
+    .filter((r) => r && typeof r === 'object')
+    .map(mapChassisRecord)
+    .filter((d) => isReal(d.REGN_NO) || hasVehicleDetails(d))
+  if (!matches.length) return { found: false, charged, message: CHASSIS_NOT_FOUND }
+  return { found: true, data: { chassisNumber, matches: matches.map(toApi1Reply) }, charged }
 }
 
 // API 4 (PeriOne VAHAN): POST https://api.perione.in/vahan/vehicleno?email=<registered email> with
@@ -787,6 +863,37 @@ const fetchHsrpInfo = async (vehicleNumber, { userId, via } = {}) => {
   }
 }
 
+/**
+ * Vehicle(s) for a chassis number from ParzivalHub (API 3), with admin alerts like fetchHsrpInfo:
+ * { found: true, data: { chassisNumber, matches: [record, ...] }, charged } or { found: false, message, charged };
+ * when the provider fails an error with `providerUnavailable: true` and a message safe to show users is thrown.
+ */
+const fetchChassisInfo = async (chassisNumber, { userId, via } = {}) => {
+  try {
+    const result = await fetchChassisFromApi3(chassisNumber, { userId })
+    await autoResolveAlerts('api3chassis:error:')
+    return result
+  } catch (err) {
+    const code = alertCodeOf(err)
+    console.error('Chassis to RC lookup failed:', err?.response?.data || err.message)
+    await raiseAlert({
+      key: `api3chassis:error:${code}`,
+      severity: err.providerCode || code === 'NOT_SET_UP' ? 'critical' : 'warning',
+      source: 'api3',
+      code,
+      title: (ALERT_TITLES[code] || ((n) => (err.providerCode ? `${n} refused the request (${code})` : `${n} is not responding`)))('Chassis to RC (API 3)'),
+      message: String(err.message || '').slice(0, 500),
+      vehicleNumber: chassisNumber,
+      userId,
+      via
+    })
+    const unavailable = new Error('Chassis search is temporarily unavailable. Please try again after some time.')
+    unavailable.providerUnavailable = true
+    unavailable.detail = err.message
+    throw unavailable
+  }
+}
+
 // What a user or API key customer sees when a provider fails. The real reason goes to the admin alerts.
 const UNAVAILABLE_MESSAGE = 'Vehicle information service is temporarily unavailable. Please try again after some time.'
 
@@ -921,4 +1028,4 @@ const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
   return fetchFromApi5(vehicleNumber, { userId })
 }
 
-module.exports = { fetchVehicleInfo, fetchHsrpInfo, cleanVehicleNumber, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, mapApi2Fields }
+module.exports = { fetchVehicleInfo, fetchHsrpInfo, fetchChassisInfo, cleanVehicleNumber, cleanChassisNumber, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, mapApi2Fields }

@@ -3,6 +3,7 @@ const ApiCreditTransaction = require('../models/ApiCreditTransaction')
 const User = require('../models/User')
 const RcSearchUsage = require('../models/RcSearchUsage')
 const HsrpSearchUsage = require('../models/HsrpSearchUsage')
+const ChassisSearchUsage = require('../models/ChassisSearchUsage')
 const ApiKeySale = require('../models/ApiKeySale')
 const ApiKey = require('../models/ApiKey')
 const ApiKeyCall = require('../models/ApiKeyCall')
@@ -40,13 +41,21 @@ const roundMoney = (n) => Math.round((Number(n) + Number.EPSILON) * 100) / 100
 // sale turns on. Rows saved before `product` existed are RC.
 const PRODUCTS = {
   rc: { limit: 'rcSearchLimit', count: 'rcSearchCount', feature: 'rcDetails', label: 'Vehicle RC', short: 'RC' },
-  hsrp: { limit: 'hsrpSearchLimit', count: 'hsrpSearchCount', feature: 'hsrp', label: 'HSRP', short: 'HSRP' }
+  hsrp: { limit: 'hsrpSearchLimit', count: 'hsrpSearchCount', feature: 'hsrp', label: 'HSRP', short: 'HSRP' },
+  chassis: { limit: 'chassisSearchLimit', count: 'chassisSearchCount', feature: 'chassisToRc', label: 'Chassis to RC', short: 'Chassis' }
 }
-const productOf = (value) => (value === 'hsrp' ? 'hsrp' : 'rc')
-// Mongo filter for one product ('rc' / 'hsrp'), or none for 'all'
-const productMatch = (product) => (product === 'hsrp' ? { product: 'hsrp' } : product === 'rc' ? { product: { $ne: 'hsrp' } } : {})
-// ?product= on the list / summary / usage: 'rc', 'hsrp' or 'all' (default)
-const productFilter = (value) => (value === 'rc' || value === 'hsrp' ? value : 'all')
+// Products other than RC: sold to app users only (API keys serve vehicle RC details)
+const OTHER_PRODUCTS = Object.keys(PRODUCTS).filter((p) => p !== 'rc')
+const productOf = (value) => (OTHER_PRODUCTS.includes(value) ? value : 'rc')
+// Mongo filter for one product, or none for 'all'. Rows saved before `product` existed are RC.
+const productMatch = (product) =>
+  OTHER_PRODUCTS.includes(product) ? { product } : product === 'rc' ? { product: { $nin: OTHER_PRODUCTS } } : {}
+// ?product= on the list / summary / usage: 'rc', 'hsrp', 'chassis' or 'all' (default)
+const productFilter = (value) => (PRODUCTS[value] ? value : 'all')
+// API key sales are vehicle (RC) calls: shown for RC and All only
+const withApiKeys = (product) => !OTHER_PRODUCTS.includes(product)
+// The limit / count fields of every product, for selects
+const ALL_LIMIT_FIELDS = Object.values(PRODUCTS).map((P) => `${P.limit} ${P.count}`).join(' ')
 
 // Days shown in the day-wise income table
 const INCOME_DAYS = 30
@@ -76,7 +85,7 @@ exports.getTransactions = async (req, res) => {
 
     const userTypes = { all: ['sale', 'purchase', 'adjustment'], sales: ['sale'], sale: ['sale'], purchase: ['purchase'], adjustment: ['adjustment'] }[type] || []
     // API key sales are vehicle (RC) calls
-    const withKeySales = ['all', 'sales', 'key_sale'].includes(type) && product !== 'hsrp'
+    const withKeySales = ['all', 'sales', 'key_sale'].includes(type) && withApiKeys(product)
 
     // A user filter leaves out provider purchases, which belong to no user
     const txnMatch = { type: { $in: userObjectId ? userTypes.filter((t) => t !== 'purchase') : userTypes }, ...productMatch(product) }
@@ -470,7 +479,7 @@ exports.getAdjustment = async (req, res) => {
     if (!mongoose.isValidObjectId(userId)) return badRequest(res, 'Invalid user')
     const product = productOf(req.query.product)
     const [user, history] = await Promise.all([
-      User.findById(userId).select('name mobile1 rcSearchLimit rcSearchCount hsrpSearchLimit hsrpSearchCount').lean(),
+      User.findById(userId).select(`name mobile1 ${ALL_LIMIT_FIELDS}`).lean(),
       ApiCreditTransaction.find({ userId, type: { $in: ['sale', 'adjustment'] }, ...productMatch(product) })
         .sort({ date: -1, createdAt: -1 })
         .select('type quantity rate amount paidAmount callsBefore oldRate balance date note')
@@ -608,20 +617,21 @@ exports.getUsage = async (req, res) => {
     const today = RcSearchUsage.todayIST()
     const from7 = shiftDate(today, -6)
     const from28 = shiftDate(today, -27)
-    // RC: app searches + API key calls; HSRP: app searches only (API keys serve vehicle details)
-    const product = req.query.product === 'hsrp' ? 'hsrp' : 'rc'
+    // RC: app searches + API key calls; HSRP / Chassis: app searches only (API keys serve vehicle details)
+    const product = productOf(req.query.product)
     const P = PRODUCTS[product]
-    const Usage = product === 'hsrp' ? HsrpSearchUsage : RcSearchUsage
+    const Usage = { rc: RcSearchUsage, hsrp: HsrpSearchUsage, chassis: ChassisSearchUsage }[product]
+    const keyCalls = withApiKeys(product)
 
     const [rows, firstRow, keyRows, firstKeyCall] = await Promise.all([
       Usage.find({ date: { $gte: from28, $lte: today } }).select('userId date count').lean(),
       Usage.findOne({}).sort({ date: 1 }).select('date').lean(),
-      product === 'hsrp' ? [] : ApiKeyCall.aggregate([
+      !keyCalls ? [] : ApiKeyCall.aggregate([
         { $match: { date: { $gte: from28, $lte: today }, ...CHARGED_KEY_CALL } },
         // Calls logged before `source` was saved were all API 1
         { $group: { _id: { apiKeyId: '$apiKeyId', date: '$date', source: { $ifNull: ['$source', 'rtosarthi_api1'] } }, count: { $sum: 1 } } }
       ]),
-      product === 'hsrp' ? null : ApiKeyCall.findOne(CHARGED_KEY_CALL).sort({ date: 1 }).select('date').lean()
+      !keyCalls ? null : ApiKeyCall.findOne(CHARGED_KEY_CALL).sort({ date: 1 }).select('date').lean()
     ])
 
     // One entry per day, newest first, including days with no searches
@@ -721,7 +731,7 @@ exports.getUsage = async (req, res) => {
               ...usage,
               name: user?.name,
               mobile1: user?.mobile1,
-              // (named rcSearch* for both products; for HSRP they are the HSRP limit / count)
+              // (named rcSearch* for every product; for HSRP / Chassis they are that product's limit / count)
               rcSearchLimit: user?.[P.limit] || 0,
               rcSearchCount: user?.[P.count] || 0,
               rcSearchRemaining: Math.max(0, (user?.[P.limit] || 0) - (user?.[P.count] || 0))
@@ -753,10 +763,11 @@ exports.getUsage = async (req, res) => {
 // Totals, month-wise cashflow and per-user sales
 exports.getSummary = async (req, res) => {
   try {
-    // ?product=rc / hsrp / all. API key sales are vehicle (RC) calls, so they are left out for HSRP.
+    // ?product=rc / hsrp / chassis / all. API key sales are vehicle (RC) calls, so they are left out for
+    // HSRP and Chassis.
     const product = productFilter(req.query.product)
     const pm = productMatch(product)
-    const withKeys = product !== 'hsrp'
+    const withKeys = withApiKeys(product)
     const none = Promise.resolve([])
     // Sales dated today (India), from users and from API keys
     const today = RcSearchUsage.todayIST()
@@ -820,6 +831,8 @@ exports.getSummary = async (req, res) => {
             rcSearchCount: { $ifNull: ['$user.rcSearchCount', 0] },
             hsrpSearchLimit: { $ifNull: ['$user.hsrpSearchLimit', 0] },
             hsrpSearchCount: { $ifNull: ['$user.hsrpSearchCount', 0] },
+            chassisSearchLimit: { $ifNull: ['$user.chassisSearchLimit', 0] },
+            chassisSearchCount: { $ifNull: ['$user.chassisSearchCount', 0] },
             quantity: 1,
             amount: 1,
             paid: 1,
@@ -1019,7 +1032,8 @@ exports.getSummary = async (req, res) => {
           paid: roundMoney(u.paid),
           pending: roundMoney(u.amount - u.paid),
           rcSearchRemaining: Math.max(0, (u.rcSearchLimit || 0) - (u.rcSearchCount || 0)),
-          hsrpSearchRemaining: Math.max(0, (u.hsrpSearchLimit || 0) - (u.hsrpSearchCount || 0))
+          hsrpSearchRemaining: Math.max(0, (u.hsrpSearchLimit || 0) - (u.hsrpSearchCount || 0)),
+          chassisSearchRemaining: Math.max(0, (u.chassisSearchLimit || 0) - (u.chassisSearchCount || 0))
         }))
       }
     })

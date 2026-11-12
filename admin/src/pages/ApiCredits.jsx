@@ -47,27 +47,31 @@ const EMPTY_FORM = { type: 'sale', product: 'rc', userId: '', quantity: '', rate
 
 // What calls are sold for: each has its own limit on the user (backend PRODUCTS in adminApiCreditController)
 const PRODUCT_INFO = {
-  rc: { label: 'Vehicle RC', short: 'RC', limit: 'rcSearchLimit', count: 'rcSearchCount', feature: 'rcDetails', featureName: 'RC Details' },
-  hsrp: { label: 'HSRP', short: 'HSRP', limit: 'hsrpSearchLimit', count: 'hsrpSearchCount', feature: 'hsrp', featureName: 'HSRP Search' }
+  rc: { label: 'Vehicle RC', short: 'RC', limit: 'rcSearchLimit', count: 'rcSearchCount', remaining: 'rcSearchRemaining', feature: 'rcDetails', featureName: 'RC Details', on: 'bg-indigo-600 border-indigo-600 text-white' },
+  hsrp: { label: 'HSRP', short: 'HSRP', limit: 'hsrpSearchLimit', count: 'hsrpSearchCount', remaining: 'hsrpSearchRemaining', feature: 'hsrp', featureName: 'HSRP Search', on: 'bg-teal-600 border-teal-600 text-white', tag: 'bg-teal-50 text-teal-700 border-teal-200', text: 'text-teal-600' },
+  chassis: { label: 'Chassis to RC', short: 'Chassis', limit: 'chassisSearchLimit', count: 'chassisSearchCount', remaining: 'chassisSearchRemaining', feature: 'chassisToRc', featureName: 'Chassis to RC', on: 'bg-violet-600 border-violet-600 text-white', tag: 'bg-violet-50 text-violet-700 border-violet-200', text: 'text-violet-600' }
 }
+// Products sold to app users only (API keys serve vehicle RC)
+const APP_ONLY_PRODUCTS = ['hsrp', 'chassis']
 const PRODUCT_FILTERS = [
   ['all', 'All'],
   ['rc', 'Vehicle RC'],
-  ['hsrp', 'HSRP']
+  ['hsrp', 'HSRP'],
+  ['chassis', 'Chassis']
 ]
-const productParam = (value) => (value === 'rc' || value === 'hsrp' ? value : 'all')
+const productParam = (value) => (PRODUCT_INFO[value] ? value : 'all')
 
 const ProductTag = ({ product }) =>
-  product === 'hsrp' ? (
-    <span className='inline-flex ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide bg-teal-50 text-teal-700 border border-teal-200'>
-      HSRP
+  APP_ONLY_PRODUCTS.includes(product) ? (
+    <span className={`inline-flex ml-1 px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border ${PRODUCT_INFO[product].tag}`}>
+      {PRODUCT_INFO[product].short}
     </span>
   ) : null
 
 // Price per API call a sale to a user starts at
 const DEFAULT_SALE_RATE = 2
-// Usual selling price per call for each product (₹): RC 2, HSRP 25
-const DEFAULT_SALE_RATES = { rc: DEFAULT_SALE_RATE, hsrp: 25 }
+// Usual selling price per call for each product (₹): RC 2, HSRP 25, Chassis 10
+const DEFAULT_SALE_RATES = { rc: DEFAULT_SALE_RATE, hsrp: 25, chassis: 10 }
 
 const round2 = (n) => Math.round(n * 100) / 100
 
@@ -233,7 +237,7 @@ const ApiCredits = () => {
         userId,
         date: todayIST(),
         // Sales start at the usual ₹2 per call; purchases at the price paid last time
-        // Sales start at the usual price of the product (RC ₹2, HSRP ₹25); purchases at the last price paid
+        // Sales start at the usual price of the product (RC ₹2, HSRP ₹25, Chassis ₹10); purchases at the last price paid
         rate:
           type === 'sale'
             ? String(DEFAULT_SALE_RATES[forProduct])
@@ -538,7 +542,7 @@ const ApiCredits = () => {
                 onClick={() => changeProduct(value)}
                 aria-pressed={product === value}
                 className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
-                  product === value ? (value === 'hsrp' ? 'bg-teal-600 text-white' : 'bg-indigo-600 text-white') : 'text-gray-600 hover:bg-gray-50'
+                  product === value ? PRODUCT_INFO[value]?.on || PRODUCT_INFO.rc.on : 'text-gray-600 hover:bg-gray-50'
                 } ${i > 0 ? 'border-l border-gray-300' : ''}`}
               >
                 {label}
@@ -595,7 +599,7 @@ const ApiCredits = () => {
           <div className='flex flex-wrap items-baseline justify-between gap-x-2 mb-2'>
             <h2 className='text-sm font-bold text-gray-800'>Sales{product !== 'all' && ` · ${PRODUCT_INFO[product].label}`}</h2>
             <p className='text-[11px] text-gray-400'>
-              {product === 'hsrp' ? 'HSRP calls are sold to app users only' : 'Total, then sold to app users and sold on API keys (vehicle RC)'}
+              {APP_ONLY_PRODUCTS.includes(product) ? `${PRODUCT_INFO[product].label} calls are sold to app users only` : 'Total, then sold to app users and sold on API keys (vehicle RC)'}
             </p>
           </div>
           <div className='grid grid-cols-2 lg:grid-cols-5 gap-2 sm:gap-3 mb-3 sm:mb-5'>
@@ -1071,28 +1075,32 @@ const ApiCredits = () => {
                             {u.pending > 0 ? formatRupees(u.pending) : 'Paid'}
                           </td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
-                            {product === 'hsrp' ? (
-                              `${formatNumber(u.hsrpSearchCount)} / ${formatNumber(u.hsrpSearchLimit)}`
+                            {APP_ONLY_PRODUCTS.includes(product) ? (
+                              `${formatNumber(u[PRODUCT_INFO[product].count])} / ${formatNumber(u[PRODUCT_INFO[product].limit])}`
                             ) : (
                               <>
                                 {formatNumber(u.rcSearchCount)} / {formatNumber(u.rcSearchLimit)}
-                                {product === 'all' && u.hsrpSearchLimit > 0 && (
-                                  <div className='text-[10px] text-teal-600'>HSRP {formatNumber(u.hsrpSearchCount)} / {formatNumber(u.hsrpSearchLimit)}</div>
-                                )}
+                                {product === 'all' && APP_ONLY_PRODUCTS.filter((p) => u[PRODUCT_INFO[p].limit] > 0).map((p) => (
+                                  <div key={p} className={`text-[10px] ${PRODUCT_INFO[p].text}`}>
+                                    {PRODUCT_INFO[p].short} {formatNumber(u[PRODUCT_INFO[p].count])} / {formatNumber(u[PRODUCT_INFO[p].limit])}
+                                  </div>
+                                ))}
                               </>
                             )}
                           </td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums whitespace-nowrap'>
-                            {formatNumber(product === 'hsrp' ? u.hsrpSearchRemaining : u.rcSearchRemaining)}
-                            {product === 'all' && u.hsrpSearchLimit > 0 && (
-                              <div className='text-[10px] text-teal-600'>HSRP {formatNumber(u.hsrpSearchRemaining)}</div>
-                            )}
+                            {formatNumber(u[(PRODUCT_INFO[product] || PRODUCT_INFO.rc).remaining])}
+                            {product === 'all' && APP_ONLY_PRODUCTS.filter((p) => u[PRODUCT_INFO[p].limit] > 0).map((p) => (
+                              <div key={p} className={`text-[10px] ${PRODUCT_INFO[p].text}`}>
+                                {PRODUCT_INFO[p].short} {formatNumber(u[PRODUCT_INFO[p].remaining])}
+                              </div>
+                            ))}
                           </td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 whitespace-nowrap'>{formatDate(u.lastDate)}</td>
                           <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-right'>
                             <button
                               onClick={() => setAdjustFor(String(u.userId))}
-                              disabled={!(product === 'hsrp' ? u.hsrpSearchRemaining : u.rcSearchRemaining || u.hsrpSearchRemaining)}
+                              disabled={!(PRODUCT_INFO[product] ? u[PRODUCT_INFO[product].remaining] : Object.values(PRODUCT_INFO).some((p) => u[p.remaining]))}
                               className='px-2 py-1 text-[11px] font-semibold text-amber-700 border border-amber-200 rounded-md hover:bg-amber-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer whitespace-nowrap'
                               title="Re-price this user's calls left at a new rate"
                             >
@@ -1299,7 +1307,7 @@ const ApiCredits = () => {
               <form onSubmit={handleSubmit} className='space-y-3 p-5'>
                 <div>
                   <label className={labelClass}>Calls for</label>
-                  <div className='grid grid-cols-2 gap-2'>
+                  <div className='grid grid-cols-3 gap-2'>
                     {Object.entries(PRODUCT_INFO).map(([value, info]) => (
                       <button
                         key={value}
@@ -1323,7 +1331,7 @@ const ApiCredits = () => {
                         aria-pressed={formData.product === value}
                         className={`px-3 py-2 rounded-lg border text-sm font-semibold transition-colors cursor-pointer ${
                           formData.product === value
-                            ? value === 'hsrp' ? 'bg-teal-600 border-teal-600 text-white' : 'bg-indigo-600 border-indigo-600 text-white'
+                            ? info.on
                             : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
                         }`}
                       >

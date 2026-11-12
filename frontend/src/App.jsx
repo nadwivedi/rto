@@ -47,6 +47,7 @@ import MoneyReceived from './pages/MoneyReceived/MoneyReceived'
 import VehicleDetails from './pages/VehicleDetails/VehicleDetails'
 import VehicleSearchHistory from './pages/VehicleDetails/VehicleSearchHistory'
 import HsrpSearch from './pages/Hsrp/HsrpSearch'
+import ChassisSearch from './pages/ChassisToRc/ChassisSearch'
 import PWAPrompt from './components/PWAPrompt'
 // import { Agentation } from 'agentation'
 
@@ -81,6 +82,8 @@ function ProtectedLayout() {
     }
     // HSRP search only for accounts the admin has given it
     if (location.pathname === '/hsrp' && !user?.features?.hsrp) return true
+    // Chassis to RC search only for accounts the admin has given it
+    if (location.pathname === '/chassis-to-rc' && !user?.features?.chassisToRc) return true
     return null
   }
 
@@ -114,7 +117,7 @@ function ProtectedLayout() {
         const isModalOpen = document.querySelector('.bg-slate-900\\/60, .fixed.inset-0, [role="dialog"]') !== null;
         if (isModalOpen) return;
 
-        const vahanHubPages = ['/vahan', '/forms', '/whatsapp', '/setting', '/javak', '/leads', '/kyc', '/vehicle-details', '/vehicle-detail', '/vehicle-search-history', '/vehicle-details/history', '/hsrp'];
+        const vahanHubPages = ['/vahan', '/forms', '/whatsapp', '/setting', '/javak', '/leads', '/kyc', '/vehicle-details', '/vehicle-detail', '/vehicle-search-history', '/vehicle-details/history', '/hsrp', '/chassis-to-rc'];
         const sarthiHubPages = ['/sarthi'];
         const sarthiSubPages = ['/driving', '/vehicle-transfer', '/noc', '/registration-renewal', '/hpa-hpt', '/cashflow-report'];
 
@@ -182,6 +185,7 @@ function ProtectedLayout() {
                 <Route path='/vehicle-search-history' element={<VehicleSearchHistory />} />
                 <Route path='/vehicle-details/history' element={<VehicleSearchHistory />} />
                 <Route path='/hsrp' element={<HsrpSearch />} />
+                <Route path='/chassis-to-rc' element={<ChassisSearch />} />
 
                 <Route path='/vehicle-ledger/:registrationNumber' element={<VehicleLedgerPage />} />
                 <Route path='/insurance' element={<Insurance />} />

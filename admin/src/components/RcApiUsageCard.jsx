@@ -160,7 +160,7 @@ const RcApiUsageCard = ({ className = '' }) => {
       <Api5HsrpRow usage={data?.hsrpUsage} allocation={data?.hsrpAllocation} />
     </div>
     <Api2Card usage={data?.api2Usage} loading={loading && !data} error={error} onSaved={fetchUsage} />
-    <ParzivalCard usage={data?.api3Usage} loading={loading && !data} error={error} />
+    <ParzivalCard usage={data?.api3Usage} chassisUsage={data?.chassisUsage} chassisAllocation={data?.chassisAllocation} loading={loading && !data} error={error} />
     </div>
   )
 }
@@ -417,7 +417,7 @@ const Api2Card = ({ usage, loading, error, onSaved }) => {
   )
 }
 
-const ParzivalCard = ({ usage, loading, error }) => {
+const ParzivalCard = ({ usage, chassisUsage, chassisAllocation, loading, error }) => {
   // Time read once when the card mounts, for the days-left count
   const [now] = useState(() => Date.now())
   const has = (v) => v !== null && v !== undefined
@@ -491,6 +491,60 @@ const ParzivalCard = ({ usage, loading, error }) => {
             {usage.lastVehicleNumber && <> ({usage.lastVehicleNumber})</>}. Updates after every Parzival API search.
           </p>
         </>
+      )}
+
+      {/* Same account and wallet, separate API: Chassis -> RC, with its own quota and price */}
+      {!error && !loading && <ChassisRow usage={chassisUsage} allocation={chassisAllocation} now={now} />}
+    </div>
+  )
+}
+
+// Chassis to RC (POST /v1/chassis-to-rc) quota and price from its last reply, and what is still promised to users
+const ChassisRow = ({ usage, allocation, now }) => {
+  const has = (v) => v !== null && v !== undefined
+  const quota = usage?.quotaRemaining
+  const expires = usage?.accessExpiresAt ? new Date(usage.accessExpiresAt) : null
+  const daysLeft = expires ? Math.ceil((expires.getTime() - now) / DAY_MS) : null
+  const oversold = has(quota) && allocation && allocation.allocatedRemaining > quota
+  return (
+    <div className='mt-3 pt-3 border-t border-gray-100'>
+      <div className='flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1'>
+        <p className='text-[11px] font-semibold text-violet-700 uppercase tracking-wide'>Chassis to RC</p>
+        {usage ? (
+          <p className='text-sm'>
+            {has(quota) ? (
+              <>
+                <span className={`text-xl font-bold tabular-nums ${quota <= 0 ? 'text-red-600' : quota <= 10 ? 'text-orange-600' : 'text-gray-900'}`}>
+                  {formatNumber(quota)}
+                </span>
+                <span className='text-gray-500'> quota left</span>
+              </>
+            ) : (
+              <span className='text-gray-500'>No quota limit sent</span>
+            )}
+            {usage.lastCharge > 0 && <span className='text-gray-400'> · {formatMoney(usage.lastCharge)} per search</span>}
+            {daysLeft !== null && (
+              <span className={daysLeft <= 7 ? 'text-orange-700 font-semibold' : 'text-gray-400'}>
+                {' · '}{daysLeft > 0 ? `access ${daysLeft} day${daysLeft === 1 ? '' : 's'} left` : 'access expired'}
+              </span>
+            )}
+          </p>
+        ) : (
+          <p className='text-xs text-gray-400'>Shown after the first chassis search</p>
+        )}
+      </div>
+      {allocation?.users > 0 && (
+        <p className={`text-[11px] mt-0.5 ${oversold ? 'text-orange-700 font-semibold' : 'text-gray-500'}`}>
+          {formatNumber(allocation.allocatedRemaining)} chassis search{allocation.allocatedRemaining === 1 ? '' : 'es'} still allotted to {allocation.users} user
+          {allocation.users === 1 ? '' : 's'}
+          {oversold && <> — more than the ParzivalHub quota left</>}.
+        </p>
+      )}
+      {usage?.checkedAt && (
+        <p className='text-[11px] text-gray-400 mt-0.5'>
+          Last chassis search {formatDateTime(usage.checkedAt)}
+          {usage.lastChassisNumber && <> ({usage.lastChassisNumber})</>}
+        </p>
       )}
     </div>
   )

@@ -154,7 +154,8 @@ const FEATURE_OPTIONS = [
   { name: 'features_tempRc', label: 'Temporary RC', title: 'Show Temporary Authorization of Registration Certificate in RC Details' },
   { name: 'features_nlParticular', label: 'NL Particulars', title: 'Show NL Vehicle Particulars (For Internal Use) in RC Details' },
   { name: 'features_saveVehicleRecords', label: 'Save Records (RC)', title: 'Show a Save button in RC Details that adds the vehicle to Vehicle Registration, Fitness, Insurance and PUC with 0 fee' },
-  { name: 'features_hsrp', label: 'HSRP Search', title: 'HSRP (number plate) details search; switched on by itself when HSRP calls are sold to the user' }
+  { name: 'features_hsrp', label: 'HSRP Search', title: 'HSRP (number plate) details search; switched on by itself when HSRP calls are sold to the user' },
+  { name: 'features_chassisToRc', label: 'Chassis to RC', title: 'Chassis number to vehicle (RC) search through ParzivalHub; switched on by itself when Chassis calls are sold to the user' }
 ]
 
 const INPUT_CLASS = 'w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
@@ -296,11 +297,14 @@ const Users = () => {
     features_nlParticular: false,
     features_saveVehicleRecords: false,
     features_hsrp: false,
+    features_chassisToRc: false,
     rcProvider: 'api2',
     rcSearchLimit: 0,
     rcSearchCount: 0,
     hsrpSearchLimit: 0,
-    hsrpSearchCount: 0
+    hsrpSearchCount: 0,
+    chassisSearchLimit: 0,
+    chassisSearchCount: 0
   })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
@@ -549,7 +553,8 @@ const Users = () => {
           tempRc: formData.features_tempRc,
           nlParticular: formData.features_nlParticular,
           saveVehicleRecords: formData.features_saveVehicleRecords,
-          hsrp: formData.features_hsrp
+          hsrp: formData.features_hsrp,
+          chassisToRc: formData.features_chassisToRc
         }
       }
       delete bodyData.features_greenTax
@@ -566,6 +571,9 @@ const Users = () => {
       delete bodyData.features_hsrp
       delete bodyData.hsrpSearchLimit
       delete bodyData.hsrpSearchCount
+      delete bodyData.features_chassisToRc
+      delete bodyData.chassisSearchLimit
+      delete bodyData.chassisSearchCount
       // Shown in the form for reference only; the limit changes through User API Sales
       delete bodyData.rcSearchLimit
       delete bodyData.rcSearchCount
@@ -595,7 +603,7 @@ const Users = () => {
         setShowFeatures(false)
         setIsEditMode(false)
         setEditingUserId(null)
-        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'lifetime', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, features_hsrp: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, hsrpSearchLimit: 0, hsrpSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
+        setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'lifetime', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, features_hsrp: false, features_chassisToRc: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, hsrpSearchLimit: 0, hsrpSearchCount: 0, chassisSearchLimit: 0, chassisSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
     fetchUsers()
     fetchStateCounts()
       } else {
@@ -642,11 +650,14 @@ const Users = () => {
       features_nlParticular: user.features?.nlParticular ?? false,
       features_saveVehicleRecords: user.features?.saveVehicleRecords ?? false,
       features_hsrp: user.features?.hsrp ?? false,
+      features_chassisToRc: user.features?.chassisToRc ?? false,
       rcProvider: providerOption(user.rcProvider, 'api2').value,
       rcSearchLimit: user.rcSearchLimit ?? 0,
       rcSearchCount: user.rcSearchCount ?? 0,
       hsrpSearchLimit: user.hsrpSearchLimit ?? 0,
-      hsrpSearchCount: user.hsrpSearchCount ?? 0
+      hsrpSearchCount: user.hsrpSearchCount ?? 0,
+      chassisSearchLimit: user.chassisSearchLimit ?? 0,
+      chassisSearchCount: user.chassisSearchCount ?? 0
     })
     setShowModal(true)
     setError('')
@@ -658,7 +669,7 @@ const Users = () => {
     setIsEditMode(false)
     setEditingUserId(null)
     setError('')
-    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'lifetime', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, features_hsrp: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, hsrpSearchLimit: 0, hsrpSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
+    setFormData({ name: '', mobile1: '', mobile2: '', email: '', address: '', state: '', rto: '', billName: '', billDescription: '', planType: 'lifetime', subscriptionExpiresAt: '', yearlyPrice: '', lifetimeFee: '', paidAmount: '', password: '', features_greenTax: false, features_professionalTax: false, features_autoCreateRC: false, features_expandAdditionalDetails: false, features_moneyReceived: false, features_rcDetails: false, features_forms: false, features_form23: false, features_tempRc: false, features_nlParticular: false, features_saveVehicleRecords: false, features_hsrp: false, features_chassisToRc: false, rcProvider: 'api2', rcSearchLimit: 0, rcSearchCount: 0, hsrpSearchLimit: 0, hsrpSearchCount: 0, chassisSearchLimit: 0, chassisSearchCount: 0, paymentScreenshots: [], referredBy: '', referralCommission: '' })
   }
 
   const openDeleteModal = (user) => {
@@ -1005,7 +1016,18 @@ const Users = () => {
         HSRP {hsrpLeft}/{user.hsrpSearchLimit || 0} left
       </span>
     ) : null
-    if (!user.features?.rcDetails) return hsrpBadge
+    const chassisLeft = Math.max(0, (user.chassisSearchLimit || 0) - (user.chassisSearchCount || 0))
+    const chassisBadge = user.features?.chassisToRc ? (
+      <span
+        className={`inline-block mt-1 ml-1 text-[10px] font-semibold px-1.5 py-0.5 rounded ${
+          chassisLeft <= 0 ? 'bg-rose-50 text-rose-700' : 'bg-violet-50 text-violet-700'
+        }`}
+        title={`${user.chassisSearchCount || 0} Chassis to RC searches done`}
+      >
+        Chassis {chassisLeft}/{user.chassisSearchLimit || 0} left
+      </span>
+    ) : null
+    if (!user.features?.rcDetails) return hsrpBadge || chassisBadge ? <>{hsrpBadge}{chassisBadge}</> : null
     const left = Math.max(0, (user.rcSearchLimit || 0) - (user.rcSearchCount || 0))
     return (
       <>
@@ -1018,6 +1040,7 @@ const Users = () => {
         RC {left}/{user.rcSearchLimit || 0} left
       </span>
       {hsrpBadge}
+      {chassisBadge}
       </>
     )
   }
@@ -2274,6 +2297,50 @@ const Users = () => {
                         </>
                       ) : (
                         <p className='text-[11px] text-teal-700'>Starts at 0. After creating the user, sell HSRP calls in API Sales.</p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Chassis to RC limit: like RC, it only grows when Chassis calls are sold in API Sales */}
+                  {formData.features_chassisToRc && (
+                    <div className='mt-3 p-3.5 bg-white rounded-xl border border-violet-100 space-y-3'>
+                      <p className='text-xs font-semibold text-violet-900'>
+                        Chassis to RC Search
+                        <span className='block text-[11px] font-normal text-violet-700'>Chassis number to vehicle details through ParzivalHub (API 3)</span>
+                      </p>
+                      {isEditMode ? (
+                        <>
+                          <div className='grid grid-cols-3 gap-2 text-center'>
+                            <div className='p-2 bg-violet-50/60 rounded-lg border border-violet-100'>
+                              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Chassis Limit</p>
+                              <p className='text-base font-bold text-violet-900 font-mono'>{formData.chassisSearchLimit || 0}</p>
+                            </div>
+                            <div className='p-2 bg-violet-50/60 rounded-lg border border-violet-100'>
+                              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Used</p>
+                              <p className='text-base font-bold text-violet-900 font-mono'>{formData.chassisSearchCount || 0}</p>
+                            </div>
+                            <div className='p-2 bg-violet-50/60 rounded-lg border border-violet-100'>
+                              <p className='text-[10px] font-semibold text-gray-500 uppercase tracking-wide'>Left</p>
+                              <p className={`text-base font-bold font-mono ${
+                                (formData.chassisSearchLimit || 0) - (formData.chassisSearchCount || 0) <= 0 ? 'text-rose-700' : 'text-emerald-700'
+                              }`}>
+                                {Math.max(0, (formData.chassisSearchLimit || 0) - (formData.chassisSearchCount || 0))}
+                              </p>
+                            </div>
+                          </div>
+                          <div className='flex flex-wrap items-center justify-between gap-2'>
+                            <p className='text-[11px] text-violet-700'>To increase it, sell Chassis calls in API Sales.</p>
+                            <button
+                              type='button'
+                              onClick={() => navigate(`/api-credits?user=${editingUserId}&product=chassis`)}
+                              className='px-3 py-1.5 text-xs font-semibold bg-violet-600 text-white rounded-lg hover:bg-violet-700 cursor-pointer'
+                            >
+                              Sell Chassis Calls
+                            </button>
+                          </div>
+                        </>
+                      ) : (
+                        <p className='text-[11px] text-violet-700'>Starts at 0. After creating the user, sell Chassis calls in API Sales.</p>
                       )}
                     </div>
                   )}

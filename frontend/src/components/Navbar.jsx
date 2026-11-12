@@ -45,6 +45,12 @@ const Navbar = () => {
       path: "/hsrp",
       description: "HSRP Number Plate Details",
     },
+    {
+      name: "Chassis to RC",
+      icon: "🔎",
+      path: "/chassis-to-rc",
+      description: "Vehicle Details from Chassis Number",
+    },
 
     {
       name: "NP",
@@ -257,6 +263,7 @@ const Navbar = () => {
   const featureFilter = (item) => {
     if (item.path === '/vehicle-details') return enabledFeatures.rcDetails === true;
     if (item.path === '/hsrp') return enabledFeatures.hsrp === true;
+    if (item.path === '/chassis-to-rc') return enabledFeatures.chassisToRc === true;
     if (item.path === '/green-tax') return enabledFeatures.greenTax === true;
     if (item.path === '/professional-tax') return enabledFeatures.professionalTax === true;
     if (item.path === '/forms' || item.path?.startsWith('/forms/')) return enabledFeatures.forms === true;

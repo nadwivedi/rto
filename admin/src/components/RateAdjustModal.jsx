@@ -23,8 +23,8 @@ const labelClass = 'block text-sm font-semibold text-gray-700 mb-1.5'
  */
 const RateAdjustModal = ({ userId: initialUserId = '', product: initialProduct = 'rc', userOptions, onClose, onDone }) => {
   const [userId, setUserId] = useState(initialUserId)
-  // Vehicle RC or HSRP calls: each has its own limit and rates
-  const [product, setProduct] = useState(initialProduct === 'hsrp' ? 'hsrp' : 'rc')
+  // Vehicle RC, HSRP or Chassis calls: each has its own limit and rates
+  const [product, setProduct] = useState(PRODUCT_LABELS[initialProduct] ? initialProduct : 'rc')
   const [info, setInfo] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -80,7 +80,7 @@ const RateAdjustModal = ({ userId: initialUserId = '', product: initialProduct =
     if (!validOld) return setError('Enter the rate the calls left were sold at')
     if (!validNew) return setError('Enter the new rate per API call')
     if (change === 0) return setError('The number of calls stays the same at this rate')
-    const msg = `Adjust ${info.user.name} (${product === 'hsrp' ? 'HSRP' : 'Vehicle RC'})?\n\n${formatNumber(left)} calls @ ${formatRupees(oldPrice)} = ${formatRupees(balance)}\n→ ${formatNumber(callsAfter)} calls @ ${formatRupees(newPrice)}${leftover > 0 ? ` (${formatRupees(leftover)} left over)` : ''}\n\nTheir limit changes by ${change > 0 ? '+' : ''}${formatNumber(change)}.`
+    const msg = `Adjust ${info.user.name} (${PRODUCT_LABELS[product]})?\n\n${formatNumber(left)} calls @ ${formatRupees(oldPrice)} = ${formatRupees(balance)}\n→ ${formatNumber(callsAfter)} calls @ ${formatRupees(newPrice)}${leftover > 0 ? ` (${formatRupees(leftover)} left over)` : ''}\n\nTheir limit changes by ${change > 0 ? '+' : ''}${formatNumber(change)}.`
     if (!confirm(msg)) return
     try {
       setSaving(true)
@@ -143,17 +143,14 @@ const RateAdjustModal = ({ userId: initialUserId = '', product: initialProduct =
               <div className='flex flex-wrap items-center justify-between gap-2 mb-3 sm:mb-4'>
                 <StepTitle n={1} title='Choose the user' className='' />
                 <div className='inline-flex rounded-lg border border-gray-300 overflow-hidden bg-white' role='group' aria-label='Calls for'>
-                  {[
-                    ['rc', 'Vehicle RC'],
-                    ['hsrp', 'HSRP']
-                  ].map(([value, label], i) => (
+                  {Object.entries(PRODUCT_LABELS).map(([value, label], i) => (
                     <button
                       key={value}
                       type='button'
                       onClick={() => setProduct(value)}
                       aria-pressed={product === value}
                       className={`px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer ${
-                        product === value ? (value === 'hsrp' ? 'bg-teal-600 text-white' : 'bg-gray-900 text-white') : 'text-gray-600 hover:bg-gray-50'
+                        product === value ? PRODUCT_TONES[value] : 'text-gray-600 hover:bg-gray-50'
                       } ${i > 0 ? 'border-l border-gray-300' : ''}`}
                     >
                       {label}
@@ -179,7 +176,7 @@ const RateAdjustModal = ({ userId: initialUserId = '', product: initialProduct =
 
               {info && !loading && (
                 <div className='mt-4 grid grid-cols-3 gap-2 sm:gap-3'>
-                  <Stat label={product === 'hsrp' ? 'HSRP calls left' : 'RC calls left'} value={formatNumber(left)} sub={`${formatNumber(info.user.used)} used of ${formatNumber(info.user.limit)}`} />
+                  <Stat label={`${PRODUCT_SHORT[product]} calls left`} value={formatNumber(left)} sub={`${formatNumber(info.user.used)} used of ${formatNumber(info.user.limit)}`} />
                   <Stat
                     label='Current rate'
                     value={info.currentRate != null ? `${formatRupees(info.currentRate)}` : '-'}
@@ -383,6 +380,11 @@ const RateAdjustModal = ({ userId: initialUserId = '', product: initialProduct =
     </div>
   )
 }
+
+// The products calls are sold for (backend PRODUCTS in adminApiCreditController)
+const PRODUCT_LABELS = { rc: 'Vehicle RC', hsrp: 'HSRP', chassis: 'Chassis' }
+const PRODUCT_SHORT = { rc: 'RC', hsrp: 'HSRP', chassis: 'Chassis' }
+const PRODUCT_TONES = { rc: 'bg-gray-900 text-white', hsrp: 'bg-teal-600 text-white', chassis: 'bg-violet-600 text-white' }
 
 const StepTitle = ({ n, title, className = 'mb-3 sm:mb-4' }) => (
   <div className={`flex items-center gap-2.5 ${className}`}>

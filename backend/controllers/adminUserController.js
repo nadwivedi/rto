@@ -9,7 +9,7 @@ const crypto = require('crypto')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
 const { backupAndCleanUserData } = require('../utils/userDataClean')
-const { PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
+const { PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
 
 // '' / null clears a money field, a number >= 0 sets it, anything else is ignored (returns false)
 const parseMoney = (value) => {
@@ -93,7 +93,8 @@ const USER_FIELDS = [
   { key: 'features.tempRc', label: 'Feature: Temporary RC in RC Details' },
   { key: 'features.nlParticular', label: 'Feature: NL Particulars in RC Details' },
   { key: 'features.saveVehicleRecords', label: 'Feature: Save Records in RC Details' },
-  { key: 'features.hsrp', label: 'Feature: HSRP Search' }
+  { key: 'features.hsrp', label: 'Feature: HSRP Search' },
+  { key: 'features.chassisToRc', label: 'Feature: Chassis to RC Search' }
 ]
 
 // Point every user's RC searches at one API, e.g. all to API 5 while API 2 is down
@@ -451,8 +452,9 @@ exports.createUser = async (req, res) => {
         tempRc: features.tempRc === true,
         nlParticular: features.nlParticular === true,
         saveVehicleRecords: features.saveVehicleRecords === true,
-        hsrp: features.hsrp === true
-      } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false, form23: false, tempRc: false, nlParticular: false, saveVehicleRecords: false, hsrp: false },
+        hsrp: features.hsrp === true,
+        chassisToRc: features.chassisToRc === true
+      } : { greenTax: false, professionalTax: false, autoCreateRC: false, expandAdditionalDetails: false, moneyReceived: false, rcDetails: false, forms: false, form23: false, tempRc: false, nlParticular: false, saveVehicleRecords: false, hsrp: false, chassisToRc: false },
       rcProvider: PROVIDERS[rcProvider] ? rcProvider : undefined,
       // Starts at 0; the limit only grows when a sale is recorded in Vehicle API Sales
       rcSearchLimit: 0,
@@ -612,7 +614,8 @@ exports.updateUser = async (req, res) => {
         tempRc: features.tempRc === true,
         nlParticular: features.nlParticular === true,
         saveVehicleRecords: features.saveVehicleRecords === true,
-        hsrp: features.hsrp === true
+        hsrp: features.hsrp === true,
+        chassisToRc: features.chassisToRc === true
       }
     }
     if (rcProvider !== undefined) {
@@ -753,6 +756,9 @@ exports.updateUser = async (req, res) => {
         hsrpSearchLimit: user.hsrpSearchLimit || 0,
         hsrpSearchCount: user.hsrpSearchCount || 0,
         hsrpSearchRemaining: Math.max(0, (user.hsrpSearchLimit || 0) - (user.hsrpSearchCount || 0)),
+        chassisSearchLimit: user.chassisSearchLimit || 0,
+        chassisSearchCount: user.chassisSearchCount || 0,
+        chassisSearchRemaining: Math.max(0, (user.chassisSearchLimit || 0) - (user.chassisSearchCount || 0)),
         rcProvider: user.rcProvider,
         planType: user.planType,
         subscriptionExpiresAt: user.subscriptionExpiresAt,
@@ -1271,6 +1277,29 @@ exports.getRcApiUsage = async (req, res) => {
       }
     ])
 
+    // Chassis to RC (same ParzivalHub account and wallet as API 3): its own quota, charge and expiry
+    const api3Chassis = await ApiUsage.findOne({ provider: API3_CHASSIS_USAGE_PROVIDER }).lean()
+    const chassisUsage = api3Chassis
+      ? {
+          quotaRemaining: api3Chassis.remaining ?? null,
+          lastCharge: api3Chassis.lastCharge ?? null,
+          accessExpiresAt: api3Chassis.accessExpiresAt || null,
+          checkedAt: api3Chassis.checkedAt || api3Chassis.updatedAt || null,
+          lastChassisNumber: api3Chassis.lastVehicleNumber || null
+        }
+      : null
+    // Chassis searches still promised to users
+    const [chassisAllocation] = await User.aggregate([
+      { $match: { 'features.chassisToRc': true } },
+      {
+        $group: {
+          _id: null,
+          users: { $sum: 1 },
+          allocatedRemaining: { $sum: { $max: [0, { $subtract: [{ $ifNull: ['$chassisSearchLimit', 0] }, { $ifNull: ['$chassisSearchCount', 0] }] }] } }
+        }
+      }
+    ])
+
     // API 3 (Parzival API): wallet, quota and access expiry from its last reply
     const api3 = await ApiUsage.findOne({ provider: API3_USAGE_PROVIDER }).lean()
     const api3Usage = api3
@@ -1311,6 +1340,8 @@ exports.getRcApiUsage = async (req, res) => {
         hsrpUsage,
         hsrpAllocation: { users: hsrpAllocation?.users || 0, allocatedRemaining: hsrpAllocation?.allocatedRemaining || 0 },
         api3Usage,
+        chassisUsage,
+        chassisAllocation: { users: chassisAllocation?.users || 0, allocatedRemaining: chassisAllocation?.allocatedRemaining || 0 },
         allocation: {
           users: allocation?.users || 0,
           allocatedRemaining: allocation?.allocatedRemaining || 0

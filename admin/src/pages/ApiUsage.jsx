@@ -30,16 +30,24 @@ const th = 'px-2.5 sm:px-4 py-2 sm:py-2.5 text-[10px] sm:text-[11px] font-semibo
 
 // API Usage: calls left with the providers and the searches app users and API keys actually made.
 // Sales and purchases are on the API Sales page.
+// The products searches are counted for (backend getUsage ?product=)
+const USAGE_PRODUCTS = {
+  rc: { label: 'Vehicle RC', tone: 'bg-indigo-600 text-white' },
+  hsrp: { label: 'HSRP', tone: 'bg-teal-600 text-white' },
+  chassis: { label: 'Chassis to RC', tone: 'bg-violet-600 text-white' }
+}
+
 const ApiUsage = () => {
   const [usage, setUsage] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [refreshKey, setRefreshKey] = useState(0)
-  // Vehicle RC searches (app + API keys) or HSRP searches (app only)
+  // Vehicle RC searches (app + API keys), HSRP or Chassis searches (app only)
   const [searchParams, setSearchParams] = useSearchParams()
-  const product = searchParams.get('product') === 'hsrp' ? 'hsrp' : 'rc'
-  const isHsrp = product === 'hsrp'
-  const changeProduct = (value) => setSearchParams(value === 'hsrp' ? { product: 'hsrp' } : {}, { replace: true })
+  const product = USAGE_PRODUCTS[searchParams.get('product')] ? searchParams.get('product') : 'rc'
+  // App searches only, no API key columns
+  const appOnly = product !== 'rc'
+  const changeProduct = (value) => setSearchParams(value === 'rc' ? {} : { product: value }, { replace: true })
 
   // App users and API keys in one list, most used first
   const usageRows = useMemo(
@@ -84,16 +92,13 @@ const ApiUsage = () => {
             Calls left with the providers, and the vehicle searches app users and API keys made
           </p>
           <div className='mt-2 inline-flex rounded-lg border border-gray-300 overflow-hidden bg-white' role='group' aria-label='Product'>
-            {[
-              ['rc', 'Vehicle RC'],
-              ['hsrp', 'HSRP']
-            ].map(([value, label], i) => (
+            {Object.entries(USAGE_PRODUCTS).map(([value, { label }], i) => (
               <button
                 key={value}
                 onClick={() => changeProduct(value)}
                 aria-pressed={product === value}
                 className={`px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
-                  product === value ? (value === 'hsrp' ? 'bg-teal-600 text-white' : 'bg-indigo-600 text-white') : 'text-gray-600 hover:bg-gray-50'
+                  product === value ? USAGE_PRODUCTS[value].tone : 'text-gray-600 hover:bg-gray-50'
                 } ${i > 0 ? 'border-l border-gray-300' : ''}`}
               >
                 {label}
@@ -142,7 +147,7 @@ const ApiUsage = () => {
           {/* Searches users actually made */}
           <div className='mb-3 sm:mb-5'>
             <div className='flex flex-wrap items-baseline justify-between gap-x-2 mb-2'>
-              <h2 className='text-sm font-bold text-gray-800'>{isHsrp ? 'HSRP searches made' : 'Vehicle RC searches made'}</h2>
+              <h2 className='text-sm font-bold text-gray-800'>{USAGE_PRODUCTS[product].label} searches made</h2>
               <p className='text-[11px] text-gray-400'>
                 {usage?.trackingSince
                   ? `Counting since ${formatDay(usage.trackingSince)} · searches before that are not included`
@@ -163,7 +168,7 @@ const ApiUsage = () => {
               />
             </div>
 
-            {!isHsrp && (
+            {!appOnly && (
             <p className='mb-3 text-[11px] text-gray-500'>
               API key calls · today: API 5 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api5Today)}</span>
               {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Today)}</span>
@@ -193,12 +198,12 @@ const ApiUsage = () => {
                     <tr className='border-b border-gray-100 bg-gray-50/60'>
                       <th className={`${th} text-left`}>Day</th>
                       <th className={`${th} text-right`}>App</th>
-                      {!isHsrp && <th className={`${th} text-right`} title='API key calls served by API 5 (and by the removed API 1 before it)'>API 5</th>}
-                      {!isHsrp && <th className={`${th} text-right`} title='API key calls served by API 2'>API 2</th>}
-                      {!isHsrp && <th className={`${th} text-right`} title='API key calls served by API 3 – Parzival API'>Parzival</th>}
-                      {!isHsrp && <th className={`${th} text-right`} title='API key calls served by API 4 – PeriOne API'>PeriOne</th>}
-                      {!isHsrp && <th className={`${th} text-right`} title='API key calls served by API 2 + API 4 together'>API 2+4</th>}
-                      {!isHsrp && <th className={`${th} text-right`} title='API key calls served by API 3 + API 2 together'>API 3+2</th>}
+                      {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 5 (and by the removed API 1 before it)'>API 5</th>}
+                      {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 2'>API 2</th>}
+                      {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 3 – Parzival API'>Parzival</th>}
+                      {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 4 – PeriOne API'>PeriOne</th>}
+                      {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 2 + API 4 together'>API 2+4</th>}
+                      {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 3 + API 2 together'>API 3+2</th>}
                       <th className={`${th} text-right`}>Total</th>
                       <th className={`${th} text-right`} title='Users and API keys that searched that day'>Active</th>
                     </tr>
@@ -211,12 +216,12 @@ const ApiUsage = () => {
                           {day.date === usage.today && <span className='ml-1.5 text-[10px] font-bold text-indigo-600 uppercase'>Today</span>}
                         </td>
                         <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.appCount)}</td>
-                        {!isHsrp && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber((day.api5Count || 0) + (day.api1Count || 0))}</td>}
-                        {!isHsrp && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api2Count)}</td>}
-                        {!isHsrp && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api3Count)}</td>}
-                        {!isHsrp && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api4Count)}</td>}
-                        {!isHsrp && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api24Count)}</td>}
-                        {!isHsrp && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api32Count)}</td>}
+                        {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber((day.api5Count || 0) + (day.api1Count || 0))}</td>}
+                        {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api2Count)}</td>}
+                        {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api3Count)}</td>}
+                        {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api4Count)}</td>}
+                        {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api24Count)}</td>}
+                        {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api32Count)}</td>}
                         <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                           {formatNumber(day.count)}
                         </td>
@@ -231,7 +236,7 @@ const ApiUsage = () => {
               {/* User-wise */}
               <div className='bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden flex flex-col'>
                 <h3 className='text-sm font-bold text-gray-800 p-3 border-b border-gray-100'>
-                  {isHsrp ? 'Usage by user' : <>Usage by user &amp; API key</>}
+                  {appOnly ? 'Usage by user' : <>Usage by user &amp; API key</>}
                   {usageRows.length > 0 && <span className='font-normal text-gray-400'> ({usageRows.length})</span>}
                 </h3>
                 {usageRows.length ? (
