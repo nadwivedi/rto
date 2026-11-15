@@ -259,9 +259,10 @@ const fetchFromApi2 = async (vehicleNumber, { userId } = {}) => {
   // Shown in pm2 logs (key hidden) so the URL actually used can be checked
   console.log(`[API 2] ${vehicleNumber} -> ${String(apiUrl).replace(/([?&]key=)[^&]*/i, '$1***')}`)
 
-  // API 2 sometimes takes 40s+ to answer (even for a number it does not have), so it gets a long wait
+  // API 2 often takes 35-60s to answer (even for a number it does not have), so it gets a long wait:
+  // 90s by default (VEHICLE_INFO_API2_TIMEOUT_MS), so a reply that comes in just after a minute is not lost
   const response = await axios.get(`${apiUrl}${encodeURIComponent(vehicleNumber)}`, {
-    timeout: 60000,
+    timeout: Number(process.env.VEHICLE_INFO_API2_TIMEOUT_MS) || 90000,
     validateStatus: (status) => status < 500,
     headers: { Accept: 'application/json, text/plain, */*' }
   })
