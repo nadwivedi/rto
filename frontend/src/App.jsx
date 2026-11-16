@@ -49,6 +49,7 @@ import VehicleSearchHistory from './pages/VehicleDetails/VehicleSearchHistory'
 import HsrpSearch from './pages/Hsrp/HsrpSearch'
 import ChassisSearch from './pages/ChassisToRc/ChassisSearch'
 import PWAPrompt from './components/PWAPrompt'
+import SubscriptionNotice from './components/SubscriptionNotice'
 // import { Agentation } from 'agentation'
 
 function LegacyPartyDetailRedirect() {
@@ -219,6 +220,8 @@ function ProtectedLayout() {
             </main>
           </div>
         </div>
+
+        {!isDeactivated && <SubscriptionNotice />}
 
         {isDeactivated && (
           <div className='fixed inset-0 z-[200] flex items-center justify-center bg-black/40'>

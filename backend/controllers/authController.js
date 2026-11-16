@@ -154,6 +154,7 @@ exports.login = async (req, res) => {
           profileImage: user.profileImage || null,
           isActive: user.isActive,
           planType: user.planType || 'yearly',
+          subscriptionExpiresAt: user.subscriptionExpiresAt,
           features: user.features || {},
           rcSearchLimit: user.rcSearchLimit || 0,
           rcSearchCount: user.rcSearchCount || 0,
@@ -226,15 +227,18 @@ exports.staffLogin = async (req, res) => {
     // Resolve adminId - use the stored one or find the first admin in the DB
     let adminId = employee.adminId ? employee.adminId.toString() : null
     let adminFeatures = {}
+    let adminPlan = {}
     if (!adminId) {
-      const adminUser = await User.findOne({}).select('_id features').lean()
+      const adminUser = await User.findOne({}).select('_id features planType subscriptionExpiresAt').lean()
       adminId = adminUser ? adminUser._id.toString() : null
       adminFeatures = adminUser?.features || {}
+      adminPlan = adminUser || {}
       // Save for future logins so subsequent logins are instant
       if (adminId) await Employee.updateOne({ _id: employee._id }, { adminId })
     } else {
-      const adminUser = await User.findById(adminId).select('features').lean()
+      const adminUser = await User.findById(adminId).select('features planType subscriptionExpiresAt').lean()
       adminFeatures = adminUser?.features || {}
+      adminPlan = adminUser || {}
     }
 
     const token = jwt.sign(
@@ -270,6 +274,9 @@ exports.staffLogin = async (req, res) => {
           permissions: employee.permissions,
           sections: employee.sections,
           features: adminFeatures,
+          // The owner's plan, so staff see the subscription expiry notice too
+          planType: adminPlan.planType || 'yearly',
+          subscriptionExpiresAt: adminPlan.subscriptionExpiresAt,
           isActive: employee.isActive,
           lastLogin: employee.lastLogin,
           lastActivity: employee.lastActivity
@@ -364,6 +371,7 @@ exports.adminAccessLogin = async (req, res) => {
           type: 'user',
           isActive: user.isActive,
           planType: user.planType || 'yearly',
+          subscriptionExpiresAt: user.subscriptionExpiresAt,
           features: user.features || {},
           rcSearchLimit: user.rcSearchLimit || 0,
           rcSearchCount: user.rcSearchCount || 0,
@@ -406,7 +414,7 @@ exports.getProfile = async (req, res) => {
       const activityAt = new Date()
       await Employee.updateOne({ _id: employee._id }, { lastActivity: activityAt })
       employee.lastActivity = activityAt
-      const adminUser = await User.findById(employee.adminId || req.user.adminId).select('features rcSearchLimit rcSearchCount').lean()
+      const adminUser = await User.findById(employee.adminId || req.user.adminId).select('features rcSearchLimit rcSearchCount planType subscriptionExpiresAt').lean()
       return res.json({
         success: true,
         data: {
@@ -418,6 +426,8 @@ exports.getProfile = async (req, res) => {
             permissions: employee.permissions,
             sections: employee.sections,
             features: adminUser?.features || {},
+            planType: adminUser?.planType || 'yearly',
+            subscriptionExpiresAt: adminUser?.subscriptionExpiresAt,
             rcSearchLimit: adminUser?.rcSearchLimit || 0,
             rcSearchCount: adminUser?.rcSearchCount || 0,
             rcSearchRemaining: Math.max(0, (adminUser?.rcSearchLimit || 0) - (adminUser?.rcSearchCount || 0)),
