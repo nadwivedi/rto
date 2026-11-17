@@ -8,7 +8,11 @@ export const PROVIDER_OPTIONS = [
   // Both at once: API 2's full record with API 4's latest insurance / PUC / tax / fitness (API 4 has transport vehicles only)
   { value: 'api24', label: 'API 2 + API 4 – details + latest status', short: 'API 2 + 4', tag: 'bg-violet-50 text-violet-700 border-violet-200', button: 'hover:bg-violet-100' },
   // Both at once: everything from API 3, only the mobile number from API 2
-  { value: 'api32', label: 'API 3 + API 2 – API 3 details + API 2 mobile', short: 'API 3 + 2', tag: 'bg-teal-50 text-teal-700 border-teal-200', button: 'hover:bg-teal-100' }
+  { value: 'api32', label: 'API 3 + API 2 – API 3 details + API 2 mobile', short: 'API 3 + 2', tag: 'bg-teal-50 text-teal-700 border-teal-200', button: 'hover:bg-teal-100' },
+  // Basic details only (owner, address, chassis, mobile, PUC, policy no); no insurance / fitness / tax dates
+  { value: 'api7', label: 'API 7 – Telegram basic details', short: 'API 7', tag: 'bg-rose-50 text-rose-700 border-rose-200', button: 'hover:bg-rose-100' },
+  // PeriOne first; API 7 is called only when PeriOne has the vehicle (transport vehicles only)
+  { value: 'api47', label: 'PeriOne + API 7 (basic) – transport advanced', short: 'PeriOne + API 7', tag: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200', button: 'hover:bg-fuchsia-100' }
 ]
 
 // `fallback` is the source used when none is saved: API 5 for keys, API 2 for users

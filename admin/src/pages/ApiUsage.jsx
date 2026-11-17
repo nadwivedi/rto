@@ -177,12 +177,16 @@ const ApiUsage = () => {
               {' · '}PeriOne API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api4Today)}</span>
               {' · '}API 2 + 4 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api24Today)}</span>
               {' · '}API 3 + 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api32Today)}</span>
+              {' · '}API 7 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api7Today)}</span>
+              {' · '}PeriOne + API 7 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api47Today)}</span>
               {' · last 28 days: '}API 5 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api5Last28)}</span>
               {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Last28)}</span>
               {' · '}Parzival API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Last28)}</span>
               {' · '}PeriOne API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api4Last28)}</span>
               {' · '}API 2 + 4 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api24Last28)}</span>
               {' · '}API 3 + 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api32Last28)}</span>
+              {' · '}API 7 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api7Last28)}</span>
+              {' · '}PeriOne + API 7 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api47Last28)}</span>
               {' · '}App <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.appLast28)}</span>
               {/* Calls API 1 (Nikhil API, now removed) served before it was replaced by API 5 */}
               {usage?.totals?.api1Last28 > 0 && <>{' · '}old API 1 <span className='font-semibold text-gray-800'>{formatNumber(usage.totals.api1Last28)}</span></>}
@@ -206,6 +210,8 @@ const ApiUsage = () => {
                       {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 4 – PeriOne API'>PeriOne</th>}
                       {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 2 + API 4 together'>API 2+4</th>}
                       {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 3 + API 2 together'>API 3+2</th>}
+                      {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 7 – Telegram basic details'>API 7</th>}
+                      {!appOnly && <th className={`${th} text-right`} title='API key calls served by PeriOne + API 7 (transport advanced)'>PeriOne+7</th>}
                       <th className={`${th} text-right`}>Total</th>
                       <th className={`${th} text-right`} title='Users and API keys that searched that day'>Active</th>
                     </tr>
@@ -225,6 +231,8 @@ const ApiUsage = () => {
                         {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api4Count)}</td>}
                         {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api24Count)}</td>}
                         {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api32Count)}</td>}
+                        {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api7Count)}</td>}
+                        {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api47Count)}</td>}
                         <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                           {formatNumber(day.count)}
                         </td>

@@ -161,6 +161,7 @@ const RcApiUsageCard = ({ className = '' }) => {
     </div>
     <Api2Card usage={data?.api2Usage} loading={loading && !data} error={error} onSaved={fetchUsage} />
     <ParzivalCard usage={data?.api3Usage} chassisUsage={data?.chassisUsage} chassisAllocation={data?.chassisAllocation} loading={loading && !data} error={error} />
+    <Api7Card usage={data?.api7Usage} loading={loading && !data} error={error} />
     </div>
   )
 }
@@ -191,6 +192,38 @@ const Api5HsrpRow = ({ usage, allocation }) => {
           {allocation.users === 1 ? '' : 's'}
           {oversold && <> — more than API 5 has left</>}.
         </p>
+      )}
+    </div>
+  )
+}
+
+// API 7 (vehicleinfo.online, Telegram basic details): credits left, from its last reply
+const Api7Card = ({ usage, loading, error }) => {
+  const has = usage && usage.remaining !== null && usage.remaining !== undefined
+  const left = has ? usage.remaining : null
+  return (
+    <div className='bg-white rounded-xl p-4 shadow-sm border border-gray-100'>
+      <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>API 7 Credits</p>
+      <p className='text-[11px] text-gray-400 mt-0.5'>Telegram basic details · vehicleinfo.online (also used by PeriOne + API 7)</p>
+      {error ? (
+        <p className='text-sm text-red-600 mt-3'>{error}</p>
+      ) : loading ? (
+        <div className='mt-3 h-8 w-32 bg-gray-100 rounded animate-pulse' />
+      ) : !has ? (
+        <p className='text-sm text-gray-500 mt-3'>No API 7 search has been made yet. The credits left appear here after the first one.</p>
+      ) : (
+        <>
+          <div className='flex flex-wrap items-baseline gap-x-2 gap-y-0.5 mt-3'>
+            <span className={`text-3xl font-bold tabular-nums ${left <= 0 ? 'text-red-600' : left <= 50 ? 'text-orange-600' : 'text-gray-900'}`}>{formatNumber(left)}</span>
+            <span className='text-sm text-gray-500'>credits left</span>
+            {usage.lastCharge > 0 && <span className='text-sm text-gray-400'>· {usage.lastCharge} per search</span>}
+          </div>
+          <p className='text-[11px] text-gray-400 mt-2'>
+            As of the last search
+            {usage.checkedAt && <> on {formatDateTime(usage.checkedAt)}</>}
+            {usage.lastVehicleNumber && <> ({usage.lastVehicleNumber})</>}.
+          </p>
+        </>
       )}
     </div>
   )

@@ -34,7 +34,11 @@ const PROVIDERS = {
   // Both at once: API 2 for the vehicle details, API 4 for the latest insurance / PUC / tax / fitness
   api24: 'API 2 + API 4 – details + latest status',
   // Both at once: everything from API 3, only the mobile number from API 2
-  api32: 'API 3 + API 2 – API 3 details + API 2 mobile'
+  api32: 'API 3 + API 2 – API 3 details + API 2 mobile',
+  // Basic details (owner, address, chassis, mobile, PUC, policy no) from vehicleinfo.online
+  api7: 'API 7 – Telegram basic details',
+  // PeriOne first; only when it has the vehicle, API 7 fills in owner / mobile / chassis / address
+  api47: 'PeriOne + API 7 (basic) – transport advanced'
 }
 
 // The fields every reply has, in the order the old API 1 used (API 5 sends the same names). Every
@@ -916,6 +920,139 @@ const fetchFromApi5 = async (vehicleNumber, { userId } = {}) => {
   return { found: true, data: toApi1Reply(data), charged }
 }
 
+// API 7 (Telegram basic details, clients.vehicleinfo.online): GET api.php?number=<no>&key=<key>.
+// It replies { status: 'SUCCESS', data: { vehicle_info: { registrationNo, owner, address, chassisNo, ... },
+// mobile_lookup: { mobile_number }, api_usage: { credits_deducted, credits_remaining } } }, or
+// { status: 'VEHICLE_NOT_FOUND' (HTTP 404) | 'INVALID_API_KEY' | ..., data: [] }. Basic details only:
+// no insurance / fitness / tax dates, and the engine number comes masked (so it is left out).
+const API7_URL = 'https://clients.vehicleinfo.online/api.php'
+const API7_USAGE_PROVIDER = 'vehicleinfoapi7'
+const API7_LOW_CREDITS = Number(process.env.VEHICLE_INFO_API7_LOW_CREDITS_ALERT) || 50
+// A status that means our key / account is the problem, not the vehicle number
+const API7_ACCOUNT_ERROR = /key|credit|balance|limit|expired|block|suspend|unauthori[sz]ed|forbidden|plan|recharge/i
+
+// API 1 field <- API 7 vehicle_info field
+const API7_FIELDS = {
+  REGN_NO: 'registrationNo',
+  OWNER_NAME: 'owner',
+  PRESENT_ADDRESS: 'address',
+  CHASI_NO: 'chassisNo',
+  ENG_NO: 'engineNo',
+  REGN_DT: 'registrationDate',
+  MAKER_DESC: 'make',
+  MAKER_MODEL: 'model',
+  FUEL_DESC: 'fuel',
+  REGISTERED_AT: 'rto',
+  BODY_TYPE_DESC: 'bodyType',
+  CUBIC_CAPACITY: 'cubicCapacity',
+  SEATING_CAPACITY: 'seatingCapacity',
+  FINANCER_DETAILS: 'financier',
+  POLICY_NO: 'policyNo',
+  INS_POLICY_NO: 'policyNo',
+  PUCC_NO: 'pucNo',
+  PUCC_UPTO: 'pucValidTill',
+  PUC_UPTO: 'pucValidTill'
+}
+
+const mapApi7Fields = (info, mobileLookup) => {
+  const data = {}
+  for (const [field, name] of Object.entries(API7_FIELDS)) {
+    const value = info[name]
+    // isReal drops blanks and masked values (engineNo 'J3A5FMS20*****')
+    if (!isReal(value)) continue
+    data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
+  }
+  const mobile = mobileLookup && typeof mobileLookup === 'object' ? mobileLookup.mobile_number : undefined
+  if (isReal(mobile)) data.MOBILE_NO = String(mobile).trim()
+  const variant = isReal(info.variant) ? String(info.variant).trim() : ''
+  if (data.MAKER_MODEL && variant && !String(data.MAKER_MODEL).includes(variant)) data.MAKER_MODEL = `${data.MAKER_MODEL} ${variant}`
+  // 'CG12' -> state CG, RTO 12 (as API 2 sends it)
+  const rto = String(info.rtoCode || data.REGN_NO || '').match(/^([A-Za-z]{2})-?(\d+)/)
+  if (rto) {
+    data.STATE_CD = rto[1].toUpperCase()
+    data.RTO_CD = rto[2]
+  }
+  if (data.REGISTERED_AT && !/rto/i.test(data.REGISTERED_AT)) data.REGISTERED_AT = `${data.REGISTERED_AT} RTO`
+  if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
+    data.CUBIC_CAPACITY = Number(data.CUBIC_CAPACITY).toFixed(2)
+  }
+  for (const field of ['REGN_DT', 'PUCC_UPTO', 'PUC_UPTO']) if (data[field]) data[field] = toApi1Date(data[field])
+  return data
+}
+
+// Every successful API 7 reply has api_usage.credits_remaining; keep it for the admin panel and alert
+// when it runs low. Never throws.
+const recordApi7Usage = async (usage, { vehicleNumber, userId } = {}) => {
+  const remaining = toNumber(usage?.credits_remaining)
+  if (remaining === undefined) return
+  const snapshot = { checkedAt: new Date(), remaining }
+  const charge = toNumber(usage.credits_deducted)
+  if (charge !== undefined) snapshot.lastCharge = charge
+  if (vehicleNumber) snapshot.lastVehicleNumber = vehicleNumber
+  if (userId) snapshot.lastUserId = userId
+  try {
+    await ApiUsage.findOneAndUpdate({ provider: API7_USAGE_PROVIDER }, { $set: snapshot }, { upsert: true, setDefaultsOnInsert: true })
+  } catch (err) {
+    console.error('Failed to record API 7 usage:', err.message)
+  }
+  if (remaining <= API7_LOW_CREDITS) {
+    await raiseAlert({
+      key: 'api7:low-balance',
+      severity: remaining <= 0 ? 'critical' : 'warning',
+      source: 'api7',
+      code: 'LOW_BALANCE',
+      title: remaining <= 0 ? 'API 7: no credits left' : 'API 7: credits running low',
+      message: `${remaining} credit${remaining === 1 ? '' : 's'} left on vehicleinfo.online (API 7). Recharge before searches start failing.`,
+      vehicleNumber,
+      userId
+    })
+  } else {
+    await autoResolveAlerts('api7:low-balance')
+  }
+}
+
+const fetchFromApi7 = async (vehicleNumber, { userId } = {}) => {
+  const apiKey = process.env.VEHICLE_INFO_API7_KEY
+  if (!apiKey) throw new Error('API 7 is not set up (VEHICLE_INFO_API7_KEY)')
+
+  const response = await axios.get(process.env.VEHICLE_INFO_API7_URL || API7_URL, {
+    params: { number: vehicleNumber, key: apiKey },
+    timeout: Number(process.env.VEHICLE_INFO_API7_TIMEOUT_MS) || 30000,
+    validateStatus: (status) => status < 500,
+    headers: { Accept: 'application/json' }
+  })
+
+  let raw = response.data
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw)
+    } catch (err) {
+      raw = null
+    }
+  }
+  const status = String(raw?.status || '').trim()
+  const body = raw?.data && typeof raw.data === 'object' && !Array.isArray(raw.data) ? raw.data : null
+  if (body) await recordApi7Usage(body.api_usage, { vehicleNumber, userId })
+
+  if (!/^success$/i.test(status) || !body) {
+    if ([401, 402, 403, 429].includes(response.status) || (!/not.?found/i.test(status) && API7_ACCOUNT_ERROR.test(status))) {
+      throw new ProviderError(`API 7 refused the request: HTTP ${response.status} ${status}`.trim(), status || `HTTP_${response.status}`)
+    }
+    const message = /invalid.*(vehicle|number)/i.test(status)
+      ? 'Invalid vehicle number. Please check registration number.'
+      : 'Vehicle details not found. Please check registration number.'
+    return { found: false, charged: null, message }
+  }
+
+  const info = body.vehicle_info && typeof body.vehicle_info === 'object' ? body.vehicle_info : null
+  const data = info ? mapApi7Fields(info, body.mobile_lookup) : null
+  if (!data || !hasVehicleDetails(data)) {
+    return { found: false, charged: null, message: 'Vehicle details not found. Please check registration number.' }
+  }
+  if (!data.REGN_NO) data.REGN_NO = vehicleNumber
+  return { found: true, data: toApi1Reply(data), charged: null }
+}
+
 // API 5 HSRP: GET /v1/hsrp?number=<no> with the same key. data is
 // { status, regno, chassis, engine, hsrp_response: { message, fuel, maker, vchType, norms, vchCatg, regnDate,
 //   hsrpFrontLaserCode, hsrpRearLaserCode, stateCd, offCd, ... } }, sent on as it is.
@@ -1038,7 +1175,8 @@ const alertCodeOf = (err) => {
 }
 
 /**
- * One live lookup at a vehicle info provider: API 5 unless `provider` says 'api2', 'api3' or 'api4'.
+ * One live lookup at a vehicle info provider: API 5 unless `provider` says 'api2', 'api3', 'api4' or
+ * 'api7', or a combined source (COMBINED: 'api24', 'api32', 'api47').
  * Resolves to { found: true, data, charged } or { found: false, message, charged }, where
  * `charged` says whether the provider used one of our credits (null when it did not say).
  * When the provider fails (down, timeout, 5xx, bad key, empty wallet) an admin alert is raised
@@ -1107,6 +1245,23 @@ const COMBINED = {
     extra: 'api2',
     groups: [['MOBILE_NO']],
     fillGaps: false
+  },
+  // Transport advanced: PeriOne (API 4) has the latest insurance / PUC / tax / fitness / permit for
+  // transport vehicles but no owner, mobile, chassis or engine; API 7 has those basic details.
+  // PeriOne is asked first and API 7 only when PeriOne found the vehicle (a private vehicle, a miss or
+  // a PeriOne failure never spends an API 7 credit). Every field PeriOne left empty comes from API 7,
+  // except within a group PeriOne has the date for, so an API 7 PUC number never sits next to a
+  // PeriOne PUC date.
+  api47: {
+    base: 'api4',
+    extra: 'api7',
+    sequential: true,
+    groups: [],
+    keepBaseGroups: [
+      ['INSURANCE_UPTO', 'INSURANCE_COMP', 'POLICY_NO', 'INS_POLICY_NO'],
+      ['PUCC_UPTO', 'PUC_UPTO', 'PUCC_NO']
+    ],
+    fillGaps: true
   }
 }
 const filled = (value) => value !== undefined && value !== null && value !== '' && value !== 'NA'
@@ -1118,7 +1273,9 @@ const settle = (promise) => promise.then(
 
 // With `extraWaitMs`, once `base` has the vehicle `extra` gets at most that long more (ms), so a slow
 // extra never holds the reply back: the user then gets `base`'s record alone
-const fetchCombined = async (vehicleNumber, { base, extra, groups, fillGaps, extraWaitMs }, { userId, via } = {}) => {
+const fetchCombined = async (vehicleNumber, config, { userId, via } = {}) => {
+  if (config.sequential) return fetchSequential(vehicleNumber, config, { userId, via })
+  const { base, extra, groups, fillGaps, extraWaitMs } = config
   const asked = settle(lookupOne(extra, vehicleNumber, { userId, via }))
   const first = await settle(lookupOne(base, vehicleNumber, { userId, via }))
   let timer
@@ -1149,11 +1306,35 @@ const fetchCombined = async (vehicleNumber, { base, extra, groups, fillGaps, ext
   return { found: true, data, charged: main.charged }
 }
 
+// `base` first; `extra` only when `base` found the vehicle. `base` finding nothing or failing is the
+// answer (its "not found", or "unavailable"); `extra` finding nothing or failing sends `base`'s record alone.
+const fetchSequential = async (vehicleNumber, { base, extra, groups = [], keepBaseGroups = [], fillGaps }, { userId, via } = {}) => {
+  const main = await lookupOne(base, vehicleNumber, { userId, via })
+  if (!main.found) return main
+
+  const second = await settle(lookupOne(extra, vehicleNumber, { userId, via }))
+  const more = second.status === 'fulfilled' && second.value.found ? second.value : null
+  if (!more) return main
+
+  const data = { ...main.data }
+  for (const group of groups) {
+    if (filled(more.data[group[0]])) for (const field of group) data[field] = more.data[field]
+  }
+  const kept = new Set(keepBaseGroups.filter((group) => filled(main.data[group[0]])).flat())
+  if (fillGaps) {
+    for (const field of API1_FIELDS) {
+      if (!kept.has(field) && !filled(data[field]) && filled(more.data[field])) data[field] = more.data[field]
+    }
+  }
+  return { found: true, data, charged: main.charged }
+}
+
 const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
   if (provider === 'api2') return fetchFromApi2(vehicleNumber, { userId })
   if (provider === 'api3') return fetchFromApi3(vehicleNumber, { userId })
   if (provider === 'api4') return fetchFromApi4(vehicleNumber)
+  if (provider === 'api7') return fetchFromApi7(vehicleNumber, { userId })
   return fetchFromApi5(vehicleNumber, { userId })
 }
 
-module.exports = { fetchVehicleInfo, fetchHsrpInfo, fetchChassisInfo, cleanVehicleNumber, cleanChassisNumber, cleanEngineNumber, chassisProvider, chassisNeedsEngine, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, mapApi2Fields }
+module.exports = { fetchVehicleInfo, fetchHsrpInfo, fetchChassisInfo, cleanVehicleNumber, cleanChassisNumber, cleanEngineNumber, chassisProvider, chassisNeedsEngine, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, API7_USAGE_PROVIDER, COMBINED, mapApi2Fields, mapApi7Fields }

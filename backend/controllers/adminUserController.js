@@ -9,7 +9,7 @@ const crypto = require('crypto')
 const { logError, getUserFriendlyError, getSimplifiedTimestamp } = require('../utils/errorLogger')
 const { recordActivity, snapshot, diffSnapshots } = require('../utils/activityLog')
 const { backupAndCleanUserData } = require('../utils/userDataClean')
-const { PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
+const { PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, API7_USAGE_PROVIDER } = require('../utils/vehicleInfoProvider')
 
 // '' / null clears a money field, a number >= 0 sets it, anything else is ignored (returns false)
 const parseMoney = (value) => {
@@ -891,6 +891,8 @@ exports.getUserStatistics = async (req, res) => {
     const rcApi4Users = await User.countDocuments({ rcProvider: 'api4' })
     const rcApi24Users = await User.countDocuments({ rcProvider: 'api24' })
     const rcApi32Users = await User.countDocuments({ rcProvider: 'api32' })
+    const rcApi7Users = await User.countDocuments({ rcProvider: 'api7' })
+    const rcApi47Users = await User.countDocuments({ rcProvider: 'api47' })
     // Plan fee (lifetime fee or yearly price) against the money received
     const [fees] = await User.aggregate([
       {
@@ -920,11 +922,13 @@ exports.getUserStatistics = async (req, res) => {
         active: activeUsers,
         inactive: inactiveUsers,
         rcApi5: rcApi5Users,
-        rcApi2: totalUsers - rcApi5Users - rcApi3Users - rcApi4Users - rcApi24Users - rcApi32Users,
+        rcApi2: totalUsers - rcApi5Users - rcApi3Users - rcApi4Users - rcApi24Users - rcApi32Users - rcApi7Users - rcApi47Users,
         rcApi3: rcApi3Users,
         rcApi4: rcApi4Users,
         rcApi24: rcApi24Users,
         rcApi32: rcApi32Users,
+        rcApi7: rcApi7Users,
+        rcApi47: rcApi47Users,
         fees: {
           totalFee: fees?.totalFee || 0,
           paidAmount: fees?.paidAmount || 0,
@@ -1313,6 +1317,17 @@ exports.getRcApiUsage = async (req, res) => {
         }
       : null
 
+    // API 7 (vehicleinfo.online): credits left, from its last reply
+    const api7 = await ApiUsage.findOne({ provider: API7_USAGE_PROVIDER }).lean()
+    const api7Usage = api7
+      ? {
+          remaining: api7.remaining ?? null,
+          lastCharge: api7.lastCharge ?? null,
+          checkedAt: api7.checkedAt || api7.updatedAt || null,
+          lastVehicleNumber: api7.lastVehicleNumber || null
+        }
+      : null
+
     // Searches still promised to users who have the RC Details feature switched on
     const [allocation] = await User.aggregate([
       { $match: { 'features.rcDetails': true } },
@@ -1340,6 +1355,7 @@ exports.getRcApiUsage = async (req, res) => {
         hsrpUsage,
         hsrpAllocation: { users: hsrpAllocation?.users || 0, allocatedRemaining: hsrpAllocation?.allocatedRemaining || 0 },
         api3Usage,
+        api7Usage,
         chassisUsage,
         chassisAllocation: { users: chassisAllocation?.users || 0, allocatedRemaining: chassisAllocation?.allocatedRemaining || 0 },
         allocation: {
