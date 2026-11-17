@@ -204,7 +204,7 @@ const Api7Card = ({ usage, loading, error }) => {
   return (
     <div className='bg-white rounded-xl p-4 shadow-sm border border-gray-100'>
       <p className='text-xs text-gray-500 font-semibold uppercase tracking-wide'>API 7 Credits</p>
-      <p className='text-[11px] text-gray-400 mt-0.5'>Telegram basic details · vehicleinfo.online (also used by PeriOne + API 7)</p>
+      <p className='text-[11px] text-gray-400 mt-0.5'>Telegram basic details · vehicleinfo.online (also used by PeriOne + API 7 (transport advanced))</p>
       {error ? (
         <p className='text-sm text-red-600 mt-3'>{error}</p>
       ) : loading ? (

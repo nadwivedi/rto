@@ -246,7 +246,7 @@ const ApiKeys = () => {
           <div>
             <p className='text-sm font-semibold text-gray-800'>Vehicle data source for all Vehicle RC keys</p>
             <p className='text-xs text-gray-500 mt-0.5'>
-              {formatNumber(totals.api5 || 0)} on API 5 · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on Parzival API · {formatNumber(totals.api4 || 0)} on PeriOne API (transport only) · {formatNumber(totals.api24 || 0)} on API 2 + 4 · {formatNumber(totals.api32 || 0)} on API 3 + 2 · {formatNumber(totals.api7 || 0)} on API 7 · {formatNumber(totals.api47 || 0)} on PeriOne + API 7. Switch every key at once when one API is down.
+              {formatNumber(totals.api5 || 0)} on API 5 · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on Parzival API · {formatNumber(totals.api4 || 0)} on PeriOne API (transport only) · {formatNumber(totals.api24 || 0)} on API 2 + 4 · {formatNumber(totals.api32 || 0)} on API 3 + 2 · {formatNumber(totals.api7 || 0)} on API 7 · {formatNumber(totals.api47 || 0)} on PeriOne + API 7 (transport advanced). Switch every key at once when one API is down.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>

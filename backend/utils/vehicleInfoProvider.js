@@ -38,7 +38,7 @@ const PROVIDERS = {
   // Basic details (owner, address, chassis, mobile, PUC, policy no) from vehicleinfo.online
   api7: 'API 7 – Telegram basic details',
   // PeriOne first; only when it has the vehicle, API 7 fills in owner / mobile / chassis / address
-  api47: 'PeriOne + API 7 (basic) – transport advanced'
+  api47: 'PeriOne + API 7 (transport advanced)'
 }
 
 // The fields every reply has, in the order the old API 1 used (API 5 sends the same names). Every

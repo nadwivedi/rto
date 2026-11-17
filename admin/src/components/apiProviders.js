@@ -12,7 +12,7 @@ export const PROVIDER_OPTIONS = [
   // Basic details only (owner, address, chassis, mobile, PUC, policy no); no insurance / fitness / tax dates
   { value: 'api7', label: 'API 7 – Telegram basic details', short: 'API 7', tag: 'bg-rose-50 text-rose-700 border-rose-200', button: 'hover:bg-rose-100' },
   // PeriOne first; API 7 is called only when PeriOne has the vehicle (transport vehicles only)
-  { value: 'api47', label: 'PeriOne + API 7 (basic) – transport advanced', short: 'PeriOne + API 7', tag: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200', button: 'hover:bg-fuchsia-100' }
+  { value: 'api47', label: 'PeriOne + API 7 (transport advanced)', short: 'PeriOne + API 7 (transport advanced)', tag: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200', button: 'hover:bg-fuchsia-100' }
 ]
 
 // `fallback` is the source used when none is saved: API 5 for keys, API 2 for users

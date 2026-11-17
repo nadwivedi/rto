@@ -1097,7 +1097,7 @@ const Users = () => {
           <div>
             <p className='text-sm font-semibold text-gray-800'>RC Details API for app users</p>
             <p className='text-xs text-gray-500 mt-0.5'>
-              {stats.rcApi5 || 0} on API 5 · {stats.rcApi2 ?? stats.total} on API 2 · {stats.rcApi3 || 0} on Parzival API · {stats.rcApi4 || 0} on PeriOne API (transport only) · {stats.rcApi24 || 0} on API 2 + 4 · {stats.rcApi32 || 0} on API 3 + 2 · {stats.rcApi7 || 0} on API 7 · {stats.rcApi47 || 0} on PeriOne + API 7. Switch every user at once when one API is down, or change one user in Edit.
+              {stats.rcApi5 || 0} on API 5 · {stats.rcApi2 ?? stats.total} on API 2 · {stats.rcApi3 || 0} on Parzival API · {stats.rcApi4 || 0} on PeriOne API (transport only) · {stats.rcApi24 || 0} on API 2 + 4 · {stats.rcApi32 || 0} on API 3 + 2 · {stats.rcApi7 || 0} on API 7 · {stats.rcApi47 || 0} on PeriOne + API 7 (transport advanced). Switch every user at once when one API is down, or change one user in Edit.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>
