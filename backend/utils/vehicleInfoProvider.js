@@ -443,15 +443,36 @@ const recordApi3Usage = async (meta, { vehicleNumber, userId, api = 'rc' } = {})
   }
 }
 
+// ParzivalHub's own data source sometimes fails for a moment and answers 502 UPSTREAM_ERROR
+// ("You have not been charged — please retry shortly"), or 503 / 504. Those calls are free, so they
+// are asked again a couple of times before the lookup counts as failed. A timeout is not retried
+// (the user has already waited 30s).
+const API3_RETRY_DELAYS_MS = (process.env.API3_RETRY_DELAYS_MS || '2000,4000')
+  .split(',').map(Number).filter((n) => Number.isFinite(n) && n >= 0)
+const isApi3Temporary = (err) => [502, 503, 504].includes(err?.response?.status)
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+const postToApi3 = async (url, body, apiKey) => {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await axios.post(url, body, {
+        timeout: 30000,
+        validateStatus: (status) => status < 500,
+        headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', Accept: 'application/json' }
+      })
+    } catch (err) {
+      if (!isApi3Temporary(err) || attempt >= API3_RETRY_DELAYS_MS.length) throw err
+      console.warn(`[API 3] ${url.split('/').pop()} HTTP ${err.response.status} ${err.response.data?.error?.code || ''} - retry ${attempt + 1}/${API3_RETRY_DELAYS_MS.length}`)
+      await sleep(API3_RETRY_DELAYS_MS[attempt])
+    }
+  }
+}
+
 const fetchFromApi3 = async (vehicleNumber, { userId } = {}) => {
   const apiKey = process.env.PARZIVAL_API_KEY
   if (!apiKey) throw new Error('API 3 is not set up (PARZIVAL_API_KEY)')
 
-  const response = await axios.post(API3_URL, { vehicle_number: vehicleNumber }, {
-    timeout: 30000,
-    validateStatus: (status) => status < 500,
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', Accept: 'application/json' }
-  })
+  const response = await postToApi3(API3_URL, { vehicle_number: vehicleNumber }, apiKey)
 
   const raw = response.data
   // Recorded before the error checks so a "not found" reply still updates the wallet
@@ -519,12 +540,8 @@ const fetchChassisFromApi3 = async (chassisNumber, { userId } = {}) => {
   const apiKey = process.env.PARZIVAL_API_KEY
   if (!apiKey) throw new Error('API 3 is not set up (PARZIVAL_API_KEY)')
 
-  // 502 / 503 / 504 (their source down or slow) are thrown by axios like a network error
-  const response = await axios.post(API3_CHASSIS_URL, { chassis_number: chassisNumber }, {
-    timeout: 30000,
-    validateStatus: (status) => status < 500,
-    headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json', Accept: 'application/json' }
-  })
+  // 502 / 503 / 504 (their source down or slow) are retried, then thrown like a network error
+  const response = await postToApi3(API3_CHASSIS_URL, { chassis_number: chassisNumber }, apiKey)
 
   const raw = response.data
   await recordApi3Usage(raw?.meta, { vehicleNumber: chassisNumber, userId, api: 'chassis' })
