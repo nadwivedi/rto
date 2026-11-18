@@ -893,6 +893,7 @@ exports.getUserStatistics = async (req, res) => {
     const rcApi32Users = await User.countDocuments({ rcProvider: 'api32' })
     const rcApi7Users = await User.countDocuments({ rcProvider: 'api7' })
     const rcApi47Users = await User.countDocuments({ rcProvider: 'api47' })
+    const rcApi8Users = await User.countDocuments({ rcProvider: 'api8' })
     // Plan fee (lifetime fee or yearly price) against the money received
     const [fees] = await User.aggregate([
       {
@@ -922,13 +923,14 @@ exports.getUserStatistics = async (req, res) => {
         active: activeUsers,
         inactive: inactiveUsers,
         rcApi5: rcApi5Users,
-        rcApi2: totalUsers - rcApi5Users - rcApi3Users - rcApi4Users - rcApi24Users - rcApi32Users - rcApi7Users - rcApi47Users,
+        rcApi2: totalUsers - rcApi5Users - rcApi3Users - rcApi4Users - rcApi24Users - rcApi32Users - rcApi7Users - rcApi47Users - rcApi8Users,
         rcApi3: rcApi3Users,
         rcApi4: rcApi4Users,
         rcApi24: rcApi24Users,
         rcApi32: rcApi32Users,
         rcApi7: rcApi7Users,
         rcApi47: rcApi47Users,
+        rcApi8: rcApi8Users,
         fees: {
           totalFee: fees?.totalFee || 0,
           paidAmount: fees?.paidAmount || 0,

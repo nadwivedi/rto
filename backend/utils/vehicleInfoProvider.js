@@ -38,7 +38,9 @@ const PROVIDERS = {
   // Basic details (owner, address, chassis, mobile, PUC, policy no) from vehicleinfo.online
   api7: 'API 7 – Telegram basic details',
   // PeriOne first; only when it has the vehicle, API 7 fills in owner / mobile / chassis / address
-  api47: 'PeriOne + API 7 (transport advanced)'
+  api47: 'PeriOne + API 7 (transport advanced)',
+  // Full RC record (owner, mobile, chassis, engine, insurance, PUC, tax, permit) from Satmat RC Verification Plus
+  api8: 'API 8 – Satmat API'
 }
 
 // The fields every reply has, in the order the old API 1 used (API 5 sends the same names). Every
@@ -1053,6 +1055,155 @@ const fetchFromApi7 = async (vehicleNumber, { userId } = {}) => {
   return { found: true, data: toApi1Reply(data), charged: null }
 }
 
+// API 8 (Satmat API, RC Verification Plus): POST <SATMAT_API8_URL> with JSON { member_id, member_password,
+// reference_number (unique per request), vehicle_number }. Satmat only answers from the server IPs it
+// has whitelisted. It replies { status: true, message: 'RC Verification Success', data: { result: { reg_no,
+// owner_name, chassis, engine, ... }, result_code: 101, http_response_code: 200 } }, or status false with
+// data.result_code 102 (invalid data) / 103 (no record) / 104 (too many responses), or an HTTP error:
+// 401 bad credentials / IP / no production access, 403 service not enabled, 409 empty wallet or a
+// duplicate reference_number, 422 / 400 bad input, 503 source busy.
+const API8_URL = 'https://satmatapi.com/public/uat_verify_v2/uat-rc-verification'
+
+// API 1 field <- API 8 result field (first one with a real value wins)
+const API8_FIELDS = {
+  REGN_NO: ['reg_no'],
+  REGN_DT: ['reg_date'],
+  REGN_UPTO: ['rc_expiry_date'],
+  OWNER_NAME: ['owner_name'],
+  F_NAME: ['owner_father_name'],
+  PRESENT_ADDRESS: ['present_address'],
+  PERMANENT_ADDRESS: ['permanent_address'],
+  MOBILE_NO: ['mobile_number'],
+  CHASI_NO: ['chassis'],
+  ENG_NO: ['engine'],
+  MAKER_DESC: ['vehicle_manufacturer_name'],
+  MAKER_MODEL: ['model'],
+  BODY_TYPE_DESC: ['body_type'],
+  FUEL_DESC: ['type'],
+  COLOR: ['vehicle_colour'],
+  FIT_UPTO: ['fit_up_to', 'fitness_upto', 'fit_upto', 'rc_fit_upto'],
+  INSURANCE_COMP: ['vehicle_insurance_company_name'],
+  INSURANCE_UPTO: ['vehicle_insurance_upto'],
+  MANU_MONTH_YR: ['vehicle_manufacturing_month_year'],
+  POLICY_NO: ['vehicle_insurance_policy_number'],
+  INS_POLICY_NO: ['vehicle_insurance_policy_number'],
+  PUC_UPTO: ['pucc_upto'],
+  PUCC_UPTO: ['pucc_upto'],
+  PUCC_NO: ['pucc_number'],
+  FINANCER_DETAILS: ['rc_financer'],
+  PERMIT_NO: ['permit_number'],
+  PERMIT_ISSUE_DATE: ['permit_issue_date'],
+  PERMIT_TYPE: ['permit_type'],
+  PERMIT_VALID_FROM: ['permit_valid_from'],
+  PERMIT_VALID_UPTO: ['permit_valid_upto'],
+  RC_NP_NO: ['national_permit_number'],
+  REGISTERED_AT: ['reg_authority'],
+  STATUS_AS_ON: ['status_as_on'],
+  STATUS: ['status'],
+  VEHICLE_CLASS: ['class'],
+  VEHICLE_CATEGORY: ['vehicle_category'],
+  SEATING_CAPACITY: ['vehicle_seat_capacity'],
+  SLEEPER_CAPACITY: ['vehicle_sleeper_capacity'],
+  STANDING_CAPACITY: ['vehicle_standing_capacity'],
+  OWNER_SERIAL_NO: ['owner_count'],
+  UNLADEN_WEIGHT: ['unladen_weight'],
+  LADEN_WEIGHT: ['gross_vehicle_weight'],
+  WHEELBASE: ['wheelbase'],
+  NO_OF_CYLINDERS: ['vehicle_cylinders_no'],
+  CUBIC_CAPACITY: ['vehicle_cubic_capacity'],
+  FUEL_NORMS: ['norms_type'],
+  TAX_UPTO: ['vehicle_tax_upto'],
+  BLACKLIST_STATUS: ['blacklist_status'],
+  NOC_DETAILS: ['noc_details'],
+  IS_COMMERCIAL: ['is_commercial']
+}
+const API8_DATE_FIELDS = [...API2_DATE_FIELDS, 'STATUS_AS_ON']
+// A message that means our account / setup is the problem, not the vehicle number
+const API8_ACCOUNT_ERROR = /credential|ip address|production access|not enabled|wallet|balance|duplicate/i
+
+const mapApi8Fields = (result) => {
+  const data = {}
+  for (const [field, names] of Object.entries(API8_FIELDS)) {
+    const value = names.map((n) => result[n]).find((v) => isReal(v) && typeof v !== 'object')
+    if (value !== undefined) data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
+  }
+  if (typeof data.IS_COMMERCIAL === 'boolean' || /^(true|false)$/i.test(String(data.IS_COMMERCIAL ?? ''))) {
+    data.IS_COMMERCIAL = String(data.IS_COMMERCIAL).toUpperCase()
+  }
+  // 'MH03XU9999' / 'MH-03' -> state MH, RTO 03 (rto_code is often empty)
+  const rto = String(isReal(result.rto_code) ? result.rto_code : data.REGN_NO || '').match(/^([A-Za-z]{2})-?(\d+)/)
+  if (rto) {
+    data.STATE_CD = rto[1].toUpperCase()
+    data.RTO_CD = rto[2]
+  }
+  const pincode = result.split_present_address?.pincode
+  if (isReal(pincode) && typeof pincode !== 'object') data.CURRENTADD_PINCODE = String(pincode).trim()
+  // Satmat sends financed: true with no financer name for some vehicles
+  if (!data.FINANCER_DETAILS && result.financed === true) data.FINANCER_DETAILS = 'Financed'
+  if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
+    data.CUBIC_CAPACITY = Number(data.CUBIC_CAPACITY).toFixed(2)
+  }
+  // '1/2025' -> '01/2025'
+  const mfg = String(data.MANU_MONTH_YR || '').match(/^(\d{1,2})\/(\d{4})$/)
+  if (mfg) data.MANU_MONTH_YR = `${mfg[1].padStart(2, '0')}/${mfg[2]}`
+  // Satmat dates are '14-02-2025' (dd-mm-yyyy) -> '14-Feb-2025'
+  for (const field of API8_DATE_FIELDS) {
+    if (!data[field]) continue
+    const dmy = String(data[field]).trim().match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/)
+    data[field] = toApi1Date(dmy ? `${dmy[1].padStart(2, '0')}/${dmy[2].padStart(2, '0')}/${dmy[3]}` : data[field])
+  }
+  return data
+}
+
+// A unique reference_number for every request (Satmat refuses a repeated one with 409)
+const api8Reference = () => `RTOS${Date.now()}${Math.floor(Math.random() * 1e6).toString().padStart(6, '0')}`
+
+const fetchFromApi8 = async (vehicleNumber) => {
+  const memberId = process.env.SATMAT_MEMBER_ID
+  const memberPassword = process.env.SATMAT_MEMBER_PASSWORD
+  if (!memberId || !memberPassword) throw new Error('API 8 is not set up (SATMAT_MEMBER_ID, SATMAT_MEMBER_PASSWORD)')
+
+  const response = await axios.post(process.env.SATMAT_API8_URL || API8_URL, {
+    member_id: memberId,
+    member_password: memberPassword,
+    reference_number: api8Reference(),
+    vehicle_number: vehicleNumber
+  }, {
+    timeout: Number(process.env.SATMAT_API8_TIMEOUT_MS) || 30000,
+    validateStatus: (status) => status < 500,
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' }
+  })
+
+  const raw = response.data && typeof response.data === 'object' ? response.data : null
+  const message = String(raw?.message || '').trim()
+  const body = raw?.data && typeof raw.data === 'object' ? raw.data : raw?.result && typeof raw.result === 'object' ? raw.result : null
+  const resultCode = Number(body?.result_code)
+
+  if ([401, 402, 403, 409, 429].includes(response.status) || API8_ACCOUNT_ERROR.test(message)) {
+    const code = /wallet|balance/i.test(message) ? 'INSUFFICIENT_BALANCE' : `HTTP_${response.status}`
+    throw new ProviderError(`API 8 refused the request: HTTP ${response.status} ${message}`.trim(), code)
+  }
+  // 104 'Too many responses' is Satmat's problem, not a missing vehicle
+  if (resultCode === 104) throw new ProviderError(`API 8 refused the request: ${message || 'Too many responses'} (104)`, 'RESULT_104')
+
+  const result = raw?.status === true && body?.result && typeof body.result === 'object' ? body.result : null
+  if (!result) {
+    const invalid = [400, 422].includes(response.status) || resultCode === 102
+    return {
+      found: false,
+      charged: null,
+      message: invalid ? 'Invalid vehicle number. Please check registration number.' : 'Vehicle details not found. Please check registration number.'
+    }
+  }
+
+  const data = mapApi8Fields(result)
+  if (!hasVehicleDetails(data)) {
+    return { found: false, charged: null, message: 'Vehicle details not found. Please check registration number.' }
+  }
+  if (!data.REGN_NO) data.REGN_NO = vehicleNumber
+  return { found: true, data: toApi1Reply(data), charged: null }
+}
+
 // API 5 HSRP: GET /v1/hsrp?number=<no> with the same key. data is
 // { status, regno, chassis, engine, hsrp_response: { message, fuel, maker, vchType, norms, vchCatg, regnDate,
 //   hsrpFrontLaserCode, hsrpRearLaserCode, stateCd, offCd, ... } }, sent on as it is.
@@ -1176,7 +1327,7 @@ const alertCodeOf = (err) => {
 
 /**
  * One live lookup at a vehicle info provider: API 5 unless `provider` says 'api2', 'api3', 'api4' or
- * 'api7', or a combined source (COMBINED: 'api24', 'api32', 'api47').
+ * 'api7' or 'api8', or a combined source (COMBINED: 'api24', 'api32', 'api47').
  * Resolves to { found: true, data, charged } or { found: false, message, charged }, where
  * `charged` says whether the provider used one of our credits (null when it did not say).
  * When the provider fails (down, timeout, 5xx, bad key, empty wallet) an admin alert is raised
@@ -1332,7 +1483,8 @@ const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
   if (provider === 'api3') return fetchFromApi3(vehicleNumber, { userId })
   if (provider === 'api4') return fetchFromApi4(vehicleNumber)
   if (provider === 'api7') return fetchFromApi7(vehicleNumber, { userId })
+  if (provider === 'api8') return fetchFromApi8(vehicleNumber)
   return fetchFromApi5(vehicleNumber, { userId })
 }
 
-module.exports = { fetchVehicleInfo, fetchHsrpInfo, fetchChassisInfo, cleanVehicleNumber, cleanChassisNumber, cleanEngineNumber, chassisProvider, chassisNeedsEngine, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, API7_USAGE_PROVIDER, COMBINED, mapApi2Fields, mapApi7Fields }
+module.exports = { fetchVehicleInfo, fetchHsrpInfo, fetchChassisInfo, cleanVehicleNumber, cleanChassisNumber, cleanEngineNumber, chassisProvider, chassisNeedsEngine, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, API7_USAGE_PROVIDER, COMBINED, mapApi2Fields, mapApi7Fields, mapApi8Fields }

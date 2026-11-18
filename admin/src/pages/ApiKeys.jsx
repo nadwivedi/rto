@@ -246,12 +246,12 @@ const ApiKeys = () => {
           <div>
             <p className='text-sm font-semibold text-gray-800'>Vehicle data source for all Vehicle RC keys</p>
             <p className='text-xs text-gray-500 mt-0.5'>
-              {formatNumber(totals.api5 || 0)} on API 5 · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on Parzival API · {formatNumber(totals.api4 || 0)} on PeriOne API (transport only) · {formatNumber(totals.api24 || 0)} on API 2 + 4 · {formatNumber(totals.api32 || 0)} on API 3 + 2 · {formatNumber(totals.api7 || 0)} on API 7 · {formatNumber(totals.api47 || 0)} on PeriOne + API 7 (transport advanced). Switch every key at once when one API is down.
+              {formatNumber(totals.api5 || 0)} on API 5 · {formatNumber(totals.api2 || 0)} on API 2 · {formatNumber(totals.api3 || 0)} on Parzival API · {formatNumber(totals.api4 || 0)} on PeriOne API (transport only) · {formatNumber(totals.api24 || 0)} on API 2 + 4 · {formatNumber(totals.api32 || 0)} on API 3 + 2 · {formatNumber(totals.api7 || 0)} on API 7 · {formatNumber(totals.api47 || 0)} on PeriOne + API 7 (transport advanced) · {formatNumber(totals.api8 || 0)} on API 8 (Satmat). Switch every key at once when one API is down.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>
             {PROVIDER_OPTIONS.map((p) => {
-              const counts = { api5: totals.api5 || 0, api2: totals.api2 || 0, api3: totals.api3 || 0, api4: totals.api4 || 0, api24: totals.api24 || 0, api32: totals.api32 || 0, api7: totals.api7 || 0, api47: totals.api47 || 0 }
+              const counts = { api5: totals.api5 || 0, api2: totals.api2 || 0, api3: totals.api3 || 0, api4: totals.api4 || 0, api24: totals.api24 || 0, api32: totals.api32 || 0, api7: totals.api7 || 0, api47: totals.api47 || 0, api8: totals.api8 || 0 }
               const already = counts[p.value] === totals.keys - (totals.chassisKeys || 0)
               return (
                 <button
