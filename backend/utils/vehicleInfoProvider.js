@@ -1064,68 +1064,143 @@ const fetchFromApi7 = async (vehicleNumber, { userId } = {}) => {
 // duplicate reference_number, 422 / 400 bad input, 503 source busy.
 const API8_URL = 'https://satmatapi.com/public/apiPrdtSg/verify-rc'
 
-// API 1 field <- API 8 result field (first one with a real value wins)
+// API 1 field <- API 8 result field (first one with a real value wins). Names are matched in lower case,
+// and fields inside nested objects (e.g. permit_details: { permit_number }) count too, so a reply that
+// uses other names than the UAT document still fills make, model, permit and the rest.
 const API8_FIELDS = {
-  REGN_NO: ['reg_no'],
-  REGN_DT: ['reg_date'],
-  REGN_UPTO: ['rc_expiry_date'],
-  OWNER_NAME: ['owner_name'],
-  F_NAME: ['owner_father_name'],
-  PRESENT_ADDRESS: ['present_address'],
+  REGN_NO: ['reg_no', 'regn_no', 'registration_number', 'rc_number', 'vehicle_number'],
+  REGN_DT: ['reg_date', 'regn_dt', 'registration_date'],
+  REGN_UPTO: ['rc_expiry_date', 'regn_upto', 'registration_upto', 'reg_upto', 'rc_valid_upto'],
+  OWNER_NAME: ['owner_name', 'owner'],
+  F_NAME: ['owner_father_name', 'father_name', 'f_name'],
+  PRESENT_ADDRESS: ['present_address', 'current_address'],
   PERMANENT_ADDRESS: ['permanent_address'],
-  MOBILE_NO: ['mobile_number'],
-  CHASI_NO: ['chassis'],
-  ENG_NO: ['engine'],
-  MAKER_DESC: ['vehicle_manufacturer_name'],
-  MAKER_MODEL: ['model'],
-  BODY_TYPE_DESC: ['body_type'],
-  FUEL_DESC: ['type'],
-  COLOR: ['vehicle_colour'],
-  FIT_UPTO: ['fit_up_to', 'fitness_upto', 'fit_upto', 'rc_fit_upto'],
-  INSURANCE_COMP: ['vehicle_insurance_company_name'],
-  INSURANCE_UPTO: ['vehicle_insurance_upto'],
-  MANU_MONTH_YR: ['vehicle_manufacturing_month_year'],
-  POLICY_NO: ['vehicle_insurance_policy_number'],
-  INS_POLICY_NO: ['vehicle_insurance_policy_number'],
-  PUC_UPTO: ['pucc_upto'],
-  PUCC_UPTO: ['pucc_upto'],
-  PUCC_NO: ['pucc_number'],
-  FINANCER_DETAILS: ['rc_financer'],
-  PERMIT_NO: ['permit_number'],
-  PERMIT_ISSUE_DATE: ['permit_issue_date'],
+  MOBILE_NO: ['mobile_number', 'mobile_no', 'mobile'],
+  CHASI_NO: ['chassis', 'chassis_number', 'chassis_no', 'chasi_no'],
+  ENG_NO: ['engine', 'engine_number', 'engine_no', 'eng_no'],
+  MAKER_DESC: ['vehicle_manufacturer_name', 'maker_description', 'maker_desc', 'manufacturer', 'manufacturer_name', 'vehicle_make', 'maker', 'make', 'brand_name'],
+  MAKER_MODEL: ['model', 'maker_model', 'vehicle_model', 'vehicle_maker_model', 'model_name'],
+  BODY_TYPE_DESC: ['body_type', 'body_type_desc', 'vehicle_body_type'],
+  FUEL_DESC: ['type', 'fuel_type', 'fuel_desc', 'fuel', 'vehicle_fuel_type'],
+  COLOR: ['vehicle_colour', 'vehicle_color', 'colour', 'color'],
+  FIT_UPTO: ['fit_up_to', 'fitness_upto', 'fit_upto', 'rc_fit_upto', 'fitness_valid_upto'],
+  INSURANCE_COMP: ['vehicle_insurance_company_name', 'insurance_company', 'insurance_company_name', 'insurance_comp', 'insurer_name'],
+  INSURANCE_UPTO: ['vehicle_insurance_upto', 'insurance_upto', 'insurance_valid_upto', 'insurance_expiry_date'],
+  MANU_MONTH_YR: ['vehicle_manufacturing_month_year', 'manufacturing_month_year', 'manu_month_yr', 'mfg_month_year'],
+  POLICY_NO: ['vehicle_insurance_policy_number', 'insurance_policy_number', 'policy_number', 'policy_no'],
+  INS_POLICY_NO: ['vehicle_insurance_policy_number', 'insurance_policy_number', 'policy_number', 'policy_no'],
+  PUC_UPTO: ['pucc_upto', 'puc_upto', 'puc_valid_upto'],
+  PUCC_UPTO: ['pucc_upto', 'puc_upto', 'puc_valid_upto'],
+  PUCC_NO: ['pucc_number', 'pucc_no', 'puc_number', 'puc_no'],
+  FINANCER_DETAILS: ['rc_financer', 'financer', 'financer_name', 'financer_details', 'hypothecation'],
+  PERMIT_NO: ['permit_number', 'permit_no'],
+  PERMIT_ISSUE_DATE: ['permit_issue_date', 'permit_issued_date'],
   PERMIT_TYPE: ['permit_type'],
-  PERMIT_VALID_FROM: ['permit_valid_from'],
-  PERMIT_VALID_UPTO: ['permit_valid_upto'],
-  RC_NP_NO: ['national_permit_number'],
-  REGISTERED_AT: ['reg_authority'],
+  PERMIT_CATEGORY: ['permit_category'],
+  PERMIT_VALID_FROM: ['permit_valid_from', 'permit_from'],
+  PERMIT_VALID_UPTO: ['permit_valid_upto', 'permit_upto', 'permit_validity_upto', 'permit_valid_till', 'permit_expiry_date'],
+  PERMIT_ISSUING_AUTHORITY: ['permit_issuing_authority', 'permit_issued_by', 'permit_authority'],
+  RC_NP_NO: ['national_permit_number', 'national_permit_no', 'np_number', 'rc_np_no'],
+  REGISTERED_AT: ['reg_authority', 'registered_at', 'registration_authority', 'rto_name'],
   STATUS_AS_ON: ['status_as_on'],
-  STATUS: ['status'],
-  VEHICLE_CLASS: ['class'],
-  VEHICLE_CATEGORY: ['vehicle_category'],
-  SEATING_CAPACITY: ['vehicle_seat_capacity'],
-  SLEEPER_CAPACITY: ['vehicle_sleeper_capacity'],
-  STANDING_CAPACITY: ['vehicle_standing_capacity'],
-  OWNER_SERIAL_NO: ['owner_count'],
+  STATUS: ['status', 'rc_status'],
+  VEHICLE_CLASS: ['class', 'vehicle_class', 'vehicle_class_desc'],
+  VEHICLE_CATEGORY: ['vehicle_category', 'category'],
+  SEATING_CAPACITY: ['vehicle_seat_capacity', 'seating_capacity', 'seat_capacity'],
+  SLEEPER_CAPACITY: ['vehicle_sleeper_capacity', 'sleeper_capacity'],
+  STANDING_CAPACITY: ['vehicle_standing_capacity', 'standing_capacity'],
+  OWNER_SERIAL_NO: ['owner_count', 'owner_serial_no', 'owner_sr_no'],
   UNLADEN_WEIGHT: ['unladen_weight'],
-  LADEN_WEIGHT: ['gross_vehicle_weight'],
-  WHEELBASE: ['wheelbase'],
-  NO_OF_CYLINDERS: ['vehicle_cylinders_no'],
-  CUBIC_CAPACITY: ['vehicle_cubic_capacity'],
-  FUEL_NORMS: ['norms_type'],
-  TAX_UPTO: ['vehicle_tax_upto'],
+  LADEN_WEIGHT: ['gross_vehicle_weight', 'laden_weight', 'gross_weight'],
+  WHEELBASE: ['wheelbase', 'wheel_base'],
+  NO_OF_CYLINDERS: ['vehicle_cylinders_no', 'no_of_cylinders', 'cylinders'],
+  CUBIC_CAPACITY: ['vehicle_cubic_capacity', 'cubic_capacity', 'engine_capacity'],
+  FUEL_NORMS: ['norms_type', 'fuel_norms', 'emission_norms', 'norms'],
+  TAX_UPTO: ['vehicle_tax_upto', 'tax_upto', 'tax_paid_upto', 'tax_valid_upto'],
   BLACKLIST_STATUS: ['blacklist_status'],
   NOC_DETAILS: ['noc_details'],
-  IS_COMMERCIAL: ['is_commercial']
+  IS_COMMERCIAL: ['is_commercial'],
+  VEHICLE_SURRENDERED_TO_DEALER: ['vehicle_surrendered_to_dealer']
 }
 const API8_DATE_FIELDS = [...API2_DATE_FIELDS, 'STATUS_AS_ON']
 // A message that means our account / setup is the problem, not the vehicle number
 const API8_ACCOUNT_ERROR = /credential|ip address|production access|not enabled|wallet|balance|duplicate/i
+// Satmat fields that are request bookkeeping, not vehicle details (left out of EXTRA_DETAILS)
+const API8_OTHER_GROUP = /permit|insur|puc|tax|fitness|challan|noc|blacklist|financ/
+const API8_SKIP =new Set(['rto_code', 'financed', 'result_code', 'http_response_code', 'reference_number', 'request_id', 'message'])
+
+// '14-02-2025' / '14/02/2025' / '2025-02-14' -> '14-Feb-2025'
+const api8Date = (value) => {
+  const s = String(value).trim()
+  const dmy = s.match(/^(\d{1,2})[-/](\d{1,2})[-/](\d{4})$/)
+  return toApi1Date(dmy ? `${dmy[1].padStart(2, '0')}/${dmy[2].padStart(2, '0')}/${dmy[3]}` : s)
+}
+// 'permit_valid_upto' -> 'Permit Valid Upto'
+const api8Label = (name) => name.replace(/_+/g, ' ').trim().replace(/\b\w/g, (c) => c.toUpperCase())
+// An array of records (challans, blacklist entries) -> one readable line per record
+const api8List = (list) => list
+  .map((item) => (item && typeof item === 'object'
+    ? Object.entries(item).filter(([, v]) => isReal(v) && typeof v !== 'object').map(([k, v]) => `${api8Label(k)}: ${String(v).trim()}`).join(', ')
+    : isReal(item) ? String(item).trim() : ''))
+  .filter(Boolean)
+
+// Every field of the result by lower-case name, nested objects flattened: permit_details.permit_number is
+// stored as 'permit_details_permit_number' and also as 'permit_number' (an outer field of that name wins)
+const flattenApi8 = (value, prefix = '', out = new Map(), depth = 0) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || depth > 3) return out
+  for (const [key, v] of Object.entries(value)) {
+    const name = key.trim().toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')
+    if (v && typeof v === 'object' && !Array.isArray(v)) {
+      flattenApi8(v, `${prefix}${name}_`, out, depth + 1)
+      continue
+    }
+    if (!out.has(`${prefix}${name}`)) out.set(`${prefix}${name}`, { value: v })
+    if (prefix && !out.has(name)) out.set(name, { value: v, nested: `${prefix}${name}` })
+  }
+  return out
+}
+
+// Everything Satmat sent that no field above took (challans, extra permit / RTO fields, ...)
+// as { 'Readable Label': 'value' }
+const api8Extra = (flat, used) => {
+  const extra = {}
+  for (const [key, entry] of flat) {
+    if (entry.nested || used.has(key)) continue
+    if (Array.isArray(entry.value)) {
+      const lines = api8List(entry.value)
+      if (lines.length) extra[api8Label(key)] = lines.join(' | ')
+      continue
+    }
+    if (!isReal(entry.value)) continue
+    let value = typeof entry.value === 'boolean' ? (entry.value ? 'Yes' : 'No') : String(entry.value).trim().replace(/\s{2,}/g, ' ')
+    if (/(date|upto|from|till|expiry)$/.test(key)) value = api8Date(value)
+    extra[api8Label(key)] = value
+  }
+  return extra
+}
 
 const mapApi8Fields = (result) => {
+  const flat = flattenApi8(result)
+  const used = new Set(API8_SKIP)
+  const take = (key) => {
+    used.add(key)
+    if (flat.get(key)?.nested) used.add(flat.get(key).nested)
+  }
   const data = {}
   for (const [field, names] of Object.entries(API8_FIELDS)) {
-    const value = names.map((n) => result[n]).find((v) => isReal(v) && typeof v !== 'object')
-    if (value !== undefined) data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
+    const name = names.find((n) => {
+      const entry = flat.get(n)
+      if (!entry || !isReal(entry.value) || typeof entry.value === 'object') return false
+      // A one-word name ('type', 'status', 'category') inside permit / insurance / ... is about that, not the vehicle
+      return !(entry.nested && !n.includes('_') && API8_OTHER_GROUP.test(entry.nested))
+    })
+    if (name) {
+      const value = flat.get(name).value
+      data[field] = typeof value === 'string' ? value.trim().replace(/\s{2,}/g, ' ') : value
+    }
+    if (name) take(name)
+    // An outer alias that is there but empty is still a known field, not an "other detail"
+    for (const n of names) if (flat.has(n) && !flat.get(n).nested) used.add(n)
   }
   if (typeof data.IS_COMMERCIAL === 'boolean' || /^(true|false)$/i.test(String(data.IS_COMMERCIAL ?? ''))) {
     data.IS_COMMERCIAL = String(data.IS_COMMERCIAL).toUpperCase()
@@ -1136,23 +1211,36 @@ const mapApi8Fields = (result) => {
     data.STATE_CD = rto[1].toUpperCase()
     data.RTO_CD = rto[2]
   }
-  const pincode = result.split_present_address?.pincode
-  if (isReal(pincode) && typeof pincode !== 'object') data.CURRENTADD_PINCODE = String(pincode).trim()
+  const split = (name) => {
+    const v = flat.get(`split_present_address_${name}`)?.value
+    return isReal(v) && typeof v !== 'object' ? String(v).trim() : undefined
+  }
+  if (split('pincode')) data.CURRENTADD_PINCODE = split('pincode')
+  if (split('state')) data.CURRENTADD_STATENAME = split('state')
+  for (const key of flat.keys()) if (key.startsWith('split_')) used.add(key)
   // Satmat sends financed: true with no financer name for some vehicles
   if (!data.FINANCER_DETAILS && result.financed === true) data.FINANCER_DETAILS = 'Financed'
-  if (data.CUBIC_CAPACITY !== undefined && Number.isFinite(Number(data.CUBIC_CAPACITY))) {
-    data.CUBIC_CAPACITY = Number(data.CUBIC_CAPACITY).toFixed(2)
+  // blacklist_details / noc lists -> BLACKLIST_STATUS / NOC_DETAILS when there is no plain field
+  for (const [key, entry] of flat) {
+    if (!Array.isArray(entry.value)) continue
+    const lines = api8List(entry.value)
+    if (/blacklist/.test(key)) {
+      used.add(key)
+      if (lines.length && !data.BLACKLIST_STATUS) data.BLACKLIST_STATUS = lines.join(' | ')
+    } else if (/noc/.test(key)) {
+      used.add(key)
+      if (lines.length && !data.NOC_DETAILS) data.NOC_DETAILS = lines.join(' | ')
+    }
+  }
+  if (data.CUBIC_CAPACITY !== undefined) {
+    const cc = Number(String(data.CUBIC_CAPACITY).replace(/\s*cc$/i, ''))
+    if (Number.isFinite(cc)) data.CUBIC_CAPACITY = cc.toFixed(2)
   }
   // '1/2025' -> '01/2025'
   const mfg = String(data.MANU_MONTH_YR || '').match(/^(\d{1,2})\/(\d{4})$/)
   if (mfg) data.MANU_MONTH_YR = `${mfg[1].padStart(2, '0')}/${mfg[2]}`
-  // Satmat dates are '14-02-2025' (dd-mm-yyyy) -> '14-Feb-2025'
-  for (const field of API8_DATE_FIELDS) {
-    if (!data[field]) continue
-    const dmy = String(data[field]).trim().match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/)
-    data[field] = toApi1Date(dmy ? `${dmy[1].padStart(2, '0')}/${dmy[2].padStart(2, '0')}/${dmy[3]}` : data[field])
-  }
-  return data
+  for (const field of API8_DATE_FIELDS) if (data[field]) data[field] = api8Date(data[field])
+  return { data, extra: api8Extra(flat, used) }
 }
 
 // A unique reference_number for every request (Satmat refuses a repeated one with 409)
@@ -1186,7 +1274,10 @@ const fetchFromApi8 = async (vehicleNumber) => {
   // 104 'Too many responses' is Satmat's problem, not a missing vehicle
   if (resultCode === 104) throw new ProviderError(`API 8 refused the request: ${message || 'Too many responses'} (104)`, 'RESULT_104')
 
-  const result = raw?.status === true && body?.result && typeof body.result === 'object' ? body.result : null
+  // The record is under data.result (the document); accept it straight under data too
+  const ok = raw?.status === true || /^(true|success)$/i.test(String(raw?.status ?? '')) || resultCode === 101
+  const record = body?.result && typeof body.result === 'object' && !Array.isArray(body.result) ? body.result : body
+  const result = ok && record && Object.keys(record).some((k) => /reg_no|regn_no|owner|chassis|engine|model/i.test(k)) ? record : null
   if (!result) {
     const invalid = [400, 422].includes(response.status) || resultCode === 102
     return {
@@ -1196,12 +1287,15 @@ const fetchFromApi8 = async (vehicleNumber) => {
     }
   }
 
-  const data = mapApi8Fields(result)
+  const { data, extra } = mapApi8Fields(result)
   if (!hasVehicleDetails(data)) {
     return { found: false, charged: null, message: 'Vehicle details not found. Please check registration number.' }
   }
   if (!data.REGN_NO) data.REGN_NO = vehicleNumber
-  return { found: true, data: toApi1Reply(data), charged: null }
+  const reply = toApi1Reply(data)
+  // Every other detail Satmat sent, so nothing in its reply is lost
+  if (Object.keys(extra).length) reply.EXTRA_DETAILS = extra
+  return { found: true, data: reply, charged: null }
 }
 
 // API 5 HSRP: GET /v1/hsrp?number=<no> with the same key. data is

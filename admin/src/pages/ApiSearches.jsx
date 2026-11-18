@@ -140,7 +140,13 @@ const ApiSearches = () => {
   }
 
   const fields = detail.response
-    ? Object.entries(detail.response).filter(([field, value]) => hasValue(value) && !DUPLICATE_FIELDS.has(field) && typeof value !== 'object')
+    ? [
+        ...Object.entries(detail.response).filter(([field, value]) => hasValue(value) && !DUPLICATE_FIELDS.has(field) && typeof value !== 'object'),
+        // Every other detail the API sent (API 8 puts them in EXTRA_DETAILS: { 'Label': 'value' })
+        ...Object.entries(detail.response.EXTRA_DETAILS && typeof detail.response.EXTRA_DETAILS === 'object' ? detail.response.EXTRA_DETAILS : {})
+          .filter(([, value]) => hasValue(value) && typeof value !== 'object')
+          .map(([label, value]) => [`extra:${label}`, value])
+      ]
     : []
 
   const select = 'px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-indigo-500 focus:border-transparent'
@@ -352,7 +358,7 @@ const ApiSearches = () => {
                   <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-5 text-xs'>
                     {fields.map(([field, value]) => (
                       <div key={field} className='flex justify-between gap-3 border-b border-gray-100 py-1.5'>
-                        <span className='text-gray-500 shrink-0'>{FIELD_LABELS[field] || field}</span>
+                        <span className='text-gray-500 shrink-0'>{field.startsWith('extra:') ? field.slice(6) : FIELD_LABELS[field] || field}</span>
                         <span className='font-semibold text-gray-800 text-right break-words min-w-0'>{String(value)}</span>
                       </div>
                     ))}

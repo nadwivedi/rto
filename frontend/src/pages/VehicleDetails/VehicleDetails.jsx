@@ -604,7 +604,10 @@ const VehicleDetails = () => {
   const v = vehicleData || {}
   const pucUpto = v.PUCC_UPTO || v.PUC_UPTO
   const policyNo = v.INS_POLICY_NO || v.POLICY_NO
-  const isActive = (v.STATUS || 'ACTIVE') === 'ACTIVE'
+  const isActive = !has(v.STATUS) || /^active$/i.test(String(v.STATUS).trim())
+  const extraDetails = v.EXTRA_DETAILS && typeof v.EXTRA_DETAILS === 'object'
+    ? Object.entries(v.EXTRA_DETAILS).filter(([, value]) => has(value))
+    : []
   const quotaTone =
     quota.rcSearchRemaining <= 0
       ? 'bg-rose-500/15 text-rose-200 ring-rose-400/40'
@@ -1004,6 +1007,7 @@ const VehicleDetails = () => {
                 <Row stacked label="Financer / bank" value={v.FINANCER_DETAILS || 'No hypothecation (cash)'} />
                 <Row label="Permit no" value={v.PERMIT_NO} />
                 <Row label="Permit type" value={v.PERMIT_TYPE} />
+                {has(v.PERMIT_CATEGORY) && <Row label="Permit category" value={v.PERMIT_CATEGORY} />}
                 <Row label="Permit issue date" value={v.PERMIT_ISSUE_DATE} />
                 {v.PERMIT_VALID_FROM && v.PERMIT_VALID_FROM !== 'NA' && <Row label="Permit valid from" value={v.PERMIT_VALID_FROM} />}
                 <Row
@@ -1030,6 +1034,26 @@ const VehicleDetails = () => {
                 <Row label="NOC details" value={v.NOC_DETAILS} />
                 <Row label="Status" value={v.STATUS || 'ACTIVE'} valueClass={isActive ? 'text-emerald-700' : 'text-rose-600'} />
               </Panel>
+
+              {/* Every other detail the API sent (challans, extra permit / RTO fields, ...) */}
+              {extraDetails.length > 0 && (
+                <section className="rounded-2xl bg-white shadow-xs ring-1 ring-slate-200 md:col-span-2 lg:col-span-3">
+                  <div className="flex items-center gap-2.5 border-b border-slate-100 px-4 py-3">
+                    <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-600 to-blue-500 text-white shadow-sm">
+                      <FileText className="h-4 w-4" />
+                    </span>
+                    <h3 className="text-sm font-semibold text-slate-900">Other Details</h3>
+                  </div>
+                  <dl className="grid grid-cols-1 gap-x-6 px-4 md:grid-cols-2 lg:grid-cols-3">
+                    {extraDetails.map(([label, value]) => (
+                      <div key={label} className="border-b border-slate-100 py-2.5">
+                        <dt className="text-xs text-slate-500">{label}</dt>
+                        <dd className="mt-0.5 break-words text-[13px] font-semibold text-slate-800">{String(value)}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </section>
+              )}
             </div>
 
             {/* Next steps */}

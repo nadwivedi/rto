@@ -186,3 +186,51 @@ test('API 8: not set up without the member id / password', async () => {
     process.env.SATMAT_MEMBER_PASSWORD = saved
   }
 })
+
+test('API 8: other field names, nested permit details and every leftover field in EXTRA_DETAILS', async () => {
+  reply = {
+    status: 200,
+    data: {
+      status: true,
+      message: 'RC Verification Success',
+      data: {
+        result: {
+          reg_no: 'CG04AB1234',
+          owner_name: 'Ram Kumar',
+          maker_description: 'TATA MOTORS LTD',
+          maker_model: 'SIGNA 4825.TK',
+          fuel_type: 'Diesel',
+          status: 'Active',
+          financed: true,
+          permit_details: {
+            permit_number: 'CG2024-NP-1234',
+            type: 'National Permit',
+            permit_valid_upto: '31-12-2028',
+            permit_issuing_authority: 'RTO Raipur'
+          },
+          challan_details: [{ challan_no: 'CG123', amount: 500 }],
+          blacklist_details: [],
+          rto_phone_number: '0771-1234567',
+          vehicle_insurance_upto: '2027-05-01'
+        },
+        result_code: 101
+      }
+    }
+  }
+  const r = await fetchVehicleInfo('CG04AB1234', { provider: 'api8' })
+  assert.equal(r.found, true)
+  assert.equal(r.data.MAKER_DESC, 'TATA MOTORS LTD')
+  assert.equal(r.data.MAKER_MODEL, 'SIGNA 4825.TK')
+  assert.equal(r.data.FUEL_DESC, 'Diesel')
+  assert.equal(r.data.PERMIT_NO, 'CG2024-NP-1234')
+  assert.equal(r.data.PERMIT_VALID_UPTO, '31-Dec-2028')
+  assert.equal(r.data.PERMIT_ISSUING_AUTHORITY, 'RTO Raipur')
+  assert.equal(r.data.INSURANCE_UPTO, '01-May-2027')
+  assert.equal(r.data.FINANCER_DETAILS, 'Financed')
+  assert.equal(r.data.STATUS, 'Active')
+  assert.deepEqual(r.data.EXTRA_DETAILS, {
+    'Permit Details Type': 'National Permit',
+    'Challan Details': 'Challan No: CG123, Amount: 500',
+    'Rto Phone Number': '0771-1234567'
+  })
+})
