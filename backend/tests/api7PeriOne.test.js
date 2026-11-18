@@ -145,27 +145,41 @@ test('PeriOne + API 7: PeriOne down -> unavailable, API 7 is never called', asyn
   assert.equal(api7Calls, 0)
 })
 
-test('PeriOne + API 7: both called, PeriOne status + API 7 owner / mobile / chassis', async () => {
+test('PeriOne + API 7: both called, insurance / fitness / tax from PeriOne, other details from API 7', async () => {
   const r = await fetchVehicleInfo('CG12BU5574', { provider: 'api47' })
   assert.equal(r.found, true)
   assert.equal(periCalls, 1)
   assert.equal(api7Calls, 1)
-  // From PeriOne
+  // Insurance / fitness / tax / RC status from PeriOne, the insurance group whole (PeriOne's policy no, not API 7's)
   assert.equal(r.data.INSURANCE_UPTO, '10-Jan-2027')
   assert.equal(r.data.INSURANCE_COMP, 'New India')
+  assert.equal(r.data.POLICY_NO, 'NEW-1')
+  assert.equal(r.data.INS_POLICY_NO, 'NEW-1')
   assert.equal(r.data.TAX_UPTO, '31-Dec-2026')
   assert.equal(r.data.FIT_UPTO, '27-Nov-2027')
-  assert.equal(r.data.MAKER_DESC, 'ROYAL ENFIELD')
-  // PeriOne has the insurance date, so its policy number is kept, not API 7's
-  assert.equal(r.data.POLICY_NO, 'NEW-1')
-  // From API 7
+  assert.equal(r.data.STATUS, 'ACTIVE')
+  // Everything else from API 7, even where PeriOne sent its own value
+  assert.equal(r.data.MAKER_DESC, 'Royal Enfield')
   assert.equal(r.data.OWNER_NAME, 'NARAYAN DWIVEDI')
   assert.equal(r.data.MOBILE_NO, '8602145864')
   assert.equal(r.data.CHASI_NO, 'ME3J3B5FMS2004994')
   assert.equal(r.data.PRESENT_ADDRESS, 'KORBA, CHATTISGARH, CT, 495674')
-  // PeriOne has no PUC date here, so the whole PUC group comes from API 7
+  // Fields API 7 does not have are filled from PeriOne
+  assert.equal(r.data.IS_COMMERCIAL, 'TRUE')
+  // PeriOne has no PUC date here, so API 7's PUC stays
   assert.equal(r.data.PUCC_UPTO, '27-Nov-2026')
   assert.equal(r.data.PUCC_NO, 'Newv4')
+})
+
+test('PeriOne + API 7: PeriOne PUC date wins with its own PUC number', async () => {
+  const withPuc = structuredClone(PERIONE_HIT)
+  withPuc.response[0].response.rcPuccUpto = '2027-03-01'
+  peri = { status: 200, data: withPuc }
+  const r = await fetchVehicleInfo('CG12BU5574', { provider: 'api47' })
+  assert.equal(r.data.PUCC_UPTO, '01-Mar-2027')
+  assert.equal(r.data.PUC_UPTO, '01-Mar-2027')
+  // PeriOne sent no PUC number, so API 7's older one is not shown next to the new date
+  assert.equal(r.data.PUCC_NO, 'NA')
 })
 
 test('PeriOne + API 7: API 7 misses -> PeriOne record alone', async () => {

@@ -1246,22 +1246,23 @@ const COMBINED = {
     groups: [['MOBILE_NO']],
     fillGaps: false
   },
-  // Transport advanced: PeriOne (API 4) has the latest insurance / PUC / tax / fitness / permit for
-  // transport vehicles but no owner, mobile, chassis or engine; API 7 has those basic details.
-  // PeriOne is asked first and API 7 only when PeriOne found the vehicle (a private vehicle, a miss or
-  // a PeriOne failure never spends an API 7 credit). Every field PeriOne left empty comes from API 7,
-  // except within a group PeriOne has the date for, so an API 7 PUC number never sits next to a
-  // PeriOne PUC date.
+  // Transport advanced: PeriOne (API 4) has the latest insurance / fitness / tax / PUC for transport
+  // vehicles but not the other details (owner, mobile, chassis, address ...); API 7 has those. PeriOne
+  // is asked first and API 7 only when PeriOne found the vehicle (a private vehicle, a miss or a
+  // PeriOne failure never spends an API 7 credit). The record is API 7's; each group below is taken
+  // whole from PeriOne when PeriOne has its date (so an API 7 PUC number never sits next to a PeriOne
+  // PUC date), and any field API 7 left empty (permit, colour, weights ...) is filled from PeriOne.
   api47: {
-    base: 'api4',
-    extra: 'api7',
+    first: 'api4',
+    then: 'api7',
     sequential: true,
-    groups: [],
-    keepBaseGroups: [
+    groups: [
       ['INSURANCE_UPTO', 'INSURANCE_COMP', 'POLICY_NO', 'INS_POLICY_NO'],
-      ['PUCC_UPTO', 'PUC_UPTO', 'PUCC_NO']
-    ],
-    fillGaps: true
+      ['FIT_UPTO'],
+      ['TAX_UPTO'],
+      ['PUCC_UPTO', 'PUC_UPTO', 'PUCC_NO'],
+      ['STATUS']
+    ]
   }
 }
 const filled = (value) => value !== undefined && value !== null && value !== '' && value !== 'NA'
@@ -1306,27 +1307,23 @@ const fetchCombined = async (vehicleNumber, config, { userId, via } = {}) => {
   return { found: true, data, charged: main.charged }
 }
 
-// `base` first; `extra` only when `base` found the vehicle. `base` finding nothing or failing is the
-// answer (its "not found", or "unavailable"); `extra` finding nothing or failing sends `base`'s record alone.
-const fetchSequential = async (vehicleNumber, { base, extra, groups = [], keepBaseGroups = [], fillGaps }, { userId, via } = {}) => {
-  const main = await lookupOne(base, vehicleNumber, { userId, via })
-  if (!main.found) return main
+// `first` is asked first and `then` only when `first` found the vehicle. `first` finding nothing or
+// failing is the answer (its "not found", or "unavailable"); `then` finding nothing or failing sends
+// `first`'s record alone. Otherwise the record is `then`'s, with `groups` and empty fields from `first`.
+const fetchSequential = async (vehicleNumber, { first, then, groups }, { userId, via } = {}) => {
+  const status = await lookupOne(first, vehicleNumber, { userId, via })
+  if (!status.found) return status
 
-  const second = await settle(lookupOne(extra, vehicleNumber, { userId, via }))
-  const more = second.status === 'fulfilled' && second.value.found ? second.value : null
-  if (!more) return main
+  const second = await settle(lookupOne(then, vehicleNumber, { userId, via }))
+  const record = second.status === 'fulfilled' && second.value.found ? second.value : null
+  if (!record) return status
 
-  const data = { ...main.data }
+  const data = { ...record.data }
   for (const group of groups) {
-    if (filled(more.data[group[0]])) for (const field of group) data[field] = more.data[field]
+    if (filled(status.data[group[0]])) for (const field of group) data[field] = status.data[field]
   }
-  const kept = new Set(keepBaseGroups.filter((group) => filled(main.data[group[0]])).flat())
-  if (fillGaps) {
-    for (const field of API1_FIELDS) {
-      if (!kept.has(field) && !filled(data[field]) && filled(more.data[field])) data[field] = more.data[field]
-    }
-  }
-  return { found: true, data, charged: main.charged }
+  for (const field of API1_FIELDS) if (!filled(data[field]) && filled(status.data[field])) data[field] = status.data[field]
+  return { found: true, data, charged: record.charged }
 }
 
 const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
