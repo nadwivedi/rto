@@ -29,6 +29,11 @@ const apiKeyCallSchema = new mongoose.Schema(
       type: String,
       trim: true
     },
+    // The provider(s) the reply actually came from, e.g. ['api4', 'api7'] (Vehicle RC keys)
+    servedBy: {
+      type: [String],
+      default: undefined
+    },
     // Vehicle details were returned
     success: {
       type: Boolean,

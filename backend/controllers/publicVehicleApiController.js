@@ -135,7 +135,7 @@ exports.lookupVehicle = withApiKey('rc', async ({ req, body, reply, reserve, ref
     const result = await fetchVehicleInfo(vehicleNumber, { userId: keyAtStart.userId, provider: keyAtStart.provider, via: `API key: ${keyAtStart.name || keyAtStart._id}` })
     if (!result.found) {
       await refund()
-      return reply(404, { success: false, message: result.message }, { vehicleNumber, charged: false })
+      return reply(404, { success: false, message: result.message }, { vehicleNumber, charged: false, servedBy: result.servedBy })
     }
 
     // The provider's own account quota is ours, not the customer's
@@ -149,6 +149,7 @@ exports.lookupVehicle = withApiKey('rc', async ({ req, body, reply, reserve, ref
       {
         vehicleNumber,
         charged,
+        servedBy: result.servedBy,
         providerUsed: Number(_usage?.used) || undefined,
         providerRemaining: Number(_usage?.remaining) || undefined,
         response: data,

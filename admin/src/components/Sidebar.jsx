@@ -10,6 +10,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Newspaper,
+  Search,
   ShieldCheck,
   Users2,
   Wallet,
@@ -33,6 +34,7 @@ const NAV_ITEMS = [
 
 // Less used pages, tucked away behind the "More" arrow
 const MORE_ITEMS = [
+  { to: '/api-searches', label: 'API Searches', icon: Search },
   { to: '/blogs', label: 'Manage Blogs', icon: Newspaper },
   { to: '/vehicle-registrations', label: 'Vehicle Registrations', icon: Car },
   { to: '/export', label: 'Export Data', icon: Download },

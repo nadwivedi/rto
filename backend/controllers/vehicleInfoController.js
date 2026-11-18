@@ -1,5 +1,6 @@
 const mongoose = require('mongoose')
 const VehicleSearchHistory = require('../models/VehicleSearchHistory')
+const RcSearchLog = require('../models/RcSearchLog')
 const User = require('../models/User')
 const RcSearchUsage = require('../models/RcSearchUsage')
 const Lead = require('../models/Lead')
@@ -7,6 +8,15 @@ const VehicleRegistration = require('../models/VehicleRegistration')
 const { fetchVehicleInfo, PROVIDERS } = require('../utils/vehicleInfoProvider')
 const { VEHICLE_DOC_TYPES, getVehicleDocuments, matchExpiry, leadPriorityFor } = require('../utils/vehicleExpiry')
 const { saveHistoryRecords, canSaveRecords, SAVE_DISABLED_MESSAGE } = require('./vehicleRecordSaveController')
+
+// One row in the admin's search log. Never throws: a failure here must not break the reply.
+const logSearch = async (entry) => {
+  try {
+    await RcSearchLog.create(entry)
+  } catch (err) {
+    console.error('Failed to log RC search:', err.message)
+  }
+}
 
 const EXPIRY_FILTERS = ['expired', '30', '60', '90', '180', '365']
 const LEAD_FILTERS = ['in', 'notIn']
@@ -77,8 +87,18 @@ const lookupVehicle = async (req, res) => {
       })
     }
 
-    const result = await fetchVehicleInfo(cleanVno, { userId: targetUserId, provider: PROVIDERS[userDoc.rcProvider] ? userDoc.rcProvider : 'api2', via: 'User search' })
+    const provider = PROVIDERS[userDoc.rcProvider] ? userDoc.rcProvider : 'api2'
+    const startedAt = Date.now()
+    const logBase = { userId: targetUserId, staffId: req.user?.staffId || undefined, vehicleNumber: cleanVno, provider }
+    let result
+    try {
+      result = await fetchVehicleInfo(cleanVno, { userId: targetUserId, provider, via: 'User search' })
+    } catch (err) {
+      await logSearch({ ...logBase, result: 'unavailable', message: String(err.detail || err.message || '').slice(0, 300), durationMs: Date.now() - startedAt })
+      throw err
+    }
     if (!result.found) {
+      await logSearch({ ...logBase, servedBy: result.servedBy, result: 'not_found', message: result.message, durationMs: Date.now() - startedAt })
       return res.status(404).json({ success: false, message: result.message })
     }
     const parsedData = result.data
@@ -115,6 +135,16 @@ const lookupVehicle = async (req, res) => {
 
     // ── Increment user's lifetime search count, only when the provider used one of our credits ──
     const charged = result.charged !== false
+    await logSearch({
+      ...logBase,
+      servedBy: result.servedBy,
+      result: 'found',
+      charged,
+      ownerName: parsedData.OWNER_NAME || '',
+      makerModel: `${parsedData.MAKER_DESC || ''} ${parsedData.MAKER_MODEL || ''}`.trim(),
+      response: parsedData,
+      durationMs: Date.now() - startedAt
+    })
     let updatedUser = null
     if (charged) {
       updatedUser = await User.findByIdAndUpdate(

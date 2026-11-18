@@ -1194,7 +1194,8 @@ const lookupOne = async (source, vehicleNumber, { userId, via } = {}) => {
     const result = await fetchFromProvider(vehicleNumber, { userId, provider: source })
     // The provider answered, so any earlier "it failed" alert for it is over
     await autoResolveAlerts(`${source}:error:`)
-    return result
+    // Which provider(s) the reply came from, for the admin's search log (combined sources list both)
+    return { ...result, servedBy: [source] }
   } catch (err) {
     const code = alertCodeOf(err)
     const name = PROVIDERS[source]
@@ -1304,7 +1305,7 @@ const fetchCombined = async (vehicleNumber, config, { userId, via } = {}) => {
     if (filled(more.data[group[0]])) for (const field of group) data[field] = more.data[field]
   }
   if (fillGaps) for (const field of API1_FIELDS) if (!filled(data[field]) && filled(more.data[field])) data[field] = more.data[field]
-  return { found: true, data, charged: main.charged }
+  return { found: true, data, charged: main.charged, servedBy: [base, extra] }
 }
 
 // `first` is asked first and `then` only when `first` found the vehicle. `first` finding nothing or
@@ -1323,7 +1324,7 @@ const fetchSequential = async (vehicleNumber, { first, then, groups }, { userId,
     if (filled(status.data[group[0]])) for (const field of group) data[field] = status.data[field]
   }
   for (const field of API1_FIELDS) if (!filled(data[field]) && filled(status.data[field])) data[field] = status.data[field]
-  return { found: true, data, charged: record.charged }
+  return { found: true, data, charged: record.charged, servedBy: [first, then] }
 }
 
 const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
