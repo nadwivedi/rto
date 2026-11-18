@@ -1062,7 +1062,7 @@ const fetchFromApi7 = async (vehicleNumber, { userId } = {}) => {
 // data.result_code 102 (invalid data) / 103 (no record) / 104 (too many responses), or an HTTP error:
 // 401 bad credentials / IP / no production access, 403 service not enabled, 409 empty wallet or a
 // duplicate reference_number, 422 / 400 bad input, 503 source busy.
-const API8_URL = 'https://satmatapi.com/public/uat_verify_v2/uat-rc-verification'
+const API8_URL = 'https://satmatapi.com/public/apiPrdtSg/verify-rc'
 
 // API 1 field <- API 8 result field (first one with a real value wins)
 const API8_FIELDS = {
