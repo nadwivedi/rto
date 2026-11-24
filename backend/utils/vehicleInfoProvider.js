@@ -1246,21 +1246,40 @@ const mapApi8Fields = (result) => {
 // A unique reference_number for every request (Satmat refuses a repeated one with 409)
 const api8Reference = () => `RTOS${Date.now()}${Math.floor(Math.random() * 1e6).toString().padStart(6, '0')}`
 
+// Satmat's reply as one line for the console (cut short so a huge HTML error page does not flood it)
+const api8Log = (body) => {
+  const text = typeof body === 'string' ? body : JSON.stringify(body)
+  return String(text ?? '').slice(0, 2000)
+}
+
 const fetchFromApi8 = async (vehicleNumber) => {
   const memberId = process.env.SATMAT_MEMBER_ID
   const memberPassword = process.env.SATMAT_MEMBER_PASSWORD
   if (!memberId || !memberPassword) throw new Error('API 8 is not set up (SATMAT_MEMBER_ID, SATMAT_MEMBER_PASSWORD)')
 
-  const response = await axios.post(process.env.SATMAT_API8_URL || API8_URL, {
-    member_id: memberId,
-    member_password: memberPassword,
-    reference_number: api8Reference(),
-    vehicle_number: vehicleNumber
-  }, {
-    timeout: Number(process.env.SATMAT_API8_TIMEOUT_MS) || 30000,
-    validateStatus: (status) => status < 500,
-    headers: { 'Content-Type': 'application/json', Accept: 'application/json' }
-  })
+  const url = process.env.SATMAT_API8_URL || API8_URL
+  const referenceNumber = api8Reference()
+  let response
+  try {
+    response = await axios.post(url, {
+      member_id: memberId,
+      member_password: memberPassword,
+      reference_number: referenceNumber,
+      vehicle_number: vehicleNumber
+    }, {
+      timeout: Number(process.env.SATMAT_API8_TIMEOUT_MS) || 30000,
+      validateStatus: (status) => status < 500,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' }
+    })
+  } catch (err) {
+    // Network error, timeout or a 5xx from Satmat
+    console.error(`[API 8] ${vehicleNumber} ref ${referenceNumber} -> ${url} FAILED:`, err.response
+      ? `HTTP ${err.response.status} ${api8Log(err.response.data)}`
+      : `${err.code || ''} ${err.message}`.trim())
+    throw err
+  }
+
+  const logError = (reason) => console.error(`[API 8] ${vehicleNumber} ref ${referenceNumber} -> ${url} ${reason}: HTTP ${response.status} ${api8Log(response.data)}`)
 
   const raw = response.data && typeof response.data === 'object' ? response.data : null
   const message = String(raw?.message || '').trim()
@@ -1268,11 +1287,15 @@ const fetchFromApi8 = async (vehicleNumber) => {
   const resultCode = Number(body?.result_code)
 
   if ([401, 402, 403, 409, 429].includes(response.status) || API8_ACCOUNT_ERROR.test(message)) {
+    logError('REFUSED')
     const code = /wallet|balance/i.test(message) ? 'INSUFFICIENT_BALANCE' : `HTTP_${response.status}`
     throw new ProviderError(`API 8 refused the request: HTTP ${response.status} ${message}`.trim(), code)
   }
   // 104 'Too many responses' is Satmat's problem, not a missing vehicle
-  if (resultCode === 104) throw new ProviderError(`API 8 refused the request: ${message || 'Too many responses'} (104)`, 'RESULT_104')
+  if (resultCode === 104) {
+    logError('TOO MANY RESPONSES (104)')
+    throw new ProviderError(`API 8 refused the request: ${message || 'Too many responses'} (104)`, 'RESULT_104')
+  }
 
   // The record is under data.result (the document); accept it straight under data too
   const ok = raw?.status === true || /^(true|success)$/i.test(String(raw?.status ?? '')) || resultCode === 101
@@ -1280,6 +1303,7 @@ const fetchFromApi8 = async (vehicleNumber) => {
   const result = ok && record && Object.keys(record).some((k) => /reg_no|regn_no|owner|chassis|engine|model/i.test(k)) ? record : null
   if (!result) {
     const invalid = [400, 422].includes(response.status) || resultCode === 102
+    logError(invalid ? 'INVALID VEHICLE NUMBER' : 'NO RECORD')
     return {
       found: false,
       charged: null,
@@ -1289,6 +1313,7 @@ const fetchFromApi8 = async (vehicleNumber) => {
 
   const { data, extra } = mapApi8Fields(result)
   if (!hasVehicleDetails(data)) {
+    logError('REPLY HAS NO VEHICLE DETAILS')
     return { found: false, charged: null, message: 'Vehicle details not found. Please check registration number.' }
   }
   if (!data.REGN_NO) data.REGN_NO = vehicleNumber
