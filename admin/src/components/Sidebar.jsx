@@ -10,6 +10,7 @@ import {
   KeyRound,
   LayoutDashboard,
   Newspaper,
+  ScrollText,
   Search,
   ShieldCheck,
   Users2,
@@ -30,6 +31,7 @@ const NAV_ITEMS = [
   { to: '/api-keys', label: 'Vehicle API Keys', icon: KeyRound, matchPrefix: true },
   { to: '/fitness-work', label: 'Fitness Work', icon: ClipboardCheck },
   { to: '/alerts', label: 'Alerts', icon: Bell, badge: 'alerts' },
+  { to: '/logs', label: 'Logs', icon: ScrollText },
 ];
 
 // Less used pages, tucked away behind the "More" arrow

@@ -12,6 +12,7 @@ import Blogs from './pages/Blogs';
 import VehicleRegistrations from './pages/VehicleRegistrations';
 import Export from './pages/Export';
 import Alerts from './pages/Alerts';
+import Logs from './pages/Logs';
 import ApiSearches from './pages/ApiSearches';
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -158,6 +159,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <Alerts />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/logs"
+                element={
+                  <ProtectedRoute>
+                    <Logs />
                   </ProtectedRoute>
                 }
               />

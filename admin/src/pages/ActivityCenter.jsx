@@ -74,7 +74,8 @@ const ENTITIES = {
   vehicle_registration: 'Vehicles',
   admin: 'Admin Logins',
   server: 'Deploys',
-  alert: 'Alerts'
+  alert: 'Alerts',
+  log: 'Logs'
 }
 
 const ENTITY_SINGULAR = {
@@ -86,7 +87,8 @@ const ENTITY_SINGULAR = {
   vehicle_registration: 'Vehicle',
   admin: 'Admin',
   server: 'Server',
-  alert: 'Alert'
+  alert: 'Alert',
+  log: 'Logs'
 }
 
 const ICON_PATHS = {
