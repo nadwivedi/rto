@@ -83,7 +83,8 @@ test('API 9: RechargeKit cardData in the usual fields, request has reg_no, partn
   assert.equal(r.data.EXTRA_DETAILS['Vehicle Chasi Number'], 'MA3EYD32S00123456')
   assert.equal(sent[0].url, 'https://verify.rechargkit.biz/validation/v3/rcAdvanceVerify')
   assert.equal(sent[0].body.reg_no, 'DL01AB1234')
-  assert.match(sent[0].body.partner_request_id, /^RTOS\d+$/)
+  assert.match(sent[0].body.partner_request_id, /^softwarebytestechnologies\d+$/)
+  assert.equal(sent[0].config.headers['Content-Type'], 'application/json')
   assert.equal(sent[0].config.headers.Authorization, 'Bearer test-token')
 })
 

@@ -1336,7 +1336,10 @@ const API9_URL = 'https://verify.rechargkit.biz/validation/v3/rcAdvanceVerify'
 const API9_ACCOUNT_ERROR = /token|unauthori[sz]ed|authenticat|ip address|whitelist|not allowed|not active|inactive|blocked|suspend|wallet|balance|insufficient|duplicate|partner|permission|service.*(not|disabled)|limit/i
 const API9_INVALID = /invalid.*(reg|vehicle|number|rc)|(reg|vehicle).*invalid|incorrect|wrong format/i
 
-const api9Reference = () => `RTOS${Date.now()}${Math.floor(Math.random() * 1e6).toString().padStart(6, '0')}`
+// Our partner name + a unique number, e.g. 'softwarebytestechnologies1764061234567123456'. The number
+// keeps it unique: RechargeKit says a partner_request_id must never be reused.
+const API9_PARTNER_ID = 'softwarebytestechnologies'
+const api9Reference = () => `${API9_PARTNER_ID}${Date.now()}${Math.floor(Math.random() * 1e6).toString().padStart(6, '0')}`
 
 const fetchFromApi9 = async (vehicleNumber) => {
   const token = process.env.RECHARGEKIT_TOKEN
