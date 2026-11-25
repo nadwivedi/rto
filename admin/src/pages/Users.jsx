@@ -1097,12 +1097,12 @@ const Users = () => {
           <div>
             <p className='text-sm font-semibold text-gray-800'>RC Details API for app users</p>
             <p className='text-xs text-gray-500 mt-0.5'>
-              {stats.rcApi5 || 0} on API 5 · {stats.rcApi2 ?? stats.total} on API 2 · {stats.rcApi3 || 0} on Parzival API · {stats.rcApi4 || 0} on PeriOne API (transport only) · {stats.rcApi24 || 0} on API 2 + 4 · {stats.rcApi32 || 0} on API 3 + 2 · {stats.rcApi7 || 0} on API 7 · {stats.rcApi47 || 0} on PeriOne + API 7 (transport advanced) · {stats.rcApi8 || 0} on API 8 (Satmat). Switch every user at once when one API is down, or change one user in Edit.
+              {stats.rcApi5 || 0} on API 5 · {stats.rcApi2 ?? stats.total} on API 2 · {stats.rcApi3 || 0} on Parzival API · {stats.rcApi4 || 0} on PeriOne API (transport only) · {stats.rcApi24 || 0} on API 2 + 4 · {stats.rcApi32 || 0} on API 3 + 2 · {stats.rcApi7 || 0} on API 7 · {stats.rcApi47 || 0} on PeriOne + API 7 (transport advanced) · {stats.rcApi8 || 0} on API 8 (Satmat) · {stats.rcApi9 || 0} on API 9 (RechargeKit). Switch every user at once when one API is down, or change one user in Edit.
             </p>
           </div>
           <div className='flex flex-wrap gap-2'>
             {PROVIDER_OPTIONS.map((p) => {
-              const counts = { api5: stats.rcApi5 || 0, api2: stats.rcApi2 ?? stats.total, api3: stats.rcApi3 || 0, api4: stats.rcApi4 || 0, api24: stats.rcApi24 || 0, api32: stats.rcApi32 || 0, api7: stats.rcApi7 || 0, api47: stats.rcApi47 || 0, api8: stats.rcApi8 || 0 }
+              const counts = { api5: stats.rcApi5 || 0, api2: stats.rcApi2 ?? stats.total, api3: stats.rcApi3 || 0, api4: stats.rcApi4 || 0, api24: stats.rcApi24 || 0, api32: stats.rcApi32 || 0, api7: stats.rcApi7 || 0, api47: stats.rcApi47 || 0, api8: stats.rcApi8 || 0, api9: stats.rcApi9 || 0 }
               const already = counts[p.value] === stats.total
               return (
                 <button

@@ -40,7 +40,9 @@ const PROVIDERS = {
   // PeriOne first; only when it has the vehicle, API 7 fills in owner / mobile / chassis / address
   api47: 'PeriOne + API 7 (transport advanced)',
   // Full RC record (owner, mobile, chassis, engine, insurance, PUC, tax, permit) from Satmat RC Verification Plus
-  api8: 'API 8 – Satmat API'
+  api8: 'API 8 – Satmat API',
+  // Advanced RC record from RechargeKit (rechargkit.biz) Advanced RC Verification
+  api9: 'API 9 – RechargeKit API'
 }
 
 // The fields every reply has, in the order the old API 1 used (API 5 sends the same names). Every
@@ -1323,6 +1325,78 @@ const fetchFromApi8 = async (vehicleNumber) => {
   return { found: true, data: reply, charged: null }
 }
 
+// API 9 (RechargeKit API, Advanced RC Verification): POST <RECHARGEKIT_API9_URL> with JSON { reg_no,
+// partner_request_id (unique per request, never reused) } and our partner token (RECHARGEKIT_TOKEN) as
+// Authorization: Bearer. It replies { error: 0, status: 1, msg: 'RC Advance validation successfull',
+// orderid, optransid, cardData: { ...RC fields }, partnerreqid }; anything else is a failure, with msg
+// saying why. cardData field names are not fixed in the document, so they go through the same flexible
+// matcher as API 8 (any common name, nested fields, every leftover detail in EXTRA_DETAILS).
+const API9_URL = 'https://verify.rechargkit.biz/validation/v3/rcAdvanceVerify'
+// A message that means our account / setup is the problem, not the vehicle number
+const API9_ACCOUNT_ERROR = /token|unauthori[sz]ed|authenticat|ip address|whitelist|not allowed|not active|inactive|blocked|suspend|wallet|balance|insufficient|duplicate|partner|permission|service.*(not|disabled)|limit/i
+const API9_INVALID = /invalid.*(reg|vehicle|number|rc)|(reg|vehicle).*invalid|incorrect|wrong format/i
+
+const api9Reference = () => `RTOS${Date.now()}${Math.floor(Math.random() * 1e6).toString().padStart(6, '0')}`
+
+const fetchFromApi9 = async (vehicleNumber) => {
+  const token = process.env.RECHARGEKIT_TOKEN
+  if (!token) throw new Error('API 9 is not set up (RECHARGEKIT_TOKEN)')
+
+  const url = process.env.RECHARGEKIT_API9_URL || API9_URL
+  const referenceNumber = api9Reference()
+  let response
+  try {
+    response = await axios.post(url, {
+      reg_no: vehicleNumber,
+      partner_request_id: referenceNumber
+    }, {
+      timeout: Number(process.env.RECHARGEKIT_API9_TIMEOUT_MS) || 30000,
+      validateStatus: (status) => status < 500,
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` }
+    })
+  } catch (err) {
+    // Network error, timeout or a 5xx from RechargeKit
+    console.error(`[API 9] ${vehicleNumber} ref ${referenceNumber} -> ${url} FAILED:`, err.response
+      ? `HTTP ${err.response.status} ${api8Log(err.response.data)}`
+      : `${err.code || ''} ${err.message}`.trim())
+    throw err
+  }
+
+  const logError = (reason) => console.error(`[API 9] ${vehicleNumber} ref ${referenceNumber} -> ${url} ${reason}: HTTP ${response.status} ${api8Log(response.data)}`)
+
+  const raw = response.data && typeof response.data === 'object' ? response.data : null
+  const message = String(raw?.msg || raw?.message || '').trim()
+  const ok = raw && Number(raw.error) === 0 && Number(raw.status) === 1
+  const card = raw?.cardData && typeof raw.cardData === 'object' && !Array.isArray(raw.cardData) ? raw.cardData : null
+
+  if ([401, 402, 403, 409, 429].includes(response.status) || (!ok && API9_ACCOUNT_ERROR.test(message))) {
+    logError('REFUSED')
+    const code = /wallet|balance|insufficient/i.test(message) ? 'INSUFFICIENT_BALANCE' : `HTTP_${response.status}`
+    throw new ProviderError(`API 9 refused the request: HTTP ${response.status} ${message}`.trim(), code)
+  }
+
+  if (!ok || !card) {
+    const invalid = [400, 422].includes(response.status) || API9_INVALID.test(message)
+    logError(invalid ? 'INVALID VEHICLE NUMBER' : 'NO RECORD')
+    return {
+      found: false,
+      charged: null,
+      message: invalid ? 'Invalid vehicle number. Please check registration number.' : 'Vehicle details not found. Please check registration number.'
+    }
+  }
+
+  const { data, extra } = mapApi8Fields(card)
+  if (!hasVehicleDetails(data)) {
+    logError('REPLY HAS NO VEHICLE DETAILS')
+    return { found: false, charged: null, message: 'Vehicle details not found. Please check registration number.' }
+  }
+  if (!data.REGN_NO) data.REGN_NO = vehicleNumber
+  const reply = toApi1Reply(data)
+  // Every other detail RechargeKit sent, so nothing in its reply is lost
+  if (Object.keys(extra).length) reply.EXTRA_DETAILS = extra
+  return { found: true, data: reply, charged: null }
+}
+
 // API 5 HSRP: GET /v1/hsrp?number=<no> with the same key. data is
 // { status, regno, chassis, engine, hsrp_response: { message, fuel, maker, vchType, norms, vchCatg, regnDate,
 //   hsrpFrontLaserCode, hsrpRearLaserCode, stateCd, offCd, ... } }, sent on as it is.
@@ -1446,7 +1520,7 @@ const alertCodeOf = (err) => {
 
 /**
  * One live lookup at a vehicle info provider: API 5 unless `provider` says 'api2', 'api3', 'api4' or
- * 'api7' or 'api8', or a combined source (COMBINED: 'api24', 'api32', 'api47').
+ * 'api7', 'api8' or 'api9', or a combined source (COMBINED: 'api24', 'api32', 'api47').
  * Resolves to { found: true, data, charged } or { found: false, message, charged }, where
  * `charged` says whether the provider used one of our credits (null when it did not say).
  * When the provider fails (down, timeout, 5xx, bad key, empty wallet) an admin alert is raised
@@ -1603,6 +1677,7 @@ const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
   if (provider === 'api4') return fetchFromApi4(vehicleNumber)
   if (provider === 'api7') return fetchFromApi7(vehicleNumber, { userId })
   if (provider === 'api8') return fetchFromApi8(vehicleNumber)
+  if (provider === 'api9') return fetchFromApi9(vehicleNumber)
   return fetchFromApi5(vehicleNumber, { userId })
 }
 

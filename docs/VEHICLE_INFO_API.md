@@ -72,7 +72,7 @@ Sample data. Fields are returned wherever they are available on the vehicle reco
 `usage.remaining` is how many calls you have left.
 Only successful calls use up your limit.
 
-`source` says which RTO Sarthi API served the call: `rtosarthi_api5`, `rtosarthi_api2`, `rtosarthi_api3`, `rtosarthi_api4`, `rtosarthi_api24` (API 2 + API 4 together) `rtosarthi_api32` (API 3 + API 2 together), `rtosarthi_api7` (basic details), `rtosarthi_api47` (transport advanced: PeriOne + API 7) or `rtosarthi_api8` (Satmat). The fields in `data` are the same for all of them. `rtosarthi_api8` replies can also have `data.EXTRA_DETAILS`: `{ "Label": "value" }` with any other detail Satmat sent (challans, extra permit or RTO fields). Every reply has `source` and `usage`, including errors.
+`source` says which RTO Sarthi API served the call: `rtosarthi_api5`, `rtosarthi_api2`, `rtosarthi_api3`, `rtosarthi_api4`, `rtosarthi_api24` (API 2 + API 4 together) `rtosarthi_api32` (API 3 + API 2 together), `rtosarthi_api7` (basic details), `rtosarthi_api47` (transport advanced: PeriOne + API 7) `rtosarthi_api8` (Satmat) or `rtosarthi_api9` (RechargeKit). The fields in `data` are the same for all of them. `rtosarthi_api8` and `rtosarthi_api9` replies can also have `data.EXTRA_DETAILS`: `{ "Label": "value" }` with any other detail the provider sent (challans, extra permit or RTO fields). Every reply has `source` and `usage`, including errors.
 
 ## Main fields in `data`
 

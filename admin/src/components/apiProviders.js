@@ -14,7 +14,9 @@ export const PROVIDER_OPTIONS = [
   // PeriOne first; API 7 is called only when PeriOne has the vehicle (transport vehicles only)
   { value: 'api47', label: 'PeriOne + API 7 (transport advanced)', short: 'PeriOne + API 7 (transport advanced)', tag: 'bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200', button: 'hover:bg-fuchsia-100' },
   // Satmat RC Verification Plus: full record (owner, mobile, chassis, engine, insurance, PUC, tax, permit)
-  { value: 'api8', label: 'API 8 – Satmat API', short: 'API 8 (Satmat)', tag: 'bg-lime-50 text-lime-700 border-lime-200', button: 'hover:bg-lime-100' }
+  { value: 'api8', label: 'API 8 – Satmat API', short: 'API 8 (Satmat)', tag: 'bg-lime-50 text-lime-700 border-lime-200', button: 'hover:bg-lime-100' },
+  // RechargeKit Advanced RC Verification: advanced RC record
+  { value: 'api9', label: 'API 9 – RechargeKit API', short: 'API 9 (RechargeKit)', tag: 'bg-orange-50 text-orange-700 border-orange-200', button: 'hover:bg-orange-100' }
 ]
 
 // `fallback` is the source used when none is saved: API 5 for keys, API 2 for users

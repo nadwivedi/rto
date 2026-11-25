@@ -180,7 +180,7 @@ const userSchema = new mongoose.Schema({
   // API 2 for everyone unless the admin gives a user another API
   rcProvider: {
     type: String,
-    enum: ['api2', 'api3', 'api4', 'api5', 'api24', 'api32', 'api7', 'api47', 'api8'],
+    enum: ['api2', 'api3', 'api4', 'api5', 'api24', 'api32', 'api7', 'api47', 'api8', 'api9'],
     default: 'api2'
   }
 }, {

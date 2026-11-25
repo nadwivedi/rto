@@ -138,9 +138,10 @@ exports.getApiKeys = async (req, res) => {
         api32: t.api32 + (!isChassisKey(k) && k.provider === 'api32' ? 1 : 0),
         api7: t.api7 + (!isChassisKey(k) && k.provider === 'api7' ? 1 : 0),
         api47: t.api47 + (!isChassisKey(k) && k.provider === 'api47' ? 1 : 0),
-        api8: t.api8 + (!isChassisKey(k) && k.provider === 'api8' ? 1 : 0)
+        api8: t.api8 + (!isChassisKey(k) && k.provider === 'api8' ? 1 : 0),
+        api9: t.api9 + (!isChassisKey(k) && k.provider === 'api9' ? 1 : 0)
       }),
-      { keys: 0, chassisKeys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0, api5: 0, api3: 0, api4: 0, api24: 0, api32: 0, api7: 0, api47: 0, api8: 0 }
+      { keys: 0, chassisKeys: 0, active: 0, soldQty: 0, soldAmount: 0, pendingAmount: 0, used: 0, callsToday: 0, api2: 0, api5: 0, api3: 0, api4: 0, api24: 0, api32: 0, api7: 0, api47: 0, api8: 0, api9: 0 }
     )
 
     res.json({ success: true, data, totals })

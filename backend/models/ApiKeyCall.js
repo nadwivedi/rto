@@ -24,7 +24,7 @@ const apiKeyCallSchema = new mongoose.Schema(
       trim: true,
       uppercase: true
     },
-    // Which of our APIs served the call: 'rtosarthi_api5' (the removed API 1 logged 'rtosarthi_api1'), 'rtosarthi_api2', 'rtosarthi_api3', 'rtosarthi_api4', 'rtosarthi_api24' (API 2 + API 4) 'rtosarthi_api32' (API 3 + API 2), 'rtosarthi_api7' (API 7 basic) or 'rtosarthi_api47' (PeriOne + API 7) or 'rtosarthi_api8' (API 8, Satmat)
+    // Which of our APIs served the call: 'rtosarthi_api5' (the removed API 1 logged 'rtosarthi_api1'), 'rtosarthi_api2', 'rtosarthi_api3', 'rtosarthi_api4', 'rtosarthi_api24' (API 2 + API 4) 'rtosarthi_api32' (API 3 + API 2), 'rtosarthi_api7' (API 7 basic) or 'rtosarthi_api47' (PeriOne + API 7) or 'rtosarthi_api8' (API 8, Satmat) or 'rtosarthi_api9' (API 9, RechargeKit)
     source: {
       type: String,
       trim: true

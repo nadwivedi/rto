@@ -70,7 +70,7 @@ number as JSON, in seconds.
    ▸ source = which RTO Sarthi API served
      the call (rtosarthi_api5, _api2,
      _api3, _api4, _api24, _api32, _api7,
-     _api47 or _api8). The data
+     _api47, _api8 or _api9). The data
      fields are
      the same for all.
 

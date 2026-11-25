@@ -180,6 +180,7 @@ const ApiUsage = () => {
               {' · '}API 7 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api7Today)}</span>
               {' · '}PeriOne + API 7 (transport advanced) <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api47Today)}</span>
               {' · '}API 8 (Satmat) <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api8Today)}</span>
+              {' · '}API 9 (RechargeKit) <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api9Today)}</span>
               {' · last 28 days: '}API 5 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api5Last28)}</span>
               {' · '}API 2 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api2Last28)}</span>
               {' · '}Parzival API <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api3Last28)}</span>
@@ -189,6 +190,7 @@ const ApiUsage = () => {
               {' · '}API 7 <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api7Last28)}</span>
               {' · '}PeriOne + API 7 (transport advanced) <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api47Last28)}</span>
               {' · '}API 8 (Satmat) <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api8Last28)}</span>
+              {' · '}API 9 (RechargeKit) <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.api9Last28)}</span>
               {' · '}App <span className='font-semibold text-gray-800'>{formatNumber(usage?.totals?.appLast28)}</span>
               {/* Calls API 1 (Nikhil API, now removed) served before it was replaced by API 5 */}
               {usage?.totals?.api1Last28 > 0 && <>{' · '}old API 1 <span className='font-semibold text-gray-800'>{formatNumber(usage.totals.api1Last28)}</span></>}
@@ -215,6 +217,7 @@ const ApiUsage = () => {
                       {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 7 – Telegram basic details'>API 7</th>}
                       {!appOnly && <th className={`${th} text-right`} title='API key calls served by PeriOne + API 7 (transport advanced)'>PeriOne + API 7</th>}
                       {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 8 – Satmat API'>API 8</th>}
+                      {!appOnly && <th className={`${th} text-right`} title='API key calls served by API 9 – RechargeKit API'>API 9</th>}
                       <th className={`${th} text-right`}>Total</th>
                       <th className={`${th} text-right`} title='Users and API keys that searched that day'>Active</th>
                     </tr>
@@ -237,6 +240,7 @@ const ApiUsage = () => {
                         {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api7Count)}</td>}
                         {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api47Count)}</td>}
                         {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api8Count)}</td>}
+                        {!appOnly && <td className='px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-gray-700 text-right tabular-nums'>{formatNumber(day.api9Count)}</td>}
                         <td className={`px-2.5 sm:px-4 py-2 sm:py-2.5 text-xs text-right tabular-nums ${day.count ? 'font-bold text-gray-900' : 'text-gray-400'}`}>
                           {formatNumber(day.count)}
                         </td>

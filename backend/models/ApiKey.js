@@ -48,7 +48,7 @@ const apiKeySchema = new mongoose.Schema(
     // RC keys only: Chassis keys use the Chassis to RC API (CHASSIS_PROVIDER)
     provider: {
       type: String,
-      enum: ['api2', 'api3', 'api4', 'api5', 'api24', 'api32', 'api7', 'api47', 'api8'],
+      enum: ['api2', 'api3', 'api4', 'api5', 'api24', 'api32', 'api7', 'api47', 'api8', 'api9'],
       default: 'api5'
     },
     // Switched off keys are refused without calling the provider
