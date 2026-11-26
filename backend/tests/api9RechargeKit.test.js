@@ -1,6 +1,7 @@
 // API 9 (RechargeKit API, Advanced RC Verification). No database needed: axios, ApiUsage and the admin
 // alerts are stubbed. Run: node --test tests/
 process.env.RECHARGEKIT_TOKEN = 'test-token'
+process.env.RECHARGEKIT_PENDING_RETRY_MS = '0,0'
 const { test, beforeEach } = require('node:test')
 const assert = require('node:assert/strict')
 const path = require('path')
@@ -60,8 +61,9 @@ beforeEach(() => {
 })
 axios.post = async (url, body, config) => {
   sent.push({ url, body, config })
-  if (reply instanceof Error) throw reply
-  return reply
+  const r = Array.isArray(reply) ? reply.shift() : reply
+  if (r instanceof Error) throw r
+  return r
 }
 
 test('API 9: RechargeKit cardData in the usual fields, request has reg_no, partner_request_id and the token', async () => {
@@ -95,7 +97,7 @@ test('API 9: every request gets its own partner_request_id', async () => {
 })
 
 test('API 9: a failed lookup is a plain not found, no alert', async () => {
-  reply = { status: 200, data: { error: 1, status: 2, msg: 'Record not found', cardData: null } }
+  reply = { status: 200, data: { error: 0, status: 3, msg: 'Record not found' } }
   const r = await fetchVehicleInfo('ZZ99ZZ0000', { provider: 'api9' })
   assert.equal(r.found, false)
   assert.match(r.message, /not found/)
@@ -103,14 +105,14 @@ test('API 9: a failed lookup is a plain not found, no alert', async () => {
 })
 
 test('API 9: invalid registration number says invalid number', async () => {
-  reply = { status: 200, data: { error: 1, status: 2, msg: 'Invalid registration number' } }
+  reply = { status: 200, data: { error: 1, msg: 'Invalid registration number' } }
   const r = await fetchVehicleInfo('XX', { provider: 'api9' })
   assert.equal(r.found, false)
   assert.match(r.message, /Invalid vehicle number/)
 })
 
 test('API 9: low balance is an INSUFFICIENT_BALANCE alert', async () => {
-  reply = { status: 200, data: { error: 1, status: 2, msg: 'Insufficient balance' } }
+  reply = { status: 200, data: { error: 1, msg: 'Insufficient balance' } }
   await assert.rejects(fetchVehicleInfo('DL01AB1234', { provider: 'api9' }), (e) => e.providerUnavailable)
   assert.equal(alerts[0].source, 'api9')
   assert.equal(alerts[0].code, 'INSUFFICIENT_BALANCE')
@@ -133,4 +135,46 @@ test('API 9: not set up without the token', async () => {
   } finally {
     process.env.RECHARGEKIT_TOKEN = saved
   }
+})
+
+// The real replies RechargeKit sent on 26 Nov 2026
+const PENDING = { status: 202, data: { error: 0, msg: 'RC Advance validation pending please try after sometime', status: 2, orderid: 'b985f999', optransid: '', cardData: '', partnerreqid: 'x' } }
+const FAILED = { status: 404, data: { error: 0, msg: 'RC Advance validation failed', status: 3, orderid: 'c400912a', optransid: '', partnerreqid: 'x' } }
+
+test('API 9: pending (status 2) is retried with a new partner_request_id until it answers', async () => {
+  reply = [PENDING, { status: 200, data: HIT }]
+  const r = await fetchVehicleInfo('CG12BU5574', { provider: 'api9' })
+  assert.equal(r.found, true)
+  assert.equal(sent.length, 2)
+  assert.notEqual(sent[0].body.partner_request_id, sent[1].body.partner_request_id)
+})
+
+test('API 9: still pending after every retry shows unavailable, not "not found"', async () => {
+  reply = [PENDING, PENDING, PENDING]
+  await assert.rejects(fetchVehicleInfo('CG12BU5574', { provider: 'api9' }), (e) => e.providerUnavailable)
+  assert.equal(sent.length, 3)
+  assert.equal(alerts[0].code, 'PENDING')
+})
+
+test('API 9: status 3 (validation failed, HTTP 404) is not found, no alert', async () => {
+  reply = FAILED
+  const r = await fetchVehicleInfo('CG12BU5574', { provider: 'api9' })
+  assert.equal(r.found, false)
+  assert.match(r.message, /not found/)
+  assert.equal(alerts.length, 0)
+})
+
+test('API 9: an empty reg_no (422) is an invalid number', async () => {
+  reply = { status: 422, data: { error: 422, msg: 'please enter valid registration number' } }
+  const r = await fetchVehicleInfo('', { provider: 'api9' })
+  assert.equal(r.found, false)
+  assert.match(r.message, /Invalid vehicle number/)
+})
+
+test('API 9: a status 1 reply is used even with HTTP 202, and cardData may be a JSON string', async () => {
+  reply = { status: 202, data: { ...HIT, cardData: JSON.stringify(HIT.cardData) } }
+  const r = await fetchVehicleInfo('DL01AB1234', { provider: 'api9' })
+  assert.equal(r.found, true)
+  assert.equal(r.data.OWNER_NAME, 'Ravi Kumar')
+  assert.equal(sent.length, 1)
 })

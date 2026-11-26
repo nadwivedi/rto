@@ -1328,8 +1328,8 @@ const fetchFromApi8 = async (vehicleNumber) => {
 // API 9 (RechargeKit API, Advanced RC Verification): POST <RECHARGEKIT_API9_URL> with JSON { reg_no,
 // partner_request_id (unique per request, never reused) } and our partner token (RECHARGEKIT_TOKEN) as
 // Authorization: Bearer. It replies { error: 0, status: 1, msg: 'RC Advance validation successfull',
-// orderid, optransid, cardData: { ...RC fields }, partnerreqid }; anything else is a failure, with msg
-// saying why. cardData field names are not fixed in the document, so they go through the same flexible
+// orderid, optransid, cardData: { ...RC fields }, partnerreqid }; status 2 (HTTP 202) is pending (retried),
+// status 3 (HTTP 404) 'RC Advance validation failed' is no record; error 422 is a bad number. cardData field names are not fixed in the document, so they go through the same flexible
 // matcher as API 8 (any common name, nested fields, every leftover detail in EXTRA_DETAILS).
 const API9_URL = 'https://verify.rechargkit.biz/validation/v3/rcAdvanceVerify'
 // A message that means our account / setup is the problem, not the vehicle number
@@ -1341,15 +1341,15 @@ const API9_INVALID = /invalid.*(reg|vehicle|number|rc)|(reg|vehicle).*invalid|in
 const API9_PARTNER_ID = 'softwarebytestechnologies'
 const api9Reference = () => `${API9_PARTNER_ID}${Date.now()}${Math.floor(Math.random() * 1e6).toString().padStart(6, '0')}`
 
-const fetchFromApi9 = async (vehicleNumber) => {
-  const token = process.env.RECHARGEKIT_TOKEN
-  if (!token) throw new Error('API 9 is not set up (RECHARGEKIT_TOKEN)')
+// RechargeKit answers status 2 (HTTP 202, 'validation pending please try after sometime') while its source
+// is still working. A partner_request_id cannot be sent twice, so each retry is a new request.
+const API9_PENDING_RETRY_MS = (process.env.RECHARGEKIT_PENDING_RETRY_MS || '3000,5000')
+  .split(',').map(Number).filter((ms) => ms >= 0)
 
-  const url = process.env.RECHARGEKIT_API9_URL || API9_URL
+const api9Post = async (vehicleNumber, url, token) => {
   const referenceNumber = api9Reference()
-  let response
   try {
-    response = await axios.post(url, {
+    const response = await axios.post(url, {
       reg_no: vehicleNumber,
       partner_request_id: referenceNumber
     }, {
@@ -1357,6 +1357,7 @@ const fetchFromApi9 = async (vehicleNumber) => {
       validateStatus: (status) => status < 500,
       headers: { 'Content-Type': 'application/json', Accept: 'application/json', Authorization: `Bearer ${token}` }
     })
+    return { response, referenceNumber }
   } catch (err) {
     // Network error, timeout or a 5xx from RechargeKit
     console.error(`[API 9] ${vehicleNumber} ref ${referenceNumber} -> ${url} FAILED:`, err.response
@@ -1364,13 +1365,40 @@ const fetchFromApi9 = async (vehicleNumber) => {
       : `${err.code || ''} ${err.message}`.trim())
     throw err
   }
+}
+
+const fetchFromApi9 = async (vehicleNumber) => {
+  const token = process.env.RECHARGEKIT_TOKEN
+  if (!token) throw new Error('API 9 is not set up (RECHARGEKIT_TOKEN)')
+  const url = process.env.RECHARGEKIT_API9_URL || API9_URL
+
+  let response, referenceNumber, raw
+  for (let attempt = 0; ; attempt++) {
+    ({ response, referenceNumber } = await api9Post(vehicleNumber, url, token))
+    raw = response.data && typeof response.data === 'object' ? response.data : null
+    // Only status 2 is pending; a status 1 reply is used whatever the HTTP code (RechargeKit sends 202 at times)
+    const pending = Number(raw?.status) === 2
+    if (!pending) break
+    console.warn(`[API 9] ${vehicleNumber} ref ${referenceNumber} PENDING` +
+      (attempt < API9_PENDING_RETRY_MS.length ? ` - retry ${attempt + 1}/${API9_PENDING_RETRY_MS.length}` : ' - giving up') +
+      `: HTTP ${response.status} ${api8Log(response.data)}`)
+    if (attempt >= API9_PENDING_RETRY_MS.length) {
+      // RechargeKit's source is slow or stuck: the vehicle may well exist, so do not say "not found"
+      throw new ProviderError(`API 9 is still processing (pending) after ${attempt + 1} tries: ${raw?.msg || 'pending'}`, 'PENDING')
+    }
+    await sleep(API9_PENDING_RETRY_MS[attempt])
+  }
 
   const logError = (reason) => console.error(`[API 9] ${vehicleNumber} ref ${referenceNumber} -> ${url} ${reason}: HTTP ${response.status} ${api8Log(response.data)}`)
 
-  const raw = response.data && typeof response.data === 'object' ? response.data : null
   const message = String(raw?.msg || raw?.message || '').trim()
   const ok = raw && Number(raw.error) === 0 && Number(raw.status) === 1
-  const card = raw?.cardData && typeof raw.cardData === 'object' && !Array.isArray(raw.cardData) ? raw.cardData : null
+  // cardData is an object; accept it as a JSON string too (RechargeKit sends cardData: '' when pending)
+  let cardData = raw?.cardData
+  if (typeof cardData === 'string' && cardData.trim().startsWith('{')) {
+    try { cardData = JSON.parse(cardData) } catch { cardData = null }
+  }
+  const card = cardData && typeof cardData === 'object' && !Array.isArray(cardData) ? cardData : null
 
   if ([401, 402, 403, 409, 429].includes(response.status) || (!ok && API9_ACCOUNT_ERROR.test(message))) {
     logError('REFUSED')
@@ -1380,7 +1408,8 @@ const fetchFromApi9 = async (vehicleNumber) => {
 
   if (!ok || !card) {
     const invalid = [400, 422].includes(response.status) || API9_INVALID.test(message)
-    logError(invalid ? 'INVALID VEHICLE NUMBER' : 'NO RECORD')
+    // status 3 'RC Advance validation failed' (HTTP 404): RechargeKit's source found nothing
+    logError(invalid ? 'INVALID VEHICLE NUMBER' : `NO RECORD (status ${raw?.status ?? '-'}, order ${raw?.orderid || '-'})`)
     return {
       found: false,
       charged: null,
