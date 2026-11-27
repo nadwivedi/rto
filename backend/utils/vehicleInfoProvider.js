@@ -1325,13 +1325,13 @@ const fetchFromApi8 = async (vehicleNumber) => {
   return { found: true, data: reply, charged: null }
 }
 
-// API 9 (RechargeKit API, Advanced RC Verification): POST <RECHARGEKIT_API9_URL> with JSON { reg_no,
+// API 9 (RechargeKit API, Advanced RC Verification): POST <RECHARGEKIT_API9_URL> with JSON { rc_no,
 // partner_request_id (unique per request, never reused) } and our partner token (RECHARGEKIT_TOKEN) as
 // Authorization: Bearer. It replies { error: 0, status: 1, msg: 'RC Advance validation successfull',
 // orderid, optransid, cardData: { ...RC fields }, partnerreqid }; status 2 (HTTP 202) is pending (retried),
 // status 3 (HTTP 404) 'RC Advance validation failed' is no record; error 422 is a bad number. cardData field names are not fixed in the document, so they go through the same flexible
 // matcher as API 8 (any common name, nested fields, every leftover detail in EXTRA_DETAILS).
-const API9_URL = 'https://verify.rechargkit.biz/validation/v3/rcAdvanceVerify'
+const API9_URL = 'https://verify.rechargkit.biz/validation/rcAdvanceVerify'
 // A message that means our account / setup is the problem, not the vehicle number
 const API9_ACCOUNT_ERROR = /token|unauthori[sz]ed|authenticat|ip address|whitelist|not allowed|not active|inactive|blocked|suspend|wallet|balance|insufficient|duplicate|partner|permission|service.*(not|disabled)|limit/i
 const API9_INVALID = /invalid.*(reg|vehicle|number|rc)|(reg|vehicle).*invalid|incorrect|wrong format/i
@@ -1350,7 +1350,7 @@ const api9Post = async (vehicleNumber, url, token) => {
   const referenceNumber = api9Reference()
   try {
     const response = await axios.post(url, {
-      reg_no: vehicleNumber,
+      rc_no: vehicleNumber,
       partner_request_id: referenceNumber
     }, {
       timeout: Number(process.env.RECHARGEKIT_API9_TIMEOUT_MS) || 30000,

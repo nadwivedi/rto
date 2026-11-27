@@ -66,7 +66,7 @@ axios.post = async (url, body, config) => {
   return r
 }
 
-test('API 9: RechargeKit cardData in the usual fields, request has reg_no, partner_request_id and the token', async () => {
+test('API 9: RechargeKit cardData in the usual fields, request has rc_no, partner_request_id and the token', async () => {
   const r = await fetchVehicleInfo('DL01AB1234', { provider: 'api9' })
   assert.equal(r.found, true)
   assert.deepEqual(r.servedBy, ['api9'])
@@ -83,8 +83,9 @@ test('API 9: RechargeKit cardData in the usual fields, request has reg_no, partn
   assert.equal(r.data.STATE_CD, 'DL')
   // A field no mapping took is kept in EXTRA_DETAILS
   assert.equal(r.data.EXTRA_DETAILS['Vehicle Chasi Number'], 'MA3EYD32S00123456')
-  assert.equal(sent[0].url, 'https://verify.rechargkit.biz/validation/v3/rcAdvanceVerify')
-  assert.equal(sent[0].body.reg_no, 'DL01AB1234')
+  assert.equal(sent[0].url, 'https://verify.rechargkit.biz/validation/rcAdvanceVerify')
+  assert.equal(sent[0].body.rc_no, 'DL01AB1234')
+  assert.equal(sent[0].body.reg_no, undefined)
   assert.match(sent[0].body.partner_request_id, /^softwarebytestechnologies\d+$/)
   assert.equal(sent[0].config.headers['Content-Type'], 'application/json')
   assert.equal(sent[0].config.headers.Authorization, 'Bearer test-token')
@@ -164,7 +165,7 @@ test('API 9: status 3 (validation failed, HTTP 404) is not found, no alert', asy
   assert.equal(alerts.length, 0)
 })
 
-test('API 9: an empty reg_no (422) is an invalid number', async () => {
+test('API 9: an empty rc_no (422) is an invalid number', async () => {
   reply = { status: 422, data: { error: 422, msg: 'please enter valid registration number' } }
   const r = await fetchVehicleInfo('', { provider: 'api9' })
   assert.equal(r.found, false)
