@@ -1181,15 +1181,16 @@ const api8Extra = (flat, used) => {
   return extra
 }
 
-const mapApi8Fields = (result) => {
+// `fields` / `rtoKeys`: another API's names (API 9 RechargeKit sends ownername, chassisno, rtocode ...)
+const mapApi8Fields = (result, { fields = API8_FIELDS, rtoKeys = ['rto_code'] } = {}) => {
   const flat = flattenApi8(result)
-  const used = new Set(API8_SKIP)
+  const used = new Set([...API8_SKIP, ...rtoKeys])
   const take = (key) => {
     used.add(key)
     if (flat.get(key)?.nested) used.add(flat.get(key).nested)
   }
   const data = {}
-  for (const [field, names] of Object.entries(API8_FIELDS)) {
+  for (const [field, names] of Object.entries(fields)) {
     const name = names.find((n) => {
       const entry = flat.get(n)
       if (!entry || !isReal(entry.value) || typeof entry.value === 'object') return false
@@ -1207,8 +1208,9 @@ const mapApi8Fields = (result) => {
   if (typeof data.IS_COMMERCIAL === 'boolean' || /^(true|false)$/i.test(String(data.IS_COMMERCIAL ?? ''))) {
     data.IS_COMMERCIAL = String(data.IS_COMMERCIAL).toUpperCase()
   }
-  // 'MH03XU9999' / 'MH-03' -> state MH, RTO 03 (rto_code is often empty)
-  const rto = String(isReal(result.rto_code) ? result.rto_code : data.REGN_NO || '').match(/^([A-Za-z]{2})-?(\d+)/)
+  // 'MH03XU9999' / 'MH-03' / 'CG-12' -> state MH, RTO 03 (rto_code is often empty)
+  const rtoCode = rtoKeys.map((k) => flat.get(k)?.value).find((v) => isReal(v) && typeof v !== 'object')
+  const rto = String(rtoCode ?? data.REGN_NO ?? '').match(/^([A-Za-z]{2})-?(\d+)/)
   if (rto) {
     data.STATE_CD = rto[1].toUpperCase()
     data.RTO_CD = rto[2]
@@ -1332,6 +1334,62 @@ const fetchFromApi8 = async (vehicleNumber) => {
 // status 3 (HTTP 404) 'RC Advance validation failed' is no record; error 422 is a bad number. cardData field names are not fixed in the document, so they go through the same flexible
 // matcher as API 8 (any common name, nested fields, every leftover detail in EXTRA_DETAILS).
 const API9_URL = 'https://verify.rechargkit.biz/validation/rcAdvanceVerify'
+// RechargeKit's cardData names: one word, no underscores (real reply, 27 Nov 2026: regno, ownername,
+// fathername, regdate '11-Aug-2010', rtocode 'CG-12', state, vehiclecategory 'M-Cycle/Scooter',
+// vehiclecolor, makermodal, fueltype, chassisno, engineno, fitnessupto, inscompany, insupto,
+// financerdetails). The other names are the same style for fields that reply did not have. They are tried
+// first, then API 8's names; anything still not taken goes to EXTRA_DETAILS.
+const API9_ALIASES = {
+  REGN_NO: ['regno', 'rcno', 'registrationno', 'vehicleno'],
+  REGN_DT: ['regdate', 'registrationdate', 'regndate'],
+  REGN_UPTO: ['regupto', 'rcupto', 'regnupto', 'registrationupto', 'rcexpirydate'],
+  OWNER_NAME: ['ownername'],
+  F_NAME: ['fathername'],
+  STATE_CD: ['state', 'statecode'],
+  PRESENT_ADDRESS: ['presentaddress', 'currentaddress', 'address'],
+  PERMANENT_ADDRESS: ['permanentaddress'],
+  MOBILE_NO: ['mobileno', 'mobilenumber', 'mobile'],
+  CHASI_NO: ['chassisno', 'chassisnumber'],
+  ENG_NO: ['engineno', 'enginenumber'],
+  MAKER_DESC: ['makerdesc', 'makername', 'manufacturer'],
+  MAKER_MODEL: ['makermodal', 'makermodel', 'modelname'],
+  BODY_TYPE_DESC: ['bodytype', 'bodytypedesc'],
+  FUEL_DESC: ['fueltype'],
+  COLOR: ['vehiclecolor', 'vehiclecolour'],
+  FIT_UPTO: ['fitnessupto', 'fitupto'],
+  INSURANCE_COMP: ['inscompany', 'insurancecompany'],
+  INSURANCE_UPTO: ['insupto', 'insuranceupto'],
+  POLICY_NO: ['inspolicyno', 'policyno', 'insurancepolicyno'],
+  INS_POLICY_NO: ['inspolicyno', 'policyno', 'insurancepolicyno'],
+  MANU_MONTH_YR: ['manufacturingmonthyear', 'mfgmonthyear', 'manumonthyr', 'manufacturingdate'],
+  PUC_UPTO: ['pucupto', 'puccupto'],
+  PUCC_UPTO: ['pucupto', 'puccupto'],
+  PUCC_NO: ['pucno', 'puccno'],
+  FINANCER_DETAILS: ['financerdetails', 'financer', 'financername'],
+  PERMIT_NO: ['permitno', 'permitnumber'],
+  PERMIT_TYPE: ['permittype'],
+  PERMIT_VALID_UPTO: ['permitupto', 'permitvalidupto'],
+  REGISTERED_AT: ['registeredat', 'rtoname', 'regauthority'],
+  STATUS: ['rcstatus', 'vehiclestatus'],
+  // 'M-Cycle/Scooter' is the vehicle class (VAHAN's class description); API 5 sends the same text there
+  VEHICLE_CLASS: ['vehiclecategory', 'vehicleclass', 'vehicleclassdesc'],
+  SEATING_CAPACITY: ['seatcapacity', 'seatingcapacity'],
+  CUBIC_CAPACITY: ['cubiccapacity', 'enginecapacity', 'cc'],
+  UNLADEN_WEIGHT: ['unladenweight'],
+  LADEN_WEIGHT: ['ladenweight', 'grossweight', 'grossvehicleweight'],
+  NO_OF_CYLINDERS: ['noofcylinders', 'cylinders'],
+  WHEELBASE: ['wheelbase'],
+  FUEL_NORMS: ['normsdesc', 'fuelnorms', 'norms', 'emissionnorms'],
+  TAX_UPTO: ['taxupto', 'taxpaidupto'],
+  OWNER_SERIAL_NO: ['ownerserialno', 'ownercount', 'ownersrno'],
+  BLACKLIST_STATUS: ['blackliststatus'],
+  NOC_DETAILS: ['nocdetails']
+}
+const API9_FIELDS = Object.fromEntries(
+  [...new Set([...Object.keys(API8_FIELDS), ...Object.keys(API9_ALIASES)])]
+    .map((field) => [field, [...(API9_ALIASES[field] || []), ...(API8_FIELDS[field] || [])]])
+)
+const API9_RTO_KEYS = ['rtocode', 'rto_code']
 // A message that means our account / setup is the problem, not the vehicle number
 const API9_ACCOUNT_ERROR = /token|unauthori[sz]ed|authenticat|ip address|whitelist|not allowed|not active|inactive|blocked|suspend|wallet|balance|insufficient|duplicate|partner|permission|service.*(not|disabled)|limit/i
 const API9_INVALID = /invalid.*(reg|vehicle|number|rc)|(reg|vehicle).*invalid|incorrect|wrong format/i
@@ -1417,7 +1475,7 @@ const fetchFromApi9 = async (vehicleNumber) => {
     }
   }
 
-  const { data, extra } = mapApi8Fields(card)
+  const { data, extra } = mapApi8Fields(card, { fields: API9_FIELDS, rtoKeys: API9_RTO_KEYS })
   if (!hasVehicleDetails(data)) {
     logError('REPLY HAS NO VEHICLE DETAILS')
     return { found: false, charged: null, message: 'Vehicle details not found. Please check registration number.' }
@@ -1713,4 +1771,4 @@ const fetchFromProvider = async (vehicleNumber, { userId, provider } = {}) => {
   return fetchFromApi5(vehicleNumber, { userId })
 }
 
-module.exports = { fetchVehicleInfo, fetchHsrpInfo, fetchChassisInfo, cleanVehicleNumber, cleanChassisNumber, cleanEngineNumber, chassisProvider, chassisNeedsEngine, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, API7_USAGE_PROVIDER, COMBINED, mapApi2Fields, mapApi7Fields, mapApi8Fields }
+module.exports = { fetchVehicleInfo, fetchHsrpInfo, fetchChassisInfo, cleanVehicleNumber, cleanChassisNumber, cleanEngineNumber, chassisProvider, chassisNeedsEngine, PROVIDERS, API2_USAGE_PROVIDER, API3_USAGE_PROVIDER, API3_CHASSIS_USAGE_PROVIDER, API5_USAGE_PROVIDER, API5_HSRP_USAGE_PROVIDER, API7_USAGE_PROVIDER, COMBINED, mapApi2Fields, mapApi7Fields, mapApi8Fields, API9_FIELDS, API9_RTO_KEYS }

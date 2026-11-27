@@ -91,6 +91,61 @@ test('API 9: RechargeKit cardData in the usual fields, request has rc_no, partne
   assert.equal(sent[0].config.headers.Authorization, 'Bearer test-token')
 })
 
+// The shape of a real cardData RechargeKit sent on 27 Nov 2026 (one-word names, no underscores; personal values replaced).
+// The reply as we showed it put all of these in EXTRA_DETAILS; 'maker' / 'status' are the two fields
+// that already filled MAKER_DESC and STATUS (their exact names were not in the copy we saw).
+const REAL_CARD = {
+  regno: 'CG10XY1234',
+  ownername: 'RAMESH KUMAR SHARMA',
+  fathername: 'SURESH PRASAD SHARMA',
+  regdate: '11-Aug-2010',
+  rtocode: 'CG-10',
+  state: 'CG',
+  vehiclecategory: 'M-Cycle/Scooter',
+  vehiclecolor: 'RED',
+  makermodal: 'YAMAHA-YBR',
+  fueltype: 'PETROL',
+  chassisno: 'ME1ABCD1A2000001',
+  engineno: '5ABC000001',
+  fitnessupto: '10-Aug-2025',
+  inscompany: 'UNITED INDIA INSURANCE CO.LTD',
+  insupto: '18-Jun-2011',
+  financerdetails: 'SAMPLE AUTO FINANCE LTD',
+  maker: 'INDIA YAMAHA MOTOR PVT LTD',
+  status: 'ACTIVE'
+}
+
+test('API 9: the real RechargeKit reply fills the usual fields, nothing left in EXTRA_DETAILS', async () => {
+  reply = { status: 200, data: { ...HIT, cardData: REAL_CARD } }
+  const r = await fetchVehicleInfo('CG10XY1234', { provider: 'api9' })
+  assert.equal(r.found, true)
+  const expected = {
+    REGN_NO: 'CG10XY1234',
+    REGN_DT: '11-Aug-2010',
+    OWNER_NAME: 'RAMESH KUMAR SHARMA',
+    F_NAME: 'SURESH PRASAD SHARMA',
+    STATE_CD: 'CG',
+    RTO_CD: '10',
+    CHASI_NO: 'ME1ABCD1A2000001',
+    ENG_NO: '5ABC000001',
+    MAKER_DESC: 'INDIA YAMAHA MOTOR PVT LTD',
+    MAKER_MODEL: 'YAMAHA-YBR',
+    FUEL_DESC: 'PETROL',
+    COLOR: 'RED',
+    FIT_UPTO: '10-Aug-2025',
+    INSURANCE_COMP: 'UNITED INDIA INSURANCE CO.LTD',
+    INSURANCE_UPTO: '18-Jun-2011',
+    FINANCER_DETAILS: 'SAMPLE AUTO FINANCE LTD',
+    STATUS: 'ACTIVE',
+    VEHICLE_CLASS: 'M-Cycle/Scooter'
+  }
+  for (const [field, value] of Object.entries(expected)) assert.equal(r.data[field], value, field)
+  assert.equal(r.data.EXTRA_DETAILS, undefined)
+  // Same 69 fields, same order as every other API
+  assert.equal(Object.keys(r.data).length, 69)
+  assert.equal(Object.keys(r.data)[0], 'REGN_NO')
+})
+
 test('API 9: every request gets its own partner_request_id', async () => {
   await fetchVehicleInfo('DL01AB1234', { provider: 'api9' })
   await fetchVehicleInfo('DL01AB1234', { provider: 'api9' })
