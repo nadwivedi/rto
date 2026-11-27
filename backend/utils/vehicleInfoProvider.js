@@ -8,7 +8,9 @@ const toNumber = (value) => {
   return value !== null && value !== '' && Number.isFinite(n) ? n : undefined
 }
 
-const NOT_FOUND_TEXT = /not\s*found|no\s*record|invalid/i
+// A provider's "there is no vehicle" text in a detail field ('Vehicle Details not Found', 'Not Available',
+// 'No Data Found', 'Record not exist' ...): such a reply is not found, and is not charged to the user
+const NOT_FOUND_TEXT = /not\s*found|not\s*available|not\s*exist|\bno\s+(record|data|details?)\b|unavailable|invalid/i
 const DETAIL_FIELDS = ['OWNER_NAME', 'MAKER_DESC', 'MAKER_MODEL', 'VEHICLE_CLASS', 'CHASI_NO', 'ENG_NO', 'REGN_DT']
 
 /**
@@ -1492,6 +1494,8 @@ const fetchFromApi9 = async (vehicleNumber) => {
 // { status, regno, chassis, engine, hsrp_response: { message, fuel, maker, vchType, norms, vchCatg, regnDate,
 //   hsrpFrontLaserCode, hsrpRearLaserCode, stateCd, offCd, ... } }, sent on as it is.
 const HSRP_NOT_FOUND = 'HSRP details not found for this vehicle number. Please check the number.'
+// hsrp_response fields that only a real HSRP record has
+const HSRP_DETAIL_FIELDS = ['hsrpFrontLaserCode', 'hsrpRearLaserCode', 'maker', 'regnDate', 'vchType', 'fuel', 'norms', 'vchCatg']
 
 const fetchHsrpFromApi5 = async (vehicleNumber, { userId } = {}) => {
   const apiKey = process.env.PARZIVAL5_API_KEY
@@ -1518,8 +1522,12 @@ const fetchHsrpFromApi5 = async (vehicleNumber, { userId } = {}) => {
   const data = raw.data && typeof raw.data === 'object' ? raw.data : null
   const charged = raw.charged === undefined ? true : Boolean(Number(raw.charged))
   const hsrp = data?.hsrp_response && typeof data.hsrp_response === 'object' ? data.hsrp_response : null
-  const hasDetails = hsrp && ['hsrpFrontLaserCode', 'hsrpRearLaserCode', 'maker', 'regnDate'].some((k) => isReal(hsrp[k]))
-  if (!data || (!hasDetails && /fail|not\s*found|invalid/i.test(String(data.status || hsrp?.message || '')))) {
+  // Found only when API 5 sent real HSRP details. A reply with an empty hsrp_response (whatever its status
+  // text says: 'No Record', 'Data not available', ...) is "not found" to the user, so it must not use
+  // one of their searches either.
+  const hasDetails = hsrp && HSRP_DETAIL_FIELDS.some((k) => isReal(hsrp[k]) && !NOT_FOUND_TEXT.test(String(hsrp[k])))
+  if (!data || !hasDetails) {
+    if (data) console.warn(`[API 5 HSRP] ${vehicleNumber} NO HSRP DETAILS (not charged to the user): ${api8Log(data)}`)
     return { found: false, charged, message: HSRP_NOT_FOUND }
   }
   return { found: true, data: { ...data, regno: data.regno || vehicleNumber }, charged }
