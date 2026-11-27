@@ -1,6 +1,7 @@
 const axios = require('axios')
 const ApiUsage = require('../models/ApiUsage')
 const { raiseAlert, autoResolveAlerts } = require('./adminAlerts')
+const { withLogContext } = require('./logContext')
 
 const toNumber = (value) => {
   const n = Number(value)
@@ -1529,7 +1530,10 @@ const fetchHsrpFromApi5 = async (vehicleNumber, { userId } = {}) => {
  * { found: true, data, charged } or { found: false, message, charged }; when API 5 fails an error with
  * `providerUnavailable: true` and a message safe to show users is thrown.
  */
-const fetchHsrpInfo = async (vehicleNumber, { userId, via } = {}) => {
+const fetchHsrpInfo = (vehicleNumber, { userId, staffId, via } = {}) =>
+  withLogContext({ vehicleNumber, userId, staffId, via }, () => hsrpLookup(vehicleNumber, { userId, via }))
+
+const hsrpLookup = async (vehicleNumber, { userId, via } = {}) => {
   try {
     const result = await fetchHsrpFromApi5(vehicleNumber, { userId })
     await autoResolveAlerts('api5hsrp:error:')
@@ -1561,7 +1565,10 @@ const fetchHsrpInfo = async (vehicleNumber, { userId, via } = {}) => {
  * { found: true, data: { chassisNumber, matches: [record, ...] }, charged } or { found: false, message, charged };
  * when the provider fails an error with `providerUnavailable: true` and a message safe to show users is thrown.
  */
-const fetchChassisInfo = async (chassisNumber, { userId, via, engineNumber } = {}) => {
+const fetchChassisInfo = (chassisNumber, { userId, staffId, via, engineNumber } = {}) =>
+  withLogContext({ chassisNumber, userId, staffId, via }, () => chassisLookup(chassisNumber, { userId, via, engineNumber }))
+
+const chassisLookup = async (chassisNumber, { userId, via, engineNumber } = {}) => {
   const provider = chassisProvider()
   try {
     const result = provider === 'api3'
@@ -1617,10 +1624,12 @@ const alertCodeOf = (err) => {
  * and an error with `providerUnavailable: true` and a message safe to show users is thrown;
  * the provider's own reason is in `error.detail`.
  */
-const fetchVehicleInfo = async (vehicleNumber, { userId, provider, via } = {}) => {
-  if (COMBINED[provider]) return fetchCombined(vehicleNumber, COMBINED[provider], { userId, via })
-  return lookupOne(PROVIDERS[provider] ? provider : 'api5', vehicleNumber, { userId, via })
-}
+// Every console line printed during the lookup is saved with the vehicle no and who searched (admin Logs)
+const fetchVehicleInfo = (vehicleNumber, { userId, staffId, provider, via } = {}) =>
+  withLogContext({ vehicleNumber, userId, staffId, via }, () => {
+    if (COMBINED[provider]) return fetchCombined(vehicleNumber, COMBINED[provider], { userId, via })
+    return lookupOne(PROVIDERS[provider] ? provider : 'api5', vehicleNumber, { userId, via })
+  })
 
 // One provider, with its own admin alerts (see fetchVehicleInfo)
 const lookupOne = async (source, vehicleNumber, { userId, via } = {}) => {

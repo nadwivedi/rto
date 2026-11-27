@@ -60,7 +60,7 @@ exports.lookup = async (req, res) => {
       })
     }
 
-    const result = await fetchChassisInfo(chassis, { userId: accountId, engineNumber: engine, via: 'User Chassis to RC search' })
+    const result = await fetchChassisInfo(chassis, { userId: accountId, staffId: req.user?.staffId, engineNumber: engine, via: 'User Chassis to RC search' })
     if (!result.found) return res.status(404).json({ success: false, message: result.message, ...quota })
 
     let saved = null

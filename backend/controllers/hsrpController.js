@@ -54,7 +54,7 @@ exports.lookup = async (req, res) => {
       })
     }
 
-    const result = await fetchHsrpInfo(vno, { userId: accountId, via: 'User HSRP search' })
+    const result = await fetchHsrpInfo(vno, { userId: accountId, staffId: req.user?.staffId, via: 'User HSRP search' })
     if (!result.found) return res.status(404).json({ success: false, message: result.message, ...quota })
 
     let saved = null

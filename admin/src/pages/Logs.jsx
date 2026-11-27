@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { AlertTriangle, Copy, Info, OctagonAlert, RefreshCw, ScrollText, Search, Trash2 } from 'lucide-react'
+import { AlertTriangle, Car, Copy, Info, KeyRound, OctagonAlert, RefreshCw, ScrollText, Search, Trash2, User } from 'lucide-react'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
 const AUTO_REFRESH_MS = 10000
@@ -31,6 +31,26 @@ const formatDateTime = (value) => {
     minute: '2-digit',
     second: '2-digit'
   })
+}
+
+// 'API key: Fleet App' -> key; 'User search' / 'User HSRP search' -> app
+const viaLabel = (via = '') => {
+  const key = via.match(/^API key:\s*(.+)$/)
+  if (key) return { kind: 'key', text: key[1] }
+  return { kind: 'app', text: via.replace(/^User\s+/, '').replace(/^search$/, 'RC search') }
+}
+
+// The search a log line was printed for: vehicle / chassis number, who searched and how, as one line
+const contextText = (c) => {
+  if (!c) return ''
+  const who = [c.userName, c.userMobile].filter(Boolean).join(' ')
+  return [
+    c.vehicleNumber && `Vehicle ${c.vehicleNumber}`,
+    c.chassisNumber && `Chassis ${c.chassisNumber}`,
+    who && `User ${who}`,
+    c.staffName && `staff ${c.staffName}`,
+    c.via
+  ].filter(Boolean).join(' · ')
 }
 
 const Logs = () => {
@@ -133,12 +153,18 @@ const Logs = () => {
 
   const copyLog = async (log) => {
     try {
-      await navigator.clipboard.writeText(`${formatDateTime(log.createdAt)} ${log.level.toUpperCase()} ${log.message}`)
+      const context = contextText(log.context)
+      await navigator.clipboard.writeText(`${formatDateTime(log.createdAt)} ${log.level.toUpperCase()} ${context ? `[${context}] ` : ''}${log.message}`)
       setCopiedId(log._id)
       setTimeout(() => setCopiedId(null), 1500)
     } catch {
       // Clipboard blocked; nothing to do
     }
+  }
+
+  const searchFor = (text) => {
+    setSearchInput(text)
+    setQuery(text)
   }
 
   const submitSearch = (e) => {
@@ -230,7 +256,7 @@ const Logs = () => {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onBlur={() => setQuery(searchInput.trim())}
-              placeholder='Search vehicle no, error…'
+              placeholder='Search vehicle no, user, error…'
               className='w-full sm:w-56 text-sm outline-none bg-transparent'
             />
           </form>
@@ -278,6 +304,41 @@ const Logs = () => {
                     {copiedId === log._id ? 'Copied' : ''}
                   </button>
                 </div>
+                {log.context && (log.context.vehicleNumber || log.context.chassisNumber || log.context.userId) && (
+                  <div className='mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-700'>
+                    {(log.context.vehicleNumber || log.context.chassisNumber) && (
+                      <button
+                        onClick={() => searchFor(log.context.vehicleNumber || log.context.chassisNumber)}
+                        className='inline-flex items-center gap-1 font-mono font-bold text-gray-900 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 hover:bg-amber-100 cursor-pointer'
+                        title='Show every log for this number'
+                      >
+                        <Car className='h-3 w-3' />
+                        {log.context.chassisNumber && !log.context.vehicleNumber ? `Chassis ${log.context.chassisNumber}` : log.context.vehicleNumber}
+                      </button>
+                    )}
+                    {log.context.userName && (
+                      <button
+                        onClick={() => searchFor(log.context.userMobile || log.context.userName)}
+                        className='inline-flex items-center gap-1 hover:text-indigo-700 cursor-pointer'
+                        title='Show every log for this user'
+                      >
+                        <User className='h-3 w-3 text-gray-400' />
+                        <span className='font-semibold'>{log.context.userName}</span>
+                        {log.context.userMobile && <span className='text-gray-500'>{log.context.userMobile}</span>}
+                        {log.context.staffName && <span className='text-gray-500'>· by staff {log.context.staffName}</span>}
+                      </button>
+                    )}
+                    {log.context.via && (() => {
+                      const via = viaLabel(log.context.via)
+                      return (
+                        <span className='inline-flex items-center gap-1 text-gray-500'>
+                          {via.kind === 'key' ? <KeyRound className='h-3 w-3' /> : null}
+                          {via.kind === 'key' ? `API key: ${via.text}` : via.text}
+                        </span>
+                      )
+                    })()}
+                  </div>
+                )}
                 <pre
                   onClick={() => long && setExpanded((prev) => ({ ...prev, [log._id]: !prev[log._id] }))}
                   className={`mt-1 text-xs font-mono text-gray-800 whitespace-pre-wrap break-all ${long ? 'cursor-pointer' : ''}`}

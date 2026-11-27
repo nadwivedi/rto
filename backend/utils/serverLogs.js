@@ -1,5 +1,6 @@
 const util = require('util')
 const mongoose = require('mongoose')
+const { getLogContext } = require('./logContext')
 
 // Copies everything the backend prints with console.log / info / warn / error / debug into the
 // ServerLog collection (admin panel > Logs). The console still prints as before.
@@ -59,7 +60,9 @@ const installServerLogs = () => {
           buffer.shift()
           dropped++
         }
-        buffer.push({ level, source: sourceOf(message), message, pid: process.pid, createdAt: new Date() })
+        // Which search (vehicle no, user) the line was printed for, when it came from inside a lookup
+        const context = getLogContext()
+        buffer.push({ level, source: sourceOf(message), message, ...(context && { context }), pid: process.pid, createdAt: new Date() })
       } catch {
         // A log line that cannot be formatted is not worth breaking the caller for
       }

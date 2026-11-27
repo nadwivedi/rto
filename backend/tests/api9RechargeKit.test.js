@@ -234,3 +234,19 @@ test('API 9: a status 1 reply is used even with HTTP 202, and cardData may be a 
   assert.equal(r.data.OWNER_NAME, 'Ravi Kumar')
   assert.equal(sent.length, 1)
 })
+
+test('API 9: an error printed during the lookup knows the vehicle no and who searched (admin Logs)', async () => {
+  const { getLogContext } = require('../utils/logContext')
+  const printed = []
+  const original = console.error
+  console.error = (...args) => printed.push({ text: args.join(' '), context: getLogContext() })
+  try {
+    reply = { status: 401, data: { error: 1, msg: 'Unauthorized' } }
+    await assert.rejects(fetchVehicleInfo('CG04AB1234', { provider: 'api9', userId: 'user1', staffId: 'staff1', via: 'User search' }))
+  } finally {
+    console.error = original
+  }
+  const refused = printed.find((p) => p.text.includes('[API 9]'))
+  assert.ok(refused, 'the API 9 error was printed')
+  assert.deepEqual(refused.context, { vehicleNumber: 'CG04AB1234', userId: 'user1', staffId: 'staff1', via: 'User search' })
+})

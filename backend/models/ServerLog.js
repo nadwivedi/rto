@@ -10,6 +10,22 @@ const serverLogSchema = new mongoose.Schema(
     // The [TAG] the line started with, e.g. 'API 8', 'API 3', 'Chassis to RC'
     source: { type: String, trim: true },
     message: { type: String, default: '' },
+    // The search the line was printed during (utils/logContext): vehicle / chassis number, the account
+    // (owner) and staff member who searched, and how ('User search', 'API key: Fleet App', ...)
+    context: {
+      type: new mongoose.Schema(
+        {
+          vehicleNumber: String,
+          chassisNumber: String,
+          // Ids as text: the lines are saved with insertMany({ lean: true }), which does not cast
+          userId: String,
+          staffId: String,
+          via: String
+        },
+        { _id: false }
+      ),
+      default: undefined
+    },
     // Which backend process wrote it (pm2 instance), handy after a restart
     pid: { type: Number },
     createdAt: { type: Date, default: Date.now }
@@ -20,6 +36,7 @@ const serverLogSchema = new mongoose.Schema(
 serverLogSchema.index({ createdAt: 1 }, { expireAfterSeconds: LOG_RETENTION_DAYS * 24 * 60 * 60 })
 serverLogSchema.index({ level: 1, createdAt: -1 })
 serverLogSchema.index({ source: 1, createdAt: -1 })
+serverLogSchema.index({ 'context.vehicleNumber': 1, _id: -1 })
 
 module.exports = mongoose.model('ServerLog', serverLogSchema)
 module.exports.LOG_RETENTION_DAYS = LOG_RETENTION_DAYS

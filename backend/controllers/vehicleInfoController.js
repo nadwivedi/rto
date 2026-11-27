@@ -92,7 +92,7 @@ const lookupVehicle = async (req, res) => {
     const logBase = { userId: targetUserId, staffId: req.user?.staffId || undefined, vehicleNumber: cleanVno, provider }
     let result
     try {
-      result = await fetchVehicleInfo(cleanVno, { userId: targetUserId, provider, via: 'User search' })
+      result = await fetchVehicleInfo(cleanVno, { userId: targetUserId, staffId: req.user?.staffId, provider, via: 'User search' })
     } catch (err) {
       const { status, body } = lookupErrorReply(err)
       await logSearch({ ...logBase, result: 'unavailable', message: String(err.detail || err.message || '').slice(0, 300), statusCode: status, replyBody: body, durationMs: Date.now() - startedAt })
