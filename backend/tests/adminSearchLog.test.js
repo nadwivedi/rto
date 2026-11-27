@@ -52,7 +52,7 @@ const keyChassis = { _id: id(), name: 'Chassis Key', product: 'chassis' }
 const t = (min) => new Date(Date.UTC(2026, 10, 18, 10, min))
 const appLogs = [
   { _id: id(), userId: userA._id, vehicleNumber: 'CG12BU5574', provider: 'api47', servedBy: ['api4', 'api7'], result: 'found', charged: true, ownerName: 'NARAYAN DWIVEDI', response: { REGN_NO: 'CG12BU5574', OWNER_NAME: 'NARAYAN DWIVEDI' }, createdAt: t(5) },
-  { _id: id(), userId: userA._id, vehicleNumber: 'CG04AB1234', provider: 'api47', servedBy: ['api4'], result: 'not_found', message: 'not found', createdAt: t(1) }
+  { _id: id(), userId: userA._id, vehicleNumber: 'CG04AB1234', provider: 'api47', servedBy: ['api4'], result: 'not_found', message: 'not found', statusCode: 404, replyBody: { success: false, message: 'not found' }, createdAt: t(1) }
 ]
 const keyCalls = [
   { _id: id(), apiKeyId: keyRc._id, vehicleNumber: 'MH12AB0001', source: 'rtosarthi_api7', servedBy: ['api7'], statusCode: 200, charged: true, response: { REGN_NO: 'MH12AB0001' }, createdAt: t(3) },
@@ -115,4 +115,19 @@ test('eye button: the full vehicle details of one search', async () => {
   const k = await call(getSearch, { params: { kind: 'key', id: String(keyCalls[0]._id) } })
   assert.equal(k.data.response.REGN_NO, 'MH12AB0001')
   assert.equal((await call(getSearch, { params: { kind: 'x', id: 'bad' } })).code, 400)
+})
+
+test('eye button: the exact JSON the user got, also for a not found search; none for old searches', async () => {
+  const miss = await call(getSearch, { params: { kind: 'app', id: String(appLogs[1]._id) } })
+  assert.deepEqual(miss.data.replyBody, { success: false, message: 'not found' })
+  assert.equal(miss.data.statusCode, 404)
+  assert.equal(miss.data.response, null)
+  const old = await call(getSearch, { params: { kind: 'app', id: String(appLogs[0]._id) } })
+  assert.equal(old.data.replyBody, null)
+  assert.equal(old.data.statusCode, null)
+})
+
+test('the list does not send the saved JSON', async () => {
+  const r = await call(listSearches, {})
+  for (const row of r.data) assert.equal(row.replyBody, undefined)
 })

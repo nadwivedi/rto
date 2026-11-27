@@ -62,7 +62,7 @@ exports.listSearches = async (req, res) => {
     }
 
     const [appRows, keyRows] = await Promise.all([
-      type === 'key' ? [] : RcSearchLog.find(appQuery).select('-response').sort({ createdAt: -1 }).limit(limit + 1).lean(),
+      type === 'key' ? [] : RcSearchLog.find(appQuery).select('-response -replyBody').sort({ createdAt: -1 }).limit(limit + 1).lean(),
       type === 'app'
         ? []
         : ApiKeyCall.find(keyQuery)
@@ -139,15 +139,20 @@ exports.listSearches = async (req, res) => {
   }
 }
 
-// GET /api/admin/searches/:kind/:id - one search with the full vehicle details the API sent back
+// GET /api/admin/searches/:kind/:id - one search: the vehicle details (`response`) and the exact JSON
+// body the user / API key caller was sent (`replyBody`, with its HTTP `statusCode`; null for searches
+// logged before it was saved)
 exports.getSearch = async (req, res) => {
   try {
     const { kind, id } = req.params
     if (!['app', 'key'].includes(kind) || !mongoose.isValidObjectId(id)) return badRequest(res, 'Invalid search')
     const Model = kind === 'app' ? RcSearchLog : ApiKeyCall
-    const row = await Model.findById(id).select('response').lean()
+    const row = await Model.findById(id).select('response replyBody statusCode').lean()
     if (!row) return res.status(404).json({ success: false, message: 'Search not found' })
-    res.json({ success: true, data: { response: row.response || null } })
+    res.json({
+      success: true,
+      data: { response: row.response || null, replyBody: row.replyBody || null, statusCode: row.statusCode || null }
+    })
   } catch (error) {
     sendError(res, req, error)
   }

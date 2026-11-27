@@ -94,12 +94,14 @@ const lookupVehicle = async (req, res) => {
     try {
       result = await fetchVehicleInfo(cleanVno, { userId: targetUserId, provider, via: 'User search' })
     } catch (err) {
-      await logSearch({ ...logBase, result: 'unavailable', message: String(err.detail || err.message || '').slice(0, 300), durationMs: Date.now() - startedAt })
-      throw err
+      const { status, body } = lookupErrorReply(err)
+      await logSearch({ ...logBase, result: 'unavailable', message: String(err.detail || err.message || '').slice(0, 300), statusCode: status, replyBody: body, durationMs: Date.now() - startedAt })
+      return res.status(status).json(body)
     }
     if (!result.found) {
-      await logSearch({ ...logBase, servedBy: result.servedBy, result: 'not_found', message: result.message, durationMs: Date.now() - startedAt })
-      return res.status(404).json({ success: false, message: result.message })
+      const body = { success: false, message: result.message }
+      await logSearch({ ...logBase, servedBy: result.servedBy, result: 'not_found', message: result.message, statusCode: 404, replyBody: body, durationMs: Date.now() - startedAt })
+      return res.status(404).json(body)
     }
     const parsedData = result.data
 
@@ -135,16 +137,6 @@ const lookupVehicle = async (req, res) => {
 
     // ── Increment user's lifetime search count, only when the provider used one of our credits ──
     const charged = result.charged !== false
-    await logSearch({
-      ...logBase,
-      servedBy: result.servedBy,
-      result: 'found',
-      charged,
-      ownerName: parsedData.OWNER_NAME || '',
-      makerModel: `${parsedData.MAKER_DESC || ''} ${parsedData.MAKER_MODEL || ''}`.trim(),
-      response: parsedData,
-      durationMs: Date.now() - startedAt
-    })
     let updatedUser = null
     if (charged) {
       updatedUser = await User.findByIdAndUpdate(
@@ -161,7 +153,7 @@ const lookupVehicle = async (req, res) => {
     const newCount = updatedUser?.rcSearchCount || (charged ? currentCount + 1 : currentCount)
     const newRemaining = Math.max(0, newLimit - newCount)
 
-    return res.status(200).json({
+    const body = {
       success: true,
       message: 'Vehicle details fetched successfully',
       data: parsedData,
@@ -175,27 +167,40 @@ const lookupVehicle = async (req, res) => {
         lastSearchedAt: savedRecord.lastSearchedAt,
         searchCount: savedRecord.searchCount
       } : null
-    })
-  } catch (error) {
-    // Provider trouble (empty wallet, bad key, API down) is for the admin, who gets an alert;
-    // the user only hears that the service is unavailable
-    if (error.providerUnavailable) {
-      return res.status(503).json({ success: false, message: error.message })
     }
-    console.error('Error fetching vehicle details:', error?.response?.data || error.message)
-    const status = error.response ? error.response.status : 500
-    const msg =
-      error.response?.data?.message ||
-      error.response?.data?.error ||
-      error.message ||
-      'Failed to fetch vehicle details from RTO server'
-
-    return res.status(status === 404 ? 404 : 500).json({
-      success: false,
-      message: msg,
-      error: error.message
+    await logSearch({
+      ...logBase,
+      servedBy: result.servedBy,
+      result: 'found',
+      charged,
+      ownerName: parsedData.OWNER_NAME || '',
+      makerModel: `${parsedData.MAKER_DESC || ''} ${parsedData.MAKER_MODEL || ''}`.trim(),
+      response: parsedData,
+      statusCode: 200,
+      replyBody: body,
+      durationMs: Date.now() - startedAt
     })
+    return res.status(200).json(body)
+  } catch (error) {
+    const { status, body } = lookupErrorReply(error)
+    return res.status(status).json(body)
   }
+}
+
+// The reply a failed lookup gets. Provider trouble (empty wallet, bad key, API down) is for the admin,
+// who gets an alert; the user only hears that the service is unavailable.
+const lookupErrorReply = (error) => {
+  if (error.providerUnavailable) {
+    return { status: 503, body: { success: false, message: error.message } }
+  }
+  console.error('Error fetching vehicle details:', error?.response?.data || error.message)
+  const status = error.response ? error.response.status : 500
+  const msg =
+    error.response?.data?.message ||
+    error.response?.data?.error ||
+    error.message ||
+    'Failed to fetch vehicle details from RTO server'
+  return { status: status === 404 ? 404 : 500, body: { success: false, message: msg, error: error.message } }
 }
 
 /**

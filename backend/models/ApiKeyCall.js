@@ -73,6 +73,11 @@ const apiKeyCallSchema = new mongoose.Schema(
     response: {
       type: mongoose.Schema.Types.Mixed
     },
+    // The exact JSON body sent to the caller, every call (with source and usage). Calls logged before
+    // this was added have none.
+    replyBody: {
+      type: mongoose.Schema.Types.Mixed
+    },
     // The key's limit after this call
     callLimit: {
       type: Number

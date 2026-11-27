@@ -472,7 +472,7 @@ exports.getApiKeyCalls = async (req, res) => {
     const [totalRecords, calls] = await Promise.all([
       ApiKeyCall.countDocuments(query),
       ApiKeyCall.find(query)
-        .select('-response')
+        .select('-response -replyBody')
         .sort({ createdAt: -1 })
         .skip((pageNum - 1) * limitNum)
         .limit(limitNum)

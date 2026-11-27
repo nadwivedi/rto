@@ -71,8 +71,9 @@ const withApiKey = (product, run) => async (req, res) => {
   const source = product === 'chassis' ? `rtosarthi_${chassisProvider()}` : `rtosarthi_${PROVIDERS[apiKey.provider] ? apiKey.provider : 'api5'}`
 
   const reply = async (statusCode, payload, entry = {}) => {
-    await logCall(apiKey, req, startedAt, { statusCode, success: statusCode === 200, message: payload.message, source, ...entry })
-    return res.status(statusCode).json({ ...payload, source, usage: usageOf(apiKey) })
+    const replyBody = { ...payload, source, usage: usageOf(apiKey) }
+    await logCall(apiKey, req, startedAt, { statusCode, success: statusCode === 200, message: payload.message, source, replyBody, ...entry })
+    return res.status(statusCode).json(replyBody)
   }
 
   if (!apiKey.active) {

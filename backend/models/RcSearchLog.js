@@ -58,6 +58,14 @@ const rcSearchLogSchema = new mongoose.Schema(
     response: {
       type: mongoose.Schema.Types.Mixed
     },
+    // The exact JSON body the app was sent (found, not found or failed) and its HTTP status, for the
+    // admin's API Searches page. Searches logged before this was added have none.
+    replyBody: {
+      type: mongoose.Schema.Types.Mixed
+    },
+    statusCode: {
+      type: Number
+    },
     durationMs: {
       type: Number
     }

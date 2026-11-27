@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Eye, RefreshCw, Search, X } from 'lucide-react'
+import { Check, Copy, Eye, RefreshCw, Search, X } from 'lucide-react'
 import { providerOption } from '../components/apiProviders'
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'https://api.rtosarthi.com'
@@ -93,8 +93,9 @@ const ApiSearches = () => {
   const [query, setQuery] = useState('')
   const [appliedQuery, setAppliedQuery] = useState('')
   const [open, setOpen] = useState(null)
-  const [detail, setDetail] = useState({ loading: false, response: null, error: '' })
-  const [showJson, setShowJson] = useState(false)
+  const [detail, setDetail] = useState({ loading: false, response: null, replyBody: null, statusCode: null, error: '' })
+  const [showFields, setShowFields] = useState(false)
+  const [copied, setCopied] = useState(false)
   const requestId = useRef(0)
 
   const load = useCallback(async (before) => {
@@ -127,15 +128,29 @@ const ApiSearches = () => {
 
   const viewRow = async (row) => {
     setOpen(row)
-    setShowJson(false)
-    setDetail({ loading: true, response: null, error: '' })
+    setShowFields(false)
+    setCopied(false)
+    setDetail({ loading: true, response: null, replyBody: null, statusCode: null, error: '' })
     try {
       const response = await fetch(`${BACKEND_URL}/api/admin/searches/${row.kind}/${row._id}`, { credentials: 'include' })
       const json = await response.json()
       if (!json.success) throw new Error(json.message || 'Failed to load the details')
-      setDetail({ loading: false, response: json.data.response, error: '' })
+      const { response: vehicle, replyBody = null, statusCode = null } = json.data
+      setDetail({ loading: false, response: vehicle, replyBody, statusCode, error: '' })
     } catch (err) {
-      setDetail({ loading: false, response: null, error: err.message || 'Failed to load the details' })
+      setDetail({ loading: false, response: null, replyBody: null, statusCode: null, error: err.message || 'Failed to load the details' })
+    }
+  }
+
+  // The exact JSON the user got; searches saved before that was recorded only have the vehicle details
+  const jsonText = detail.replyBody ? JSON.stringify(detail.replyBody, null, 2) : detail.response ? JSON.stringify(detail.response, null, 2) : ''
+  const copyJson = async () => {
+    try {
+      await navigator.clipboard.writeText(jsonText)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 1500)
+    } catch {
+      setCopied(false)
     }
   }
 
@@ -157,7 +172,7 @@ const ApiSearches = () => {
         <div>
           <h1 className='text-xl sm:text-2xl font-bold text-gray-800'>API Searches</h1>
           <p className='text-xs sm:text-sm text-gray-500 mt-0.5'>
-            Every vehicle RC search, by app users and API keys, with the API that answered. Click the eye to see the details it sent.
+            Every vehicle RC search, by app users and API keys, with the API that answered. Click the eye to see the exact JSON the user got.
           </p>
         </div>
         <button
@@ -294,10 +309,9 @@ const ApiSearches = () => {
                       <td className={`${td} text-center`}>
                         <button
                           onClick={() => viewRow(row)}
-                          disabled={row.result !== 'found'}
-                          className='p-1.5 rounded-md text-indigo-600 hover:bg-indigo-50 disabled:text-gray-300 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default'
-                          title={row.result === 'found' ? 'View the vehicle details the API sent' : 'No vehicle details for this search'}
-                          aria-label='View vehicle details'
+                          className='p-1.5 rounded-md text-indigo-600 hover:bg-indigo-50 cursor-pointer'
+                          title='View the JSON response the user got'
+                          aria-label='View JSON response'
                         >
                           <Eye className='w-4 h-4' />
                         </button>
@@ -351,25 +365,46 @@ const ApiSearches = () => {
                 <div className='h-48 bg-gray-50 rounded-lg animate-pulse' />
               ) : detail.error ? (
                 <p className='text-sm text-red-600'>{detail.error}</p>
-              ) : !detail.response ? (
-                <p className='text-sm text-gray-500'>No vehicle details were saved for this search.</p>
+              ) : !jsonText ? (
+                <p className='text-sm text-gray-500'>
+                  This search was saved before replies were recorded, so there is no JSON for it.
+                  {open.message && <span className='block mt-1 text-gray-700'>Message: {open.message}</span>}
+                </p>
               ) : (
                 <>
-                  <div className='grid grid-cols-1 sm:grid-cols-2 gap-x-5 text-xs'>
-                    {fields.map(([field, value]) => (
-                      <div key={field} className='flex justify-between gap-3 border-b border-gray-100 py-1.5'>
-                        <span className='text-gray-500 shrink-0'>{field.startsWith('extra:') ? field.slice(6) : FIELD_LABELS[field] || field}</span>
-                        <span className='font-semibold text-gray-800 text-right break-words min-w-0'>{String(value)}</span>
-                      </div>
-                    ))}
+                  <div className='flex flex-wrap items-center justify-between gap-2 mb-1.5'>
+                    <div className='flex items-center gap-2 text-xs font-semibold text-gray-700'>
+                      {detail.replyBody ? 'JSON response the user got' : 'Vehicle details (data) the user got'}
+                      {detail.statusCode && (
+                        <span className={`px-1.5 py-0.5 rounded border text-[10px] font-bold ${detail.statusCode === 200 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-700 border-red-200'}`}>
+                          HTTP {detail.statusCode}
+                        </span>
+                      )}
+                    </div>
+                    <button onClick={copyJson} className='inline-flex items-center gap-1 px-2 py-1 text-[11px] font-semibold text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50 cursor-pointer'>
+                      {copied ? <Check className='w-3.5 h-3.5 text-emerald-600' /> : <Copy className='w-3.5 h-3.5' />} {copied ? 'Copied' : 'Copy JSON'}
+                    </button>
                   </div>
-                  <button onClick={() => setShowJson((v) => !v)} className='mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer'>
-                    {showJson ? 'Hide' : 'Show'} full response (JSON)
-                  </button>
-                  {showJson && (
-                    <pre className='mt-2 p-2.5 bg-gray-900 text-gray-100 rounded-lg overflow-auto max-h-80 text-[11px]'>
-                      {JSON.stringify(detail.response, null, 2)}
-                    </pre>
+                  {!detail.replyBody && (
+                    <p className='mb-1.5 text-[11px] text-amber-700'>Saved before full replies were recorded: only the vehicle details are shown, not the whole reply.</p>
+                  )}
+                  <pre className='p-2.5 bg-gray-900 text-gray-100 rounded-lg overflow-auto max-h-[28rem] text-[11px] whitespace-pre'>{jsonText}</pre>
+                  {fields.length > 0 && (
+                    <>
+                      <button onClick={() => setShowFields((v) => !v)} className='mt-3 text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer'>
+                        {showFields ? 'Hide' : 'Show'} vehicle details as a list
+                      </button>
+                      {showFields && (
+                        <div className='mt-2 grid grid-cols-1 sm:grid-cols-2 gap-x-5 text-xs'>
+                          {fields.map(([field, value]) => (
+                            <div key={field} className='flex justify-between gap-3 border-b border-gray-100 py-1.5'>
+                              <span className='text-gray-500 shrink-0'>{field.startsWith('extra:') ? field.slice(6) : FIELD_LABELS[field] || field}</span>
+                              <span className='font-semibold text-gray-800 text-right break-words min-w-0'>{String(value)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
                   )}
                 </>
               )}
